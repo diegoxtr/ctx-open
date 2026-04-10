@@ -5,6 +5,16 @@ CTX is a Cognitive Version Control System: a CLI for structured reasoning artifa
 
 Current version: `1.0.1`
 
+## Viewer
+
+Working context and graph exploration in CTX Viewer:
+
+![CTX Viewer working context](assets/screenshots/ctx-viewer-working-context.jpg)
+
+Commit-focused trace graph for a resolved reasoning thread:
+
+![CTX Viewer commit thread](assets/screenshots/ctx-viewer-commit-thread.jpg)
+
 ## For Models And Agents
 
 Models and agents do not automatically know how to work with CTX on first contact.
