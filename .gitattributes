@@ -1,0 +1,2 @@
+artifacts/distribution/*.tar.gz filter=lfs diff=lfs merge=lfs -text
+artifacts/distribution/*.zip filter=lfs diff=lfs merge=lfs -text

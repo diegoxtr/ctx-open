@@ -1,0 +1,12 @@
+bin/
+obj/
+.vs/
+.vscode/
+*.user
+*.suo
+*.cache
+*.tmp
+tmp/
+
+# Local CTX state
+.ctx/

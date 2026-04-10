@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ctx.Domain\Ctx.Domain.csproj" />
+    <ProjectReference Include="..\Ctx.Application\Ctx.Application.csproj" />
+    <ProjectReference Include="..\Ctx.Core\Ctx.Core.csproj" />
+    <ProjectReference Include="..\Ctx.Persistence\Ctx.Persistence.csproj" />
+    <ProjectReference Include="..\Ctx.Providers\Ctx.Providers.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
