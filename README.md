@@ -96,7 +96,8 @@ Viewer:
 - `dotnet run --project .\Ctx.Viewer`
 - Open `http://localhost:5271`
 - Load a `.ctx` repository path to inspect branches, timeline lanes, commits and graph traces over time
-- If no repository path is stored or entered, the viewer first uses `CTX_VIEWER_DEFAULT_REPOSITORY_PATH` or `Viewer__DefaultRepositoryPath` when configured, and otherwise falls back to the project git root, which for this self-hosting repository resolves to `<repo-root>`
+- If no repository path is stored or entered, the viewer first uses `CTX_VIEWER_DEFAULT_REPOSITORY_PATH` or `Viewer__DefaultRepositoryPath` when configured, and otherwise falls back to the project git root, which in this source repository resolves to `<repo-root>`
+- This public source repository does not ship a live repo-root `.ctx` workspace, so the bundled demo or an explicit CTX repository path is the recommended starting point
 - Default branch is `main` unless the browser already remembers a newer repository or branch selection
 - `Auto-refresh` starts enabled by default unless the browser already remembers that you turned it off, and the viewer remembers that preference across reloads
 - Use `Refresh` for manual reloads or keep `Auto-refresh` enabled for periodic sync
@@ -114,15 +115,15 @@ Viewer:
 - The viewer remembers the last repository, branch, focus combination and task-state filter mix across reloads
 - The left panel shows both active and closed tasks so current and completed work stay visible without opening the graph first
 - Task items in the left panel can now focus the corresponding `Task` node and restore the working graph context
-- Primary self-hosting repository: `<repo-root>`
+- Source repository root: `<repo-root>`
 - Bundled demo repository: `<repo-root>\\examples\\viewer-demo`
 - The bundled demo includes `main`, `feature/ux-timeline` and `research/validation`
-- The repo-root `.ctx` workspace tracks the real product roadmap, evidence, decisions and cognitive commits for CTX itself
+- The bundled demo provides a ready-to-open `.ctx` repository for viewer validation
 - Local publish/install is documented in `docs/LOCAL_CTX_INSTALLATION.md`
 - The local launcher command is `ctx`
 - Agent prompt example: `prompts/CTX_AGENT_PROMPT.md`
 - Autonomous operator prompt: `prompts/CTX_AUTONOMOUS_OPERATOR_PROMPT.md`
-- Self-hosting workflow: `docs/USE_CTX_TO_BUILD_CTX.md`
+- Authoring workflow example: `docs/USE_CTX_TO_BUILD_CTX.md`
 
 ## Planned Direction
 
@@ -183,7 +184,7 @@ This is a planned direction, not a statement of current capability.
 - `ctx next` returns `Task` candidates when open work exists, and can return `Gap` candidates from strong recorded hypotheses when CTX has no open task to continue.
 - Only hypotheses in `Proposed` or `UnderEvaluation` state are eligible as `Gap` candidates for `ctx next`.
 - `ctx audit` reports cognitive consistency issues such as open hypotheses on closed tasks, draft conclusions on completed work, and missing thread closure.
-- `docs/COMMAND_ADOPTION_AND_COVERAGE.md` summarizes which CLI surfaces are actually used in self-hosting, which remain cold, and which unused commands should be validated first by product value.
+- `docs/COMMAND_ADOPTION_AND_COVERAGE.md` summarizes which CLI surfaces are already used in the current workflow, which remain cold, and which unused commands should be validated first by product value.
 - `ctx thread reconstruct --format markdown` emits a readable narrative thread artifact in addition to the structured JSON model.
 - `docs/WORK_MODEL_AND_PRIORITIZATION.md` now defines the canonical distinction between `issue`, `gap`, `task`, `subtask`, `blocker`, `duplicate` and `follow-up`.
 - Distribution assets now live under `distribution/`, including target manifests, platform installer scaffolding, and the shipped agent-link prompt fragment.

@@ -53,7 +53,7 @@ Si ya tenes el repositorio en tu maquina, ubicate en la carpeta raiz del proyect
 Ejemplo:
 
 ```powershell
-cd C:\sources\ctx
+cd <repo-root>
 ```
 
 ## 5. Restaurar, compilar y testear

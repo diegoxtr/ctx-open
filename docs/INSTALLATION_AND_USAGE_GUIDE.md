@@ -53,7 +53,7 @@ If you already have the repository, move to the project root.
 Example:
 
 ```powershell
-cd C:\sources\ctx
+cd <repo-root>
 ```
 
 ## 5. Restore, build, test
