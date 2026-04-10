@@ -44,7 +44,8 @@ Current default behavior:
 
 - if no repository path is stored or entered, the viewer first checks `CTX_VIEWER_DEFAULT_REPOSITORY_PATH` or `Viewer__DefaultRepositoryPath`
 - if no configured default exists, the viewer resolves the default root from the nearest project `.git` directory
-- in this self-hosting repository that fallback root resolves to `<repo-root>`
+- in this source repository that fallback root resolves to `<repo-root>`
+- this public source repository does not include a live repo-root `.ctx` workspace, so the bundled demo or an explicit CTX repository path is the recommended starting point
 - default cognitive branch is `main`
 - `Auto-refresh` starts enabled by default unless the browser already remembers it being turned off
 - it remembers the last `Repository` and `Branch` used in the browser

@@ -44,7 +44,8 @@ Comportamiento por defecto actual:
 
 - si no hay una ruta guardada ni ingresada, el viewer primero revisa `CTX_VIEWER_DEFAULT_REPOSITORY_PATH` o `Viewer__DefaultRepositoryPath`
 - si no existe una ruta configurada, el viewer resuelve la raiz por defecto desde el `.git` mas cercano del proyecto
-- en este repositorio self-host esa raiz de fallback resuelve a `<repo-root>`
+- en este repositorio de codigo fuente esa raiz de fallback resuelve a `<repo-root>`
+- este repositorio publico no incluye un workspace `.ctx` vivo en la raiz, asi que el demo incluido o una ruta explicita a un repositorio CTX son el mejor punto de partida
 - la branch cognitiva por defecto es `main`
 - `Auto-refresh` arranca activado por defecto salvo que el navegador ya recuerde que lo apagaste
 - despues recuerda el ultimo `Repository` y la ultima `Branch` usados en el navegador

@@ -35,7 +35,7 @@ dotnet --version
 2. 拉取代码并进入根目录：
 
 ```powershell
-cd C:\sources\ctx
+cd <repo-root>
 ```
 
 3. 恢复、构建、测试：
