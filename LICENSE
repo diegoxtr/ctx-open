@@ -1,0 +1,106 @@
+CTX Source-Available License v1.0
+
+Copyright (c) 2026 Diego Mariano Verrastro
+All rights reserved.
+
+Licensor affiliation notice: Diego Mariano Verrastro is identified in this project as a member of the Universidad Nacional de Jujuy. That reference is descriptive only and does not transfer ownership, sponsorship, endorsement, or institutional rights unless stated in a separate written agreement.
+
+1. Purpose
+
+This License is intended to allow local use, modification, redistribution, and commercial on-premise use of CTX, while preserving the Licensor's ownership of the original work, the CTX brand, and the right to separately license hosted or competing service offerings.
+
+2. Definitions
+
+"Software" means this repository and its source code, documentation, examples, scripts, configuration, file formats, and related materials distributed under this License.
+
+"Licensor" means Diego Mariano Verrastro.
+
+"Permitted Use" means use, copying, modification, and redistribution of the Software under the terms of this License.
+
+"Competing Service" means a hosted, managed, cloud, SaaS, API, or similar third-party service whose primary purpose is to provide CTX, or a substantially similar cognitive version control service, to users outside your own organization.
+
+"Self-Hosted Use" means running the Software for yourself or inside your own organization, including internal commercial use and on-premise deployments.
+
+3. Grant of Rights
+
+Subject to compliance with this License, Licensor grants you a non-exclusive, worldwide, revocable license to:
+
+- use the Software locally for personal, educational, research, evaluation, and commercial purposes;
+- deploy and use the Software in self-hosted and on-premise environments;
+- copy and modify the Software;
+- redistribute original or modified copies of the Software, provided that this License, copyright notices, and attribution notices are preserved;
+- create integrations, plugins, extensions, and automations for use with the Software.
+
+4. Commercial Use
+
+Commercial use of the Software in local, self-hosted, internal, or on-premise environments is permitted under this License.
+
+You may charge for services related to installation, customization, support, integration, training, or internal deployment of the Software, provided you do not violate Section 5.
+
+5. Restricted Uses
+
+You may not, without a separate written commercial agreement from the Licensor:
+
+- offer the Software as a Competing Service;
+- provide a hosted or managed service based primarily on the Software to third parties;
+- sublicense the Software under different terms that remove or override the restrictions in this License;
+- use the name "CTX" or related branding in a way that suggests official status, endorsement, ownership, or origin from the Licensor when that is not true;
+- remove or alter copyright, license, attribution, or trademark notices.
+
+6. Derivatives and Redistribution
+
+You may publish, redistribute, and share modified versions of the Software under this same License, provided that:
+
+- you clearly identify your modifications;
+- you do not misrepresent your version as the official CTX distribution;
+- you preserve all existing notices;
+- you do not violate the restrictions on Competing Services.
+
+7. Ownership
+
+The Software, the official CTX project, the CTX name and identity, and the original architecture, documentation, and implementation authored by the Licensor remain the intellectual property of the Licensor, except for rights expressly granted under this License.
+
+No trademark rights are granted by this License.
+
+8. Contributions
+
+Unless otherwise agreed in writing, contributions submitted to the official CTX repository are governed by the contributor terms or assignment terms published by the Licensor for that repository.
+
+9. Official Project Control and Future Relicensing
+
+This License does not limit the Licensor's right to:
+
+- maintain an official distribution of CTX;
+- publish future versions under the same or different license terms;
+- enter into commercial agreements;
+- assign, transfer, sell, or otherwise commercialize the official project and its associated intellectual property.
+
+10. Patent and Other Rights
+
+No patent license or trademark license is granted except as expressly stated in this License.
+
+11. Termination
+
+This License terminates automatically if you materially violate its terms. Upon termination, your rights under this License end immediately.
+
+Sections concerning ownership, restrictions, disclaimers, limitation of liability, and governing law survive termination.
+
+12. Disclaimer
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT.
+
+13. Limitation of Liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE LICENSOR SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES, OR FOR ANY LOSS OF PROFITS, REVENUE, DATA, GOODWILL, OR BUSINESS OPPORTUNITY ARISING FROM OR RELATED TO THE SOFTWARE OR THIS LICENSE.
+
+14. Governing Law
+
+This License is governed by the laws of the Republic of Argentina or wherever the creator decides.
+
+Any dispute arising out of or relating to this License shall be submitted to the competent courts of the Republic of Argentina, subject to mandatory applicable law.
+
+15. Contact
+
+Commercial licensing inquiries:
+
+- diegoxtr@hotmail.com

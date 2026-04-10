@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CTX Viewer</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header class="topbar">
+        <div>
+            <div class="topbar-title">
+                <h1>CTX Viewer</h1>
+                <span class="topbar-byline">by Diego Verrastro</span>
+            </div>
+            <p>Timeline and cognitive graph explorer</p>
+        </div>
+        <form id="repo-form" class="repo-form">
+            <label for="repo-path">Repository</label>
+            <input id="repo-path" name="repoPath" type="text" placeholder="Leave empty to use configured default or project git root" />
+            <label for="branch-select">Branch</label>
+            <select id="branch-select" name="branch"></select>
+            <button type="submit">Load</button>
+            <button id="refresh-button" type="button" class="secondary-button">Refresh</button>
+            <label for="auto-refresh-toggle" class="toggle-label">
+                <input id="auto-refresh-toggle" type="checkbox" />
+                Auto-refresh
+            </label>
+        </form>
+    </header>
+
+    <section class="view-toolbar">
+        <div class="view-mode-group" role="group" aria-label="Viewer mode">
+            <span class="view-mode-label">View</span>
+            <button type="button" class="view-mode-button active" data-view-mode="history">History</button>
+            <button type="button" class="view-mode-button" data-view-mode="split">Split</button>
+            <button type="button" class="view-mode-button" data-view-mode="graph">Graph</button>
+        </div>
+        <p id="view-mode-caption" class="view-mode-caption">History mode keeps timeline and commit detail readable by collapsing the graph panel.</p>
+    </section>
+
+    <main class="layout" data-view-mode="history">
+        <aside class="panel panel-left">
+            <h2>Commits</h2>
+            <section class="sidebar-section history-section">
+                <div class="section-heading">
+                    <h3>History</h3>
+                    <span id="commit-count" class="detail-count"></span>
+                </div>
+                <div class="history-toolbar">
+                    <label class="history-toolbar-label" for="history-sort-select">Order</label>
+                    <select id="history-sort-select" class="history-sort-select">
+                        <option value="newest">Newest first</option>
+                        <option value="oldest">Oldest first</option>
+                    </select>
+                </div>
+                <div id="commit-list" class="commit-list"></div>
+            </section>
+            <div id="summary-cards" class="cards"></div>
+            <section class="sidebar-section">
+                <div class="section-heading">
+                    <h3>Top Hypotheses</h3>
+                    <span id="hypothesis-count" class="detail-count"></span>
+                </div>
+                <p id="last-loaded" class="last-loaded">Not loaded yet</p>
+                <p id="freshness-status" class="freshness-status">Auto-refresh off</p>
+                <ul id="hypothesis-ranking" class="hypothesis-ranking"></ul>
+            </section>
+            <section class="sidebar-section">
+                <div class="section-heading">
+                    <h3>Tasks</h3>
+                    <span id="task-count" class="detail-count"></span>
+                </div>
+                <div id="task-summary" class="task-summary"></div>
+                <div id="task-lists" class="task-lists">
+                    <div class="task-group">
+                        <div class="task-group-heading">
+                            <h4>Active</h4>
+                            <span id="task-active-count" class="detail-count"></span>
+                        </div>
+                        <ul id="task-active-list" class="task-list"></ul>
+                    </div>
+                    <div class="task-group">
+                        <div class="task-group-heading">
+                            <h4>Closed</h4>
+                            <span id="task-closed-count" class="detail-count"></span>
+                        </div>
+                        <ul id="task-closed-list" class="task-list"></ul>
+                    </div>
+                </div>
+            </section>
+        </aside>
+
+        <div class="panel-divider panel-divider-left" data-divider="left" role="separator" aria-orientation="vertical" aria-label="Resize left panel"></div>
+
+        <section class="panel panel-center">
+            <div class="panel-header">
+                <div>
+                    <h2>Trace Graph</h2>
+                    <span id="graph-caption"></span>
+                </div>
+                <div class="graph-filter-toolbar">
+                <div class="graph-preset-group" role="group" aria-label="Graph focus presets">
+                    <span class="graph-filter-label">Focus</span>
+                    <button type="button" class="graph-preset-button active" data-graph-preset="all">All</button>
+                    <button type="button" class="graph-preset-button" data-graph-preset="working">Working</button>
+                    <button type="button" class="graph-preset-button" data-graph-preset="thinking">Thinking</button>
+                    <button type="button" class="graph-preset-button" data-graph-preset="closed">Closed</button>
+                </div>
+                <label class="graph-filter-option graph-filter-commit">
+                    <input id="commit-focus-toggle" type="checkbox" checked>
+                    Focus
+                </label>
+                <span class="graph-filter-label">Task states</span>
+                    <label class="graph-filter-option">
+                        <input id="graph-filter-draft" type="checkbox" data-task-filter="Draft" checked>
+                        Draft
+                    </label>
+                    <label class="graph-filter-option">
+                        <input id="graph-filter-ready" type="checkbox" data-task-filter="Ready" checked>
+                        Ready
+                    </label>
+                    <label class="graph-filter-option">
+                        <input id="graph-filter-inprogress" type="checkbox" data-task-filter="InProgress" checked>
+                        InProgress
+                    </label>
+                    <label class="graph-filter-option">
+                        <input id="graph-filter-blocked" type="checkbox" data-task-filter="Blocked" checked>
+                        Blocked
+                    </label>
+                    <label class="graph-filter-option">
+                        <input id="graph-filter-done" type="checkbox" data-task-filter="Done" checked>
+                        Done
+                    </label>
+                </div>
+            </div>
+            <p id="graph-focus-caption" class="graph-focus-caption">Showing all task states.</p>
+            <div id="graph-canvas" class="graph-canvas"></div>
+            <p id="viewer-hint" class="viewer-hint">Load a local `.ctx` repository to inspect its timeline and graph.</p>
+        </section>
+
+        <div class="panel-divider panel-divider-right" data-divider="right" role="separator" aria-orientation="vertical" aria-label="Resize right panel"></div>
+
+        <aside class="panel panel-right">
+            <h2>Details</h2>
+            <section>
+                <h3>Commit</h3>
+                <div id="commit-detail" class="detail-surface">Select a commit.</div>
+            </section>
+            <section>
+                <h3>Node</h3>
+                <pre id="node-detail" class="detail-box">Click a node.</pre>
+            </section>
+        </aside>
+    </main>
+
+    <script src="/app.js"></script>
+</body>
+</html>

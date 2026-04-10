@@ -1,0 +1,19 @@
+{
+  "defaultProvider": "openai",
+  "providers": [
+    {
+      "name": "openai",
+      "defaultModel": "gpt-4.1",
+      "endpoint": "https://api.openai.com/v1/responses",
+      "enabled": true
+    },
+    {
+      "name": "anthropic",
+      "defaultModel": "claude-3-7-sonnet-latest",
+      "endpoint": "https://api.anthropic.com/v1/messages",
+      "enabled": true
+    }
+  ],
+  "packetTokenLimit": 16000,
+  "trackMetrics": true
+}

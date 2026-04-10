@@ -1,0 +1,177 @@
+﻿# CTX Technical Index
+If a language model and its agent lose context, this is the tool you need.
+
+This document centralizes technical and operational documentation available in the repo.
+
+It is the entry point for:
+
+- development
+- architecture
+- operations
+- tests
+- technical onboarding
+
+## Quick reading map
+
+Recommended order:
+
+1. [README.md](C:/sources/ctx-public/README.md)
+2. [V1_PLAN.md](C:/sources/ctx-public/docs/V1_PLAN.md)
+3. [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-public/docs/V1_FUNCTIONAL_SPEC.md)
+4. [TECHNICAL_ARCHITECTURE.md](C:/sources/ctx-public/docs/TECHNICAL_ARCHITECTURE.md)
+5. [DOMAIN_MODEL.md](C:/sources/ctx-public/docs/DOMAIN_MODEL.md)
+6. [CTX_STRUCTURE.md](C:/sources/ctx-public/docs/CTX_STRUCTURE.md)
+7. [CLI_COMMANDS.md](C:/sources/ctx-public/docs/CLI_COMMANDS.md)
+
+## Documents by category
+
+## Product and scope
+
+- [V1_PLAN.md](C:/sources/ctx-public/docs/V1_PLAN.md)
+  Summarizes objective, scope, phases, backlog, and V1 path.
+
+- [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-public/docs/V1_FUNCTIONAL_SPEC.md)
+  Defines modules, requirements, acceptance criteria, and V1 definition of done.
+
+- [RELEASE_1_0_1.md](C:/sources/ctx-public/docs/RELEASE_1_0_1.md)
+  Summarizes the current stable release baseline.
+
+## Architecture and design
+
+- [TECHNICAL_ARCHITECTURE.md](C:/sources/ctx-public/docs/TECHNICAL_ARCHITECTURE.md)
+  Layers, responsibilities, dependencies, and end-to-end flows.
+
+- [DOMAIN_MODEL.md](C:/sources/ctx-public/docs/DOMAIN_MODEL.md)
+  Entities, strong IDs, states, relationships, and domain rules.
+
+- [CTX_STRUCTURE.md](C:/sources/ctx-public/docs/CTX_STRUCTURE.md)
+  `.ctx/` structure, base files, directories, and invariants.
+
+- [COGNITIVE_GRAPH_AND_LINEAGE.md](C:/sources/ctx-public/docs/COGNITIVE_GRAPH_AND_LINEAGE.md)
+  Defines the relational projection of knowledge and its visualization roadmap.
+
+- [COGNITIVE_THREAD_RECONSTRUCTION.md](C:/sources/ctx-public/docs/COGNITIVE_THREAD_RECONSTRUCTION.md)
+  Canonical model for reconstructing the cognitive thread from structured artifacts, commits, and branches.
+
+- [WORK_MODEL_AND_PRIORITIZATION.md](C:/sources/ctx-public/docs/WORK_MODEL_AND_PRIORITIZATION.md)
+  Canonical taxonomy for issue/gap/task/subtask/duplicate/blocker and proximity-based prioritization.
+
+- [CTX_GOAL_FLOW_DIAGRAM.md](C:/sources/ctx-public/docs/CTX_GOAL_FLOW_DIAGRAM.md)
+  Example flow and CTX commands to resolve a goal and build the `.ctx` map.
+
+## Operations and usage
+
+- [CLI_COMMANDS.md](C:/sources/ctx-public/docs/CLI_COMMANDS.md)
+  Full reference of implemented CLI commands.
+
+- [COMMAND_ADOPTION_AND_COVERAGE.md](C:/sources/ctx-public/docs/COMMAND_ADOPTION_AND_COVERAGE.md)
+  Which commands are used, which are cold, and the recommended adoption order.
+
+- [INSTALLATION_AND_USAGE_GUIDE.md](C:/sources/ctx-public/docs/INSTALLATION_AND_USAGE_GUIDE.md)
+  Operational onboarding for install, run, and first use.
+
+- [PILOT_TESTING_GUIDE.md](C:/sources/ctx-public/docs/PILOT_TESTING_GUIDE.md)
+  Guide for running controlled pilots.
+
+- [CTX_VIEWER_GUIDE.md](C:/sources/ctx-public/docs/CTX_VIEWER_GUIDE.md)
+  How to interpret the viewer, its timeline, branches, and panels.
+
+## Operation prompts
+
+- [CTX_BASE_PROMPT.md](C:/sources/ctx-public/prompts/CTX_BASE_PROMPT.md)
+  Base template for operating CTX with new tools (objective, scope, adaptation).
+
+- [CTX_AGENT_PROMPT.md](C:/sources/ctx-public/prompts/CTX_AGENT_PROMPT.md)
+  Agent prompt with continuity, evidence, and cognitive closeout rules.
+
+- [CTX_AUTONOMOUS_OPERATOR_PROMPT.md](C:/sources/ctx-public/prompts/CTX_AUTONOMOUS_OPERATOR_PROMPT.md)
+  Autonomous operator prompt with strict inspection/execution/closeout sequence.
+
+## Repository root
+
+- [README.md](C:/sources/ctx-public/README.md)
+  Project entry point.
+
+- [CHANGELOG.md](C:/sources/ctx-public/CHANGELOG.md)
+  Summarized product change history.
+
+- [LICENSE](C:/sources/ctx-public/LICENSE)
+  Source-available license.
+
+- [COPYRIGHT.md](C:/sources/ctx-public/COPYRIGHT.md)
+  Copyright notice.
+
+- [TRADEMARK.md](C:/sources/ctx-public/TRADEMARK.md)
+  Trademark usage rules.
+
+- [CONTRIBUTOR_ASSIGNMENT.md](C:/sources/ctx-public/CONTRIBUTOR_ASSIGNMENT.md)
+  Contribution assignment terms.
+
+- [NOTICE](C:/sources/ctx-public/NOTICE)
+  Supplemental repository notices.
+
+## Validation scripts
+
+- [run-smoke-test.ps1](C:/sources/ctx-public/scripts/run-smoke-test.ps1)
+  Reproducible functional validation flow.
+
+- [run-merge-conflict-demo.ps1](C:/sources/ctx-public/scripts/run-merge-conflict-demo.ps1)
+  Reproducible branch/merge/conflict demo.
+
+- [publish-local.ps1](C:/sources/ctx-public/scripts/publish-local.ps1)
+  Publishes local install in `C:\ctx` while preserving versioned workspace.
+
+- [build-distribution.ps1](C:/sources/ctx-public/scripts/build-distribution.ps1)
+  Builds cross-platform portable CTX bundles from `distribution/targets.json`.
+
+## Recommended reading by profile
+
+### Developer
+
+1. [README.md](C:/sources/ctx-public/README.md)
+2. [TECHNICAL_ARCHITECTURE.md](C:/sources/ctx-public/docs/TECHNICAL_ARCHITECTURE.md)
+3. [DOMAIN_MODEL.md](C:/sources/ctx-public/docs/DOMAIN_MODEL.md)
+4. [CTX_STRUCTURE.md](C:/sources/ctx-public/docs/CTX_STRUCTURE.md)
+5. [CLI_COMMANDS.md](C:/sources/ctx-public/docs/CLI_COMMANDS.md)
+
+### Technical tester
+
+1. [README.md](C:/sources/ctx-public/README.md)
+2. [INSTALLATION_AND_USAGE_GUIDE.md](C:/sources/ctx-public/docs/INSTALLATION_AND_USAGE_GUIDE.md)
+3. [CLI_COMMANDS.md](C:/sources/ctx-public/docs/CLI_COMMANDS.md)
+4. [PILOT_TESTING_GUIDE.md](C:/sources/ctx-public/docs/PILOT_TESTING_GUIDE.md)
+
+### Business/V1 scope
+
+1. [V1_PLAN.md](C:/sources/ctx-public/docs/V1_PLAN.md)
+2. [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-public/docs/V1_FUNCTIONAL_SPEC.md)
+3. [RELEASE_1_0_0.md](C:/sources/ctx-public/docs/RELEASE_1_0_0.md)
+
+## Documentation coverage status
+
+Currently documented:
+
+- product objective
+- V1 scope
+- domain model
+- technical architecture
+- persistence structure
+- CLI commands
+- installation
+- viewer
+- pilot
+- stable release
+- IP and contributions
+- cognitive graph
+- formal thread reconstruction
+
+## Useful future docs
+
+Potential additions:
+
+- technical decision ADRs
+- manual cognitive conflict resolution guide
+- provider integration guide
+- operational troubleshooting guide
+- post-V1 roadmap
+

@@ -1,0 +1,8 @@
+CTX is the system of record.
+Read CTX first.
+Plan from CTX.
+Decide from CTX.
+Follow ctx next when it is valid.
+Record evidence, decisions, and conclusions in CTX before committing code.
+Do not create work outside CTX without adding a task and hypothesis.
+If you start planning from chat instead of CTX, stop, inspect CTX again, and continue from repository state.

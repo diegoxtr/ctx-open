@@ -1,0 +1,58 @@
+{
+  "targets": [
+    {
+      "id": "win-x64",
+      "rid": "win-x64",
+      "os": "windows",
+      "arch": "x64",
+      "portableFormat": "zip",
+      "installerFormat": "exe",
+      "includeViewer": true
+    },
+    {
+      "id": "win-x86",
+      "rid": "win-x86",
+      "os": "windows",
+      "arch": "x86",
+      "portableFormat": "zip",
+      "installerFormat": "exe",
+      "includeViewer": true
+    },
+    {
+      "id": "linux-x64",
+      "rid": "linux-x64",
+      "os": "linux",
+      "arch": "x64",
+      "portableFormat": "tar.gz",
+      "installerFormat": "deb,rpm",
+      "includeViewer": true
+    },
+    {
+      "id": "linux-arm64",
+      "rid": "linux-arm64",
+      "os": "linux",
+      "arch": "arm64",
+      "portableFormat": "tar.gz",
+      "installerFormat": "deb,rpm",
+      "includeViewer": true
+    },
+    {
+      "id": "osx-x64",
+      "rid": "osx-x64",
+      "os": "macos",
+      "arch": "x64",
+      "portableFormat": "tar.gz",
+      "installerFormat": "pkg,dmg",
+      "includeViewer": true
+    },
+    {
+      "id": "osx-arm64",
+      "rid": "osx-arm64",
+      "os": "macos",
+      "arch": "arm64",
+      "portableFormat": "tar.gz",
+      "installerFormat": "pkg,dmg",
+      "includeViewer": true
+    }
+  ]
+}

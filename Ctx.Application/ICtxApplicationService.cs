@@ -1,0 +1,43 @@
+namespace Ctx.Application;
+
+public interface ICtxApplicationService
+{
+    System.Threading.Tasks.Task<CommandResult> InitAsync(string repositoryPath, InitRepositoryRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> StatusAsync(string repositoryPath, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> AddGoalAsync(string repositoryPath, AddGoalRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> AddTaskAsync(string repositoryPath, AddTaskRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> UpdateTaskAsync(string repositoryPath, UpdateTaskRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> AddHypothesisAsync(string repositoryPath, AddHypothesisRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> UpdateHypothesisAsync(string repositoryPath, UpdateHypothesisRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> RankHypothesesAsync(string repositoryPath, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> NextAsync(string repositoryPath, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> AddDecisionAsync(string repositoryPath, AddDecisionRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> AddEvidenceAsync(string repositoryPath, AddEvidenceRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> AddConclusionAsync(string repositoryPath, AddConclusionRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> UpdateConclusionAsync(string repositoryPath, UpdateConclusionRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> RunAsync(string repositoryPath, RunRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> CommitAsync(string repositoryPath, CommitRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> LogAsync(string repositoryPath, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> DiffAsync(string repositoryPath, string? fromCommitId, string? toCommitId, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> BranchAsync(string repositoryPath, string branchName, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> CheckoutAsync(string repositoryPath, string branchName, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> MergeAsync(string repositoryPath, string sourceBranch, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> ContextAsync(string repositoryPath, string purpose, string? goalId, string? taskId, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> ListArtifactsAsync(string repositoryPath, string artifactType, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> ShowArtifactAsync(string repositoryPath, string artifactType, string artifactId, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> ListProvidersAsync(string repositoryPath, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> ListRunsAsync(string repositoryPath, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> ShowRunAsync(string repositoryPath, string runId, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> ListPacketsAsync(string repositoryPath, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> ShowPacketAsync(string repositoryPath, string packetId, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> ShowMetricsAsync(string repositoryPath, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> GraphSummaryAsync(string repositoryPath, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> GraphShowAsync(string repositoryPath, string nodeId, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> ExportGraphAsync(string repositoryPath, string format, string? commitId, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> GraphLineageAsync(string repositoryPath, string focusType, string focusId, string format, string? outputPath, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> ThreadReconstructAsync(string repositoryPath, string focusType, string focusId, string format, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> DoctorAsync(string repositoryPath, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> AuditAsync(string repositoryPath, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> ExportAsync(string repositoryPath, string outputPath, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> ImportAsync(string repositoryPath, string inputPath, CancellationToken cancellationToken);
+}
