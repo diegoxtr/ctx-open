@@ -10,3 +10,7 @@ tmp/
 
 # Local CTX state
 .ctx/
+!examples/ctx/
+!examples/ctx/futbol-mundial/
+!examples/ctx/futbol-mundial/.ctx/
+!examples/ctx/futbol-mundial/.ctx/**

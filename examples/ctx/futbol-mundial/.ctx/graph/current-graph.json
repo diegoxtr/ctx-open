@@ -1,0 +1,1058 @@
+﻿{
+  "project": {
+    "name": "futbol-mundial-example",
+    "description": "Public example of a CTX repository that tracks planning and closure for a football world cup fixture site",
+    "defaultBranch": "main",
+    "state": 1,
+    "id": {
+      "value": "7446acdcaf6d4719a73fac2102b3e91e"
+    },
+    "trace": {
+      "createdBy": "ctx-demo",
+      "createdAtUtc": "2026-04-11T02:34:16.2483418+00:00",
+      "updatedBy": null,
+      "updatedAtUtc": null,
+      "tags": [
+        "project"
+      ],
+      "relatedIds": [],
+      "modelName": null,
+      "modelVersion": null
+    }
+  },
+  "goals": [
+    {
+      "parentGoalId": null,
+      "title": "Armar fixture base del Mundial 2026",
+      "description": "Construir un repositorio trazable para relevar y documentar el fixture oficial del proximo Mundial de futbol",
+      "priority": 1,
+      "state": 1,
+      "taskIds": [
+        {
+          "value": "c8a148e784564133bb27716c32565f22"
+        },
+        {
+          "value": "cb24206903af4bbc83786a85b063bca2"
+        },
+        {
+          "value": "16bd1023d2484acd94646b1881c0a2fb"
+        },
+        {
+          "value": "e45d1de967054323b52f05b22372987a"
+        },
+        {
+          "value": "ee1f93b1376842a1b11d5740940b94e3"
+        },
+        {
+          "value": "c28d5fd2dd5a4e72ada24a3ca524dc80"
+        }
+      ],
+      "id": {
+        "value": "35c9a68e504843c59dccbe5a3ba0fbcc"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:35:11.2330885+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "goal"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "goalId": {
+        "value": "35c9a68e504843c59dccbe5a3ba0fbcc"
+      },
+      "title": "Validar fuente oficial del fixture",
+      "description": "Confirmar si FIFA ya publico el calendario oficial y la fecha de vigencia",
+      "state": 4,
+      "dependsOnTaskIds": [],
+      "hypothesisIds": [
+        {
+          "value": "674400e4ac484c16a9e6d6d59e597d20"
+        }
+      ],
+      "parentTaskId": null,
+      "id": {
+        "value": "c8a148e784564133bb27716c32565f22"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:35:11.6833779+00:00",
+        "updatedBy": "ctx-demo",
+        "updatedAtUtc": "2026-04-11T02:35:24.4874741+00:00",
+        "tags": [
+          "task"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "goalId": {
+        "value": "35c9a68e504843c59dccbe5a3ba0fbcc"
+      },
+      "title": "Definir estructura del repositorio",
+      "description": "Preparar archivos base para documentar el fixture y las fuentes",
+      "state": 4,
+      "dependsOnTaskIds": [],
+      "hypothesisIds": [],
+      "parentTaskId": null,
+      "id": {
+        "value": "cb24206903af4bbc83786a85b063bca2"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:35:12.2659934+00:00",
+        "updatedBy": "ctx-demo",
+        "updatedAtUtc": "2026-04-11T02:35:57.2810179+00:00",
+        "tags": [
+          "task"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "goalId": {
+        "value": "35c9a68e504843c59dccbe5a3ba0fbcc"
+      },
+      "title": "Publicar entregable inicial",
+      "description": "Dejar un resumen operativo del fixture disponible hoy y los proximos pasos",
+      "state": 4,
+      "dependsOnTaskIds": [
+        {
+          "value": "c8a148e784564133bb27716c32565f22"
+        },
+        {
+          "value": "cb24206903af4bbc83786a85b063bca2"
+        }
+      ],
+      "hypothesisIds": [],
+      "parentTaskId": null,
+      "id": {
+        "value": "16bd1023d2484acd94646b1881c0a2fb"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:35:12.7822166+00:00",
+        "updatedBy": "ctx-demo",
+        "updatedAtUtc": "2026-04-11T02:35:57.6245187+00:00",
+        "tags": [
+          "task"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "goalId": {
+        "value": "35c9a68e504843c59dccbe5a3ba0fbcc"
+      },
+      "title": "Crear version web del fixture",
+      "description": "Construir una pagina estatica en HTML, CSS y JavaScript para presentar el fixture del Mundial 2026",
+      "state": 4,
+      "dependsOnTaskIds": [],
+      "hypothesisIds": [
+        {
+          "value": "907be4f20063467484d86b0d3ae816a3"
+        }
+      ],
+      "parentTaskId": null,
+      "id": {
+        "value": "e45d1de967054323b52f05b22372987a"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:42:13.5553448+00:00",
+        "updatedBy": "ctx-demo",
+        "updatedAtUtc": "2026-04-11T02:44:21.8351174+00:00",
+        "tags": [
+          "task"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "goalId": {
+        "value": "35c9a68e504843c59dccbe5a3ba0fbcc"
+      },
+      "title": "Redise\u00F1ar paleta y agregar cambio de tema",
+      "description": "Ajustar la direccion visual del fixture web y permitir cambiar colores desde la interfaz",
+      "state": 4,
+      "dependsOnTaskIds": [],
+      "hypothesisIds": [
+        {
+          "value": "8a6a3ecf263f432eb17cdd4d92fcc872"
+        }
+      ],
+      "parentTaskId": null,
+      "id": {
+        "value": "ee1f93b1376842a1b11d5740940b94e3"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:47:54.6398371+00:00",
+        "updatedBy": "ctx-demo",
+        "updatedAtUtc": "2026-04-11T02:52:29.5187872+00:00",
+        "tags": [
+          "task"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "goalId": {
+        "value": "35c9a68e504843c59dccbe5a3ba0fbcc"
+      },
+      "title": "Agregar interfaz multilenguaje",
+      "description": "Traducir la pagina a espanol, ingles y chino y permitir seleccionar idioma desde la interfaz",
+      "state": 4,
+      "dependsOnTaskIds": [],
+      "hypothesisIds": [
+        {
+          "value": "d50b188d2396484ab46cff67f01c22ef"
+        }
+      ],
+      "parentTaskId": null,
+      "id": {
+        "value": "c28d5fd2dd5a4e72ada24a3ca524dc80"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:55:56.8009631+00:00",
+        "updatedBy": "ctx-demo",
+        "updatedAtUtc": "2026-04-11T02:58:02.6153213+00:00",
+        "tags": [
+          "task"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    }
+  ],
+  "hypotheses": [
+    {
+      "statement": "El fixture oficial del Mundial 2026 ya esta publicado por FIFA y puede usarse como fuente primaria del repo",
+      "rationale": "La fase final del sorteo y el calendario quedaron cerrados en diciembre de 2025",
+      "confidence": 0.92,
+      "impact": 0.95,
+      "evidenceStrength": 0.75,
+      "costToValidate": 0.1,
+      "state": 0,
+      "taskIds": [
+        {
+          "value": "c8a148e784564133bb27716c32565f22"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "7a5932a1a8ae4f3780754d684e7ff39e"
+        },
+        {
+          "value": "d5457a048f97469593a860a45ca04d4f"
+        }
+      ],
+      "probability": 0.92,
+      "score": 0.7945,
+      "id": {
+        "value": "674400e4ac484c16a9e6d6d59e597d20"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:35:13.3812221+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "hypothesis"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "statement": "Una landing estatica con filtros y tarjetas de partidos permite validar mejor el entregable que un resumen Markdown",
+      "rationale": "El usuario pidio especificamente una pagina web cool y el formato visual es mas adecuado para un fixture",
+      "confidence": 0.9,
+      "impact": 0.88,
+      "evidenceStrength": 0.7,
+      "costToValidate": 0.15,
+      "state": 0,
+      "taskIds": [
+        {
+          "value": "e45d1de967054323b52f05b22372987a"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "d103963c7160443da15080e3098fb5f9"
+        }
+      ],
+      "probability": 0.9,
+      "score": 0.7480,
+      "id": {
+        "value": "907be4f20063467484d86b0d3ae816a3"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:42:13.9681243+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "hypothesis"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "statement": "Un selector de temas con paletas mas claras y contrastadas mejora la percepcion visual del fixture",
+      "rationale": "El usuario indico explicitamente que no le gustan los colores actuales y pidio algo para cambiarlos",
+      "confidence": 0.93,
+      "impact": 0.84,
+      "evidenceStrength": 0.75,
+      "costToValidate": 0.12,
+      "state": 0,
+      "taskIds": [
+        {
+          "value": "ee1f93b1376842a1b11d5740940b94e3"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "af002eb144384f149c6e196faabb6764"
+        }
+      ],
+      "probability": 0.93,
+      "score": 0.7575,
+      "id": {
+        "value": "8a6a3ecf263f432eb17cdd4d92fcc872"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:47:55.1559045+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "hypothesis"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "statement": "Un selector de idioma visible con banderas mejora la usabilidad del fixture para audiencias internacionales",
+      "rationale": "El usuario pidio explicitamente espanol, ingles y chino con un mecanismo claro de seleccion",
+      "confidence": 0.94,
+      "impact": 0.86,
+      "evidenceStrength": 0.78,
+      "costToValidate": 0.14,
+      "state": 0,
+      "taskIds": [
+        {
+          "value": "c28d5fd2dd5a4e72ada24a3ca524dc80"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "58db3094705d4719bbc9722187000f46"
+        }
+      ],
+      "probability": 0.94,
+      "score": 0.7720,
+      "id": {
+        "value": "d50b188d2396484ab46cff67f01c22ef"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:55:57.7770487+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "hypothesis"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "title": "Usar FIFA como fuente primaria del fixture",
+      "rationale": "El calendario oficial ya esta publicado por el organizador; evita reconstrucciones manuales y reduce riesgo de inconsistencia",
+      "state": 1,
+      "hypothesisIds": [
+        {
+          "value": "674400e4ac484c16a9e6d6d59e597d20"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "7a5932a1a8ae4f3780754d684e7ff39e"
+        },
+        {
+          "value": "d5457a048f97469593a860a45ca04d4f"
+        }
+      ],
+      "id": {
+        "value": "34755b5504de4113a983730bc821ee21"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:35:25.5900156+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "decision"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Implementar fixture como pagina estatica",
+      "rationale": "Cumple el pedido del usuario con el menor costo tecnico y deja la puerta abierta a una futura ingesta completa del fixture oficial",
+      "state": 1,
+      "hypothesisIds": [
+        {
+          "value": "907be4f20063467484d86b0d3ae816a3"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "d103963c7160443da15080e3098fb5f9"
+        }
+      ],
+      "id": {
+        "value": "5b88f1ae984346818db298d47d23f22e"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:42:14.7031033+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "decision"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Incorporar sistema de temas",
+      "rationale": "Resolver el feedback con una sola paleta seria fragil; un selector permite comparar variantes sin rehacer la estructura",
+      "state": 1,
+      "hypothesisIds": [
+        {
+          "value": "8a6a3ecf263f432eb17cdd4d92fcc872"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "af002eb144384f149c6e196faabb6764"
+        }
+      ],
+      "id": {
+        "value": "bbbae988ba404f7480e05153f77b70cb"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:47:55.9589463+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "decision"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Agregar selector de idioma con banderas",
+      "rationale": "Centraliza el cambio de idioma en la interfaz y evita duplicar paginas estaticas por idioma",
+      "state": 1,
+      "hypothesisIds": [
+        {
+          "value": "d50b188d2396484ab46cff67f01c22ef"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "58db3094705d4719bbc9722187000f46"
+        }
+      ],
+      "id": {
+        "value": "ff15b2c6939f4b79afc97daadb93ed5a"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:55:59.5011389+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "decision"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "title": "FIFA publico la pagina oficial del fixture 2026",
+      "summary": "La pagina oficial de FIFA indica que incluye el calendario completo, sedes y resultados del Mundial 2026; fue publicada el 31 de marzo de 2026",
+      "source": "https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/articles/match-schedule-fixtures-results-teams-stadiums",
+      "kind": 2,
+      "confidence": 0.95,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "674400e4ac484c16a9e6d6d59e597d20"
+        },
+        {
+          "entityType": "Task",
+          "entityId": "c8a148e784564133bb27716c32565f22"
+        }
+      ],
+      "id": {
+        "value": "7a5932a1a8ae4f3780754d684e7ff39e"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:35:23.352203+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "FIFA confirma que el torneo 2026 se juega en junio y julio de 2026",
+      "summary": "El comunicado oficial de ticketing del 25 de marzo de 2026 afirma que el torneo se disputa este junio y julio y que esta a menos de 80 dias",
+      "source": "https://inside.fifa.com/organisation/media-releases/fifa-world-cup-2026-last-minute-sales-phase-start-wednesday-first-april",
+      "kind": 2,
+      "confidence": 0.93,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "674400e4ac484c16a9e6d6d59e597d20"
+        },
+        {
+          "entityType": "Task",
+          "entityId": "c8a148e784564133bb27716c32565f22"
+        }
+      ],
+      "id": {
+        "value": "d5457a048f97469593a860a45ca04d4f"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:35:23.9298931+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Repositorio inicial creado",
+      "summary": "Se inicializaron git y ctx y se agregaron README, .gitignore y un resumen base del fixture",
+      "source": "workspace:c:/sources/futbolMundial",
+      "kind": 0,
+      "confidence": 0.99,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "cb24206903af4bbc83786a85b063bca2"
+        },
+        {
+          "entityType": "Task",
+          "entityId": "16bd1023d2484acd94646b1881c0a2fb"
+        },
+        {
+          "entityType": "Decision",
+          "entityId": "34755b5504de4113a983730bc821ee21"
+        }
+      ],
+      "id": {
+        "value": "c3aee111a9334d088ed075ab2cb4ef07"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:35:56.9868031+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Pedido explicito de entregable web",
+      "summary": "El usuario pidio que el fixture se presente con HTML, CSS y JavaScript como pagina web",
+      "source": "example:user-request:landing-page",
+      "kind": 0,
+      "confidence": 0.99,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "e45d1de967054323b52f05b22372987a"
+        },
+        {
+          "entityType": "Hypothesis",
+          "entityId": "907be4f20063467484d86b0d3ae816a3"
+        }
+      ],
+      "id": {
+        "value": "d103963c7160443da15080e3098fb5f9"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:42:14.3040322+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Version web implementada",
+      "summary": "Se agregaron index.html, styles.css y script.js para presentar el fixture como pagina estatica con filtros y tarjetas de partidos",
+      "source": "workspace:c:/sources/futbolMundial",
+      "kind": 0,
+      "confidence": 0.99,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "e45d1de967054323b52f05b22372987a"
+        },
+        {
+          "entityType": "Decision",
+          "entityId": "5b88f1ae984346818db298d47d23f22e"
+        }
+      ],
+      "id": {
+        "value": "bc4a91b46f7143ac8b6ebec74af95f59"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:44:21.2186058+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Feedback negativo sobre la paleta actual",
+      "summary": "El usuario pidio cambiar los colores y esquematizar esa decision en ctx",
+      "source": "example:user-feedback:visual-direction",
+      "kind": 0,
+      "confidence": 0.99,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "ee1f93b1376842a1b11d5740940b94e3"
+        },
+        {
+          "entityType": "Hypothesis",
+          "entityId": "8a6a3ecf263f432eb17cdd4d92fcc872"
+        }
+      ],
+      "id": {
+        "value": "af002eb144384f149c6e196faabb6764"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:47:55.4730063+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Intento interrumpido de redise\u00F1o visual",
+      "summary": "Se intento reemplazar la paleta y agregar selector de tema, pero la edicion se interrumpio mientras se resolvia un problema de caracteres en script.js durante apply_patch",
+      "source": "chat:turn-aborted:rediseno-visual",
+      "kind": 0,
+      "confidence": 0.97,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "ee1f93b1376842a1b11d5740940b94e3"
+        },
+        {
+          "entityType": "Decision",
+          "entityId": "bbbae988ba404f7480e05153f77b70cb"
+        }
+      ],
+      "id": {
+        "value": "d5b834c7b8464eb5a2c9e4790d3e68aa"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:50:28.5674377+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Sistema de temas implementado",
+      "summary": "La pagina ahora incluye selector de tema con variantes Arena, Noche y Cancha, persistidas en localStorage, junto con una paleta base redise\u00F1ada",
+      "source": "workspace:c:/sources/futbolMundial",
+      "kind": 0,
+      "confidence": 0.99,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "ee1f93b1376842a1b11d5740940b94e3"
+        },
+        {
+          "entityType": "Decision",
+          "entityId": "bbbae988ba404f7480e05153f77b70cb"
+        }
+      ],
+      "id": {
+        "value": "458c723a6ad746d3b1a8cf246fb213ca"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:52:28.5712382+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Pedido de traduccion multilenguaje",
+      "summary": "El usuario solicito traducir la interfaz al ingles, al chino y al espanol con banderas para seleccionar idioma",
+      "source": "example:user-request:multilingual-support",
+      "kind": 0,
+      "confidence": 0.99,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "c28d5fd2dd5a4e72ada24a3ca524dc80"
+        },
+        {
+          "entityType": "Hypothesis",
+          "entityId": "d50b188d2396484ab46cff67f01c22ef"
+        }
+      ],
+      "id": {
+        "value": "58db3094705d4719bbc9722187000f46"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:55:58.5401153+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Selector multilenguaje implementado",
+      "summary": "La pagina ahora permite cambiar entre espa\u00F1ol, ingles y chino mediante botones con banderas y traduce la interfaz, etiquetas y textos visibles",
+      "source": "workspace:c:/sources/futbolMundial",
+      "kind": 0,
+      "confidence": 0.99,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "c28d5fd2dd5a4e72ada24a3ca524dc80"
+        },
+        {
+          "entityType": "Decision",
+          "entityId": "ff15b2c6939f4b79afc97daadb93ed5a"
+        }
+      ],
+      "id": {
+        "value": "8f18e3d5c68948d1a6c16fb1f5836a65"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:58:02.1682262+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    }
+  ],
+  "conclusions": [
+    {
+      "summary": "El repositorio base para trabajar el fixture del Mundial 2026 quedo inicializado con trazabilidad suficiente para continuar la carga oficial de partidos",
+      "state": 1,
+      "decisionIds": [
+        {
+          "value": "34755b5504de4113a983730bc821ee21"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "c3aee111a9334d088ed075ab2cb4ef07"
+        }
+      ],
+      "goalIds": [
+        {
+          "value": "35c9a68e504843c59dccbe5a3ba0fbcc"
+        }
+      ],
+      "taskIds": [
+        {
+          "value": "cb24206903af4bbc83786a85b063bca2"
+        },
+        {
+          "value": "16bd1023d2484acd94646b1881c0a2fb"
+        }
+      ],
+      "id": {
+        "value": "a79dc79892fe43fdbbdf30e191c68b86"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:35:57.9456796+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "conclusion"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "summary": "El repositorio ya ofrece una primera version web del fixture del Mundial 2026, alineada con el pedido del usuario y apoyada en la fuente oficial de FIFA",
+      "state": 1,
+      "decisionIds": [
+        {
+          "value": "5b88f1ae984346818db298d47d23f22e"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "bc4a91b46f7143ac8b6ebec74af95f59"
+        }
+      ],
+      "goalIds": [
+        {
+          "value": "35c9a68e504843c59dccbe5a3ba0fbcc"
+        }
+      ],
+      "taskIds": [
+        {
+          "value": "e45d1de967054323b52f05b22372987a"
+        }
+      ],
+      "id": {
+        "value": "94014577e5c1402ab75ee0c5ada43746"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:44:22.5544213+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "conclusion"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "summary": "El redise\u00F1o visual qued\u00F3 resuelto con una nueva paleta base y un selector de temas integrado en la interfaz",
+      "state": 1,
+      "decisionIds": [
+        {
+          "value": "bbbae988ba404f7480e05153f77b70cb"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "d5b834c7b8464eb5a2c9e4790d3e68aa"
+        }
+      ],
+      "goalIds": [],
+      "taskIds": [
+        {
+          "value": "ee1f93b1376842a1b11d5740940b94e3"
+        }
+      ],
+      "id": {
+        "value": "f91f26f7d90d455e9b604c498734818d"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:50:29.3200307+00:00",
+        "updatedBy": "ctx-demo",
+        "updatedAtUtc": "2026-04-11T02:52:30.4264969+00:00",
+        "tags": [
+          "conclusion"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "summary": "La interfaz del fixture ya ofrece tres idiomas seleccionables desde la cabecera con persistencia local del idioma activo",
+      "state": 1,
+      "decisionIds": [
+        {
+          "value": "ff15b2c6939f4b79afc97daadb93ed5a"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "8f18e3d5c68948d1a6c16fb1f5836a65"
+        }
+      ],
+      "goalIds": [],
+      "taskIds": [
+        {
+          "value": "c28d5fd2dd5a4e72ada24a3ca524dc80"
+        }
+      ],
+      "id": {
+        "value": "fb234060f8a240629ece21f76b7cdf11"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:58:02.982416+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "conclusion"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    }
+  ],
+  "runs": [
+    {
+      "provider": "openai",
+      "model": "gpt-4.1",
+      "state": 2,
+      "startedAtUtc": "2026-04-11T02:35:58.2119832+00:00",
+      "completedAtUtc": "2026-04-11T02:35:58.2620063+00:00",
+      "packetId": {
+        "value": "b85d066c56e3499592d72633c5af12a8"
+      },
+      "usage": {
+        "inputTokens": 105,
+        "outputTokens": 120,
+        "acuCost": 0.01,
+        "duration": "00:00:00.0500000",
+        "totalTokens": 225
+      },
+      "promptFingerprint": "7a7ffcab66d916f64b8816dd08db7b3e516dc9d1f5cad8654882d9298b649456",
+      "summary": "Offline structured result for \u0027Sugerir siguientes pasos para completar la ingesta del fixture oficial del Mundial 2026\u0027. Configure credentials to reach the live provider.",
+      "artifacts": [
+        {
+          "artifactType": "summary",
+          "title": "offline-result",
+          "content": "Packet b85d066c56e3499592d72633c5af12a8 built with 105 estimated tokens.",
+          "references": []
+        }
+      ],
+      "id": {
+        "value": "0e909b83554a4162a59df316583b0e17"
+      },
+      "trace": {
+        "createdBy": "ctx-demo",
+        "createdAtUtc": "2026-04-11T02:35:58.262106+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "run",
+          "openai"
+        ],
+        "relatedIds": [
+          "b85d066c56e3499592d72633c5af12a8"
+        ],
+        "modelName": "gpt-4.1",
+        "modelVersion": null
+      }
+    }
+  ]
+}
