@@ -1,0 +1,21 @@
+﻿{
+  "name": "futbol-mundial-example",
+  "description": "Public example of a CTX repository that tracks planning and closure for a football world cup fixture site",
+  "defaultBranch": "main",
+  "state": 1,
+  "id": {
+    "value": "7446acdcaf6d4719a73fac2102b3e91e"
+  },
+  "trace": {
+    "createdBy": "ctx-demo",
+    "createdAtUtc": "2026-04-11T02:34:16.2483418+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "project"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

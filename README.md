@@ -90,6 +90,7 @@ ctx usage coverage
 
 - `examples/viewer-demo`: bundled multi-branch viewer demo repository
 - `examples/ctx/futbol-mundial`: sanitized public `.ctx` example focused on planning and closure for a football world cup fixture site
+- `examples/ctx/futbol-mundial/fixture-2026-summary.md`: documented fixture output snapshot that shows the current accepted facts, delivery scope, and next ingestion steps
 
 Documentation:
 
