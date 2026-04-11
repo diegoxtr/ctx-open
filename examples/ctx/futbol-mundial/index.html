@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fixture Mundial 2026</title>
+  <meta name="description" content="Fixture base del Mundial 2026 en formato web, con filtros por fase y sede.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <nav class="topbar">
+        <div class="brand">
+          <span class="brand-mark">26</span>
+          <div>
+            <p class="eyebrow" data-i18n="brandEyebrow">Mundial de Futbol</p>
+            <h1 data-i18n="brandTitle">Fixture 2026</h1>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <div class="lang-switcher" aria-label="Language selector">
+            <button class="lang-button active" type="button" data-lang="es" aria-label="Español">🇪🇸 ES</button>
+            <button class="lang-button" type="button" data-lang="en" aria-label="English">🇬🇧 EN</button>
+            <button class="lang-button" type="button" data-lang="zh" aria-label="中文">🇨🇳 中文</button>
+          </div>
+          <label class="theme-switcher" for="theme-select">
+            <span data-i18n="themeLabel">Tema</span>
+            <select id="theme-select" aria-label="Cambiar tema visual">
+              <option value="arena" data-i18n-option="themeArena">Arena</option>
+              <option value="noche" data-i18n-option="themeNight">Noche</option>
+              <option value="cancha" data-i18n-option="themeField">Cancha</option>
+            </select>
+          </label>
+          <a class="source-link" href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/articles/match-schedule-fixtures-results-teams-stadiums" target="_blank" rel="noreferrer" data-i18n="sourceLink">Fuente oficial FIFA</a>
+        </div>
+      </nav>
+
+      <section class="hero-grid">
+        <div class="hero-copy">
+          <p class="kicker" data-i18n="heroKicker">Canada - Mexico - Estados Unidos</p>
+          <h2 data-i18n="heroTitle">Una vista web del fixture para trabajar partidos, sedes y fases sin perder trazabilidad.</h2>
+          <p class="lede" data-i18n="heroLead">
+            Esta version toma como base el calendario oficial publicado por FIFA y presenta una carga inicial navegable en HTML, CSS y JavaScript.
+          </p>
+          <div class="hero-metrics" id="hero-metrics"></div>
+        </div>
+
+        <aside class="hero-panel">
+          <p class="panel-label" data-i18n="panelLabel">Corte de datos</p>
+          <p class="panel-date" data-i18n="panelDate">10 de abril de 2026</p>
+          <p class="panel-text" data-i18n="panelText">
+            La carga actual mezcla partidos con cruces ya visibles en la publicacion oficial y slots de fixture confirmados por sede, fase o numero de partido.
+          </p>
+          <ul class="panel-list">
+            <li data-i18n="panelItem1">Filtros por fase y pais anfitrion</li>
+            <li data-i18n="panelItem2">Busqueda por ciudad, estadio o equipo</li>
+            <li data-i18n="panelItem3">Tarjetas visuales de partidos</li>
+          </ul>
+        </aside>
+      </section>
+    </header>
+
+    <main class="content">
+      <section class="controls">
+        <div class="control-block">
+          <label for="search" data-i18n="searchLabel">Buscar</label>
+          <input id="search" type="search" placeholder="Equipo, ciudad o estadio" data-i18n-placeholder="searchPlaceholder">
+        </div>
+        <div class="control-block">
+          <label for="stage-filter" data-i18n="stageLabel">Fase</label>
+          <select id="stage-filter">
+            <option value="all" data-i18n="allStages">Todas</option>
+          </select>
+        </div>
+        <div class="control-block">
+          <label for="host-filter" data-i18n="hostLabel">Sede anfitriona</label>
+          <select id="host-filter">
+            <option value="all" data-i18n="allHosts">Todas</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="legend">
+        <span class="legend-chip confirmed" data-i18n="badgeConfirmed">Cruce visible</span>
+        <span class="legend-chip slot" data-i18n="badgeSlot">Slot oficial</span>
+        <span class="legend-chip knockout" data-i18n="badgeKnockout">Knockout</span>
+      </section>
+
+      <section class="results-head">
+        <div>
+          <p class="eyebrow" data-i18n="resultsEyebrow">Listado</p>
+          <h3 id="results-title" data-i18n="resultsTitle">Partidos cargados</h3>
+        </div>
+        <p id="results-count" class="results-count"></p>
+      </section>
+
+      <section id="matches-grid" class="matches-grid" aria-live="polite"></section>
+
+      <template id="match-card-template">
+        <article class="match-card">
+          <div class="match-card-top">
+            <span class="match-number"></span>
+            <span class="match-badge"></span>
+          </div>
+          <div class="match-stage"></div>
+          <div class="teams">
+            <div class="team-row">
+              <span class="team-name home-team"></span>
+            </div>
+            <div class="versus">vs</div>
+            <div class="team-row">
+              <span class="team-name away-team"></span>
+            </div>
+          </div>
+          <div class="match-meta">
+            <p class="match-date"></p>
+            <p class="match-venue"></p>
+            <p class="match-note"></p>
+          </div>
+        </article>
+      </template>
+
+      <section class="notes">
+        <div class="notes-card">
+          <p class="eyebrow" data-i18n="notesEyebrow1">Criterio de carga</p>
+          <h3 data-i18n="notesTitle1">Que estas viendo</h3>
+          <p data-i18n="notesText1">
+            No se inventaron cruces faltantes. Cuando el relevamiento actual solo permite validar un slot oficial, la tarjeta muestra ese slot en lugar de simular un rival definitivo.
+          </p>
+        </div>
+        <div class="notes-card">
+          <p class="eyebrow" data-i18n="notesEyebrow2">Siguiente iteracion</p>
+          <h3 data-i18n="notesTitle2">Como escalar esto</h3>
+          <p data-i18n="notesText2">
+            La pagina ya esta preparada para recibir una carga completa en JSON o CSV con todos los partidos oficiales y seguir creciendo sin rehacer la interfaz.
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
