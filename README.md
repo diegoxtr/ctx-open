@@ -86,6 +86,11 @@ ctx commit -m "seed cognitive graph"
 ctx usage coverage
 ```
 
+## Examples
+
+- `examples/viewer-demo`: bundled multi-branch viewer demo repository
+- `examples/ctx/futbol-mundial`: sanitized public `.ctx` example focused on planning and closure for a football world cup fixture site
+
 Documentation:
 
 - `docs/CLI_COMMANDS.md`
