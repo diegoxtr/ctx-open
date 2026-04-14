@@ -6,6 +6,26 @@ public record CommandResult(bool Success, string Message, object? Data = null);
 
 public record InitRepositoryRequest(string ProjectName, string Description, string Branch, string CreatedBy);
 public record AddGoalRequest(string Title, string Description, int Priority, string? ParentGoalId, string CreatedBy);
+public record OpenWorkLineRequest(string ParentGoalId, string Title, string Description, int? Priority, string? TaskTitle, string? TaskDescription, string CreatedBy);
+public record AddOperationalRunbookRequest(
+    string Title,
+    string Kind,
+    IReadOnlyList<string> Triggers,
+    string WhenToUse,
+    IReadOnlyList<string> Do,
+    IReadOnlyList<string> Verify,
+    IReadOnlyList<string> References,
+    IReadOnlyList<string> GoalIds,
+    IReadOnlyList<string> TaskIds,
+    string CreatedBy);
+public record AddCognitiveTriggerRequest(
+    string Kind,
+    string Summary,
+    string? Text,
+    IReadOnlyList<string> GoalIds,
+    IReadOnlyList<string> TaskIds,
+    IReadOnlyList<string> RunbookIds,
+    string CreatedBy);
 public record AddTaskRequest(string Title, string Description, string? GoalId, IReadOnlyList<string> DependsOnTaskIds, string CreatedBy, string? ParentTaskId = null);
 public record UpdateTaskRequest(string TaskId, string? Title, string? Description, string? State, string UpdatedBy);
 public record AddHypothesisRequest(string Statement, string Rationale, decimal Confidence, decimal Impact, decimal EvidenceStrength, decimal CostToValidate, string? TaskId, string CreatedBy);
@@ -17,6 +37,87 @@ public record UpdateConclusionRequest(string ConclusionId, string? Summary, stri
 public record RunRequest(string Provider, string Purpose, string Model, string? GoalId, string? TaskId, string RequestedBy);
 public record CommitRequest(string Message, string CreatedBy);
 public record GraphExportRequest(string Format);
+public record CloseoutPendingItem(string ChangeType, string EntityType, string EntityId, string Summary);
+public record StatusPendingSummary(
+    bool HasPendingChanges,
+    string DiffSummary,
+    int PendingArtifactCount,
+    IReadOnlyList<CloseoutPendingItem> PendingItems,
+    string? NextAction);
+public record StatusSummary(
+    string Branch,
+    string? Head,
+    bool Dirty,
+    int Goals,
+    int Tasks,
+    int Hypotheses,
+    int Decisions,
+    int Evidence,
+    int Conclusions,
+    int Runs,
+    StatusPendingSummary? Pending);
+public record NextWorkDiagnostics(
+    string SelectionMode,
+    int OpenTaskCount,
+    int DraftTaskCount,
+    int ReadyTaskCount,
+    int InProgressTaskCount,
+    int BlockedTaskCount,
+    int DoneTaskCount,
+    int EligibleGapHypothesisCount,
+    int GapCandidateCount,
+    int GapExcludedByNonClosedTasks,
+    int GapExcludedByAcceptedConclusions,
+    IReadOnlyList<string> Guidance);
+public record NextWorkSummary(
+    NextWorkCandidate? Recommended,
+    IReadOnlyList<NextWorkCandidate> Candidates,
+    NextWorkDiagnostics Diagnostics);
+public record BlockCheckMissingItem(string ItemType, string Detail);
+public record RunbookSuggestion(
+    string RunbookId,
+    string Title,
+    string Kind,
+    string WhenToUse,
+    IReadOnlyList<string> Do,
+    IReadOnlyList<string> Verify,
+    IReadOnlyList<string> References);
+public record OpenWorkLineSummary(
+    string ParentGoalId,
+    string ParentGoalTitle,
+    string GoalId,
+    string GoalTitle,
+    string? SeedTaskId,
+    string? SeedTaskTitle);
+public record BlockCheckSummary(
+    string TaskId,
+    string TaskTitle,
+    string TaskState,
+    string SelectionReason,
+    bool ReadyForCommit,
+    int HypothesisCount,
+    int EvidenceCount,
+    int DecisionCount,
+    int AcceptedDecisionCount,
+    int ConclusionCount,
+    int AcceptedConclusionCount,
+    IReadOnlyList<BlockCheckMissingItem> Missing,
+    IReadOnlyList<RunbookSuggestion> RunbookSuggestions,
+    IReadOnlyList<string> AdditionalRunbooksAvailable,
+    IReadOnlyList<string> Guidance);
+public record MicroCloseoutSuggestion(
+    string Kind,
+    string Summary,
+    IReadOnlyList<string> SuggestedActions);
+public record CloseoutSummary(
+    string Branch,
+    string? HeadCommitId,
+    bool Dirty,
+    bool HasPendingChanges,
+    string DiffSummary,
+    IReadOnlyList<CloseoutPendingItem> PendingItems,
+    IReadOnlyList<string> Guidance,
+    MicroCloseoutSuggestion? MicroCloseout);
 
 public interface IWorkingContextRepository
 {
@@ -60,6 +161,20 @@ public interface IPacketRepository
     System.Threading.Tasks.Task<ContextPacket?> LoadAsync(string repositoryPath, ContextPacketId packetId, CancellationToken cancellationToken);
 }
 
+public interface IOperationalRunbookRepository
+{
+    System.Threading.Tasks.Task SaveAsync(string repositoryPath, OperationalRunbook runbook, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<IReadOnlyList<OperationalRunbook>> ListAsync(string repositoryPath, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<OperationalRunbook?> LoadAsync(string repositoryPath, OperationalRunbookId runbookId, CancellationToken cancellationToken);
+}
+
+public interface ICognitiveTriggerRepository
+{
+    System.Threading.Tasks.Task SaveAsync(string repositoryPath, CognitiveTrigger trigger, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<IReadOnlyList<CognitiveTrigger>> ListAsync(string repositoryPath, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CognitiveTrigger?> LoadAsync(string repositoryPath, CognitiveTriggerId triggerId, CancellationToken cancellationToken);
+}
+
 public interface IMetricsRepository
 {
     System.Threading.Tasks.Task<MetricsSnapshot> LoadAsync(string repositoryPath, CancellationToken cancellationToken);
@@ -73,22 +188,22 @@ public interface IRepositoryWriteLock
 
 public interface IContextBuilder
 {
-    ContextPacket Build(WorkingContext context, string purpose, string? goalId = null, string? taskId = null);
+    ContextPacket Build(WorkingContext context, IReadOnlyList<OperationalRunbook> runbooks, IReadOnlyList<CognitiveTrigger> triggers, string purpose, string? goalId = null, string? taskId = null);
 }
 
 public interface IDiffEngine
 {
-    ContextDiff Diff(ContextCommit? previous, WorkingContext current);
+    ContextDiff Diff(ContextCommit? previous, RepositorySnapshot current);
 }
 
 public interface ICommitEngine
 {
-    ContextCommit CreateCommit(WorkingContext current, ContextCommit? previous, string message, string createdBy);
+    ContextCommit CreateCommit(WorkingContext current, IReadOnlyList<OperationalRunbook> runbooks, IReadOnlyList<CognitiveTrigger> triggers, ContextCommit? previous, string message, string createdBy);
 }
 
 public interface IMergeEngine
 {
-    MergeResult Merge(WorkingContext current, ContextCommit sourceCommit);
+    MergeResult Merge(RepositorySnapshot current, ContextCommit sourceCommit);
 }
 
 public interface IRunOrchestrator

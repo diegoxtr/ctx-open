@@ -32,6 +32,8 @@ public static class Bootstrapper
         var commitRepository = new FileSystemCommitRepository(jsonSerializer);
         var branchRepository = new FileSystemBranchRepository(jsonSerializer);
         var packetRepository = new FileSystemPacketRepository(jsonSerializer);
+        var runbookRepository = new FileSystemOperationalRunbookRepository(jsonSerializer);
+        var triggerRepository = new FileSystemCognitiveTriggerRepository(jsonSerializer);
         var runRepository = new FileSystemRunRepository(jsonSerializer);
         var metricsRepository = new FileSystemMetricsRepository(jsonSerializer);
         var repositoryWriteLock = new FileSystemRepositoryWriteLock();
@@ -45,8 +47,8 @@ public static class Bootstrapper
             new OpenAiProvider(new HttpClient()),
             new AnthropicProvider(new HttpClient())
         });
-        var runOrchestrator = new RunOrchestrator(contextBuilder, providerRegistry, packetRepository, runRepository, metricsRepository, clock, hashingService);
-        var applicationService = new CtxApplicationService(workingRepository, commitRepository, branchRepository, runRepository, packetRepository, metricsRepository, runOrchestrator, contextBuilder, commitEngine, mergeEngine, clock, repositoryWriteLock);
+        var runOrchestrator = new RunOrchestrator(contextBuilder, providerRegistry, packetRepository, runRepository, metricsRepository, clock, hashingService, runbookRepository, triggerRepository);
+        var applicationService = new CtxApplicationService(workingRepository, commitRepository, branchRepository, runRepository, packetRepository, metricsRepository, runOrchestrator, contextBuilder, commitEngine, mergeEngine, clock, hashingService, repositoryWriteLock, runbookRepository, triggerRepository);
 
         return new CtxRuntime(
             applicationService,

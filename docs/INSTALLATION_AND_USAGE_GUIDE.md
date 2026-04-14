@@ -1,4 +1,4 @@
-# CTX Installation and Usage Guide
+﻿# CTX Installation and Usage Guide
 If a language model and its agent lose context, this is the tool you need.
 
 ## 1. Objective
@@ -53,7 +53,7 @@ If you already have the repository, move to the project root.
 Example:
 
 ```powershell
-cd <repo-root>
+cd C:\sources\ctx
 ```
 
 ## 5. Restore, build, test
@@ -87,7 +87,7 @@ If there is no cognitive repository in the current folder, run `init` first.
 Move to a workspace folder and run:
 
 ```powershell
-dotnet run --project .\\Ctx.Cli -- init --name "CTX-DEMO" --description "First cognitive repo"
+dotnet run --project C:\sources\ctx\Ctx.Cli -- init --name "CTX-DEMO" --description "First cognitive repo"
 ```
 
 Expected:
@@ -99,7 +99,7 @@ Expected:
 Verify:
 
 ```powershell
-dotnet run --project .\\Ctx.Cli -- status
+dotnet run --project C:\sources\ctx\Ctx.Cli -- status
 ```
 
 ## 8. First recommended flow
@@ -107,49 +107,49 @@ dotnet run --project .\\Ctx.Cli -- status
 ### Step 1 - Create a goal
 
 ```powershell
-dotnet run --project .\\Ctx.Cli -- goal add --title "Define testing strategy" --description "Prepare a technical pilot"
+dotnet run --project C:\sources\ctx\Ctx.Cli -- goal add --title "Define testing strategy" --description "Prepare a technical pilot"
 ```
 
 ### Step 2 - Create a task
 
 ```powershell
-dotnet run --project .\\Ctx.Cli -- task add --title "Evaluate CLI flow" --description "Validate core commands"
+dotnet run --project C:\sources\ctx\Ctx.Cli -- task add --title "Evaluate CLI flow" --description "Validate core commands"
 ```
 
 ### Step 3 - Create a hypothesis
 
 ```powershell
-dotnet run --project .\\Ctx.Cli -- hypo add --statement "Structured flow improves traceability" --rationale "State is persisted in artifacts"
+dotnet run --project C:\sources\ctx\Ctx.Cli -- hypo add --statement "Structured flow improves traceability" --rationale "State is persisted in artifacts"
 ```
 
 ### Step 4 - Record evidence
 
 ```powershell
-dotnet run --project .\\Ctx.Cli -- evidence add --title "Initial test" --summary "Structure helps resume context" --source "manual evaluation" --kind Observation --supports hypothesis:<hypothesisId>
+dotnet run --project C:\sources\ctx\Ctx.Cli -- evidence add --title "Initial test" --summary "Structure helps resume context" --source "manual evaluation" --kind Observation --supports hypothesis:<hypothesisId>
 ```
 
 ### Step 5 - Record a decision
 
 ```powershell
-dotnet run --project .\\Ctx.Cli -- decision add --title "Use CTX in pilot" --rationale "Traceability is sufficient for pilot" --state Accepted --hypotheses <hypothesisId> --evidence <evidenceId>
+dotnet run --project C:\sources\ctx\Ctx.Cli -- decision add --title "Use CTX in pilot" --rationale "Traceability is sufficient for pilot" --state Accepted --hypotheses <hypothesisId> --evidence <evidenceId>
 ```
 
 ### Step 6 - Record a conclusion
 
 ```powershell
-dotnet run --project .\\Ctx.Cli -- conclusion add --summary "Approve internal pilot usage" --state Accepted --decisions <decisionId> --evidence <evidenceId>
+dotnet run --project C:\sources\ctx\Ctx.Cli -- conclusion add --summary "Approve internal pilot usage" --state Accepted --decisions <decisionId> --evidence <evidenceId>
 ```
 
 ### Step 7 - Execute a run
 
 ```powershell
-dotnet run --project .\\Ctx.Cli -- run --provider openai --purpose "Review pilot risks"
+dotnet run --project C:\sources\ctx\Ctx.Cli -- run --provider openai --purpose "Review pilot risks"
 ```
 
 ### Step 8 - Create a cognitive commit
 
 ```powershell
-dotnet run --project .\\Ctx.Cli -- commit -m "first end-to-end flow"
+dotnet run --project C:\sources\ctx\Ctx.Cli -- commit -m "first end-to-end flow"
 ```
 
 ## 9. Useful commands

@@ -4,7 +4,12 @@ public interface ICtxApplicationService
 {
     System.Threading.Tasks.Task<CommandResult> InitAsync(string repositoryPath, InitRepositoryRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> StatusAsync(string repositoryPath, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> CheckAsync(string repositoryPath, string? taskId, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> CloseoutAsync(string repositoryPath, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddGoalAsync(string repositoryPath, AddGoalRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> OpenWorkLineAsync(string repositoryPath, OpenWorkLineRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> AddOperationalRunbookAsync(string repositoryPath, AddOperationalRunbookRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> AddCognitiveTriggerAsync(string repositoryPath, AddCognitiveTriggerRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddTaskAsync(string repositoryPath, AddTaskRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> UpdateTaskAsync(string repositoryPath, UpdateTaskRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddHypothesisAsync(string repositoryPath, AddHypothesisRequest request, CancellationToken cancellationToken);
@@ -23,6 +28,10 @@ public interface ICtxApplicationService
     System.Threading.Tasks.Task<CommandResult> CheckoutAsync(string repositoryPath, string branchName, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> MergeAsync(string repositoryPath, string sourceBranch, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> ContextAsync(string repositoryPath, string purpose, string? goalId, string? taskId, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> ListOperationalRunbooksAsync(string repositoryPath, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> ShowOperationalRunbookAsync(string repositoryPath, string runbookId, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> ListCognitiveTriggersAsync(string repositoryPath, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> ShowCognitiveTriggerAsync(string repositoryPath, string triggerId, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> ListArtifactsAsync(string repositoryPath, string artifactType, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> ShowArtifactAsync(string repositoryPath, string artifactType, string artifactId, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> ListProvidersAsync(string repositoryPath, CancellationToken cancellationToken);

@@ -1,7 +1,7 @@
 ﻿# Command Adoption and Coverage
 If a language model and its agent lose context, this is the tool you need.
 
-This document summarizes how the CTX CLI is currently used in the authoring workflow and what to do with underused or cold commands.
+This document summarizes how the CTX CLI is actually used in the self-hosted workspace and what to do with underused or cold commands.
 
 The goal is not to chase coverage for its own sake.
 
@@ -107,7 +107,7 @@ Surfaces with no real use yet:
 Interpretation:
 
 - some are cold because the flow does not need them yet
-- some are cold because the product does not push them in the current workflow yet
+- some are cold because the product does not push them in real self-hosting
 - some are edge capabilities, not the happy path
 
 ## Not all cold commands are equally important
@@ -147,7 +147,7 @@ Validate later:
 Reason:
 
 - critical to the full CTX model
-- not yet part of the daily core workflow
+- not yet part of the daily self-hosting path
 - require controlled scenarios and intentional testing
 
 ### Tier 3: future or specialized value
@@ -164,7 +164,7 @@ Defer:
 Reason:
 
 - depend on providers, integrations, or advanced workflows
-- not the main day-to-day friction today
+- not the main self-hosting friction today
 
 ### Tier 4: do not prioritize now
 

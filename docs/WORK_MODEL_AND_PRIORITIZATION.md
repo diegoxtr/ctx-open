@@ -24,6 +24,8 @@ CTX needs to distinguish between:
 
 Before deciding whether something deserves a `task`, CTX should distinguish these levels:
 
+- `goal`
+- `sub-goal`
 - `issue`
 - `gap`
 - `task`
@@ -35,6 +37,9 @@ Before deciding whether something deserves a `task`, CTX should distinguish thes
 
 Base rule:
 
+- `goal` defines a durable strategic lane
+- `sub-goal` defines a tactical line under a broader goal
+- `operational runbook` defines compact reusable operational knowledge
 - `issue` describes something that bothers, fails, or creates friction
 - `gap` names the concrete difference between current state and desired state
 - `task` defines the executable work to close that gap
@@ -42,8 +47,82 @@ Base rule:
 Short formula:
 
 ```text
+goal -> sub-goal -> task
+operational runbook -> execution guidance
 issue -> gap -> task
 ```
+
+### `OperationalRunbook`
+
+An `OperationalRunbook` stores compact recurring operational knowledge such as:
+
+- local publish flows
+- Git closeout rules
+- recurring troubleshooting
+- reusable guardrails
+
+Use it when the knowledge:
+
+- applies more than once
+- should guide execution before the agent improvises
+- is too important to remain buried only in docs or past evidence
+- should stay small enough to enter a packet without inflating context cost
+
+Do not use it for one-off execution history.
+That still belongs in `evidence`, `decision`, `conclusion`, and normal task closure.
+
+### `CognitiveTrigger`
+
+A `CognitiveTrigger` stores the compact origin that opened or redirected a cognitive line.
+
+Use it when:
+- a user message opens a new line of work
+- an agent continuation prompt materially redirects the line
+- a recurring issue or runbook activation becomes part of the line origin
+- the origin should remain auditable without relying on external chat history
+
+Do not use it for every small reply.
+Messages like `ok`, `continue`, or other trivial continuity nudges should not become standalone triggers.
+
+### `Goal`
+
+A `goal` is a strategic lane that should stay meaningful across many tasks and commits.
+
+Use it when the work:
+
+- opens or expands a durable product, platform, or operational direction
+- should remain understandable even when no single execution thread is active
+- is broader than one tactical branch of work
+
+Do not create a new `goal` when the work is only a thematic branch of an already active strategic lane.
+
+### `Sub-goal`
+
+A `sub-goal` is a tactical line under an existing goal.
+
+Use it when the work:
+
+- belongs to an active strategic goal
+- needs its own cognitive lane because the parent goal mixes multiple themes
+- groups several related tasks that should not hang directly from the umbrella goal
+
+This is the right layer for things like a UI branch under a viewer goal or a packaging branch under a distribution goal.
+
+### Canonical structure rule
+
+When new work appears, classify it in this order:
+
+1. create a `goal` if the work opens or changes a durable strategic lane
+2. create a `sub-goal` if the work belongs to an existing goal but needs its own thematic branch
+3. create a `task` if the work is a concrete executable unit inside an existing lane
+4. create a `subtask` only if the work exists mainly to help close a current parent task
+
+Operationally:
+
+- keep strategic goals open
+- open new UI or product lines under them as `sub-goals`
+- attach new tasks to the nearest tactical line, not to the umbrella goal by default
+- use `ctx line open` when the operator intent is "open a tactical line here and start working inside it"
 
 ### `Issue`
 

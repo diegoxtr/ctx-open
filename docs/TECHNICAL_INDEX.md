@@ -33,7 +33,7 @@ Recommended order:
 - [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-public/docs/V1_FUNCTIONAL_SPEC.md)
   Defines modules, requirements, acceptance criteria, and V1 definition of done.
 
-- [RELEASE_1_0_1.md](C:/sources/ctx-public/docs/RELEASE_1_0_1.md)
+- [RELEASE_1_0_2.md](C:/sources/ctx-public/docs/RELEASE_1_0_2.md)
   Summarizes the current stable release baseline.
 
 ## Architecture and design
@@ -53,8 +53,14 @@ Recommended order:
 - [COGNITIVE_THREAD_RECONSTRUCTION.md](C:/sources/ctx-public/docs/COGNITIVE_THREAD_RECONSTRUCTION.md)
   Canonical model for reconstructing the cognitive thread from structured artifacts, commits, and branches.
 
+- [COGNITIVE_TRIGGERS.md](C:/sources/ctx-public/docs/COGNITIVE_TRIGGERS.md)
+  Persistent origin model for cognitive lines, compact trigger summaries, and packet integration.
+
 - [WORK_MODEL_AND_PRIORITIZATION.md](C:/sources/ctx-public/docs/WORK_MODEL_AND_PRIORITIZATION.md)
   Canonical taxonomy for issue/gap/task/subtask/duplicate/blocker and proximity-based prioritization.
+
+- [OPERATIONAL_RUNBOOKS.md](C:/sources/ctx-public/docs/OPERATIONAL_RUNBOOKS.md)
+  Compact design for recurring operational knowledge, packet injection, and overflow handling.
 
 - [CTX_GOAL_FLOW_DIAGRAM.md](C:/sources/ctx-public/docs/CTX_GOAL_FLOW_DIAGRAM.md)
   Example flow and CTX commands to resolve a goal and build the `.ctx` map.
@@ -75,6 +81,12 @@ Recommended order:
 
 - [CTX_VIEWER_GUIDE.md](C:/sources/ctx-public/docs/CTX_VIEWER_GUIDE.md)
   How to interpret the viewer, its timeline, branches, and panels.
+
+- [LOCAL_CTX_INSTALLATION.md](C:/sources/ctx-public/docs/LOCAL_CTX_INSTALLATION.md)
+  Canonical local publish/install flow for `C:\ctx`, `ctx`, and `ctx-viewer`.
+
+- [INSTALLER_AND_DISTRIBUTION.md](C:/sources/ctx-public/docs/INSTALLER_AND_DISTRIBUTION.md)
+  Packaging model, portable archives, and distribution output policy.
 
 ## Operation prompts
 
@@ -164,6 +176,8 @@ Currently documented:
 - IP and contributions
 - cognitive graph
 - formal thread reconstruction
+- cognitive triggers
+- local install and distribution
 
 ## Useful future docs
 

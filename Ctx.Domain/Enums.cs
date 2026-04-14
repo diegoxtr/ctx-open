@@ -59,3 +59,20 @@ public enum ConclusionState
     Accepted = 1,
     Superseded = 2
 }
+
+public enum OperationalRunbookKind
+{
+    Procedure = 0,
+    Troubleshooting = 1,
+    Policy = 2,
+    Guardrail = 3
+}
+
+public enum CognitiveTriggerKind
+{
+    UserPrompt = 0,
+    AgentPrompt = 1,
+    Continuation = 2,
+    RunbookTrigger = 3,
+    IssueTrigger = 4
+}

@@ -6,11 +6,14 @@ obj/
 *.suo
 *.cache
 *.tmp
-tmp/
+artifacts/
 
-# Local CTX state
-.ctx/
-!examples/ctx/
-!examples/ctx/futbol-mundial/
-!examples/ctx/futbol-mundial/.ctx/
-!examples/ctx/futbol-mundial/.ctx/**
+# CTX local state
+/.ctx/
+!/.ctx/
+!/.ctx/**
+/.ctx/write.lock
+/.ctx/metrics/usage.json
+!examples/viewer-demo/
+!examples/viewer-demo/.ctx/
+!examples/viewer-demo/.ctx/**

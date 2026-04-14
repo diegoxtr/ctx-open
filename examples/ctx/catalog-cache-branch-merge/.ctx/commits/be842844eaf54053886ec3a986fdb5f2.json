@@ -1,0 +1,457 @@
+{
+  "branch": "experiment/ttl-only",
+  "message": "evaluate ttl-only cache branch",
+  "parentIds": [
+    {
+      "value": "ff74f8f6488e42888f5c06447f8e6f0d"
+    }
+  ],
+  "createdAtUtc": "2026-04-12T00:01:50.221097+00:00",
+  "snapshotHash": "519d44b0a0dd5565d62a2edc6336396b3cf860662a9e6b9afdef5ce4f03b86ab",
+  "diff": {
+    "fromCommitId": {
+      "value": "ff74f8f6488e42888f5c06447f8e6f0d"
+    },
+    "toCommitId": {
+      "value": "be842844eaf54053886ec3a986fdb5f2"
+    },
+    "decisions": [
+      {
+        "changeType": "Added",
+        "entityType": "Decision",
+        "entityId": "f2535c205bee48e69cd1ca4d3de23900",
+        "summary": "Do not choose TTL-only as the final catalog strategy [Rejected]"
+      }
+    ],
+    "hypotheses": [
+      {
+        "changeType": "Modified",
+        "entityType": "Hypothesis",
+        "entityId": "62344fd9f3a1405a8e2fcbc1c9a0a09a",
+        "summary": "Evaluating each cache strategy in its own cognitive branch will make the final architecture decision easier to justify and review. [UnderEvaluation]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Hypothesis",
+        "entityId": "da74efeb6b4944dfa74ec00f616f1075",
+        "summary": "TTL-only invalidation is sufficient for the catalog because operational simplicity outweighs short-lived staleness. [Refuted]"
+      }
+    ],
+    "evidence": [
+      {
+        "changeType": "Added",
+        "entityType": "Evidence",
+        "entityId": "55655cdc5350446089fe4be53333a7bb",
+        "summary": "TTL-only keeps the implementation minimal [Document]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Evidence",
+        "entityId": "d1cbc7a38eca4283b1240659aa115c8b",
+        "summary": "TTL-only leaves stale catalog risk unresolved [Observation]"
+      }
+    ],
+    "tasks": [
+      {
+        "changeType": "Modified",
+        "entityType": "Task",
+        "entityId": "107013c0ef794f9a88572f01a2f3792d",
+        "summary": "Compare branch outcomes and choose the final cache design [InProgress]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Task",
+        "entityId": "41922709e3664068a4650e1b201bbe62",
+        "summary": "Evaluate TTL-only invalidation [Done]"
+      }
+    ],
+    "conclusions": [
+      {
+        "changeType": "Added",
+        "entityType": "Conclusion",
+        "entityId": "9313a032e24244a39d0929c8590cd906",
+        "summary": "TTL-only remains useful as a low-cost baseline, but it is not strong enough for the catalog path that needs targeted freshness. [Accepted]"
+      }
+    ],
+    "conflicts": [],
+    "summary": "decisions:1 hypotheses:2 evidence:2 tasks:2 conclusions:1"
+  },
+  "snapshot": {
+    "repositoryVersion": "1.0",
+    "currentBranch": "experiment/ttl-only",
+    "headCommitId": {
+      "value": "be842844eaf54053886ec3a986fdb5f2"
+    },
+    "dirty": false,
+    "project": {
+      "name": "catalog-cache-branch-merge",
+      "description": "Cognitive repo for evaluating cache invalidation strategies with branches",
+      "defaultBranch": "main",
+      "state": 1,
+      "id": {
+        "value": "6c602857017143338004b7cb096fe360"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-12T00:00:58.9104602+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "project"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    "goals": [
+      {
+        "parentGoalId": null,
+        "title": "Choose a cache invalidation strategy for the product catalog",
+        "description": "Compare two candidate approaches and keep the final architecture decision auditable across branches.",
+        "priority": 1,
+        "state": 1,
+        "taskIds": [
+          {
+            "value": "107013c0ef794f9a88572f01a2f3792d"
+          },
+          {
+            "value": "41922709e3664068a4650e1b201bbe62"
+          }
+        ],
+        "id": {
+          "value": "951ceb82dcec475898b00780c4143861"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:44.327149+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "goal"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "tasks": [
+      {
+        "goalId": {
+          "value": "951ceb82dcec475898b00780c4143861"
+        },
+        "title": "Compare branch outcomes and choose the final cache design",
+        "description": "Use separate cognitive branches to evaluate TTL-only and tag-aware invalidation before deciding on main.",
+        "state": 2,
+        "dependsOnTaskIds": [],
+        "hypothesisIds": [
+          {
+            "value": "62344fd9f3a1405a8e2fcbc1c9a0a09a"
+          }
+        ],
+        "parentTaskId": null,
+        "id": {
+          "value": "107013c0ef794f9a88572f01a2f3792d"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:44.6894719+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-12T00:01:44.9756038+00:00",
+          "tags": [
+            "task"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "goalId": {
+          "value": "951ceb82dcec475898b00780c4143861"
+        },
+        "title": "Evaluate TTL-only invalidation",
+        "description": "Measure the simplicity and freshness risk of expiring catalog entries only by time window.",
+        "state": 4,
+        "dependsOnTaskIds": [],
+        "hypothesisIds": [
+          {
+            "value": "da74efeb6b4944dfa74ec00f616f1075"
+          }
+        ],
+        "parentTaskId": {
+          "value": "107013c0ef794f9a88572f01a2f3792d"
+        },
+        "id": {
+          "value": "41922709e3664068a4650e1b201bbe62"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:46.9937855+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-12T00:01:49.8243096+00:00",
+          "tags": [
+            "task"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "hypotheses": [
+      {
+        "statement": "Evaluating each cache strategy in its own cognitive branch will make the final architecture decision easier to justify and review.",
+        "rationale": "The team needs a clean comparison between simplicity and consistency before selecting the production path.",
+        "confidence": 0.88,
+        "impact": 0.82,
+        "evidenceStrength": 0.50,
+        "costToValidate": 0.15,
+        "state": 1,
+        "taskIds": [
+          {
+            "value": "107013c0ef794f9a88572f01a2f3792d"
+          }
+        ],
+        "evidenceIds": [],
+        "probability": 0.88,
+        "score": 0.6800,
+        "id": {
+          "value": "62344fd9f3a1405a8e2fcbc1c9a0a09a"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:45.2480498+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-12T00:01:45.583356+00:00",
+          "tags": [
+            "hypothesis"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "statement": "TTL-only invalidation is sufficient for the catalog because operational simplicity outweighs short-lived staleness.",
+        "rationale": "A simpler cache policy lowers implementation cost and operational overhead.",
+        "confidence": 0.62,
+        "impact": 0.64,
+        "evidenceStrength": 0.40,
+        "costToValidate": 0.18,
+        "state": 3,
+        "taskIds": [
+          {
+            "value": "41922709e3664068a4650e1b201bbe62"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "55655cdc5350446089fe4be53333a7bb"
+          },
+          {
+            "value": "d1cbc7a38eca4283b1240659aa115c8b"
+          }
+        ],
+        "probability": 0.62,
+        "score": 0.5030,
+        "id": {
+          "value": "da74efeb6b4944dfa74ec00f616f1075"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:47.5910936+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-12T00:01:48.8767297+00:00",
+          "tags": [
+            "hypothesis"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "decisions": [
+      {
+        "title": "Do not choose TTL-only as the final catalog strategy",
+        "rationale": "The strategy is attractive for simplicity but does not meet the freshness requirement for price and stock updates.",
+        "state": 2,
+        "hypothesisIds": [
+          {
+            "value": "da74efeb6b4944dfa74ec00f616f1075"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "55655cdc5350446089fe4be53333a7bb"
+          },
+          {
+            "value": "d1cbc7a38eca4283b1240659aa115c8b"
+          }
+        ],
+        "id": {
+          "value": "f2535c205bee48e69cd1ca4d3de23900"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:49.1798107+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "decision"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "evidence": [
+      {
+        "title": "TTL-only keeps the implementation minimal",
+        "summary": "The TTL-only strategy note shows the smallest operational surface: entries expire by time without explicit invalidation logic.",
+        "source": "file:docs/ttl-strategy.md",
+        "kind": 2,
+        "confidence": 0.84,
+        "state": 2,
+        "supports": [
+          {
+            "entityType": "Task",
+            "entityId": "41922709e3664068a4650e1b201bbe62"
+          },
+          {
+            "entityType": "Hypothesis",
+            "entityId": "da74efeb6b4944dfa74ec00f616f1075"
+          }
+        ],
+        "id": {
+          "value": "55655cdc5350446089fe4be53333a7bb"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:48.2103132+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "evidence"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "title": "TTL-only leaves stale catalog risk unresolved",
+        "summary": "The TTL-only strategy still allows stale price or stock reads until expiration, which is risky for a freshness-sensitive catalog.",
+        "source": "file:docs/ttl-strategy.md",
+        "kind": 0,
+        "confidence": 0.91,
+        "state": 2,
+        "supports": [
+          {
+            "entityType": "Task",
+            "entityId": "41922709e3664068a4650e1b201bbe62"
+          },
+          {
+            "entityType": "Hypothesis",
+            "entityId": "da74efeb6b4944dfa74ec00f616f1075"
+          }
+        ],
+        "id": {
+          "value": "d1cbc7a38eca4283b1240659aa115c8b"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:48.5351624+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "evidence"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "conclusions": [
+      {
+        "summary": "TTL-only remains useful as a low-cost baseline, but it is not strong enough for the catalog path that needs targeted freshness.",
+        "state": 1,
+        "decisionIds": [
+          {
+            "value": "f2535c205bee48e69cd1ca4d3de23900"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "55655cdc5350446089fe4be53333a7bb"
+          },
+          {
+            "value": "d1cbc7a38eca4283b1240659aa115c8b"
+          }
+        ],
+        "goalIds": [
+          {
+            "value": "951ceb82dcec475898b00780c4143861"
+          }
+        ],
+        "taskIds": [
+          {
+            "value": "41922709e3664068a4650e1b201bbe62"
+          }
+        ],
+        "id": {
+          "value": "9313a032e24244a39d0929c8590cd906"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:49.5138441+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "conclusion"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "runs": [],
+    "id": {
+      "value": "8d2c7bc7f0bc40abb01d86039d5d0f49"
+    },
+    "trace": {
+      "createdBy": "diegoxtr",
+      "createdAtUtc": "2026-04-12T00:00:58.9104602+00:00",
+      "updatedBy": "diegoxtr",
+      "updatedAtUtc": "2026-04-12T00:01:50.1710369+00:00",
+      "tags": [
+        "project"
+      ],
+      "relatedIds": [],
+      "modelName": null,
+      "modelVersion": null
+    }
+  },
+  "id": {
+    "value": "be842844eaf54053886ec3a986fdb5f2"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-12T00:01:50.2210141+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "commit"
+    ],
+    "relatedIds": [
+      "ff74f8f6488e42888f5c06447f8e6f0d"
+    ],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

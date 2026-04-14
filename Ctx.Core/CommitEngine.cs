@@ -18,7 +18,10 @@ public sealed class CommitEngine : ICommitEngine
         _diffEngine = diffEngine;
     }
 
-    public ContextCommit CreateCommit(WorkingContext current, ContextCommit? previous, string message, string createdBy)
+    public ContextCommit CreateCommit(WorkingContext current, IReadOnlyList<OperationalRunbook> runbooks, ContextCommit? previous, string message, string createdBy)
+        => CreateCommit(current, runbooks, Array.Empty<CognitiveTrigger>(), previous, message, createdBy);
+
+    public ContextCommit CreateCommit(WorkingContext current, IReadOnlyList<OperationalRunbook> runbooks, IReadOnlyList<CognitiveTrigger> triggers, ContextCommit? previous, string message, string createdBy)
     {
         var cleanSnapshot = current with
         {
@@ -30,9 +33,14 @@ public sealed class CommitEngine : ICommitEngine
             }
         };
 
-        var snapshotHash = _hashingService.Hash(_jsonSerializer.Serialize(cleanSnapshot));
+        var repositorySnapshot = new RepositorySnapshot(
+            cleanSnapshot,
+            runbooks.OrderBy(item => item.Title, StringComparer.OrdinalIgnoreCase).ToArray(),
+            triggers.OrderBy(item => item.Trace.CreatedAtUtc).ToArray());
+        var snapshotHash = _hashingService.Hash(_jsonSerializer.Serialize(repositorySnapshot));
         var commitId = ContextCommitId.New();
-        var commitSnapshot = cleanSnapshot with { HeadCommitId = commitId };
+        var commitWorkingSnapshot = cleanSnapshot with { HeadCommitId = commitId };
+        var commitSnapshot = repositorySnapshot with { WorkingContext = commitWorkingSnapshot };
         var diff = _diffEngine.Diff(previous, commitSnapshot);
         var trace = new Traceability(
             createdBy,
@@ -46,7 +54,7 @@ public sealed class CommitEngine : ICommitEngine
 
         return new ContextCommit(
             commitId,
-            commitSnapshot.CurrentBranch,
+            commitWorkingSnapshot.CurrentBranch,
             message,
             previous is null ? Array.Empty<ContextCommitId>() : new[] { previous.Id },
             _clock.UtcNow,

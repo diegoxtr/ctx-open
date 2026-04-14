@@ -1,0 +1,45 @@
+{
+  "provider": "openai",
+  "model": "gpt-4.1",
+  "state": 2,
+  "startedAtUtc": "2026-04-11T23:56:34.8052508+00:00",
+  "completedAtUtc": "2026-04-11T23:56:34.8552863+00:00",
+  "packetId": {
+    "value": "3dfc150515cf4e9f8d8b64eb252010d5"
+  },
+  "usage": {
+    "inputTokens": 444,
+    "outputTokens": 120,
+    "acuCost": 0.01,
+    "duration": "00:00:00.0500000",
+    "totalTokens": 564
+  },
+  "promptFingerprint": "346f291c27d180d977aad3bfdf8dadad5e176e993f07096d98344c70d91030a0",
+  "summary": "Offline structured result for \u0027Summarize the next validation step for the checkout pricing regression.\u0027. Configure credentials to reach the live provider.",
+  "artifacts": [
+    {
+      "artifactType": "summary",
+      "title": "offline-result",
+      "content": "Packet 3dfc150515cf4e9f8d8b64eb252010d5 built with 444 estimated tokens.",
+      "references": []
+    }
+  ],
+  "id": {
+    "value": "c3112e2e149845a3a89c773a4e5efd8f"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-11T23:56:34.8553877+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "run",
+      "openai"
+    ],
+    "relatedIds": [
+      "3dfc150515cf4e9f8d8b64eb252010d5"
+    ],
+    "modelName": "gpt-4.1",
+    "modelVersion": null
+  }
+}

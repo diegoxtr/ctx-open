@@ -25,11 +25,11 @@ public sealed class MergeEngineTests
             Array.Empty<ContextCommitId>(),
             new DateTimeOffset(2026, 4, 7, 15, 0, 0, TimeSpan.Zero),
             "hash",
-            new ContextDiff(null, null, Array.Empty<ContextDiffChange>(), Array.Empty<ContextDiffChange>(), Array.Empty<ContextDiffChange>(), Array.Empty<ContextDiffChange>(), Array.Empty<ContextDiffChange>(), Array.Empty<CognitiveConflict>(), string.Empty),
-            sourceSnapshot,
+            new ContextDiff(null, null, Array.Empty<ContextDiffChange>(), Array.Empty<ContextDiffChange>(), Array.Empty<ContextDiffChange>(), Array.Empty<ContextDiffChange>(), Array.Empty<ContextDiffChange>(), Array.Empty<ContextDiffChange>(), Array.Empty<CognitiveConflict>(), string.Empty),
+            new RepositorySnapshot(sourceSnapshot, Array.Empty<OperationalRunbook>()),
             sourceSnapshot.Trace);
 
-        var result = new MergeEngine().Merge(current, sourceCommit);
+        var result = new MergeEngine().Merge(new RepositorySnapshot(current, Array.Empty<OperationalRunbook>()), sourceCommit);
 
         Assert.False(result.AutoMerged);
         Assert.Contains(result.Conflicts, conflict => conflict.EntityType == nameof(Ctx.Domain.Task));

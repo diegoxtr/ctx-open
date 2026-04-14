@@ -1,0 +1,718 @@
+{
+  "branch": "main",
+  "message": "close checkout regression with executable evidence",
+  "parentIds": [
+    {
+      "value": "9114b287441e4c00a6371ef8b1227514"
+    }
+  ],
+  "createdAtUtc": "2026-04-11T23:56:38.4637053+00:00",
+  "snapshotHash": "48e61b16e33c3884afdbaecd287b6f983e2fd84274240915dd10982661389172",
+  "diff": {
+    "fromCommitId": {
+      "value": "9114b287441e4c00a6371ef8b1227514"
+    },
+    "toCommitId": {
+      "value": "b63e5e0d06be4172b4a5e5ce690b1636"
+    },
+    "decisions": [
+      {
+        "changeType": "Modified",
+        "entityType": "Decision",
+        "entityId": "71952171534d43e1b8458ea342b10435",
+        "summary": "Treat discount composition as the primary fix surface [Accepted]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Decision",
+        "entityId": "23561cce721743fd894130e0d619c05b",
+        "summary": "Keep explicit stacked discount logic with regression tests [Accepted]"
+      }
+    ],
+    "hypotheses": [
+      {
+        "changeType": "Modified",
+        "entityType": "Hypothesis",
+        "entityId": "d9088d373355446e99c530f36c8403ac",
+        "summary": "The VIP discount is applied twice when coupon handling is enabled, producing an undercharged checkout total. [Supported]"
+      },
+      {
+        "changeType": "Modified",
+        "entityType": "Hypothesis",
+        "entityId": "7a225cbc059941d0a70daea44721de77",
+        "summary": "The checkout total drift comes from tax or subtotal rounding rather than duplicated discount logic. [Refuted]"
+      },
+      {
+        "changeType": "Modified",
+        "entityType": "Hypothesis",
+        "entityId": "1e58f23b52dc41d8bf00ffc89981250e",
+        "summary": "The defect is in discount composition and can be stabilized by keeping the stacked rate explicit before downstream calculations. [Supported]"
+      }
+    ],
+    "evidence": [
+      {
+        "changeType": "Modified",
+        "entityType": "Evidence",
+        "entityId": "d470ab62a07b4ec1a69434415773c3d1",
+        "summary": "Incident reconstruction identifies VIP coupon path as the only risky scenario [Observation]"
+      },
+      {
+        "changeType": "Modified",
+        "entityType": "Evidence",
+        "entityId": "b708f61539a84bb9b43f6a890a59c0e5",
+        "summary": "Code inspection shows discount composition as the unstable area [Document]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Evidence",
+        "entityId": "e7e6d031f6a946babfd71c6b2ad38912",
+        "summary": "Regression tests pass for regular, VIP, and VIP plus coupon totals [Experiment]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Evidence",
+        "entityId": "871f5b5eb1b94acba6e70a3964ae5e32",
+        "summary": "Stable discount rate prevents floating output drift [Observation]"
+      }
+    ],
+    "tasks": [
+      {
+        "changeType": "Modified",
+        "entityType": "Task",
+        "entityId": "30b4fec86b6645c29b5f0ad2584521e0",
+        "summary": "Reproduce and isolate the incorrect VIP total [Done]"
+      },
+      {
+        "changeType": "Modified",
+        "entityType": "Task",
+        "entityId": "7a6bb7620fb447c7bf4970bd70e41509",
+        "summary": "Validate the real cause inside discount composition [Done]"
+      },
+      {
+        "changeType": "Modified",
+        "entityType": "Task",
+        "entityId": "9c36b828ca2d4327adb8be481509cef2",
+        "summary": "Ship the fix and regression coverage [Done]"
+      }
+    ],
+    "conclusions": [
+      {
+        "changeType": "Added",
+        "entityType": "Conclusion",
+        "entityId": "0b264645f73043148127dbcac0f13f6a",
+        "summary": "The checkout pricing regression is closed: VIP discount composition is stable, coupon stacking remains intentional, and regression coverage now protects the critical scenarios. [Accepted]"
+      }
+    ],
+    "conflicts": [],
+    "summary": "decisions:2 hypotheses:3 evidence:4 tasks:3 conclusions:1"
+  },
+  "snapshot": {
+    "repositoryVersion": "1.0",
+    "currentBranch": "main",
+    "headCommitId": {
+      "value": "b63e5e0d06be4172b4a5e5ce690b1636"
+    },
+    "dirty": false,
+    "project": {
+      "name": "critical-checkout-regression",
+      "description": "Cognitive repo for a critical VIP discount regression",
+      "defaultBranch": "main",
+      "state": 1,
+      "id": {
+        "value": "ce2daf896870426791d6ffedb57dd810"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-11T23:53:26.99512+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "project"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    "goals": [
+      {
+        "parentGoalId": null,
+        "title": "Restore checkout pricing consistency",
+        "description": "Investigate and close a critical regression affecting VIP discount totals in checkout.",
+        "priority": 1,
+        "state": 1,
+        "taskIds": [
+          {
+            "value": "30b4fec86b6645c29b5f0ad2584521e0"
+          },
+          {
+            "value": "7a6bb7620fb447c7bf4970bd70e41509"
+          },
+          {
+            "value": "9c36b828ca2d4327adb8be481509cef2"
+          }
+        ],
+        "id": {
+          "value": "45cc3736c95d451881f5dafd35f31a26"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-11T23:56:31.0113885+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "goal"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "tasks": [
+      {
+        "goalId": {
+          "value": "45cc3736c95d451881f5dafd35f31a26"
+        },
+        "title": "Reproduce and isolate the incorrect VIP total",
+        "description": "Capture the failing business scenario and identify the suspicious pricing path.",
+        "state": 4,
+        "dependsOnTaskIds": [],
+        "hypothesisIds": [
+          {
+            "value": "d9088d373355446e99c530f36c8403ac"
+          },
+          {
+            "value": "7a225cbc059941d0a70daea44721de77"
+          }
+        ],
+        "parentTaskId": null,
+        "id": {
+          "value": "30b4fec86b6645c29b5f0ad2584521e0"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-11T23:56:31.2111405+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-11T23:56:33.2201715+00:00",
+          "tags": [
+            "task"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "goalId": {
+          "value": "45cc3736c95d451881f5dafd35f31a26"
+        },
+        "title": "Validate the real cause inside discount composition",
+        "description": "Confirm whether the defect is discount duplication, tax logic, or rate normalization.",
+        "state": 4,
+        "dependsOnTaskIds": [
+          {
+            "value": "30b4fec86b6645c29b5f0ad2584521e0"
+          }
+        ],
+        "hypothesisIds": [
+          {
+            "value": "1e58f23b52dc41d8bf00ffc89981250e"
+          }
+        ],
+        "parentTaskId": null,
+        "id": {
+          "value": "7a6bb7620fb447c7bf4970bd70e41509"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-11T23:56:31.4204226+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-11T23:56:35.1355977+00:00",
+          "tags": [
+            "task"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "goalId": {
+          "value": "45cc3736c95d451881f5dafd35f31a26"
+        },
+        "title": "Ship the fix and regression coverage",
+        "description": "Lock the corrected pricing rule with executable tests.",
+        "state": 4,
+        "dependsOnTaskIds": [
+          {
+            "value": "7a6bb7620fb447c7bf4970bd70e41509"
+          }
+        ],
+        "hypothesisIds": [],
+        "parentTaskId": null,
+        "id": {
+          "value": "9c36b828ca2d4327adb8be481509cef2"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-11T23:56:31.618946+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-11T23:56:38.0627721+00:00",
+          "tags": [
+            "task"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "hypotheses": [
+      {
+        "statement": "The VIP discount is applied twice when coupon handling is enabled, producing an undercharged checkout total.",
+        "rationale": "The incident only appears in VIP orders that also carry promotional coupon input.",
+        "confidence": 0.82,
+        "impact": 0.95,
+        "evidenceStrength": 0.40,
+        "costToValidate": 0.20,
+        "state": 2,
+        "taskIds": [
+          {
+            "value": "30b4fec86b6645c29b5f0ad2584521e0"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "d470ab62a07b4ec1a69434415773c3d1"
+          }
+        ],
+        "probability": 0.82,
+        "score": 0.6795,
+        "id": {
+          "value": "d9088d373355446e99c530f36c8403ac"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-11T23:56:32.0271159+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-11T23:56:36.3903268+00:00",
+          "tags": [
+            "hypothesis"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "statement": "The checkout total drift comes from tax or subtotal rounding rather than duplicated discount logic.",
+        "rationale": "Pricing incidents often come from rounding boundaries or tax recomputation.",
+        "confidence": 0.45,
+        "impact": 0.70,
+        "evidenceStrength": 0.30,
+        "costToValidate": 0.35,
+        "state": 3,
+        "taskIds": [
+          {
+            "value": "30b4fec86b6645c29b5f0ad2584521e0"
+          }
+        ],
+        "evidenceIds": [],
+        "probability": 0.45,
+        "score": 0.4275,
+        "id": {
+          "value": "7a225cbc059941d0a70daea44721de77"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-11T23:56:32.2339537+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-11T23:56:36.73072+00:00",
+          "tags": [
+            "hypothesis"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "statement": "The defect is in discount composition and can be stabilized by keeping the stacked rate explicit before downstream calculations.",
+        "rationale": "The safest fix is to make the composed discount rate deterministic before computing discount amount and total.",
+        "confidence": 0.76,
+        "impact": 0.88,
+        "evidenceStrength": 0.35,
+        "costToValidate": 0.25,
+        "state": 2,
+        "taskIds": [
+          {
+            "value": "7a6bb7620fb447c7bf4970bd70e41509"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "b708f61539a84bb9b43f6a890a59c0e5"
+          },
+          {
+            "value": "e7e6d031f6a946babfd71c6b2ad38912"
+          },
+          {
+            "value": "871f5b5eb1b94acba6e70a3964ae5e32"
+          }
+        ],
+        "probability": 0.76,
+        "score": 0.6190,
+        "id": {
+          "value": "1e58f23b52dc41d8bf00ffc89981250e"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-11T23:56:32.4460783+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-11T23:56:37.0688525+00:00",
+          "tags": [
+            "hypothesis"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "decisions": [
+      {
+        "title": "Treat discount composition as the primary fix surface",
+        "rationale": "Evidence points to the combined VIP-plus-coupon path, so the remediation should be applied in discount composition before chasing tax logic.",
+        "state": 1,
+        "hypothesisIds": [
+          {
+            "value": "d9088d373355446e99c530f36c8403ac"
+          },
+          {
+            "value": "1e58f23b52dc41d8bf00ffc89981250e"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "d470ab62a07b4ec1a69434415773c3d1"
+          },
+          {
+            "value": "b708f61539a84bb9b43f6a890a59c0e5"
+          }
+        ],
+        "id": {
+          "value": "71952171534d43e1b8458ea342b10435"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-11T23:56:34.3338226+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "decision"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "title": "Keep explicit stacked discount logic with regression tests",
+        "rationale": "The final code path stays simple, deterministic, and executable under tests for the incident scenarios.",
+        "state": 1,
+        "hypothesisIds": [
+          {
+            "value": "1e58f23b52dc41d8bf00ffc89981250e"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "e7e6d031f6a946babfd71c6b2ad38912"
+          },
+          {
+            "value": "871f5b5eb1b94acba6e70a3964ae5e32"
+          }
+        ],
+        "id": {
+          "value": "23561cce721743fd894130e0d619c05b"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-11T23:56:37.3843774+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "decision"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Incident reconstruction identifies VIP coupon path as the only risky scenario",
+        "summary": "The incident summary narrows the failure to VIP checkout when promotional coupon input is present; regular checkout is not implicated.",
+        "source": "file:incident-summary.md",
+        "kind": 0,
+        "confidence": 0.89,
+        "state": 2,
+        "supports": [
+          {
+            "entityType": "Task",
+            "entityId": "30b4fec86b6645c29b5f0ad2584521e0"
+          },
+          {
+            "entityType": "Hypothesis",
+            "entityId": "d9088d373355446e99c530f36c8403ac"
+          }
+        ],
+        "id": {
+          "value": "d470ab62a07b4ec1a69434415773c3d1"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-11T23:56:32.6671824+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "evidence"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "title": "Code inspection shows discount composition as the unstable area",
+        "summary": "The pricing function composes VIP and coupon discounts in one accumulation path, which is the highest-risk location for duplicated application or unstable rates.",
+        "source": "file:src/pricing.js",
+        "kind": 2,
+        "confidence": 0.84,
+        "state": 2,
+        "supports": [
+          {
+            "entityType": "Task",
+            "entityId": "7a6bb7620fb447c7bf4970bd70e41509"
+          },
+          {
+            "entityType": "Hypothesis",
+            "entityId": "1e58f23b52dc41d8bf00ffc89981250e"
+          }
+        ],
+        "id": {
+          "value": "b708f61539a84bb9b43f6a890a59c0e5"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-11T23:56:32.9572569+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "evidence"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "title": "Regression tests pass for regular, VIP, and VIP plus coupon totals",
+        "summary": "The executable regression suite confirms total 100 for regular checkout, 90 for VIP-only checkout, and 170 for VIP plus WELCOME5 on subtotal 200.",
+        "source": "command:node tests/pricing.test.js",
+        "kind": 3,
+        "confidence": 0.99,
+        "state": 2,
+        "supports": [
+          {
+            "entityType": "Task",
+            "entityId": "9c36b828ca2d4327adb8be481509cef2"
+          },
+          {
+            "entityType": "Hypothesis",
+            "entityId": "1e58f23b52dc41d8bf00ffc89981250e"
+          }
+        ],
+        "id": {
+          "value": "e7e6d031f6a946babfd71c6b2ad38912"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-11T23:56:35.6123781+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "evidence"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "title": "Stable discount rate prevents floating output drift",
+        "summary": "The implementation rounds the composed discount rate before downstream calculations, preventing runtime output drift such as 0.15000000000000002 leaking into results.",
+        "source": "file:src/pricing.js",
+        "kind": 0,
+        "confidence": 0.93,
+        "state": 2,
+        "supports": [
+          {
+            "entityType": "Task",
+            "entityId": "9c36b828ca2d4327adb8be481509cef2"
+          },
+          {
+            "entityType": "Hypothesis",
+            "entityId": "1e58f23b52dc41d8bf00ffc89981250e"
+          }
+        ],
+        "id": {
+          "value": "871f5b5eb1b94acba6e70a3964ae5e32"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-11T23:56:35.9584751+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "evidence"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "conclusions": [
+      {
+        "summary": "The checkout pricing regression is closed: VIP discount composition is stable, coupon stacking remains intentional, and regression coverage now protects the critical scenarios.",
+        "state": 1,
+        "decisionIds": [
+          {
+            "value": "23561cce721743fd894130e0d619c05b"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "e7e6d031f6a946babfd71c6b2ad38912"
+          },
+          {
+            "value": "871f5b5eb1b94acba6e70a3964ae5e32"
+          }
+        ],
+        "goalIds": [
+          {
+            "value": "45cc3736c95d451881f5dafd35f31a26"
+          }
+        ],
+        "taskIds": [
+          {
+            "value": "30b4fec86b6645c29b5f0ad2584521e0"
+          },
+          {
+            "value": "7a6bb7620fb447c7bf4970bd70e41509"
+          },
+          {
+            "value": "9c36b828ca2d4327adb8be481509cef2"
+          }
+        ],
+        "id": {
+          "value": "0b264645f73043148127dbcac0f13f6a"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-11T23:56:37.7165242+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "conclusion"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "runs": [
+      {
+        "provider": "openai",
+        "model": "gpt-4.1",
+        "state": 2,
+        "startedAtUtc": "2026-04-11T23:56:34.8052508+00:00",
+        "completedAtUtc": "2026-04-11T23:56:34.8552863+00:00",
+        "packetId": {
+          "value": "3dfc150515cf4e9f8d8b64eb252010d5"
+        },
+        "usage": {
+          "inputTokens": 444,
+          "outputTokens": 120,
+          "acuCost": 0.01,
+          "duration": "00:00:00.0500000",
+          "totalTokens": 564
+        },
+        "promptFingerprint": "346f291c27d180d977aad3bfdf8dadad5e176e993f07096d98344c70d91030a0",
+        "summary": "Offline structured result for \u0027Summarize the next validation step for the checkout pricing regression.\u0027. Configure credentials to reach the live provider.",
+        "artifacts": [
+          {
+            "artifactType": "summary",
+            "title": "offline-result",
+            "content": "Packet 3dfc150515cf4e9f8d8b64eb252010d5 built with 444 estimated tokens.",
+            "references": []
+          }
+        ],
+        "id": {
+          "value": "c3112e2e149845a3a89c773a4e5efd8f"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-11T23:56:34.8553877+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "run",
+            "openai"
+          ],
+          "relatedIds": [
+            "3dfc150515cf4e9f8d8b64eb252010d5"
+          ],
+          "modelName": "gpt-4.1",
+          "modelVersion": null
+        }
+      }
+    ],
+    "id": {
+      "value": "cc440af044f246b487b8506dd07e5f9c"
+    },
+    "trace": {
+      "createdBy": "diegoxtr",
+      "createdAtUtc": "2026-04-11T23:53:26.99512+00:00",
+      "updatedBy": "diegoxtr",
+      "updatedAtUtc": "2026-04-11T23:56:38.3728543+00:00",
+      "tags": [
+        "project"
+      ],
+      "relatedIds": [],
+      "modelName": null,
+      "modelVersion": null
+    }
+  },
+  "id": {
+    "value": "b63e5e0d06be4172b4a5e5ce690b1636"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-11T23:56:38.463615+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "commit"
+    ],
+    "relatedIds": [
+      "9114b287441e4c00a6371ef8b1227514"
+    ],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

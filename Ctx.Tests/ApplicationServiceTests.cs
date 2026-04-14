@@ -41,6 +41,9 @@ public sealed class ApplicationServiceTests
             Assert.True(commit.Success);
             Assert.True(status.Success);
             Assert.Contains("On branch main", status.Message);
+            var statusData = Assert.IsType<Ctx.Application.StatusSummary>(status.Data);
+            Assert.False(statusData.Dirty);
+            Assert.Null(statusData.Pending);
             Assert.True(Directory.Exists(Path.Combine(repositoryPath, ".ctx", "commits")));
         }
         finally
@@ -91,10 +94,8 @@ public sealed class ApplicationServiceTests
             Assert.True(evidence.Success);
             Assert.True(decision.Success);
             Assert.True(conclusion.Success);
-            var statusJson = System.Text.Json.JsonSerializer.Serialize(
-                status.Data,
-                new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
-            Assert.Contains("\"conclusions\":1", statusJson);
+            var statusData = Assert.IsType<Ctx.Application.StatusSummary>(status.Data);
+            Assert.Equal(1, statusData.Conclusions);
         }
         finally
         {
@@ -751,6 +752,270 @@ public sealed class ApplicationServiceTests
             Assert.Contains(graph.Edges, edge => edge.Relationship == "subgoal");
             Assert.Contains(graph.Edges, edge => edge.Relationship == "depends-on");
             Assert.Contains(graph.Nodes, node => node.Id == $"Goal:{childGoalId}");
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task CloseoutAsync_ReportsCleanWhenWorkingMatchesHead()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var clock = new FixedClock(new DateTimeOffset(2026, 4, 8, 18, 0, 0, TimeSpan.Zero));
+            var jsonSerializer = new DefaultJsonSerializer();
+            var hashing = new Sha256HashingService();
+            var workingRepository = new FileSystemWorkingContextRepository(jsonSerializer);
+            var commitRepository = new FileSystemCommitRepository(jsonSerializer);
+            var branchRepository = new FileSystemBranchRepository(jsonSerializer);
+            var packetRepository = new FileSystemPacketRepository(jsonSerializer);
+            var runRepository = new FileSystemRunRepository(jsonSerializer);
+            var metricsRepository = new FileSystemMetricsRepository(jsonSerializer);
+            var contextBuilder = new ContextBuilder(clock, hashing);
+            var commitEngine = new CommitEngine(clock, hashing, jsonSerializer, new DiffEngine());
+            var mergeEngine = new MergeEngine();
+            var providers = new Ctx.Providers.AIProviderRegistry(Array.Empty<Ctx.Application.IAIProvider>());
+            var runOrchestrator = new RunOrchestrator(contextBuilder, providers, packetRepository, runRepository, metricsRepository, clock, hashing);
+            var service = new CtxApplicationService(workingRepository, commitRepository, branchRepository, runRepository, packetRepository, metricsRepository, runOrchestrator, contextBuilder, commitEngine, mergeEngine, clock);
+
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Closeout test", "main", "tester"), CancellationToken.None);
+            await service.AddTaskAsync(repositoryPath, new Ctx.Application.AddTaskRequest("Inspect closeout", "seed", null, Array.Empty<string>(), "tester"), CancellationToken.None);
+            await service.CommitAsync(repositoryPath, new Ctx.Application.CommitRequest("seed closeout", "tester"), CancellationToken.None);
+
+            var closeout = await service.CloseoutAsync(repositoryPath, CancellationToken.None);
+
+            Assert.True(closeout.Success);
+            var data = Assert.IsType<Ctx.Application.CloseoutSummary>(closeout.Data);
+            Assert.False(data.Dirty);
+            Assert.False(data.HasPendingChanges);
+            Assert.Equal("working matches HEAD", data.DiffSummary);
+            Assert.Empty(data.PendingItems);
+            Assert.Null(data.MicroCloseout);
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task StatusAsync_ExplainsDirtyStateWithPendingPreview()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var clock = new FixedClock(new DateTimeOffset(2026, 4, 8, 18, 15, 0, TimeSpan.Zero));
+            var jsonSerializer = new DefaultJsonSerializer();
+            var hashing = new Sha256HashingService();
+            var workingRepository = new FileSystemWorkingContextRepository(jsonSerializer);
+            var commitRepository = new FileSystemCommitRepository(jsonSerializer);
+            var branchRepository = new FileSystemBranchRepository(jsonSerializer);
+            var packetRepository = new FileSystemPacketRepository(jsonSerializer);
+            var runRepository = new FileSystemRunRepository(jsonSerializer);
+            var metricsRepository = new FileSystemMetricsRepository(jsonSerializer);
+            var contextBuilder = new ContextBuilder(clock, hashing);
+            var commitEngine = new CommitEngine(clock, hashing, jsonSerializer, new DiffEngine());
+            var mergeEngine = new MergeEngine();
+            var providers = new Ctx.Providers.AIProviderRegistry(Array.Empty<Ctx.Application.IAIProvider>());
+            var runOrchestrator = new RunOrchestrator(contextBuilder, providers, packetRepository, runRepository, metricsRepository, clock, hashing);
+            var service = new CtxApplicationService(workingRepository, commitRepository, branchRepository, runRepository, packetRepository, metricsRepository, runOrchestrator, contextBuilder, commitEngine, mergeEngine, clock);
+
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Status preview test", "main", "tester"), CancellationToken.None);
+            var task = await service.AddTaskAsync(repositoryPath, new Ctx.Application.AddTaskRequest("Inspect status", "seed", null, Array.Empty<string>(), "tester"), CancellationToken.None);
+            var taskId = ((Ctx.Domain.Task)task.Data!).Id.Value;
+            await service.CommitAsync(repositoryPath, new Ctx.Application.CommitRequest("seed status", "tester"), CancellationToken.None);
+            var hypothesis = await service.AddHypothesisAsync(repositoryPath, new Ctx.Application.AddHypothesisRequest("Dirty status should explain pending work", "status should show the trailing artifact delta", 0.7m, 0.7m, 0.5m, 0.2m, taskId, "tester"), CancellationToken.None);
+            var hypothesisId = ((Ctx.Domain.Hypothesis)hypothesis.Data!).Id.Value;
+            await service.AddEvidenceAsync(repositoryPath, new Ctx.Application.AddEvidenceRequest("Status preview evidence", "shows pending evidence in status", "test", "Observation", 0.8m, new[] { $"hypothesis:{hypothesisId}" }, "tester"), CancellationToken.None);
+
+            var status = await service.StatusAsync(repositoryPath, CancellationToken.None);
+
+            Assert.True(status.Success);
+            Assert.Contains("pending cognitive changes", status.Message);
+            var data = Assert.IsType<Ctx.Application.StatusSummary>(status.Data);
+            Assert.True(data.Dirty);
+            Assert.NotNull(data.Pending);
+            Assert.True(data.Pending!.HasPendingChanges);
+            Assert.Equal(3, data.Pending.PendingArtifactCount);
+            Assert.Contains(data.Pending.PendingItems, item => item.EntityType == "Hypothesis");
+            Assert.Contains(data.Pending.PendingItems, item => item.EntityType == "Evidence");
+            Assert.Contains(data.Pending.PendingItems, item => item.EntityType == "Task");
+            Assert.Contains("ctx closeout", data.Pending.NextAction, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task OpenWorkLineAsync_CreatesSubGoalAndOptionalSeedTask()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var clock = new FixedClock(new DateTimeOffset(2026, 4, 13, 15, 10, 0, TimeSpan.Zero));
+            var jsonSerializer = new DefaultJsonSerializer();
+            var hashing = new Sha256HashingService();
+            var workingRepository = new FileSystemWorkingContextRepository(jsonSerializer);
+            var commitRepository = new FileSystemCommitRepository(jsonSerializer);
+            var branchRepository = new FileSystemBranchRepository(jsonSerializer);
+            var packetRepository = new FileSystemPacketRepository(jsonSerializer);
+            var runRepository = new FileSystemRunRepository(jsonSerializer);
+            var metricsRepository = new FileSystemMetricsRepository(jsonSerializer);
+            var contextBuilder = new ContextBuilder(clock, hashing);
+            var commitEngine = new CommitEngine(clock, hashing, jsonSerializer, new DiffEngine());
+            var mergeEngine = new MergeEngine();
+            var providers = new Ctx.Providers.AIProviderRegistry(Array.Empty<Ctx.Application.IAIProvider>());
+            var runOrchestrator = new RunOrchestrator(contextBuilder, providers, packetRepository, runRepository, metricsRepository, clock, hashing);
+            var service = new CtxApplicationService(workingRepository, commitRepository, branchRepository, runRepository, packetRepository, metricsRepository, runOrchestrator, contextBuilder, commitEngine, mergeEngine, clock);
+
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Work-line test", "main", "tester"), CancellationToken.None);
+            var parentGoal = await service.AddGoalAsync(repositoryPath, new Ctx.Application.AddGoalRequest("Improve viewer", "Strategic viewer lane", 10, null, "tester"), CancellationToken.None);
+            var parentGoalId = ((Ctx.Domain.Goal)parentGoal.Data!).Id.Value;
+
+            var opened = await service.OpenWorkLineAsync(
+                repositoryPath,
+                new Ctx.Application.OpenWorkLineRequest(
+                    parentGoalId,
+                    "Viewer working-focus UX",
+                    "Tactical line under the viewer goal",
+                    null,
+                    "Reduce umbrella-goal noise in Working view",
+                    "Seed the first task under the new line",
+                    "tester"),
+                CancellationToken.None);
+
+            Assert.True(opened.Success);
+            var summary = Assert.IsType<Ctx.Application.OpenWorkLineSummary>(opened.Data);
+            Assert.Equal(parentGoalId, summary.ParentGoalId);
+            Assert.Equal("Improve viewer", summary.ParentGoalTitle);
+            Assert.Equal("Viewer working-focus UX", summary.GoalTitle);
+            Assert.Equal("Reduce umbrella-goal noise in Working view", summary.SeedTaskTitle);
+
+            var goal = Assert.IsType<Ctx.Domain.Goal>((await service.ShowArtifactAsync(repositoryPath, "goal", summary.GoalId, CancellationToken.None)).Data);
+            var task = Assert.IsType<Ctx.Domain.Task>((await service.ShowArtifactAsync(repositoryPath, "task", summary.SeedTaskId!, CancellationToken.None)).Data);
+
+            Assert.Equal(parentGoalId, goal.ParentGoalId!.Value.Value);
+            Assert.Equal(goal.Id, task.GoalId);
+            Assert.Equal(Ctx.Domain.TaskExecutionState.Ready, task.State);
+            Assert.Contains(goal.TaskIds, item => item.Value == task.Id.Value);
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task CloseoutAsync_EnumeratesPendingArtifactsWhenWorkingIsAheadOfHead()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var clock = new FixedClock(new DateTimeOffset(2026, 4, 8, 18, 30, 0, TimeSpan.Zero));
+            var jsonSerializer = new DefaultJsonSerializer();
+            var hashing = new Sha256HashingService();
+            var workingRepository = new FileSystemWorkingContextRepository(jsonSerializer);
+            var commitRepository = new FileSystemCommitRepository(jsonSerializer);
+            var branchRepository = new FileSystemBranchRepository(jsonSerializer);
+            var packetRepository = new FileSystemPacketRepository(jsonSerializer);
+            var runRepository = new FileSystemRunRepository(jsonSerializer);
+            var metricsRepository = new FileSystemMetricsRepository(jsonSerializer);
+            var contextBuilder = new ContextBuilder(clock, hashing);
+            var commitEngine = new CommitEngine(clock, hashing, jsonSerializer, new DiffEngine());
+            var mergeEngine = new MergeEngine();
+            var providers = new Ctx.Providers.AIProviderRegistry(Array.Empty<Ctx.Application.IAIProvider>());
+            var runOrchestrator = new RunOrchestrator(contextBuilder, providers, packetRepository, runRepository, metricsRepository, clock, hashing);
+            var service = new CtxApplicationService(workingRepository, commitRepository, branchRepository, runRepository, packetRepository, metricsRepository, runOrchestrator, contextBuilder, commitEngine, mergeEngine, clock);
+
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Closeout test", "main", "tester"), CancellationToken.None);
+            var task = await service.AddTaskAsync(repositoryPath, new Ctx.Application.AddTaskRequest("Inspect closeout", "seed", null, Array.Empty<string>(), "tester"), CancellationToken.None);
+            var taskId = ((Ctx.Domain.Task)task.Data!).Id.Value;
+            await service.CommitAsync(repositoryPath, new Ctx.Application.CommitRequest("seed closeout", "tester"), CancellationToken.None);
+            var hypothesis = await service.AddHypothesisAsync(repositoryPath, new Ctx.Application.AddHypothesisRequest("Pending evidence should be visible", "closeout should explain trailing artifacts", 0.7m, 0.7m, 0.6m, 0.2m, taskId, "tester"), CancellationToken.None);
+            var hypothesisId = ((Ctx.Domain.Hypothesis)hypothesis.Data!).Id.Value;
+            await service.AddEvidenceAsync(repositoryPath, new Ctx.Application.AddEvidenceRequest("Trailing evidence", "evidence after last commit", "test", "Observation", 0.8m, new[] { $"hypothesis:{hypothesisId}" }, "tester"), CancellationToken.None);
+
+            var closeout = await service.CloseoutAsync(repositoryPath, CancellationToken.None);
+
+            Assert.True(closeout.Success);
+            var data = Assert.IsType<Ctx.Application.CloseoutSummary>(closeout.Data);
+            Assert.True(data.Dirty);
+            Assert.True(data.HasPendingChanges);
+            Assert.Contains(data.PendingItems, item => item.EntityType == "Evidence");
+            Assert.Contains(data.Guidance, item => item.Contains("ctx commit", StringComparison.OrdinalIgnoreCase));
+            Assert.NotNull(data.MicroCloseout);
+            Assert.Equal("HypothesisEvidence", data.MicroCloseout!.Kind);
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task CloseoutAsync_ClassifiesSmallEvidenceOnlyDelta()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var clock = new FixedClock(new DateTimeOffset(2026, 4, 8, 18, 45, 0, TimeSpan.Zero));
+            var jsonSerializer = new DefaultJsonSerializer();
+            var hashing = new Sha256HashingService();
+            var workingRepository = new FileSystemWorkingContextRepository(jsonSerializer);
+            var commitRepository = new FileSystemCommitRepository(jsonSerializer);
+            var branchRepository = new FileSystemBranchRepository(jsonSerializer);
+            var packetRepository = new FileSystemPacketRepository(jsonSerializer);
+            var runRepository = new FileSystemRunRepository(jsonSerializer);
+            var metricsRepository = new FileSystemMetricsRepository(jsonSerializer);
+            var contextBuilder = new ContextBuilder(clock, hashing);
+            var commitEngine = new CommitEngine(clock, hashing, jsonSerializer, new DiffEngine());
+            var mergeEngine = new MergeEngine();
+            var providers = new Ctx.Providers.AIProviderRegistry(Array.Empty<Ctx.Application.IAIProvider>());
+            var runOrchestrator = new RunOrchestrator(contextBuilder, providers, packetRepository, runRepository, metricsRepository, clock, hashing);
+            var service = new CtxApplicationService(workingRepository, commitRepository, branchRepository, runRepository, packetRepository, metricsRepository, runOrchestrator, contextBuilder, commitEngine, mergeEngine, clock);
+
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Evidence-only closeout test", "main", "tester"), CancellationToken.None);
+            var task = await service.AddTaskAsync(repositoryPath, new Ctx.Application.AddTaskRequest("Inspect closeout", "seed", null, Array.Empty<string>(), "tester"), CancellationToken.None);
+            var taskId = ((Ctx.Domain.Task)task.Data!).Id.Value;
+            await service.CommitAsync(repositoryPath, new Ctx.Application.CommitRequest("seed evidence-only closeout", "tester"), CancellationToken.None);
+            await service.AddEvidenceAsync(repositoryPath, new Ctx.Application.AddEvidenceRequest("Trailing evidence", "evidence after last commit", "test", "Observation", 0.8m, new[] { $"task:{taskId}" }, "tester"), CancellationToken.None);
+
+            var closeout = await service.CloseoutAsync(repositoryPath, CancellationToken.None);
+
+            Assert.True(closeout.Success);
+            var data = Assert.IsType<Ctx.Application.CloseoutSummary>(closeout.Data);
+            Assert.NotNull(data.MicroCloseout);
+            Assert.Equal("EvidenceOnly", data.MicroCloseout!.Kind);
         }
         finally
         {
@@ -1614,6 +1879,9 @@ public sealed class ApplicationServiceTests
             var candidates = document.RootElement.GetProperty("candidates");
             Assert.Equal(3, candidates.GetArrayLength());
             Assert.Equal(topTaskId, candidates[0].GetProperty("entityId").GetString());
+            var diagnostics = document.RootElement.GetProperty("diagnostics");
+            Assert.Equal("Task", diagnostics.GetProperty("selectionMode").GetString());
+            Assert.Equal(3, diagnostics.GetProperty("openTaskCount").GetInt32());
             var dependentIndex = Enumerable.Range(0, candidates.GetArrayLength())
                 .Single(index => candidates[index].GetProperty("entityId").GetString() == dependentTaskId);
             Assert.True(dependentIndex > 0);
@@ -1731,6 +1999,10 @@ public sealed class ApplicationServiceTests
             var candidates = document.RootElement.GetProperty("candidates");
             Assert.Equal(1, candidates.GetArrayLength());
             Assert.Equal("Open a new task from this gap", candidates[0].GetProperty("factors").GetProperty("recommendedAction").GetString());
+            var diagnostics = document.RootElement.GetProperty("diagnostics");
+            Assert.Equal("Gap", diagnostics.GetProperty("selectionMode").GetString());
+            Assert.Equal(0, diagnostics.GetProperty("openTaskCount").GetInt32());
+            Assert.Equal(1, diagnostics.GetProperty("gapCandidateCount").GetInt32());
         }
         finally
         {
@@ -1801,6 +2073,184 @@ public sealed class ApplicationServiceTests
             var candidates = document.RootElement.GetProperty("candidates");
             Assert.Equal(1, candidates.GetArrayLength());
             Assert.Equal(((Ctx.Domain.Hypothesis)lowerGapHypothesis.Data!).Id.Value, candidates[0].GetProperty("entityId").GetString());
+            var diagnostics = document.RootElement.GetProperty("diagnostics");
+            Assert.Equal(1, diagnostics.GetProperty("gapExcludedByAcceptedConclusions").GetInt32());
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task NextAsync_ExplainsWhyNoCandidatesRemain()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var clock = new FixedClock(new DateTimeOffset(2026, 4, 9, 13, 45, 0, TimeSpan.Zero));
+            var jsonSerializer = new DefaultJsonSerializer();
+            var hashing = new Sha256HashingService();
+            var workingRepository = new FileSystemWorkingContextRepository(jsonSerializer);
+            var commitRepository = new FileSystemCommitRepository(jsonSerializer);
+            var branchRepository = new FileSystemBranchRepository(jsonSerializer);
+            var packetRepository = new FileSystemPacketRepository(jsonSerializer);
+            var runRepository = new FileSystemRunRepository(jsonSerializer);
+            var metricsRepository = new FileSystemMetricsRepository(jsonSerializer);
+            var contextBuilder = new ContextBuilder(clock, hashing);
+            var commitEngine = new CommitEngine(clock, hashing, jsonSerializer, new DiffEngine());
+            var mergeEngine = new MergeEngine();
+            var providers = new Ctx.Providers.AIProviderRegistry(Array.Empty<Ctx.Application.IAIProvider>());
+            var runOrchestrator = new RunOrchestrator(contextBuilder, providers, packetRepository, runRepository, metricsRepository, clock, hashing);
+            var service = new CtxApplicationService(workingRepository, commitRepository, branchRepository, runRepository, packetRepository, metricsRepository, runOrchestrator, contextBuilder, commitEngine, mergeEngine, clock);
+
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "No candidates test", "main", "tester"), CancellationToken.None);
+            var goal = await service.AddGoalAsync(repositoryPath, new Ctx.Application.AddGoalRequest("Preserve autonomous flow", "Explain no next-step result", 1, null, "tester"), CancellationToken.None);
+            var goalId = ((Ctx.Domain.Goal)goal.Data!).Id.Value;
+
+            var completedTask = await service.AddTaskAsync(repositoryPath, new Ctx.Application.AddTaskRequest("Close the last explicit task", "Leaves only resolved threads", goalId, Array.Empty<string>(), "tester"), CancellationToken.None);
+            var completedTaskId = ((Ctx.Domain.Task)completedTask.Data!).Id.Value;
+
+            var resolvedHypothesis = await service.AddHypothesisAsync(repositoryPath, new Ctx.Application.AddHypothesisRequest("A resolved gap should not resurface", "Accepted conclusion closes this thread", 0.88m, 0.82m, 0.7m, 0.2m, completedTaskId, "tester"), CancellationToken.None);
+            var resolvedHypothesisId = ((Ctx.Domain.Hypothesis)resolvedHypothesis.Data!).Id.Value;
+            var evidence = await service.AddEvidenceAsync(repositoryPath, new Ctx.Application.AddEvidenceRequest("Resolution evidence", "Thread is already closed", "tests", "Observation", 0.9m, new[] { $"hypothesis:{resolvedHypothesisId}" }, "tester"), CancellationToken.None);
+            var evidenceId = ((Ctx.Domain.Evidence)evidence.Data!).Id.Value;
+            var decision = await service.AddDecisionAsync(repositoryPath, new Ctx.Application.AddDecisionRequest("Keep closure", "Accepted outcome already exists", "Accepted", new[] { resolvedHypothesisId }, new[] { evidenceId }, "tester"), CancellationToken.None);
+            var decisionId = ((Ctx.Domain.Decision)decision.Data!).Id.Value;
+
+            await service.AddConclusionAsync(repositoryPath, new Ctx.Application.AddConclusionRequest("The thread is closed and should not become a gap candidate.", "Accepted", new[] { decisionId }, new[] { evidenceId }, new[] { goalId }, new[] { completedTaskId }, "tester"), CancellationToken.None);
+            await service.UpdateTaskAsync(repositoryPath, new Ctx.Application.UpdateTaskRequest(completedTaskId, null, null, "Done", "tester"), CancellationToken.None);
+
+            var result = await service.NextAsync(repositoryPath, CancellationToken.None);
+
+            Assert.True(result.Success);
+            Assert.Contains("Review diagnostics", result.Message);
+            var json = JsonSerializer.Serialize(result.Data, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            using var document = JsonDocument.Parse(json);
+            Assert.Equal(JsonValueKind.Null, document.RootElement.GetProperty("recommended").ValueKind);
+            Assert.Equal(0, document.RootElement.GetProperty("candidates").GetArrayLength());
+            var diagnostics = document.RootElement.GetProperty("diagnostics");
+            Assert.Equal("None", diagnostics.GetProperty("selectionMode").GetString());
+            Assert.Equal(0, diagnostics.GetProperty("openTaskCount").GetInt32());
+            Assert.Equal(0, diagnostics.GetProperty("gapCandidateCount").GetInt32());
+            Assert.Equal(1, diagnostics.GetProperty("gapExcludedByAcceptedConclusions").GetInt32());
+            Assert.NotEqual(0, diagnostics.GetProperty("guidance").GetArrayLength());
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task CheckAsync_UsesTopRankedTaskAndReportsMissingClosure()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var clock = new FixedClock(new DateTimeOffset(2026, 4, 9, 14, 0, 0, TimeSpan.Zero));
+            var jsonSerializer = new DefaultJsonSerializer();
+            var hashing = new Sha256HashingService();
+            var workingRepository = new FileSystemWorkingContextRepository(jsonSerializer);
+            var commitRepository = new FileSystemCommitRepository(jsonSerializer);
+            var branchRepository = new FileSystemBranchRepository(jsonSerializer);
+            var packetRepository = new FileSystemPacketRepository(jsonSerializer);
+            var runRepository = new FileSystemRunRepository(jsonSerializer);
+            var metricsRepository = new FileSystemMetricsRepository(jsonSerializer);
+            var contextBuilder = new ContextBuilder(clock, hashing);
+            var commitEngine = new CommitEngine(clock, hashing, jsonSerializer, new DiffEngine());
+            var mergeEngine = new MergeEngine();
+            var providers = new Ctx.Providers.AIProviderRegistry(Array.Empty<Ctx.Application.IAIProvider>());
+            var runOrchestrator = new RunOrchestrator(contextBuilder, providers, packetRepository, runRepository, metricsRepository, clock, hashing);
+            var service = new CtxApplicationService(workingRepository, commitRepository, branchRepository, runRepository, packetRepository, metricsRepository, runOrchestrator, contextBuilder, commitEngine, mergeEngine, clock);
+
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Block check test", "main", "tester"), CancellationToken.None);
+            var goal = await service.AddGoalAsync(repositoryPath, new Ctx.Application.AddGoalRequest("Close work block", "Check readiness", 1, null, "tester"), CancellationToken.None);
+            var goalId = ((Ctx.Domain.Goal)goal.Data!).Id.Value;
+            var task = await service.AddTaskAsync(repositoryPath, new Ctx.Application.AddTaskRequest("Check current block", "Need readiness guidance", goalId, Array.Empty<string>(), "tester"), CancellationToken.None);
+            var taskId = ((Ctx.Domain.Task)task.Data!).Id.Value;
+            await service.AddHypothesisAsync(repositoryPath, new Ctx.Application.AddHypothesisRequest("Readiness check should find missing closure", "No decision or conclusion yet", 0.9m, 0.8m, 0.6m, 0.2m, taskId, "tester"), CancellationToken.None);
+
+            var result = await service.CheckAsync(repositoryPath, null, CancellationToken.None);
+
+            Assert.True(result.Success);
+            Assert.Contains("closure gaps", result.Message);
+            var data = Assert.IsType<Ctx.Application.BlockCheckSummary>(result.Data);
+            Assert.Equal(taskId, data.TaskId);
+            Assert.Equal("top-ranked task from ctx next", data.SelectionReason);
+            Assert.False(data.ReadyForCommit);
+            Assert.Contains(data.Missing, item => item.ItemType == "TaskState");
+            Assert.Contains(data.Missing, item => item.ItemType == "Evidence");
+            Assert.Contains(data.Missing, item => item.ItemType == "Decision");
+            Assert.Contains(data.Missing, item => item.ItemType == "Conclusion");
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task CheckAsync_ReportsReadyWhenTaskThreadIsFullyClosed()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var clock = new FixedClock(new DateTimeOffset(2026, 4, 9, 14, 15, 0, TimeSpan.Zero));
+            var jsonSerializer = new DefaultJsonSerializer();
+            var hashing = new Sha256HashingService();
+            var workingRepository = new FileSystemWorkingContextRepository(jsonSerializer);
+            var commitRepository = new FileSystemCommitRepository(jsonSerializer);
+            var branchRepository = new FileSystemBranchRepository(jsonSerializer);
+            var packetRepository = new FileSystemPacketRepository(jsonSerializer);
+            var runRepository = new FileSystemRunRepository(jsonSerializer);
+            var metricsRepository = new FileSystemMetricsRepository(jsonSerializer);
+            var contextBuilder = new ContextBuilder(clock, hashing);
+            var commitEngine = new CommitEngine(clock, hashing, jsonSerializer, new DiffEngine());
+            var mergeEngine = new MergeEngine();
+            var providers = new Ctx.Providers.AIProviderRegistry(Array.Empty<Ctx.Application.IAIProvider>());
+            var runOrchestrator = new RunOrchestrator(contextBuilder, providers, packetRepository, runRepository, metricsRepository, clock, hashing);
+            var service = new CtxApplicationService(workingRepository, commitRepository, branchRepository, runRepository, packetRepository, metricsRepository, runOrchestrator, contextBuilder, commitEngine, mergeEngine, clock);
+
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Ready block check test", "main", "tester"), CancellationToken.None);
+            var goal = await service.AddGoalAsync(repositoryPath, new Ctx.Application.AddGoalRequest("Close work block", "Check readiness", 1, null, "tester"), CancellationToken.None);
+            var goalId = ((Ctx.Domain.Goal)goal.Data!).Id.Value;
+            var task = await service.AddTaskAsync(repositoryPath, new Ctx.Application.AddTaskRequest("Finish closed block", "Should be ready", goalId, Array.Empty<string>(), "tester"), CancellationToken.None);
+            var taskId = ((Ctx.Domain.Task)task.Data!).Id.Value;
+            var hypothesis = await service.AddHypothesisAsync(repositoryPath, new Ctx.Application.AddHypothesisRequest("Closed thread should be commit-ready", "All thread artifacts exist", 0.9m, 0.8m, 0.7m, 0.2m, taskId, "tester"), CancellationToken.None);
+            var hypothesisId = ((Ctx.Domain.Hypothesis)hypothesis.Data!).Id.Value;
+            var evidence = await service.AddEvidenceAsync(repositoryPath, new Ctx.Application.AddEvidenceRequest("Closure evidence", "Supports readiness", "tests", "Observation", 0.9m, new[] { $"hypothesis:{hypothesisId}" }, "tester"), CancellationToken.None);
+            var evidenceId = ((Ctx.Domain.Evidence)evidence.Data!).Id.Value;
+            var decision = await service.AddDecisionAsync(repositoryPath, new Ctx.Application.AddDecisionRequest("Proceed to commit", "The block is closed", "Accepted", new[] { hypothesisId }, new[] { evidenceId }, "tester"), CancellationToken.None);
+            var decisionId = ((Ctx.Domain.Decision)decision.Data!).Id.Value;
+            await service.AddConclusionAsync(repositoryPath, new Ctx.Application.AddConclusionRequest("The task thread is fully closed.", "Accepted", new[] { decisionId }, new[] { evidenceId }, new[] { goalId }, new[] { taskId }, "tester"), CancellationToken.None);
+            await service.UpdateTaskAsync(repositoryPath, new Ctx.Application.UpdateTaskRequest(taskId, null, null, "Done", "tester"), CancellationToken.None);
+
+            var result = await service.CheckAsync(repositoryPath, taskId, CancellationToken.None);
+
+            Assert.True(result.Success);
+            Assert.Contains("ready for cognitive commit", result.Message);
+            var data = Assert.IsType<Ctx.Application.BlockCheckSummary>(result.Data);
+            Assert.True(data.ReadyForCommit);
+            Assert.Equal("explicit task selection", data.SelectionReason);
+            Assert.Empty(data.Missing);
+            Assert.Equal(1, data.AcceptedDecisionCount);
+            Assert.Equal(1, data.AcceptedConclusionCount);
         }
         finally
         {
@@ -2068,6 +2518,433 @@ public sealed class ApplicationServiceTests
     }
 
     [Fact]
+    public async Task OperationalRunbook_AddListShow_ReturnsStructuredResults()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var service = CreateService(new DateTimeOffset(2026, 4, 13, 17, 0, 0, TimeSpan.Zero));
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Runbook test", "main", "tester"), CancellationToken.None);
+            var goal = await service.AddGoalAsync(repositoryPath, new Ctx.Application.AddGoalRequest("Operate viewer", "Keep local viewer stable", 1, null, "tester"), CancellationToken.None);
+            var goalId = ((Ctx.Domain.Goal)goal.Data!).Id.Value;
+            var task = await service.AddTaskAsync(repositoryPath, new Ctx.Application.AddTaskRequest("Publish local viewer", "Refresh installed app", goalId, Array.Empty<string>(), "tester"), CancellationToken.None);
+            var taskId = ((Ctx.Domain.Task)task.Data!).Id.Value;
+
+            var added = await service.AddOperationalRunbookAsync(
+                repositoryPath,
+                new Ctx.Application.AddOperationalRunbookRequest(
+                    "Local publish",
+                    "Procedure",
+                    new[] { "publish-local", "viewer" },
+                    "Use when refreshing the installed local viewer.",
+                    new[] { "Run scripts/publish-local.ps1", "Check C:\\ctx\\viewer" },
+                    new[] { "Viewer loads locally" },
+                    new[] { "docs/LOCAL_CTX_INSTALLATION.md", "scripts/publish-local.ps1" },
+                    new[] { goalId },
+                    new[] { taskId },
+                    "tester"),
+                CancellationToken.None);
+
+            var list = await service.ListOperationalRunbooksAsync(repositoryPath, CancellationToken.None);
+            var runbookId = ((Ctx.Domain.OperationalRunbook)added.Data!).Id.Value;
+            var show = await service.ShowOperationalRunbookAsync(repositoryPath, runbookId, CancellationToken.None);
+
+            Assert.True(added.Success);
+            Assert.True(list.Success);
+            Assert.True(show.Success);
+            var listData = Assert.IsAssignableFrom<IReadOnlyList<Ctx.Domain.OperationalRunbook>>(list.Data);
+            Assert.Single(listData);
+            var runbook = Assert.IsType<Ctx.Domain.OperationalRunbook>(show.Data);
+            Assert.Equal("Local publish", runbook.Title);
+            Assert.Equal(Ctx.Domain.OperationalRunbookKind.Procedure, runbook.Kind);
+            Assert.Contains(runbook.GoalIds, item => item.Value == goalId);
+            Assert.Contains(runbook.TaskIds, item => item.Value == taskId);
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task OperationalRunbook_Add_RecreatesMissingRunbookDirectoryForLegacyRepository()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var service = CreateService(new DateTimeOffset(2026, 4, 13, 17, 5, 0, TimeSpan.Zero));
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Legacy runbook dir test", "main", "tester"), CancellationToken.None);
+            var goal = await service.AddGoalAsync(repositoryPath, new Ctx.Application.AddGoalRequest("Operate viewer", "Keep local viewer stable", 1, null, "tester"), CancellationToken.None);
+            var goalId = ((Ctx.Domain.Goal)goal.Data!).Id.Value;
+
+            var runbookDirectory = Path.Combine(repositoryPath, ".ctx", "runbooks");
+            if (Directory.Exists(runbookDirectory))
+            {
+                Directory.Delete(runbookDirectory, recursive: true);
+            }
+
+            var added = await service.AddOperationalRunbookAsync(
+                repositoryPath,
+                new Ctx.Application.AddOperationalRunbookRequest(
+                    "Local publish",
+                    "Procedure",
+                    new[] { "publish-local" },
+                    "Use when refreshing the installed local viewer.",
+                    new[] { "Run scripts/publish-local.ps1" },
+                    new[] { "Viewer responds locally" },
+                    new[] { "scripts/publish-local.ps1" },
+                    new[] { goalId },
+                    Array.Empty<string>(),
+                    "tester"),
+                CancellationToken.None);
+
+            Assert.True(added.Success);
+            Assert.True(Directory.Exists(runbookDirectory));
+            Assert.Single(Directory.GetFiles(runbookDirectory, "*.json"));
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Context_IncludesTopTwoRunbooksAndAdditionalAvailability()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var service = CreateService(new DateTimeOffset(2026, 4, 13, 17, 15, 0, TimeSpan.Zero));
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Context runbook test", "main", "tester"), CancellationToken.None);
+            var goal = await service.AddGoalAsync(repositoryPath, new Ctx.Application.AddGoalRequest("Operate viewer", "Keep local viewer stable", 1, null, "tester"), CancellationToken.None);
+            var goalId = ((Ctx.Domain.Goal)goal.Data!).Id.Value;
+            var task = await service.AddTaskAsync(repositoryPath, new Ctx.Application.AddTaskRequest("Publish local viewer", "Refresh installed app", goalId, Array.Empty<string>(), "tester"), CancellationToken.None);
+            var taskId = ((Ctx.Domain.Task)task.Data!).Id.Value;
+
+            await service.AddOperationalRunbookAsync(repositoryPath, new Ctx.Application.AddOperationalRunbookRequest(
+                "Task-specific publish",
+                "Procedure",
+                new[] { "publish-local" },
+                "Use when publishing the local viewer task.",
+                new[] { "Run scripts/publish-local.ps1" },
+                new[] { "Installed viewer responds" },
+                new[] { "scripts/publish-local.ps1" },
+                Array.Empty<string>(),
+                new[] { taskId },
+                "tester"), CancellationToken.None);
+
+            await service.AddOperationalRunbookAsync(repositoryPath, new Ctx.Application.AddOperationalRunbookRequest(
+                "Goal guardrail",
+                "Guardrail",
+                new[] { "git-commit" },
+                "Use before committing viewer changes.",
+                new[] { "Run ctx closeout first" },
+                new[] { "ctx status is clean" },
+                new[] { "ctx closeout" },
+                new[] { goalId },
+                Array.Empty<string>(),
+                "tester"), CancellationToken.None);
+
+            await service.AddOperationalRunbookAsync(repositoryPath, new Ctx.Application.AddOperationalRunbookRequest(
+                "Publish validation",
+                "Procedure",
+                new[] { "publish-local" },
+                "Use when validating local publish output.",
+                new[] { "Open the installed viewer" },
+                new[] { "Viewer loads locally" },
+                new[] { "docs/LOCAL_CTX_INSTALLATION.md" },
+                Array.Empty<string>(),
+                Array.Empty<string>(),
+                "tester"), CancellationToken.None);
+
+            await service.AddOperationalRunbookAsync(repositoryPath, new Ctx.Application.AddOperationalRunbookRequest(
+                "Recover index lock",
+                "Troubleshooting",
+                new[] { "index.lock" },
+                "Use when git is blocked by index.lock.",
+                new[] { "Inspect and remove stale lock" },
+                new[] { "git status works" },
+                new[] { ".git/index.lock" },
+                Array.Empty<string>(),
+                Array.Empty<string>(),
+                "tester"), CancellationToken.None);
+
+            var result = await service.ContextAsync(repositoryPath, "publish-local git-commit viewer refresh", goalId, taskId, CancellationToken.None);
+
+            Assert.True(result.Success);
+            var packet = Assert.IsType<Ctx.Domain.ContextPacket>(result.Data);
+            Assert.NotNull(packet.RunbookIds);
+            Assert.Equal(2, packet.RunbookIds!.Count);
+
+            var runbookSection = Assert.Single(packet.Sections.Where(section => section.Title == "Operational Runbooks"));
+            Assert.Contains("Task-specific publish", runbookSection.Content);
+            Assert.Contains("Goal guardrail", runbookSection.Content);
+            Assert.Contains("Additional runbooks available: Publish validation", runbookSection.Content);
+            Assert.DoesNotContain("Recover index lock", runbookSection.Content, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task AddGoalAsync_CreatesAutomaticCognitiveTrigger()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var service = CreateService(new DateTimeOffset(2026, 4, 13, 18, 10, 0, TimeSpan.Zero));
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Auto trigger goal test", "main", "tester"), CancellationToken.None);
+
+            var goal = await service.AddGoalAsync(repositoryPath, new Ctx.Application.AddGoalRequest("Map reasoning", "Build a new investigation lane", 1, null, "tester"), CancellationToken.None);
+            var goalId = ((Ctx.Domain.Goal)goal.Data!).Id.Value;
+            var triggers = await service.ListCognitiveTriggersAsync(repositoryPath, CancellationToken.None);
+
+            Assert.True(goal.Success);
+            var triggerList = Assert.IsAssignableFrom<IReadOnlyList<Ctx.Domain.CognitiveTrigger>>(triggers.Data);
+            var trigger = Assert.Single(triggerList);
+            Assert.Equal(Ctx.Domain.CognitiveTriggerKind.AgentPrompt, trigger.Kind);
+            Assert.Equal("Open goal line: Map reasoning", trigger.Summary);
+            Assert.Contains(trigger.GoalIds, item => item.Value == goalId);
+            Assert.Empty(trigger.TaskIds);
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task OpenWorkLineAsync_CreatesAutomaticTriggerForSubGoalAndSeedTask()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var service = CreateService(new DateTimeOffset(2026, 4, 13, 18, 15, 0, TimeSpan.Zero));
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Auto trigger work line test", "main", "tester"), CancellationToken.None);
+            var parentGoal = await service.AddGoalAsync(repositoryPath, new Ctx.Application.AddGoalRequest("Improve viewer", "Strategic viewer lane", 10, null, "tester"), CancellationToken.None);
+            var parentGoalId = ((Ctx.Domain.Goal)parentGoal.Data!).Id.Value;
+
+            var opened = await service.OpenWorkLineAsync(
+                repositoryPath,
+                new Ctx.Application.OpenWorkLineRequest(
+                    parentGoalId,
+                    "Viewer runtime reliability",
+                    "Stabilize refresh and publish flow.",
+                    12,
+                    "Inspect viewer runtime",
+                    "Check the next runtime failure.",
+                    "tester"),
+                CancellationToken.None);
+
+            var summary = Assert.IsType<Ctx.Application.OpenWorkLineSummary>(opened.Data);
+            var triggers = await service.ListCognitiveTriggersAsync(repositoryPath, CancellationToken.None);
+            var triggerList = Assert.IsAssignableFrom<IReadOnlyList<Ctx.Domain.CognitiveTrigger>>(triggers.Data);
+            var trigger = Assert.Single(triggerList.Where(item => item.GoalIds.Any(id => id.Value == summary.GoalId) && item.TaskIds.Any(id => id.Value == summary.SeedTaskId)));
+
+            Assert.Equal("Open tactical line: Viewer runtime reliability", trigger.Summary);
+            Assert.Equal(Ctx.Domain.CognitiveTriggerKind.AgentPrompt, trigger.Kind);
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task AddTaskAsync_CreatesAutomaticTriggerOnlyForTopLevelIndependentTasks()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var service = CreateService(new DateTimeOffset(2026, 4, 13, 18, 20, 0, TimeSpan.Zero));
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Auto trigger task test", "main", "tester"), CancellationToken.None);
+
+            var topLevel = await service.AddTaskAsync(repositoryPath, new Ctx.Application.AddTaskRequest("Investigate graph gap", "Open a focused task lane", null, Array.Empty<string>(), "tester"), CancellationToken.None);
+            var topLevelTask = Assert.IsType<Ctx.Domain.Task>(topLevel.Data);
+
+            var child = await service.AddTaskAsync(repositoryPath, new Ctx.Application.AddTaskRequest("Document sub-step", "Continuation only", null, Array.Empty<string>(), "tester", topLevelTask.Id.Value), CancellationToken.None);
+            var childTask = Assert.IsType<Ctx.Domain.Task>(child.Data);
+
+            var dependent = await service.AddTaskAsync(repositoryPath, new Ctx.Application.AddTaskRequest("Follow dependency", "Depends on the first task", null, new[] { topLevelTask.Id.Value }, "tester"), CancellationToken.None);
+            var dependentTask = Assert.IsType<Ctx.Domain.Task>(dependent.Data);
+
+            var triggers = await service.ListCognitiveTriggersAsync(repositoryPath, CancellationToken.None);
+            var triggerList = Assert.IsAssignableFrom<IReadOnlyList<Ctx.Domain.CognitiveTrigger>>(triggers.Data);
+
+            Assert.Single(triggerList);
+            var trigger = triggerList[0];
+            Assert.Equal($"Open task line: {topLevelTask.Title}", trigger.Summary);
+            Assert.Contains(trigger.TaskIds, item => item == topLevelTask.Id);
+            Assert.DoesNotContain(trigger.TaskIds, item => item == childTask.Id);
+            Assert.DoesNotContain(trigger.TaskIds, item => item == dependentTask.Id);
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Check_IncludesSuggestedRunbooksForFocusedTask()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var service = CreateService(new DateTimeOffset(2026, 4, 13, 18, 0, 0, TimeSpan.Zero));
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Check runbook test", "main", "tester"), CancellationToken.None);
+            var goal = await service.AddGoalAsync(repositoryPath, new Ctx.Application.AddGoalRequest("Operate viewer", "Keep local viewer stable", 1, null, "tester"), CancellationToken.None);
+            var goalId = ((Ctx.Domain.Goal)goal.Data!).Id.Value;
+            var task = await service.AddTaskAsync(repositoryPath, new Ctx.Application.AddTaskRequest("Publish local viewer", "publish-local git-commit viewer refresh", goalId, Array.Empty<string>(), "tester"), CancellationToken.None);
+            var taskId = ((Ctx.Domain.Task)task.Data!).Id.Value;
+
+            await service.AddOperationalRunbookAsync(repositoryPath, new Ctx.Application.AddOperationalRunbookRequest(
+                "Local publish",
+                "Procedure",
+                new[] { "publish-local" },
+                "Use when refreshing the installed local viewer.",
+                new[] { "Run scripts/publish-local.ps1" },
+                new[] { "Viewer responds locally" },
+                new[] { "scripts/publish-local.ps1" },
+                new[] { goalId },
+                new[] { taskId },
+                "tester"), CancellationToken.None);
+
+            await service.AddOperationalRunbookAsync(repositoryPath, new Ctx.Application.AddOperationalRunbookRequest(
+                "Git closeout",
+                "Guardrail",
+                new[] { "git-commit" },
+                "Use before git closeout for viewer changes.",
+                new[] { "Run ctx closeout" },
+                new[] { "ctx status is clean" },
+                new[] { "ctx closeout" },
+                new[] { goalId },
+                Array.Empty<string>(),
+                "tester"), CancellationToken.None);
+
+            await service.AddOperationalRunbookAsync(repositoryPath, new Ctx.Application.AddOperationalRunbookRequest(
+                "Viewer validation",
+                "Procedure",
+                new[] { "viewer" },
+                "Use when validating the installed viewer.",
+                new[] { "Open the installed viewer" },
+                new[] { "Viewer loads locally" },
+                new[] { "docs/LOCAL_CTX_INSTALLATION.md" },
+                Array.Empty<string>(),
+                Array.Empty<string>(),
+                "tester"), CancellationToken.None);
+
+            var result = await service.CheckAsync(repositoryPath, taskId, CancellationToken.None);
+
+            Assert.True(result.Success);
+            var data = Assert.IsType<Ctx.Application.BlockCheckSummary>(result.Data);
+            Assert.Equal(2, data.RunbookSuggestions.Count);
+            Assert.Contains(data.RunbookSuggestions, item => item.Title == "Local publish");
+            Assert.Contains(data.RunbookSuggestions, item => item.Title == "Git closeout");
+            Assert.Contains("Viewer validation", data.AdditionalRunbooksAvailable);
+            Assert.Contains(data.Guidance, item => item.Contains("operational runbook suggestion", StringComparison.OrdinalIgnoreCase));
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task ExportImport_PreservesOperationalRunbooks()
+    {
+        var sourceRepositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        var targetRepositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        var exportPath = Path.Combine(Path.GetTempPath(), "ctx-tests", $"{Guid.NewGuid():N}.json");
+        Directory.CreateDirectory(sourceRepositoryPath);
+        Directory.CreateDirectory(targetRepositoryPath);
+
+        try
+        {
+            var service = CreateService(new DateTimeOffset(2026, 4, 13, 17, 30, 0, TimeSpan.Zero));
+            await service.InitAsync(sourceRepositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Export runbook test", "main", "tester"), CancellationToken.None);
+            var goal = await service.AddGoalAsync(sourceRepositoryPath, new Ctx.Application.AddGoalRequest("Operate viewer", "Keep local viewer stable", 1, null, "tester"), CancellationToken.None);
+            var goalId = ((Ctx.Domain.Goal)goal.Data!).Id.Value;
+
+            await service.AddOperationalRunbookAsync(sourceRepositoryPath, new Ctx.Application.AddOperationalRunbookRequest(
+                "Git closeout",
+                "Policy",
+                new[] { "git-commit", "git-push" },
+                "Use before publishing viewer changes.",
+                new[] { "Run ctx closeout", "Commit CTX before Git" },
+                new[] { "git status is clean" },
+                new[] { "ctx closeout" },
+                new[] { goalId },
+                Array.Empty<string>(),
+                "tester"), CancellationToken.None);
+
+            var export = await service.ExportAsync(sourceRepositoryPath, exportPath, CancellationToken.None);
+            var importedService = CreateService(new DateTimeOffset(2026, 4, 13, 17, 35, 0, TimeSpan.Zero));
+            var import = await importedService.ImportAsync(targetRepositoryPath, exportPath, CancellationToken.None);
+            var runbooks = await importedService.ListOperationalRunbooksAsync(targetRepositoryPath, CancellationToken.None);
+
+            Assert.True(export.Success);
+            Assert.True(import.Success);
+            var runbookList = Assert.IsAssignableFrom<IReadOnlyList<Ctx.Domain.OperationalRunbook>>(runbooks.Data);
+            Assert.Single(runbookList);
+            Assert.Equal("Git closeout", runbookList[0].Title);
+        }
+        finally
+        {
+            if (Directory.Exists(sourceRepositoryPath))
+            {
+                Directory.Delete(sourceRepositoryPath, recursive: true);
+            }
+
+            if (Directory.Exists(targetRepositoryPath))
+            {
+                Directory.Delete(targetRepositoryPath, recursive: true);
+            }
+
+            if (File.Exists(exportPath))
+            {
+                File.Delete(exportPath);
+            }
+        }
+    }
+
+    [Fact]
     public async Task ConcurrentTaskUpdates_PersistBothChangesWithRepositoryLock()
     {
         var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
@@ -2115,5 +2992,26 @@ public sealed class ApplicationServiceTests
                 Directory.Delete(repositoryPath, recursive: true);
             }
         }
+    }
+
+    private static CtxApplicationService CreateService(DateTimeOffset timestamp)
+    {
+        var clock = new FixedClock(timestamp);
+        var jsonSerializer = new DefaultJsonSerializer();
+        var hashing = new Sha256HashingService();
+        var workingRepository = new FileSystemWorkingContextRepository(jsonSerializer);
+        var commitRepository = new FileSystemCommitRepository(jsonSerializer);
+        var branchRepository = new FileSystemBranchRepository(jsonSerializer);
+        var packetRepository = new FileSystemPacketRepository(jsonSerializer);
+        var runRepository = new FileSystemRunRepository(jsonSerializer);
+        var metricsRepository = new FileSystemMetricsRepository(jsonSerializer);
+        var runbookRepository = new FileSystemOperationalRunbookRepository(jsonSerializer);
+        var triggerRepository = new FileSystemCognitiveTriggerRepository(jsonSerializer);
+        var contextBuilder = new ContextBuilder(clock, hashing);
+        var commitEngine = new CommitEngine(clock, hashing, jsonSerializer, new DiffEngine());
+        var mergeEngine = new MergeEngine();
+        var providers = new Ctx.Providers.AIProviderRegistry(Array.Empty<Ctx.Application.IAIProvider>());
+        var runOrchestrator = new RunOrchestrator(contextBuilder, providers, packetRepository, runRepository, metricsRepository, clock, hashing, runbookRepository, triggerRepository);
+        return new CtxApplicationService(workingRepository, commitRepository, branchRepository, runRepository, packetRepository, metricsRepository, runOrchestrator, contextBuilder, commitEngine, mergeEngine, clock, null, runbookRepository, triggerRepository);
     }
 }

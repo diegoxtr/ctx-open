@@ -22,11 +22,20 @@ const graphCaption = document.getElementById("graph-caption");
 const graphFocusCaption = document.getElementById("graph-focus-caption");
 const commitDetail = document.getElementById("commit-detail");
 const nodeDetail = document.getElementById("node-detail");
+const originDetail = document.getElementById("origin-detail");
+const playbookDetail = document.getElementById("playbook-detail");
+const leftTabButtons = Array.from(document.querySelectorAll("[data-left-tab]"));
+const leftTabPanels = Array.from(document.querySelectorAll("[data-left-panel]"));
+const leftRailTabButtons = Array.from(document.querySelectorAll("[data-left-rail-tab]"));
+const detailTabButtons = Array.from(document.querySelectorAll("[data-detail-tab]"));
+const detailTabPanels = Array.from(document.querySelectorAll("[data-detail-panel]"));
+const detailRailTabButtons = Array.from(document.querySelectorAll("[data-detail-rail-tab]"));
 const viewerHint = document.getElementById("viewer-hint");
 const taskStateFilters = Array.from(document.querySelectorAll("[data-task-filter]"));
 const graphPresetButtons = Array.from(document.querySelectorAll("[data-graph-preset]"));
 const layout = document.querySelector(".layout");
 const panelDividers = Array.from(document.querySelectorAll(".panel-divider"));
+const panelCollapseButtons = Array.from(document.querySelectorAll("[data-toggle-panel]"));
 const viewModeButtons = Array.from(document.querySelectorAll(".view-mode-button"));
 const viewModeCaption = document.getElementById("view-mode-caption");
 const commitFocusToggle = document.getElementById("commit-focus-toggle");
@@ -41,6 +50,8 @@ const commitFocusStorageKey = "ctx-viewer-commit-focus";
 const historyBranchFilterStorageKey = "ctx-viewer-history-branch-filters";
 const historySortStorageKey = "ctx-viewer-history-sort";
 const panelLayoutStorageKey = "ctx-viewer-panel-layout";
+const leftTabStorageKey = "ctx-viewer-left-tab";
+const detailTabStorageKey = "ctx-viewer-detail-tab";
 const repositoryPathStorageKey = "ctx-viewer-repository-path";
 const branchStorageKey = "ctx-viewer-branch";
 const autoRefreshStorageKey = "ctx-viewer-auto-refresh";
@@ -59,6 +70,8 @@ let selectedNodeId = null;
 let lastLoadedAt = null;
 let autoRefreshHandle = null;
 const autoRefreshIntervalMs = 5000;
+let overviewRequestSequence = 0;
+let selectionRequestSequence = 0;
 let currentViewMode = loadStoredViewMode();
 let currentGraphPreset = "all";
 let currentGraphFocusModes = new Set(["all"]);
@@ -67,8 +80,12 @@ let currentHistorySort = loadStoredHistorySort();
 let currentPanelLayout = loadStoredPanelLayout();
 let currentCommitFocus = null;
 let currentCommitFocusEnabled = loadStoredCommitFocus();
+let currentLeftTab = loadStoredLeftTab();
+let currentDetailTab = loadStoredDetailTab();
 let transientGraphFocusSnapshot = null;
 let suppressGraphFocusPersist = false;
+let playbookRequestSequence = 0;
+let originRequestSequence = 0;
 
 const graphPresets = {
     all: ["Draft", "Ready", "InProgress", "Blocked", "Done"],
@@ -91,7 +108,7 @@ for (const input of taskStateFilters) {
         syncPresetFromFilters();
         persistGraphFocusSelection();
         selectedNodeId = null;
-        renderGraph(currentGraph);
+        renderGraph(currentGraph, { preserveViewport: true });
         nodeDetail.textContent = "Click a node.";
     });
 }
@@ -135,13 +152,15 @@ if (commitFocusToggle) {
         currentCommitFocusEnabled = commitFocusToggle.checked;
         persistCommitFocusSelection();
         if (currentGraph) {
-            renderGraph(currentGraph);
+            renderGraph(currentGraph, { preserveViewport: true });
         }
     });
 }
 
 window.addEventListener("load", async () => {
     applyViewMode(currentViewMode);
+    applyLeftTab(currentLeftTab);
+    applyDetailTab(currentDetailTab);
     restoreGraphFocusSelection();
     historySortSelect.value = currentHistorySort;
     autoRefreshToggle.checked = loadStoredAutoRefreshPreference();
@@ -168,9 +187,37 @@ for (const button of viewModeButtons) {
     });
 }
 
+for (const button of leftTabButtons) {
+    button.addEventListener("click", () => {
+        applyLeftTab(button.dataset.leftTab);
+    });
+}
+
+for (const button of leftRailTabButtons) {
+    button.addEventListener("click", () => {
+        applyLeftTab(button.dataset.leftRailTab);
+        expandPanel("left");
+    });
+}
+
+for (const button of detailTabButtons) {
+    button.addEventListener("click", () => {
+        applyDetailTab(button.dataset.detailTab);
+    });
+}
+
+for (const button of detailRailTabButtons) {
+    button.addEventListener("click", () => {
+        applyDetailTab(button.dataset.detailRailTab);
+        expandPanel("right");
+    });
+}
+
 async function loadOverview(branch) {
+    const requestSequence = ++overviewRequestSequence;
     const previousOverview = currentOverview;
-    const previousSelectedCommitId = selectedCommitId;
+    const requestStartedCommitId = selectedCommitId;
+    const requestStartedNodeId = selectedNodeId;
     const repositoryPath = repoPathInput.value.trim();
     const params = new URLSearchParams();
     if (repositoryPath) {
@@ -181,13 +228,24 @@ async function loadOverview(branch) {
     }
 
     const response = await fetch(`/api/overview?${params.toString()}`);
+    if (requestSequence !== overviewRequestSequence) {
+        return;
+    }
+
     if (!response.ok) {
         const error = await response.json();
+        if (requestSequence !== overviewRequestSequence) {
+            return;
+        }
         resetViewer(error.message ?? "Failed to load repository.");
         return;
     }
 
     const overview = await response.json();
+    if (requestSequence !== overviewRequestSequence) {
+        return;
+    }
+
     currentOverview = overview;
     lastLoadedAt = new Date();
     restoreHistoryBranchFilters(overview);
@@ -196,6 +254,10 @@ async function loadOverview(branch) {
     persistBranchSelection(overview.selectedBranch);
     viewerHint.textContent = `Loaded ${overview.repositoryPath}`;
     currentHypothesisRanking = await loadHypothesisRanking();
+    if (requestSequence !== overviewRequestSequence) {
+        return;
+    }
+
     renderFreshnessStatus();
 
     renderBranchSelect(overview);
@@ -204,14 +266,28 @@ async function loadOverview(branch) {
     renderTasks(overview);
     renderCommits(overview);
 
-    const commitStillExists = previousSelectedCommitId
-        && overview.timelineCommits.some(commit => commit.id === previousSelectedCommitId);
+    const currentSelectedCommitId = selectedCommitId;
+    const currentSelectedNodeId = selectedNodeId;
+    const effectiveSelectedCommitId = currentSelectedCommitId !== requestStartedCommitId
+        ? currentSelectedCommitId
+        : requestStartedCommitId;
+    const effectiveSelectedNodeId = currentSelectedCommitId !== requestStartedCommitId
+        ? currentSelectedNodeId
+        : requestStartedNodeId;
+    const commitStillExists = effectiveSelectedCommitId
+        && overview.timelineCommits.some(commit => commit.id === effectiveSelectedCommitId);
     const preferredCommit =
-        commitStillExists ? previousSelectedCommitId :
-        previousOverview && previousSelectedCommitId === null ? null :
+        commitStillExists ? effectiveSelectedCommitId :
+        previousOverview && effectiveSelectedCommitId === null ? null :
         overview.timelineCommits[0]?.id ?? null;
+    const preferredNodeId = effectiveSelectedCommitId === preferredCommit ? effectiveSelectedNodeId : null;
+    const preserveViewport = previousOverview && effectiveSelectedCommitId === preferredCommit;
 
-    await selectCommit(preferredCommit);
+    await selectCommit(preferredCommit, {
+        preferredNodeId,
+        scrollSelectedNodeIntoView: false,
+        preserveViewport
+    });
     syncAutoRefresh();
 }
 
@@ -428,15 +504,17 @@ function normalizePanelModeLayout(value, fallback) {
 
     return {
         left: Number.isFinite(value.left) ? value.left : fallback.left,
-        right: Number.isFinite(value.right) ? value.right : fallback.right
+        right: Number.isFinite(value.right) ? value.right : fallback.right,
+        leftCollapsed: typeof value.leftCollapsed === "boolean" ? value.leftCollapsed : fallback.leftCollapsed,
+        rightCollapsed: typeof value.rightCollapsed === "boolean" ? value.rightCollapsed : fallback.rightCollapsed
     };
 }
 
 function getDefaultPanelLayout() {
     return {
-        history: { left: 920, right: 360 },
-        split: { left: 320, right: 360 },
-        graph: { left: 280, right: 320 }
+        history: { left: 920, right: 360, leftCollapsed: false, rightCollapsed: false },
+        split: { left: 320, right: 360, leftCollapsed: false, rightCollapsed: false },
+        graph: { left: 280, right: 320, leftCollapsed: false, rightCollapsed: false }
     };
 }
 
@@ -452,6 +530,72 @@ function persistPanelLayout() {
     window.localStorage.setItem(panelLayoutStorageKey, JSON.stringify(currentPanelLayout));
 }
 
+function loadStoredLeftTab() {
+    const stored = window.localStorage.getItem(leftTabStorageKey);
+    return stored === "tasks" ? "tasks" : "history";
+}
+
+function persistLeftTab() {
+    window.localStorage.setItem(leftTabStorageKey, currentLeftTab);
+}
+
+function applyLeftTab(tab) {
+    currentLeftTab = tab === "tasks" ? "tasks" : "history";
+
+    for (const button of leftTabButtons) {
+        const active = button.dataset.leftTab === currentLeftTab;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-selected", active ? "true" : "false");
+    }
+
+    for (const button of leftRailTabButtons) {
+        const active = button.dataset.leftRailTab === currentLeftTab;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-selected", active ? "true" : "false");
+    }
+
+    for (const panel of leftTabPanels) {
+        const active = panel.dataset.leftPanel === currentLeftTab;
+        panel.classList.toggle("active", active);
+        panel.hidden = !active;
+    }
+
+    persistLeftTab();
+}
+
+function loadStoredDetailTab() {
+    const stored = window.localStorage.getItem(detailTabStorageKey);
+    return stored === "origin" || stored === "playbook" || stored === "hypotheses" ? stored : "details";
+}
+
+function persistDetailTab() {
+    window.localStorage.setItem(detailTabStorageKey, currentDetailTab);
+}
+
+function applyDetailTab(tab) {
+    currentDetailTab = tab === "origin" || tab === "playbook" || tab === "hypotheses" ? tab : "details";
+
+    for (const button of detailTabButtons) {
+        const active = button.dataset.detailTab === currentDetailTab;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-selected", active ? "true" : "false");
+    }
+
+    for (const button of detailRailTabButtons) {
+        const active = button.dataset.detailRailTab === currentDetailTab;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-selected", active ? "true" : "false");
+    }
+
+    for (const panel of detailTabPanels) {
+        const active = panel.dataset.detailPanel === currentDetailTab;
+        panel.classList.toggle("active", active);
+        panel.hidden = !active;
+    }
+
+    persistDetailTab();
+}
+
 function applyPanelLayout() {
     if (!layout) {
         return;
@@ -460,9 +604,22 @@ function applyPanelLayout() {
     const mode = currentViewMode;
     const panelLayout = getPanelLayoutForMode(mode);
     const clamped = clampPanelWidths(mode, panelLayout.left, panelLayout.right);
-    currentPanelLayout[mode] = clamped;
-    layout.style.setProperty("--panel-left-width", `${clamped.left}px`);
-    layout.style.setProperty("--panel-right-width", `${clamped.right}px`);
+    currentPanelLayout[mode] = {
+        ...clamped,
+        leftCollapsed: panelLayout.leftCollapsed ?? false,
+        rightCollapsed: panelLayout.rightCollapsed ?? false
+    };
+    const constraints = getPanelConstraints(mode);
+    const leftCollapsed = currentPanelLayout[mode].leftCollapsed;
+    const rightCollapsed = currentPanelLayout[mode].rightCollapsed;
+    const collapsedWidth = 56;
+    layout.style.setProperty("--panel-left-width", `${leftCollapsed ? collapsedWidth : clamped.left}px`);
+    layout.style.setProperty("--panel-right-width", `${rightCollapsed ? collapsedWidth : clamped.right}px`);
+    layout.style.setProperty("--panel-left-min", `${leftCollapsed ? collapsedWidth : constraints.leftMin}px`);
+    layout.style.setProperty("--panel-right-min", `${rightCollapsed ? collapsedWidth : constraints.rightMin}px`);
+    layout.dataset.leftCollapsed = leftCollapsed ? "true" : "false";
+    layout.dataset.rightCollapsed = rightCollapsed ? "true" : "false";
+    syncPanelCollapseButtons();
     persistPanelLayout();
 }
 
@@ -481,11 +638,7 @@ function clampPanelWidths(mode, leftWidth, rightWidth) {
         };
     }
 
-    const constraints = {
-        history: { leftMin: 560, leftMax: 1400, rightMin: 280, rightMax: 640, centerMin: 0 },
-        split: { leftMin: 260, leftMax: 720, rightMin: 280, rightMax: 640, centerMin: 360 },
-        graph: { leftMin: 220, leftMax: 560, rightMin: 260, rightMax: 520, centerMin: 420 }
-    }[mode] ?? { leftMin: 260, leftMax: 720, rightMin: 280, rightMax: 640, centerMin: 360 };
+    const constraints = getPanelConstraints(mode);
 
     let left = clampNumber(leftWidth ?? defaults.left, constraints.leftMin, constraints.leftMax);
     let right = clampNumber(rightWidth ?? defaults.right, constraints.rightMin, constraints.rightMax);
@@ -536,6 +689,14 @@ function clampNumber(value, min, max) {
     return Math.min(max, Math.max(min, value));
 }
 
+function getPanelConstraints(mode) {
+    return {
+        history: { leftMin: 560, leftMax: 1400, rightMin: 280, rightMax: 640, centerMin: 0 },
+        split: { leftMin: 260, leftMax: 720, rightMin: 280, rightMax: 640, centerMin: 360 },
+        graph: { leftMin: 220, leftMax: 560, rightMin: 260, rightMax: 520, centerMin: 420 }
+    }[mode] ?? { leftMin: 260, leftMax: 720, rightMin: 280, rightMax: 640, centerMin: 360 };
+}
+
 function attachPanelDividerHandlers() {
     if (!layout || panelDividers.length === 0) {
         return;
@@ -543,6 +704,13 @@ function attachPanelDividerHandlers() {
 
     for (const divider of panelDividers) {
         divider.addEventListener("pointerdown", event => {
+            if (event.target instanceof Element && event.target.closest(".panel-collapse-toggle")) {
+                console.debug("[ctx-viewer] collapse button pointerdown bypassed divider drag", {
+                    side: divider.dataset.divider
+                });
+                return;
+            }
+
             if (window.matchMedia("(max-width: 1200px)").matches) {
                 return;
             }
@@ -550,6 +718,10 @@ function attachPanelDividerHandlers() {
             event.preventDefault();
             const dividerSide = divider.dataset.divider;
             const activeMode = currentViewMode;
+            const panelLayout = getPanelLayoutForMode(activeMode);
+            if ((dividerSide === "left" && panelLayout.leftCollapsed) || (dividerSide === "right" && panelLayout.rightCollapsed)) {
+                return;
+            }
             const pointerId = event.pointerId;
             divider.classList.add("dragging");
             divider.setPointerCapture(pointerId);
@@ -585,6 +757,63 @@ function attachPanelDividerHandlers() {
             divider.addEventListener("pointerup", finishDrag);
             divider.addEventListener("pointercancel", finishDrag);
         });
+    }
+}
+
+for (const button of panelCollapseButtons) {
+    button.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        console.debug("[ctx-viewer] collapse button click", {
+            side: button.dataset.togglePanel,
+            mode: currentViewMode
+        });
+        togglePanelCollapse(button.dataset.togglePanel);
+    });
+}
+
+function togglePanelCollapse(side) {
+    const panelLayout = getPanelLayoutForMode(currentViewMode);
+    if (side === "left") {
+        panelLayout.leftCollapsed = !panelLayout.leftCollapsed;
+    } else if (side === "right") {
+        panelLayout.rightCollapsed = !panelLayout.rightCollapsed;
+    }
+
+    console.debug("[ctx-viewer] togglePanelCollapse", {
+        side,
+        leftCollapsed: panelLayout.leftCollapsed,
+        rightCollapsed: panelLayout.rightCollapsed,
+        mode: currentViewMode
+    });
+    applyPanelLayout();
+}
+
+function expandPanel(side) {
+    const panelLayout = getPanelLayoutForMode(currentViewMode);
+    if (side === "left" && panelLayout.leftCollapsed) {
+        panelLayout.leftCollapsed = false;
+    } else if (side === "right" && panelLayout.rightCollapsed) {
+        panelLayout.rightCollapsed = false;
+    } else {
+        return;
+    }
+
+    applyPanelLayout();
+}
+
+function syncPanelCollapseButtons() {
+    const panelLayout = getPanelLayoutForMode(currentViewMode);
+    for (const button of panelCollapseButtons) {
+        const side = button.dataset.togglePanel;
+        const collapsed = side === "left"
+            ? panelLayout.leftCollapsed
+            : panelLayout.rightCollapsed;
+        button.textContent = side === "left"
+            ? (collapsed ? "›" : "‹")
+            : (collapsed ? "‹" : "›");
+        button.setAttribute("aria-label", `${collapsed ? "Expand" : "Collapse"} ${side} panel`);
+        button.title = `${collapsed ? "Expand" : "Collapse"} ${side} panel`;
     }
 }
 
@@ -652,6 +881,7 @@ function loadStoredTaskStateSelection() {
 }
 
 function renderCommits(overview) {
+    const historyScrollSnapshot = captureHistoryPanelScroll();
     commitList.innerHTML = "";
     commitCount.textContent = `${overview.timelineCommits.length}`;
     const lanes = buildLaneMap(overview);
@@ -674,10 +904,56 @@ function renderCommits(overview) {
 
     if (currentViewMode === "history") {
         renderBranchFirstHistory(overview, orderedBranches, groupedCommits, lanes, laneCount);
+        restoreHistoryPanelScroll(historyScrollSnapshot);
         return;
     }
 
     renderCompactHistoryNavigator(overview, orderedBranches, groupedCommits, lanes, laneCount);
+    restoreHistoryPanelScroll(historyScrollSnapshot);
+}
+
+function captureHistoryPanelScroll() {
+    return {
+        branchList: captureElementScroll(".history-branch-list"),
+        rows: captureElementScroll(".history-rows"),
+        compactRows: captureElementScroll(".history-compact-rows")
+    };
+}
+
+function captureElementScroll(selector) {
+    const element = commitList.querySelector(selector);
+    if (!element) {
+        return null;
+    }
+
+    return {
+        top: element.scrollTop,
+        left: element.scrollLeft
+    };
+}
+
+function restoreHistoryPanelScroll(snapshot) {
+    if (!snapshot) {
+        return;
+    }
+
+    restoreElementScroll(".history-branch-list", snapshot.branchList);
+    restoreElementScroll(".history-rows", snapshot.rows);
+    restoreElementScroll(".history-compact-rows", snapshot.compactRows);
+}
+
+function restoreElementScroll(selector, snapshot) {
+    if (!snapshot) {
+        return;
+    }
+
+    const element = commitList.querySelector(selector);
+    if (!element) {
+        return;
+    }
+
+    element.scrollTop = snapshot.top;
+    element.scrollLeft = snapshot.left;
 }
 
 function renderBranchFirstHistory(overview, orderedBranches, groupedCommits, lanes, laneCount) {
@@ -1085,10 +1361,16 @@ function renderHypothesisRanking(items) {
     }
 }
 
-async function selectCommit(commitId) {
+async function selectCommit(commitId, options = {}) {
     if (!currentOverview) {
         return;
     }
+
+    const requestSequence = ++selectionRequestSequence;
+
+    const preferredNodeId = options.preferredNodeId ?? null;
+    const scrollSelectedNodeIntoView = options.scrollSelectedNodeIntoView ?? false;
+    const preserveViewport = options.preserveViewport ?? false;
 
     if (commitId !== null && transientGraphFocusSnapshot) {
         restoreGraphFocus(transientGraphFocusSnapshot);
@@ -1105,8 +1387,15 @@ async function selectCommit(commitId) {
     }
 
     const graphResponse = await fetch(`/api/graph?${params.toString()}`);
+    if (requestSequence !== selectionRequestSequence) {
+        return;
+    }
+
     if (!graphResponse.ok) {
         const error = await graphResponse.json();
+        if (requestSequence !== selectionRequestSequence) {
+            return;
+        }
         graphCanvas.innerHTML = "";
         graphCaption.textContent = "Graph unavailable";
         nodeDetail.textContent = JSON.stringify(error, null, 2);
@@ -1114,11 +1403,23 @@ async function selectCommit(commitId) {
     }
 
     currentGraph = await graphResponse.json();
-    selectedNodeId = null;
+    if (requestSequence !== selectionRequestSequence) {
+        return;
+    }
+
+    selectedNodeId = preferredNodeId && currentGraph.nodes.some(node => node.id === preferredNodeId)
+        ? preferredNodeId
+        : null;
 
     if (commitId) {
         const detailResponse = await fetch(`/api/commit?id=${encodeURIComponent(commitId)}&path=${encodeURIComponent(repoPathInput.value)}`);
+        if (requestSequence !== selectionRequestSequence) {
+            return;
+        }
         const detail = await detailResponse.json();
+        if (requestSequence !== selectionRequestSequence) {
+            return;
+        }
         currentCommitFocus = buildCommitFocus(detail, currentGraph);
         ensureAllTaskStateFiltersChecked();
         renderCommitDetail(detail);
@@ -1128,13 +1429,42 @@ async function selectCommit(commitId) {
         graphCaption.textContent = "Working context";
     }
 
-    renderGraph(currentGraph);
+    renderGraph(currentGraph, { preserveViewport });
     renderTasks(currentOverview);
+    await loadOriginDetail();
+    await loadPlaybookDetail();
 
-    nodeDetail.textContent = "Click a node.";
+    if (selectedNodeId) {
+        renderSelectedNodeDetail(selectedNodeId, { scrollIntoView: scrollSelectedNodeIntoView });
+    } else {
+        nodeDetail.textContent = "Click a node.";
+    }
 }
 
-function renderGraph(graph) {
+function captureGraphViewport() {
+    return {
+        left: graphCanvas.scrollLeft,
+        top: graphCanvas.scrollTop
+    };
+}
+
+function restoreGraphViewport(viewport) {
+    if (!viewport) {
+        return;
+    }
+
+    graphCanvas.scrollLeft = viewport.left;
+    graphCanvas.scrollTop = viewport.top;
+}
+
+function resetGraphViewport() {
+    graphCanvas.scrollLeft = 0;
+    graphCanvas.scrollTop = 0;
+}
+
+function renderGraph(graph, options = {}) {
+    const preserveViewport = options.preserveViewport ?? false;
+    const viewportSnapshot = preserveViewport ? captureGraphViewport() : null;
     const scopedGraph = currentCommitFocusEnabled && currentCommitFocus
         ? filterGraphByCommitFocus(graph, currentCommitFocus)
         : graph;
@@ -1161,6 +1491,11 @@ function renderGraph(graph) {
         }
 
         graphCanvas.innerHTML = `<p class="detail-empty">No graph nodes match the selected task states.${hint ? ` ${hint}` : ""}</p>`;
+        if (preserveViewport) {
+            restoreGraphViewport(viewportSnapshot);
+        } else {
+            resetGraphViewport();
+        }
         return;
     }
 
@@ -1240,7 +1575,7 @@ function renderGraph(graph) {
             card.style.left = `${columnIndex * columnGap + 10}px`;
             card.style.top = `${y}px`;
             card.innerHTML = `<small>${displayType}</small><strong>${escapeHtml(node.label)}</strong>${scoreBadge}`;
-            card.onclick = () => showNode(node.id);
+            card.onclick = () => showNode(node.id, { scrollIntoView: false });
             stage.appendChild(card);
         });
 
@@ -1287,17 +1622,28 @@ function renderGraph(graph) {
         }
         svg.appendChild(line);
     }
+
+    if (preserveViewport) {
+        restoreGraphViewport(viewportSnapshot);
+    } else {
+        resetGraphViewport();
+    }
 }
 
-function showNode(nodeId) {
-    selectedNodeId = nodeId;
-    renderGraph(currentGraph);
-    if (currentOverview) {
-        renderTasks(currentOverview);
+function renderSelectedNodeDetail(nodeId, options = {}) {
+    const scrollIntoView = options.scrollIntoView ?? false;
+    const graph = currentRenderedGraph ?? currentGraph;
+    if (!graph) {
+        nodeDetail.textContent = "Click a node.";
+        return;
     }
 
-    const graph = currentRenderedGraph ?? currentGraph;
     const node = graph.nodes.find(item => item.id === nodeId);
+    if (!node) {
+        nodeDetail.textContent = "Selected node is no longer visible with the current filters.";
+        return;
+    }
+
     const incoming = graph.edges.filter(edge => edge.to === nodeId);
     const outgoing = graph.edges.filter(edge => edge.from === nodeId);
     const connectedNodeIds = [...new Set([...incoming.map(edge => edge.from), ...outgoing.map(edge => edge.to)])];
@@ -1305,8 +1651,22 @@ function showNode(nodeId) {
 
     nodeDetail.textContent = JSON.stringify({ node, incoming, outgoing, connectedNodes }, null, 2);
 
-    const activeNode = graphCanvas.querySelector(".graph-node.active");
-    activeNode?.scrollIntoView({ block: "center", inline: "center", behavior: "smooth" });
+    if (scrollIntoView) {
+        const activeNode = graphCanvas.querySelector(".graph-node.active");
+        activeNode?.scrollIntoView({ block: "center", inline: "center", behavior: "smooth" });
+    }
+}
+
+function showNode(nodeId, options = {}) {
+    selectedNodeId = nodeId;
+    renderGraph(currentGraph, { preserveViewport: true });
+    if (currentOverview) {
+        renderTasks(currentOverview);
+    }
+
+    renderSelectedNodeDetail(nodeId, options);
+    void loadOriginDetail();
+    void loadPlaybookDetail();
 }
 
 async function focusTask(task) {
@@ -1324,7 +1684,7 @@ async function focusTask(task) {
         applyViewMode("split");
     }
 
-    showNode(`Task:${task.id}`);
+    showNode(`Task:${task.id}`, { scrollIntoView: true });
 }
 
 function ensureTaskStateVisible(taskState) {
@@ -1338,7 +1698,7 @@ function ensureTaskStateVisible(taskState) {
         syncPresetFromFilters();
         persistGraphFocusSelection();
         if (currentGraph) {
-            renderGraph(currentGraph);
+            renderGraph(currentGraph, { preserveViewport: true });
         }
     }
 }
@@ -1370,6 +1730,7 @@ function resetViewer(message) {
     graphFocusCaption.textContent = "Showing all task states.";
     commitDetail.innerHTML = `<p class="detail-empty">Select a commit.</p>`;
     nodeDetail.textContent = "Click a node.";
+    playbookDetail.innerHTML = `<p class="detail-empty">Select a task, goal, or commit focus to view operational runbooks.</p>`;
     viewerHint.textContent = message;
     stopAutoRefresh();
 }
@@ -1418,6 +1779,18 @@ function filterGraphByTaskState(graph) {
 
     const nodeMap = new Map(graph.nodes.map(node => [node.id, node]));
     const nodeAssociations = new Map(graph.nodes.map(node => [node.id, new Set()]));
+    const taskGoalIds = new Map();
+    const subGoalParentIds = new Map();
+
+    for (const edge of graph.edges) {
+        if (edge.relationship === "contains" && edge.from?.startsWith("Goal:") && edge.to?.startsWith("Task:")) {
+            taskGoalIds.set(edge.to, edge.from);
+        }
+
+        if (edge.relationship === "subgoal" && edge.from?.startsWith("Goal:") && edge.to?.startsWith("Goal:")) {
+            subGoalParentIds.set(edge.to, edge.from);
+        }
+    }
 
     for (const taskId of taskNodes.map(node => node.id)) {
         const queue = [taskId];
@@ -1448,6 +1821,20 @@ function filterGraphByTaskState(graph) {
     }
 
     const visibleIds = new Set();
+    const directGoalIds = new Set();
+    let hasSelectedSubGoal = false;
+
+    for (const taskId of selectedTaskIds) {
+        const directGoalId = taskGoalIds.get(taskId);
+        if (!directGoalId) {
+            continue;
+        }
+
+        directGoalIds.add(directGoalId);
+        if (subGoalParentIds.has(directGoalId)) {
+            hasSelectedSubGoal = true;
+        }
+    }
 
     for (const node of graph.nodes) {
         if (node.type === "Task") {
@@ -1471,7 +1858,11 @@ function filterGraphByTaskState(graph) {
         const hasUnselectedAssociation = Array.from(associatedTaskIds).some(taskId => !selectedTaskIds.has(taskId));
 
         if (node.type === "Goal") {
-            if (hasSelectedAssociation) {
+            if (hasSelectedSubGoal) {
+                if (directGoalIds.has(node.id)) {
+                    visibleIds.add(node.id);
+                }
+            } else if (hasSelectedAssociation) {
                 visibleIds.add(node.id);
             }
             continue;
@@ -1805,7 +2196,7 @@ function toggleGraphFocusMode(presetName) {
 
     if (currentGraph) {
         selectedNodeId = null;
-        renderGraph(currentGraph);
+        renderGraph(currentGraph, { preserveViewport: true });
         nodeDetail.textContent = "Click a node.";
     } else {
         renderGraphFocusCaption();
@@ -1854,7 +2245,7 @@ function applyWorkingContextFiltersTransient() {
 
     if (currentGraph) {
         selectedNodeId = null;
-        renderGraph(currentGraph);
+        renderGraph(currentGraph, { preserveViewport: true });
         nodeDetail.textContent = "Click a node.";
     } else {
         renderGraphFocusCaption();
@@ -2007,6 +2398,15 @@ function escapeHtml(value) {
         .replaceAll(">", "&gt;");
 }
 
+function formatDateTime(value) {
+    if (!value) {
+        return "";
+    }
+
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString();
+}
+
 function buildLaneMap(overview) {
     const laneMap = new Map();
     overview.branches
@@ -2137,6 +2537,395 @@ function renderCommitDetail(detail) {
             button.onclick = () => selectCommit(parentId);
             parentContainer.appendChild(button);
         }
+    }
+}
+
+async function loadPlaybookDetail() {
+    const graph = currentRenderedGraph ?? currentGraph;
+    if (!currentOverview || !graph) {
+        playbookDetail.innerHTML = `<p class="detail-empty">Select a task, goal, or commit focus to view operational runbooks.</p>`;
+        return;
+    }
+
+    const focus = resolvePlaybookFocus(graph);
+    const params = new URLSearchParams({ path: repoPathInput.value });
+    if (focus.goalId) {
+        params.set("goalId", focus.goalId);
+    }
+    if (focus.taskId) {
+        params.set("taskId", focus.taskId);
+    }
+    params.set("purpose", focus.purpose);
+
+    const requestSequence = ++playbookRequestSequence;
+    const response = await fetch(`/api/playbook?${params.toString()}`);
+    if (requestSequence !== playbookRequestSequence) {
+        return;
+    }
+
+    if (!response.ok) {
+        playbookDetail.innerHTML = `<p class="detail-empty">Playbook unavailable for the current focus.</p>`;
+        return;
+    }
+
+    const payload = await response.json();
+    if (requestSequence !== playbookRequestSequence) {
+        return;
+    }
+
+    renderPlaybookDetail(payload);
+}
+
+async function loadOriginDetail() {
+    const graph = currentRenderedGraph ?? currentGraph;
+    if (!currentOverview || !graph) {
+        originDetail.innerHTML = `<p class="detail-empty">Select a task, goal, or commit focus to view the origin of this cognitive line.</p>`;
+        return;
+    }
+
+    const focus = resolvePlaybookFocus(graph);
+    const params = new URLSearchParams({ path: repoPathInput.value });
+    if (focus.goalId) {
+        params.set("goalId", focus.goalId);
+    }
+    if (focus.taskId) {
+        params.set("taskId", focus.taskId);
+    }
+    params.set("purpose", focus.purpose);
+
+    const requestSequence = ++originRequestSequence;
+    const response = await fetch(`/api/origin?${params.toString()}`);
+    if (requestSequence !== originRequestSequence) {
+        return;
+    }
+
+    if (!response.ok) {
+        originDetail.innerHTML = `<p class="detail-empty">Origin unavailable for the current focus.</p>`;
+        return;
+    }
+
+    const payload = await response.json();
+    if (requestSequence !== originRequestSequence) {
+        return;
+    }
+
+    renderOriginDetail(payload);
+}
+
+function resolvePlaybookFocus(graph) {
+    const selectedNode = selectedNodeId
+        ? graph.nodes.find(node => node.id === selectedNodeId) ?? null
+        : null;
+
+    if (selectedNode) {
+        const nodeFocus = resolvePlaybookFocusFromNode(graph, selectedNode);
+        if (nodeFocus) {
+            return nodeFocus;
+        }
+    }
+
+    if (selectedCommitId && currentCommitFocus) {
+        if (Array.isArray(currentCommitFocus.taskIds) && currentCommitFocus.taskIds[0]) {
+            return {
+                taskId: currentCommitFocus.taskIds[0],
+                goalId: currentCommitFocus.goalIds?.[0] ?? null,
+                purpose: `viewer commit focus ${currentCommitFocus.taskTitles?.[0] ?? selectedCommitId}`
+            };
+        }
+
+        if (Array.isArray(currentCommitFocus.goalIds) && currentCommitFocus.goalIds[0]) {
+            return {
+                taskId: null,
+                goalId: currentCommitFocus.goalIds[0],
+                purpose: `viewer commit focus ${currentCommitFocus.goalTitles?.[0] ?? selectedCommitId}`
+            };
+        }
+    }
+
+    const activeTask = (currentOverview.tasks ?? []).find(task => task.state === "InProgress")
+        ?? (currentOverview.tasks ?? []).find(task => task.state === "Ready")
+        ?? (currentOverview.tasks ?? []).find(task => task.state !== "Done");
+
+    if (activeTask) {
+        return {
+            taskId: activeTask.id,
+            goalId: activeTask.goalId ?? null,
+            purpose: `viewer working context ${activeTask.title}`
+        };
+    }
+
+    return {
+        taskId: null,
+        goalId: null,
+        purpose: "viewer working context"
+    };
+}
+
+function resolvePlaybookFocusFromNode(graph, selectedNode) {
+    const [type, entityId] = selectedNode.id.split(":");
+    if (!type || !entityId) {
+        return null;
+    }
+
+    if (type === "Task") {
+        const task = (currentOverview?.tasks ?? []).find(item => item.id === entityId);
+        return {
+            taskId: entityId,
+            goalId: task?.goalId ?? null,
+            purpose: `viewer node task ${selectedNode.label}`
+        };
+    }
+
+    if (type === "Goal") {
+        return {
+            taskId: null,
+            goalId: entityId,
+            purpose: `viewer node goal ${selectedNode.label}`
+        };
+    }
+
+    const nearestTaskId = findNearestNodeIdByType(graph, selectedNode.id, "Task");
+    if (nearestTaskId) {
+        const taskId = nearestTaskId.split(":")[1];
+        const task = (currentOverview?.tasks ?? []).find(item => item.id === taskId);
+        return {
+            taskId,
+            goalId: task?.goalId ?? null,
+            purpose: `viewer node ${selectedNode.type} ${selectedNode.label}`
+        };
+    }
+
+    const nearestGoalId = findNearestNodeIdByType(graph, selectedNode.id, "Goal");
+    if (nearestGoalId) {
+        return {
+            taskId: null,
+            goalId: nearestGoalId.split(":")[1],
+            purpose: `viewer node ${selectedNode.type} ${selectedNode.label}`
+        };
+    }
+
+    return null;
+}
+
+function findNearestNodeIdByType(graph, startNodeId, nodeType) {
+    const adjacency = new Map();
+    for (const node of graph.nodes ?? []) {
+        adjacency.set(node.id, []);
+    }
+
+    for (const edge of graph.edges ?? []) {
+        adjacency.get(edge.from)?.push(edge.to);
+        adjacency.get(edge.to)?.push(edge.from);
+    }
+
+    const queue = [startNodeId];
+    const visited = new Set([startNodeId]);
+
+    while (queue.length > 0) {
+        const currentNodeId = queue.shift();
+        const currentNode = (graph.nodes ?? []).find(node => node.id === currentNodeId);
+        if (currentNode && currentNode.type === nodeType && currentNode.id !== startNodeId) {
+            return currentNode.id;
+        }
+
+        for (const neighborId of adjacency.get(currentNodeId) ?? []) {
+            if (visited.has(neighborId)) {
+                continue;
+            }
+
+            visited.add(neighborId);
+            queue.push(neighborId);
+        }
+    }
+
+    return null;
+}
+
+function renderPlaybookDetail(payload) {
+    const selected = Array.isArray(payload?.selected) ? payload.selected : [];
+    const available = Array.isArray(payload?.available) ? payload.available : [];
+
+    if (selected.length === 0) {
+        playbookDetail.innerHTML = `
+            <p class="detail-empty">No operational runbooks match the current focus.</p>
+            ${available.length > 0 ? `
+                <details class="detail-disclosure runbook-available">
+                    <summary>Available runbooks <span class="detail-count">${available.length}</span></summary>
+                    <ul class="detail-list">
+                        ${available.map(runbook => `<li>${escapeHtml(runbook.title)} <span class="detail-count">${escapeHtml(runbook.kind)}</span></li>`).join("")}
+                    </ul>
+                </details>` : ""}
+        `;
+        return;
+    }
+
+    playbookDetail.innerHTML = `
+        <div class="runbook-stack">
+            ${selected.map(runbook => `
+                <article class="runbook-card">
+                    <div class="runbook-card-header">
+                        <strong>${escapeHtml(runbook.title)}</strong>
+                        <span class="runbook-kind">${escapeHtml(runbook.kind)}</span>
+                    </div>
+                    <div class="runbook-meta">
+                        <div class="runbook-meta-row">
+                            <span class="runbook-meta-row-label">When</span>
+                            <div>${escapeHtml(runbook.whenToUse)}</div>
+                        </div>
+                        ${Array.isArray(runbook.do) && runbook.do.length > 0 ? `
+                            <div class="runbook-meta-row">
+                                <span class="runbook-meta-row-label">Do</span>
+                                <ul>${runbook.do.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+                            </div>` : ""}
+                        ${Array.isArray(runbook.verify) && runbook.verify.length > 0 ? `
+                            <div class="runbook-meta-row">
+                                <span class="runbook-meta-row-label">Verify</span>
+                                <ul>${runbook.verify.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+                            </div>` : ""}
+                        ${Array.isArray(runbook.references) && runbook.references.length > 0 ? `
+                            <div class="runbook-meta-row">
+                                <span class="runbook-meta-row-label">References</span>
+                                <ul>${runbook.references.map(item => `<li><code>${escapeHtml(item)}</code></li>`).join("")}</ul>
+                            </div>` : ""}
+                    </div>
+                </article>
+            `).join("")}
+        </div>
+        ${available.length > 0 ? `
+            <details class="detail-disclosure runbook-available">
+                <summary>Additional runbooks available <span class="detail-count">${available.length}</span></summary>
+                <ul class="detail-list">
+                    ${available.map(runbook => `<li>${escapeHtml(runbook.title)} <span class="detail-count">${escapeHtml(runbook.kind)}</span></li>`).join("")}
+                </ul>
+            </details>` : ""}
+    `;
+}
+
+function renderOriginDetail(payload) {
+    const selected = Array.isArray(payload?.selected) ? payload.selected : [];
+    const available = Array.isArray(payload?.available) ? payload.available : [];
+
+    if (selected.length === 0) {
+        originDetail.innerHTML = `
+            <p class="detail-empty">No cognitive origin matches the current focus.</p>
+            ${available.length > 0 ? `
+                <details class="detail-disclosure runbook-available">
+                    <summary>Additional origins available <span class="detail-count">${available.length}</span></summary>
+                    <ul class="detail-list">
+                        ${available.map(trigger => `<li>${escapeHtml(trigger.summary)} <span class="detail-count">${escapeHtml(trigger.kind)}</span></li>`).join("")}
+                    </ul>
+                </details>` : ""}
+        `;
+        return;
+    }
+
+    originDetail.innerHTML = `
+        <div class="runbook-stack">
+            ${selected.map(trigger => `
+                <article class="runbook-card">
+                    <div class="runbook-card-header">
+                        <strong>${escapeHtml(trigger.summary)}</strong>
+                        <div class="origin-card-badges">
+                            <span class="runbook-kind">${escapeHtml(trigger.kind)}</span>
+                            <span class="origin-resolution ${trigger.resolution === "inherited" ? "inherited" : "direct"}">${trigger.resolution === "inherited" ? "Inherited" : "Direct"}</span>
+                        </div>
+                    </div>
+                    <p class="origin-resolution-hint">${trigger.resolution === "inherited"
+                        ? "Inherited from the nearest matching cognitive line."
+                        : "Directly attached to the current focus."}</p>
+                    <div class="origin-meta-strip">
+                        ${trigger.createdBy ? `<span>${escapeHtml(trigger.createdBy)}</span>` : ""}
+                        ${trigger.createdAtUtc ? `<span>${escapeHtml(formatDateTime(trigger.createdAtUtc))}</span>` : ""}
+                    </div>
+                    <div class="runbook-meta">
+                        ${trigger.text ? `
+                            <div class="runbook-meta-row">
+                                <span class="runbook-meta-row-label">Text</span>
+                                <div>${escapeHtml(trigger.text)}</div>
+                            </div>` : ""}
+                        ${Array.isArray(trigger.goalTitles) && trigger.goalTitles.length > 0 ? `
+                            <div class="runbook-meta-row">
+                                <span class="runbook-meta-row-label">Goals</span>
+                                <div class="detail-pill-row">
+                                    ${trigger.goalTitles.map((item, index) => `
+                                        <button type="button" class="detail-pill origin-link" data-origin-goal-id="${escapeHtml(trigger.goalIds?.[index] ?? "")}">
+                                            ${escapeHtml(item)}
+                                        </button>`).join("")}
+                                </div>
+                            </div>` : ""}
+                        ${Array.isArray(trigger.taskTitles) && trigger.taskTitles.length > 0 ? `
+                            <div class="runbook-meta-row">
+                                <span class="runbook-meta-row-label">Tasks</span>
+                                <div class="detail-pill-row">
+                                    ${trigger.taskTitles.map((item, index) => `
+                                        <button type="button" class="detail-pill origin-link" data-origin-task-id="${escapeHtml(trigger.taskIds?.[index] ?? "")}">
+                                            ${escapeHtml(item)}
+                                        </button>`).join("")}
+                                </div>
+                            </div>` : ""}
+                        ${Array.isArray(trigger.runbookTitles) && trigger.runbookTitles.length > 0 ? `
+                            <div class="runbook-meta-row">
+                                <span class="runbook-meta-row-label">Runbooks</span>
+                                <div class="detail-pill-row">
+                                    ${trigger.runbookTitles.map((item, index) => `
+                                        <button type="button" class="detail-pill origin-link" data-origin-runbook-id="${escapeHtml(trigger.runbookIds?.[index] ?? "")}">
+                                            ${escapeHtml(item)}
+                                        </button>`).join("")}
+                                </div>
+                            </div>` : ""}
+                    </div>
+                </article>
+            `).join("")}
+        </div>
+        ${available.length > 0 ? `
+            <details class="detail-disclosure runbook-available">
+                <summary>Additional origins available <span class="detail-count">${available.length}</span></summary>
+                <ul class="detail-list">
+                    ${available.map(trigger => `<li>${escapeHtml(trigger.summary)} <span class="detail-count">${escapeHtml(trigger.kind)}</span></li>`).join("")}
+                </ul>
+            </details>` : ""}
+    `;
+
+    for (const button of originDetail.querySelectorAll("[data-origin-task-id]")) {
+        button.addEventListener("click", async () => {
+            const taskId = button.dataset.originTaskId;
+            const task = (currentOverview?.tasks ?? []).find(item => item.id === taskId);
+            if (task) {
+                await focusTask(task);
+                applyDetailTab("origin");
+            }
+        });
+    }
+
+    for (const button of originDetail.querySelectorAll("[data-origin-goal-id]")) {
+        button.addEventListener("click", async () => {
+            const goalId = button.dataset.originGoalId;
+            if (!goalId || !currentRenderedGraph) {
+                return;
+            }
+
+            const goalNode = (currentRenderedGraph.nodes ?? []).find(node => node.id === `Goal:${goalId}`);
+            if (!goalNode) {
+                return;
+            }
+
+            if (selectedCommitId !== null) {
+                await selectCommit(null);
+            }
+
+            if (currentViewMode === "history") {
+                applyViewMode("split");
+            }
+
+            showNode(goalNode.id, { scrollIntoView: true });
+            applyDetailTab("origin");
+        });
+    }
+
+    for (const button of originDetail.querySelectorAll("[data-origin-runbook-id]")) {
+        button.addEventListener("click", () => {
+            applyDetailTab("playbook");
+        });
     }
 }
 

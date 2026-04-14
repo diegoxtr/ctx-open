@@ -1,0 +1,21 @@
+﻿{
+  "name": "critical-checkout-regression",
+  "description": "Cognitive repo for a critical VIP discount regression",
+  "defaultBranch": "main",
+  "state": 1,
+  "id": {
+    "value": "ce2daf896870426791d6ffedb57dd810"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-11T23:53:26.99512+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "project"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

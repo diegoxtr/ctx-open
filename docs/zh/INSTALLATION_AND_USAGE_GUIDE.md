@@ -1,44 +1,44 @@
-# CTX 安装与使用指南
-????????????????,??????????
+﻿# CTX å®‰è£…ä¸Žä½¿ç”¨æŒ‡å—
+如果语言模型及其代理丢失了上下文，这就是你需要的工具。
 
-本文档说明如何在本地首次安装、编译并使用 CTX。
+æœ¬æ–‡æ¡£è¯´æ˜Žå¦‚ä½•åœ¨æœ¬åœ°é¦–æ¬¡å®‰è£…ã€ç¼–è¯‘å¹¶ä½¿ç”¨ CTXã€‚
 
-适用人群：
+é€‚ç”¨äººç¾¤ï¼š
 
-- 技术测试人员
-- 开发者
-- 架构师
-- V1 早期用户
+- æŠ€æœ¯æµ‹è¯•äººå‘˜
+- å¼€å‘è€…
+- æž¶æž„å¸ˆ
+- V1 æ—©æœŸç”¨æˆ·
 
-## 基本要求
+## åŸºæœ¬è¦æ±‚
 
-- Windows 终端
+- Windows ç»ˆç«¯
 - .NET SDK 8
-- 仓库代码访问权限
-- 工作目录读写权限
+- ä»“åº“ä»£ç è®¿é—®æƒé™
+- å·¥ä½œç›®å½•è¯»å†™æƒé™
 
-可选：
+å¯é€‰ï¼š
 
 - `OPENAI_API_KEY`
 - `ANTHROPIC_API_KEY`
 
-未配置密钥也可使用离线 fallback 进行功能测试。
+æœªé…ç½®å¯†é’¥ä¹Ÿå¯ä½¿ç”¨ç¦»çº¿ fallback è¿›è¡ŒåŠŸèƒ½æµ‹è¯•ã€‚
 
-## 关键步骤
+## å…³é”®æ­¥éª¤
 
-1. 验证 .NET：
+1. éªŒè¯ .NETï¼š
 
 ```powershell
 dotnet --version
 ```
 
-2. 拉取代码并进入根目录：
+2. æ‹‰å–ä»£ç å¹¶è¿›å…¥æ ¹ç›®å½•ï¼š
 
 ```powershell
-cd <repo-root>
+cd C:\sources\ctx
 ```
 
-3. 恢复、构建、测试：
+3. æ¢å¤ã€æž„å»ºã€æµ‹è¯•ï¼š
 
 ```powershell
 dotnet restore Ctx.sln
@@ -46,19 +46,19 @@ dotnet build Ctx.sln
 dotnet test .\Ctx.Tests\Ctx.Tests.csproj
 ```
 
-4. 运行 CLI：
+4. è¿è¡Œ CLIï¼š
 
 ```powershell
 dotnet run --project .\Ctx.Cli -- status
 ```
 
-5. 初始化仓库：
+5. åˆå§‹åŒ–ä»“åº“ï¼š
 
 ```powershell
-dotnet run --project .\\Ctx.Cli -- init --name "CTX-DEMO" --description "First cognitive repo"
+dotnet run --project C:\sources\ctx\Ctx.Cli -- init --name "CTX-DEMO" --description "First cognitive repo"
 ```
 
-## 推荐首个流程
+## æŽ¨èé¦–ä¸ªæµç¨‹
 
 - `goal add`
 - `task add`
@@ -69,7 +69,7 @@ dotnet run --project .\\Ctx.Cli -- init --name "CTX-DEMO" --description "First c
 - `run`
 - `commit`
 
-详细示例请参考英文版：
+è¯¦ç»†ç¤ºä¾‹è¯·å‚è€ƒè‹±æ–‡ç‰ˆï¼š
 
 - [INSTALLATION_AND_USAGE_GUIDE.md](C:/sources/ctx-public/docs/INSTALLATION_AND_USAGE_GUIDE.md)
 

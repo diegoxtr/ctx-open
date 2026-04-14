@@ -1,4 +1,4 @@
-# CTX Viewer Guide
+﻿# CTX Viewer Guide
 If a language model and its agent lose context, this is the tool you need.
 
 ## What it is
@@ -44,23 +44,23 @@ Current default behavior:
 
 - if no repository path is stored or entered, the viewer first checks `CTX_VIEWER_DEFAULT_REPOSITORY_PATH` or `Viewer__DefaultRepositoryPath`
 - if no configured default exists, the viewer resolves the default root from the nearest project `.git` directory
-- in this source repository that fallback root resolves to `<repo-root>`
-- this public source repository does not include a live repo-root `.ctx` workspace, so the bundled demo or an explicit CTX repository path is the recommended starting point
+- in this self-hosting repository that fallback root resolves to `C:\sources\ctx-public`
 - default cognitive branch is `main`
 - `Auto-refresh` starts enabled by default unless the browser already remembers it being turned off
 - it remembers the last `Repository` and `Branch` used in the browser
 - it also remembers the `Auto-refresh` preference
 - side panels can be resized with vertical dividers, and widths are saved per mode (`History`, `Split`, `Graph`)
+- side panels can also collapse into compact rails from the vertical dividers, and that collapsed state is saved per mode
 
 Example repositories:
 
-- `<repo-root>\\examples\\viewer-demo`
-- `<path-to-your-ctx-repository>`
+- `C:\sources\ctx-public\examples\viewer-demo`
+- `C:\ctx\workspace\ctx-self-host`
 
 Example override:
 
 ```powershell
-$env:CTX_VIEWER_DEFAULT_REPOSITORY_PATH = "<path-to-your-ctx-repository>"
+$env:CTX_VIEWER_DEFAULT_REPOSITORY_PATH = "C:\ctx\workspace\ctx-self-host"
 dotnet run --project .\Ctx.Viewer --urls http://127.0.0.1:5271
 ```
 
@@ -103,6 +103,7 @@ Interpretation:
 - if a hypothesis is on top, it is one of the most important to inspect or validate
 - if `impact`, `evidenceStrength`, or `costToValidate` are `0`, the hypothesis is likely older and has not been enriched with the newer model
 - main viewer surfaces now share available viewport height and keep scroll inside each panel so `History`, `Split`, and `Graph` remain balanced across modes
+- when you enter `Working context`, the graph now prefers the nearest tactical line for each active task; if a task belongs to a sub-goal, that sub-goal stays visible and umbrella goals are not expanded unless the task points to them directly
 
 ### Tasks
 
@@ -134,6 +135,31 @@ Interpretation:
 - to see what is being worked on now, look at `Active`
 - to see what lines are already closed, look at `Closed`
 - this avoids deducing work only from commits or the graph
+
+## 3. Right panel
+
+The `Details` panel now uses tabs instead of stacking every surface at once:
+
+- `Details`: selected commit metadata plus raw node detail
+- `Origin`: compact `CognitiveTrigger` provenance for the current task, goal, or commit focus
+- `Playbook`: compact `OperationalRunbook` guidance for the current task, goal, or commit focus
+- `Hypotheses`: the current ranking plus freshness state
+
+The active tab is remembered locally, so the viewer returns to the last inspection surface you were using.
+
+The `Playbook` section is intentionally compact:
+
+- it shows up to two top-matching runbooks
+- it keeps `When`, `Do`, `Verify`, and `References` short
+- additional matches stay collapsed under `Additional runbooks available`
+- it does not turn runbooks into graph nodes; the guidance stays adjacent to the graph instead of competing with it
+
+The `Origin` tab uses two provenance states:
+
+- `Direct`: the current task, goal, or focus has its own trigger
+- `Inherited`: the current focus is continuing the nearest matching cognitive line and reuses that origin
+
+Because of that, repeated origin text is sometimes the correct behavior. If a task is a continuation and did not open a materially new direction, the viewer should keep showing the same inherited origin instead of inventing a new one.
 
 ### History
 

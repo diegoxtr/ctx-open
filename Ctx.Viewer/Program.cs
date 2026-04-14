@@ -19,9 +19,12 @@ var jsonSerializer = new DefaultJsonSerializer();
 var workingRepository = new FileSystemWorkingContextRepository(jsonSerializer);
 var commitRepository = new FileSystemCommitRepository(jsonSerializer);
 var branchRepository = new FileSystemBranchRepository(jsonSerializer);
+var operationalRunbookRepository = new FileSystemOperationalRunbookRepository(jsonSerializer);
+var cognitiveTriggerRepository = new FileSystemCognitiveTriggerRepository(jsonSerializer);
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
+app.MapGet("/favicon.ico", () => Results.NoContent());
 
 app.MapGet("/api/overview", async (string? path, string? branch, CancellationToken cancellationToken) =>
 {
@@ -184,10 +187,223 @@ app.MapGet("/api/commit", async (string id, string? path, CancellationToken canc
         });
 });
 
+app.MapGet("/api/playbook", async (string? path, string? goalId, string? taskId, string? purpose, CancellationToken cancellationToken) =>
+{
+    var repositoryPath = ResolveRepositoryPath(path);
+
+    if (!await workingRepository.ExistsAsync(repositoryPath, cancellationToken))
+    {
+        return Results.NotFound(new { message = $"No .ctx repository found at '{repositoryPath}'." });
+    }
+
+    var working = await workingRepository.LoadAsync(repositoryPath, cancellationToken);
+    var runbooks = await operationalRunbookRepository.ListAsync(repositoryPath, cancellationToken);
+    var effectivePurpose = string.IsNullOrWhiteSpace(purpose)
+        ? "viewer working context"
+        : purpose.Trim();
+    var packetResult = await runtime.ApplicationService.ContextAsync(repositoryPath, effectivePurpose, goalId, taskId, cancellationToken);
+
+    if (!packetResult.Success || packetResult.Data is not ContextPacket packet)
+    {
+        return Results.BadRequest(new { message = packetResult.Message });
+    }
+
+    var selectedGoals = working.Goals
+        .Where(goal => packet.GoalIds.Contains(goal.Id))
+        .ToArray();
+    var selectedTasks = working.Tasks
+        .Where(task => packet.TaskIds.Contains(task.Id))
+        .ToArray();
+    var selection = OperationalRunbookSelection.Select(runbooks, effectivePurpose, goalId, taskId, selectedGoals, selectedTasks);
+
+    return Results.Json(new
+    {
+        purpose = effectivePurpose,
+        selected = selection.Selected.Select(runbook => new
+        {
+            id = runbook.Id.Value,
+            title = runbook.Title,
+            kind = runbook.Kind.ToString(),
+            whenToUse = runbook.WhenToUse,
+            @do = runbook.Do.Take(5).ToArray(),
+            verify = runbook.Verify.Take(4).ToArray(),
+            references = runbook.References.Take(5).ToArray(),
+            goalIds = runbook.GoalIds.Select(item => item.Value).ToArray(),
+            taskIds = runbook.TaskIds.Select(item => item.Value).ToArray()
+        }),
+        available = selection.Available.Select(runbook => new
+        {
+            id = runbook.Id.Value,
+            title = runbook.Title,
+            kind = runbook.Kind.ToString()
+        })
+    });
+});
+
+app.MapGet("/api/origin", async (string? path, string? goalId, string? taskId, string? purpose, CancellationToken cancellationToken) =>
+{
+    var repositoryPath = ResolveRepositoryPath(path);
+
+    if (!await workingRepository.ExistsAsync(repositoryPath, cancellationToken))
+    {
+        return Results.NotFound(new { message = $"No .ctx repository found at '{repositoryPath}'." });
+    }
+
+    var working = await workingRepository.LoadAsync(repositoryPath, cancellationToken);
+    var triggers = await cognitiveTriggerRepository.ListAsync(repositoryPath, cancellationToken);
+    var runbooks = await operationalRunbookRepository.ListAsync(repositoryPath, cancellationToken);
+    var effectivePurpose = string.IsNullOrWhiteSpace(purpose)
+        ? "viewer working context"
+        : purpose.Trim();
+    var packetResult = await runtime.ApplicationService.ContextAsync(repositoryPath, effectivePurpose, goalId, taskId, cancellationToken);
+
+    if (!packetResult.Success || packetResult.Data is not ContextPacket packet)
+    {
+        return Results.BadRequest(new { message = packetResult.Message });
+    }
+
+    var selectedGoals = working.Goals
+        .Where(goal => packet.GoalIds.Contains(goal.Id))
+        .ToArray();
+    var selectedTasks = working.Tasks
+        .Where(task => packet.TaskIds.Contains(task.Id))
+        .ToArray();
+    var selection = SelectOriginTriggers(triggers, goalId, taskId, selectedGoals, selectedTasks, working.Tasks);
+    var goalTitles = working.Goals.ToDictionary(item => item.Id, item => item.Title);
+    var taskTitles = working.Tasks.ToDictionary(item => item.Id, item => item.Title);
+    var runbookTitles = runbooks.ToDictionary(item => item.Id, item => item.Title);
+
+    return Results.Json(new
+    {
+        purpose = effectivePurpose,
+        selected = selection.Selected.Select(item => new
+        {
+            id = item.Trigger.Id.Value,
+            kind = item.Trigger.Kind.ToString(),
+            resolution = item.Resolution,
+            summary = item.Trigger.Summary,
+            createdBy = item.Trigger.Trace.CreatedBy,
+            createdAtUtc = item.Trigger.Trace.CreatedAtUtc,
+            text = string.IsNullOrWhiteSpace(item.Trigger.Text)
+                ? null
+                : item.Trigger.Text.Length > 240
+                    ? $"{item.Trigger.Text[..240]}..."
+                    : item.Trigger.Text,
+            goalIds = item.Trigger.GoalIds.Select(id => id.Value).ToArray(),
+            goalTitles = item.Trigger.GoalIds
+                .Select(id => goalTitles.TryGetValue(id, out var title) ? title : null)
+                .Where(title => !string.IsNullOrWhiteSpace(title))
+                .ToArray(),
+            taskIds = item.Trigger.TaskIds.Select(id => id.Value).ToArray(),
+            taskTitles = item.Trigger.TaskIds
+                .Select(id => taskTitles.TryGetValue(id, out var title) ? title : null)
+                .Where(title => !string.IsNullOrWhiteSpace(title))
+                .ToArray(),
+            runbookIds = item.Trigger.OperationalRunbookIds.Select(id => id.Value).ToArray(),
+            runbookTitles = item.Trigger.OperationalRunbookIds
+                .Select(id => runbookTitles.TryGetValue(id, out var title) ? title : null)
+                .Where(title => !string.IsNullOrWhiteSpace(title))
+                .ToArray()
+        }),
+        available = selection.Available.Select(item => new
+        {
+            id = item.Trigger.Id.Value,
+            kind = item.Trigger.Kind.ToString(),
+            resolution = item.Resolution,
+            summary = item.Trigger.Summary
+        })
+    });
+});
+
 app.Run();
 
 static string ResolveRepositoryPath(string? path)
     => string.IsNullOrWhiteSpace(path) ? ResolveDefaultRepositoryRoot() : Path.GetFullPath(path);
+
+static (IReadOnlyList<(CognitiveTrigger Trigger, string Resolution)> Selected, IReadOnlyList<(CognitiveTrigger Trigger, string Resolution)> Available) SelectOriginTriggers(
+    IReadOnlyList<CognitiveTrigger> triggers,
+    string? goalId,
+    string? taskId,
+    IReadOnlyList<Goal> selectedGoals,
+    IReadOnlyList<Ctx.Domain.Task> selectedTasks,
+    IReadOnlyList<Ctx.Domain.Task> allTasks)
+{
+    if (triggers.Count == 0)
+    {
+        return (Array.Empty<(CognitiveTrigger, string)>(), Array.Empty<(CognitiveTrigger, string)>());
+    }
+
+    var directRanked = triggers
+        .Where(item => item.State != LifecycleState.Archived)
+        .Select(item =>
+        {
+            var taskMatch = !string.IsNullOrWhiteSpace(taskId) && item.TaskIds.Any(id => id.Value.Equals(taskId, StringComparison.OrdinalIgnoreCase));
+            var goalMatch = !string.IsNullOrWhiteSpace(goalId) && item.GoalIds.Any(id => id.Value.Equals(goalId, StringComparison.OrdinalIgnoreCase));
+            var selectedTaskMatch = item.TaskIds.Any(id => selectedTasks.Any(task => task.Id == id));
+            var selectedGoalMatch = item.GoalIds.Any(id => selectedGoals.Any(goal => goal.Id == id));
+            var global = item.TaskIds.Count == 0 && item.GoalIds.Count == 0;
+            var score =
+                (taskMatch ? 100 : 0) +
+                (goalMatch ? 80 : 0) +
+                (selectedTaskMatch ? 40 : 0) +
+                (selectedGoalMatch ? 20 : 0) +
+                (global ? 5 : 0);
+
+            return new { Trigger = item, Score = score };
+        })
+        .Where(item => item.Score > 0)
+        .OrderByDescending(item => item.Score)
+        .ThenByDescending(item => item.Trigger.Trace.CreatedAtUtc)
+        .ToArray();
+
+    if (directRanked.Length > 0)
+    {
+        return (
+            directRanked.Take(2).Select(item => (item.Trigger, "direct")).ToArray(),
+            directRanked.Skip(2).Select(item => (item.Trigger, "direct")).ToArray());
+    }
+
+    var selectedTaskGoalIds = selectedTasks
+        .Where(task => task.GoalId is not null)
+        .Select(task => task.GoalId!.Value.Value)
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    var selectedTaskCreatedAtUtc = selectedTasks
+        .Where(task => !string.IsNullOrWhiteSpace(taskId) && task.Id.Value.Equals(taskId, StringComparison.OrdinalIgnoreCase))
+        .Select(task => task.Trace.CreatedAtUtc)
+        .DefaultIfEmpty(DateTimeOffset.MaxValue)
+        .Max();
+    var selectedGoalIds = selectedGoals
+        .Select(goal => goal.Id.Value)
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+    if (selectedTaskGoalIds.Count == 0 && selectedGoalIds.Count == 0)
+    {
+        return (Array.Empty<(CognitiveTrigger, string)>(), Array.Empty<(CognitiveTrigger, string)>());
+    }
+
+    var tasksById = allTasks.ToDictionary(task => task.Id.Value, StringComparer.OrdinalIgnoreCase);
+    var fallbackRanked = triggers
+        .Where(item => item.State != LifecycleState.Archived)
+        .Select(item =>
+        {
+            var triggerTaskGoalMatch = item.TaskIds.Any(id =>
+                tasksById.TryGetValue(id.Value, out var triggerTask) &&
+                triggerTask.GoalId is GoalId triggerGoal &&
+                triggerTask.Trace.CreatedAtUtc <= selectedTaskCreatedAtUtc &&
+                (selectedTaskGoalIds.Contains(triggerGoal.Value) || selectedGoalIds.Contains(triggerGoal.Value)));
+            var triggerGoalMatch = item.GoalIds.Any(id => selectedGoalIds.Contains(id.Value));
+            var score = (triggerTaskGoalMatch ? 30 : 0) + (triggerGoalMatch ? 20 : 0);
+            return new { Trigger = item, Score = score };
+        })
+        .Where(item => item.Score > 0)
+        .OrderByDescending(item => item.Score)
+        .ThenByDescending(item => item.Trigger.Trace.CreatedAtUtc)
+        .ToArray();
+
+    return (
+        fallbackRanked.Take(2).Select(item => (item.Trigger, "inherited")).ToArray(),
+        fallbackRanked.Skip(2).Select(item => (item.Trigger, "inherited")).ToArray());
+}
 
 static string ResolveDefaultRepositoryRoot()
 {
@@ -219,6 +435,14 @@ static string ResolveDefaultRepositoryRoot()
 static string ResolveViewerProjectRoot()
 {
     var currentDirectory = new DirectoryInfo(AppContext.BaseDirectory);
+
+    // Published installs run without the source project file, so prefer the
+    // executable directory when it already contains the bundled web root.
+    var publishedWebRoot = Path.Combine(currentDirectory.FullName, "wwwroot");
+    if (Directory.Exists(publishedWebRoot))
+    {
+        return currentDirectory.FullName;
+    }
 
     while (currentDirectory is not null)
     {
@@ -282,7 +506,12 @@ static string BuildChangeSummary(ContextDiff diff)
 
 static ViewerCognitivePath BuildCognitivePath(ContextCommit commit)
 {
-    var snapshot = commit.Snapshot;
+    var snapshot = commit.Snapshot?.WorkingContext;
+    if (snapshot is null)
+    {
+        return EmptyViewerCognitivePath();
+    }
+
     var goalsById = snapshot.Goals.ToDictionary(goal => goal.Id.Value, StringComparer.OrdinalIgnoreCase);
     var tasksById = snapshot.Tasks.ToDictionary(task => task.Id.Value, StringComparer.OrdinalIgnoreCase);
     var hypothesesById = snapshot.Hypotheses.ToDictionary(hypothesis => hypothesis.Id.Value, StringComparer.OrdinalIgnoreCase);
@@ -437,6 +666,21 @@ static ViewerCognitivePath BuildCognitivePath(ContextCommit commit)
         decisionTitles,
         conclusionSummaries);
 }
+
+static ViewerCognitivePath EmptyViewerCognitivePath()
+    => new(
+        Array.Empty<string>(),
+        Array.Empty<string>(),
+        Array.Empty<string>(),
+        Array.Empty<string>(),
+        Array.Empty<string>(),
+        Array.Empty<string>(),
+        Array.Empty<string>(),
+        Array.Empty<string>(),
+        Array.Empty<string>(),
+        Array.Empty<string>(),
+        Array.Empty<string>(),
+        Array.Empty<string>());
 
 static void AddGoalHierarchy(
     HashSet<string> rootGoalIds,

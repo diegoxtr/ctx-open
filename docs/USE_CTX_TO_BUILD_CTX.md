@@ -1,4 +1,4 @@
-# Use CTX to Build CTX
+﻿# Use CTX to Build CTX
 If a language model and its agent lose context, this is the tool you need.
 
 ## Goal
@@ -117,7 +117,7 @@ Do not wait for manual direction if the CTX repository already makes the next st
 
 Use a specific CTX repository for product development:
 
-- `<path-to-your-ctx-repository>`
+- `C:\ctx\workspace\ctx-self-host`
 
 ## Expected outcome
 
