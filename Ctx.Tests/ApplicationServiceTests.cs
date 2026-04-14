@@ -2544,7 +2544,10 @@ public sealed class ApplicationServiceTests
                     new[] { "docs/LOCAL_CTX_INSTALLATION.md", "scripts/publish-local.ps1" },
                     new[] { goalId },
                     new[] { taskId },
-                    "tester"),
+                    "tester",
+                    new[] { "No installed CTX binary is locked" },
+                    new[] { "Failed to copy Ctx.Viewer.exe" },
+                    new[] { "Stop retrying publish if binaries remain locked" }),
                 CancellationToken.None);
 
             var list = await service.ListOperationalRunbooksAsync(repositoryPath, CancellationToken.None);
@@ -2559,6 +2562,9 @@ public sealed class ApplicationServiceTests
             var runbook = Assert.IsType<Ctx.Domain.OperationalRunbook>(show.Data);
             Assert.Equal("Local publish", runbook.Title);
             Assert.Equal(Ctx.Domain.OperationalRunbookKind.Procedure, runbook.Kind);
+            Assert.Contains("No installed CTX binary is locked", runbook.Preconditions);
+            Assert.Contains("Failed to copy Ctx.Viewer.exe", runbook.FailureSignals);
+            Assert.Contains("Stop retrying publish if binaries remain locked", runbook.EscalationBoundary);
             Assert.Contains(runbook.GoalIds, item => item.Value == goalId);
             Assert.Contains(runbook.TaskIds, item => item.Value == taskId);
         }
@@ -2876,6 +2882,97 @@ public sealed class ApplicationServiceTests
             Assert.Contains(data.RunbookSuggestions, item => item.Title == "Git closeout");
             Assert.Contains("Viewer validation", data.AdditionalRunbooksAvailable);
             Assert.Contains(data.Guidance, item => item.Contains("operational runbook suggestion", StringComparison.OrdinalIgnoreCase));
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Preflight_SelectsRunbooksForGitCloseoutOperation()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var service = CreateService(new DateTimeOffset(2026, 4, 14, 13, 45, 0, TimeSpan.Zero));
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Preflight test", "main", "tester"), CancellationToken.None);
+            var goal = await service.AddGoalAsync(repositoryPath, new Ctx.Application.AddGoalRequest("Operate viewer", "Keep local viewer stable", 1, null, "tester"), CancellationToken.None);
+            var goalId = ((Ctx.Domain.Goal)goal.Data!).Id.Value;
+            var task = await service.AddTaskAsync(repositoryPath, new Ctx.Application.AddTaskRequest("Publish local viewer", "Prepare publish and closeout", goalId, Array.Empty<string>(), "tester"), CancellationToken.None);
+            var taskId = ((Ctx.Domain.Task)task.Data!).Id.Value;
+
+            await service.AddOperationalRunbookAsync(repositoryPath, new Ctx.Application.AddOperationalRunbookRequest(
+                "Git closeout",
+                "Guardrail",
+                new[] { "git-commit", "git-push" },
+                "Use before git closeout for viewer changes.",
+                new[] { "Run ctx audit", "Run ctx closeout" },
+                new[] { "ctx audit is clean" },
+                new[] { "ctx closeout" },
+                new[] { goalId },
+                Array.Empty<string>(),
+                "tester",
+                new[] { "The intended block is already cognitively closed" },
+                new[] { "fatal: Unable to create '.git/index.lock'" },
+                new[] { "Switch to Recover index.lock before touching the lock manually" }), CancellationToken.None);
+
+            await service.AddOperationalRunbookAsync(repositoryPath, new Ctx.Application.AddOperationalRunbookRequest(
+                "Recover index.lock",
+                "Troubleshooting",
+                new[] { "index.lock" },
+                "Use when Git is blocked by index.lock.",
+                new[] { "Check live Git processes first" },
+                new[] { "git status works" },
+                new[] { "scripts/repair-git-lock.ps1" },
+                Array.Empty<string>(),
+                Array.Empty<string>(),
+                "tester"), CancellationToken.None);
+
+            var result = await service.PreflightAsync(repositoryPath, "git-closeout", null, taskId, CancellationToken.None);
+
+            Assert.True(result.Success);
+            var data = Assert.IsType<Ctx.Application.PreflightSummary>(result.Data);
+            Assert.Equal("git-closeout", data.Operation);
+            Assert.Single(data.RunbookSuggestions);
+            Assert.Equal("Git closeout", data.RunbookSuggestions[0].Title);
+            Assert.Contains("The intended block is already cognitively closed", data.RunbookSuggestions[0].Preconditions);
+            Assert.Contains("fatal: Unable to create '.git/index.lock'", data.RunbookSuggestions[0].FailureSignals);
+            Assert.Contains("Switch to Recover index.lock before touching the lock manually", data.RunbookSuggestions[0].EscalationBoundary);
+            Assert.DoesNotContain(data.RunbookSuggestions, item => item.Title == "Recover index.lock");
+            Assert.Contains(data.Guidance, item => item.Contains("ctx audit", StringComparison.OrdinalIgnoreCase));
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Closeout_GuidancePointsToGitPreflight()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var service = CreateService(new DateTimeOffset(2026, 4, 14, 13, 50, 0, TimeSpan.Zero));
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Closeout preflight guidance test", "main", "tester"), CancellationToken.None);
+            await service.AddTaskAsync(repositoryPath, new Ctx.Application.AddTaskRequest("Document change", "Pending closeout delta", null, Array.Empty<string>(), "tester"), CancellationToken.None);
+
+            var result = await service.CloseoutAsync(repositoryPath, CancellationToken.None);
+
+            Assert.True(result.Success);
+            var data = Assert.IsType<Ctx.Application.CloseoutSummary>(result.Data);
+            Assert.Contains(data.Guidance, item => item.Contains("ctx preflight --operation git-closeout", StringComparison.OrdinalIgnoreCase));
         }
         finally
         {

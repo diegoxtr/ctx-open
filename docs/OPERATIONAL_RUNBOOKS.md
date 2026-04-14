@@ -66,8 +66,11 @@ Proposed fields:
 - `Kind`
 - `Triggers`
 - `WhenToUse`
+- `Preconditions`
 - `Do`
 - `Verify`
+- `FailureSignals`
+- `EscalationBoundary`
 - `References`
 - `GoalIds`
 - `TaskIds`
@@ -125,9 +128,38 @@ Hard guideline:
 - each item should stay short
 - use canonical commands or paths, not long prose
 
+### `Preconditions`
+
+Short ordered list of conditions that should already be true before the runbook is followed.
+
+Hard guideline:
+
+- prefer `2-4` items
+- keep them binary and checkable
+- use them to stop drift before execution starts
+
 ### `Verify`
 
 Short ordered list of checks that confirm the runbook was applied correctly.
+
+### `FailureSignals`
+
+Short list of concrete symptoms that activate troubleshooting or guardrail behavior.
+
+Examples:
+
+- `.git/index.lock`
+- `Failed to copy Ctx.Viewer.exe`
+- `127.0.0.1:5271 does not respond`
+
+### `EscalationBoundary`
+
+Short list describing when the runbook should stop and hand control back to the operator instead of continuing to force recovery.
+
+Examples:
+
+- `Do not delete the lock if git.exe is still running`
+- `Do not keep retrying publish while the installed binary is still in use`
 
 ### `References`
 
@@ -210,12 +242,15 @@ Compact packet pattern:
 Operational Runbooks
 - Local publish
   When: publishing the local CLI or viewer build
+  Preconditions: release build exists; installed binaries are not locked
   Do: run scripts/publish-local.ps1; verify C:\ctx outputs; validate installed viewer
   Verify: ctx audit clean; local viewer responds
 - Git closeout
   When: before git commit or git push
+  Preconditions: ctx audit clean; closeout reviewed
   Do: run ctx closeout; ensure no .git/index.lock; commit CTX before Git
   Verify: git status clean; CTX clean
+  Escalate: switch to lock recovery if index.lock appears
 
 Additional runbooks available: Recover index.lock
 ```

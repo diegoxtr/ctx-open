@@ -161,6 +161,13 @@ La tab `Origin` usa dos estados de procedencia:
 
 Por eso, que se repita el mismo texto en `Origin` a veces es el comportamiento correcto. Si una task es una continuacion y no abrio una direccion nueva material, el viewer debe seguir mostrando ese origen heredado en lugar de inventar uno nuevo.
 
+Regla de visibilidad estrategica vs tactica:
+
+- `Working` deberia enfatizar visualmente la `Task` actual y su `Sub-goal` mas cercano
+- un `Goal` estrategico padre puede seguir mostrandose como contexto
+- los umbrella goals que siguen activos como lineas largas de producto no deberian dominar el working graph cuando no hay una task directa en foco colgando de ellos
+- eso significa que un goal estrategico puede seguir siendo correcto en el repositorio y al mismo tiempo quedar visualmente degradado en el viewer
+
 ### History
 
 Debajo aparece la historia principal del repositorio.
@@ -365,6 +372,7 @@ Ejemplos de relaciones:
 - `Decision -> Conclusion`
 
 Si un nodo es `Hypothesis`, puede mostrar un badge con `score`.
+Los nodos `Task`, `Decision` y `Conclusion` pueden mostrar badges compactos de estado, para que el grafo no sugiera que solo las hypotheses tienen metadata inline relevante.
 
 Eso significa:
 

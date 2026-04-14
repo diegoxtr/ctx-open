@@ -161,6 +161,13 @@ The `Origin` tab uses two provenance states:
 
 Because of that, repeated origin text is sometimes the correct behavior. If a task is a continuation and did not open a materially new direction, the viewer should keep showing the same inherited origin instead of inventing a new one.
 
+Strategic-vs-tactical visibility rule:
+
+- `Working` should visually emphasize the current `Task` and its nearest `Sub-goal`
+- a parent strategic `Goal` may still be shown as context
+- umbrella goals that remain active as long-lived product lanes should not dominate the working graph when no direct task in focus hangs from them
+- this means an active strategic goal can still be correct in the repository while being visually de-emphasized in the viewer
+
 ### History
 
 Below is the main repository history.
@@ -363,6 +370,7 @@ Example relations:
 - `Decision -> Conclusion`
 
 If a node is a `Hypothesis`, it can show a `score` badge.
+`Task`, `Decision`, and `Conclusion` nodes can show compact state badges instead, so the graph does not imply that only hypotheses carry meaningful inline metadata.
 
 That means:
 

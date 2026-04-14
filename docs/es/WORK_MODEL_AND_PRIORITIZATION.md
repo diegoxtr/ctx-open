@@ -97,6 +97,15 @@ Usarlo cuando el trabajo:
 
 No conviene crear un `goal` nuevo cuando el trabajo solo es una rama tematica de una linea estrategica ya activa.
 
+Los goals estrategicos pueden seguir en estado `Active` aunque no tengan una ejecucion diaria abierta debajo.
+Eso no es un bug de cierre por si mismo. Significa que el goal sigue representando una linea durable de producto u operacion.
+
+Regla de cierre:
+
+- mantener un `goal` activo si sigue nombrando una linea estrategica viva
+- cerrar o reemplazar un `goal` cuando describia un objetivo acotado que ya no es la linea activa
+- no cerrar un goal estrategico solo para que el grafo se vea mas silencioso
+
 ### `Sub-goal`
 
 Un `sub-goal` es una linea tactica debajo de un goal existente.
@@ -108,6 +117,12 @@ Usarlo cuando el trabajo:
 - agrupa varias tasks relacionadas que no conviene colgar directo del goal paraguas
 
 Es la capa correcta para cosas como una rama de UI debajo de un goal del viewer o una rama de packaging debajo de un goal de distribucion.
+
+Regla de cierre:
+
+- mantener un `sub-goal` activo mientras siga agrupando trabajo tactico actual
+- cerrar un `sub-goal` cuando esa rama de ejecucion este terminada y ya no necesite su propio carril de trabajo
+- conviene abrir un nuevo `sub-goal` antes que colgar tareas no relacionadas directo del goal paraguas
 
 ### Regla canonica de estructura
 
@@ -124,6 +139,13 @@ Operativamente:
 - abrir debajo de ellos las lineas nuevas de UI o producto como `sub-goals`
 - apuntar las tasks nuevas a la linea tactica mas cercana y no al goal paraguas por defecto
 - usar `ctx line open` cuando la intencion del operador sea "abrir una linea tactica aca y empezar a trabajar dentro de ella"
+
+Regla para el viewer:
+
+- el foco diario de `Working` deberia priorizar `task -> sub-goal -> goal padre`
+- la linea tactica mas cercana deberia cargar la mayor parte del peso visual
+- los umbrella goals estrategicos pueden seguir activos en el repositorio sin dominar la vista de trabajo
+- un goal estrategico deberia aparecer en `Working` sobre todo como contexto liviano de la linea tactica activa, no como sujeto principal cuando no cuelga una task directa de el
 
 ### `Issue`
 

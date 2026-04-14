@@ -218,6 +218,45 @@ public sealed class CtxApplicationService : ICtxApplicationService
         return new(true, message, closeout);
     }
 
+    public async System.Threading.Tasks.Task<CommandResult> PreflightAsync(string repositoryPath, string operation, string? goalId, string? taskId, CancellationToken cancellationToken)
+    {
+        var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+        var runbooks = await LoadRunbooksAsync(repositoryPath, cancellationToken);
+        var (normalizedOperation, operationLabel, purpose) = NormalizePreflightOperation(operation);
+        var (selectedGoals, selectedTasks, scope) = ResolvePreflightScope(context, goalId, taskId);
+        var selection = OperationalRunbookSelection.Select(
+            runbooks,
+            purpose,
+            goalId,
+            taskId,
+            selectedGoals,
+            selectedTasks);
+
+        var guidance = BuildPreflightGuidance(normalizedOperation, selection);
+        var summary = new PreflightSummary(
+            normalizedOperation,
+            operationLabel,
+            scope,
+            selection.Selected.Select(runbook => new RunbookSuggestion(
+                runbook.Id.Value,
+                runbook.Title,
+                runbook.Kind.ToString(),
+                runbook.WhenToUse,
+                runbook.Do.Take(3).ToArray(),
+                runbook.Verify.Take(2).ToArray(),
+                runbook.References.Take(3).ToArray(),
+                (runbook.Preconditions ?? Array.Empty<string>()).Take(3).ToArray(),
+                (runbook.FailureSignals ?? Array.Empty<string>()).Take(3).ToArray(),
+                (runbook.EscalationBoundary ?? Array.Empty<string>()).Take(2).ToArray())).ToArray(),
+            selection.Available.Select(runbook => runbook.Title).ToArray(),
+            guidance);
+
+        var message = selection.Selected.Count > 0
+            ? $"Preflight ready for {operationLabel}."
+            : $"Preflight found no matching runbooks for {operationLabel}.";
+        return new(true, message, summary);
+    }
+
     public async System.Threading.Tasks.Task<CommandResult> AddGoalAsync(string repositoryPath, AddGoalRequest request, CancellationToken cancellationToken)
     {
         return await ExecuteWriteLockedAsync(repositoryPath, cancellationToken, async () =>
@@ -344,6 +383,9 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 request.Do.Where(item => !string.IsNullOrWhiteSpace(item)).ToArray(),
                 request.Verify.Where(item => !string.IsNullOrWhiteSpace(item)).ToArray(),
                 request.References.Where(item => !string.IsNullOrWhiteSpace(item)).ToArray(),
+                (request.Preconditions ?? Array.Empty<string>()).Where(item => !string.IsNullOrWhiteSpace(item)).ToArray(),
+                (request.FailureSignals ?? Array.Empty<string>()).Where(item => !string.IsNullOrWhiteSpace(item)).ToArray(),
+                (request.EscalationBoundary ?? Array.Empty<string>()).Where(item => !string.IsNullOrWhiteSpace(item)).ToArray(),
                 goalIds,
                 taskIds,
                 LifecycleState.Active,
@@ -1893,7 +1935,10 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 runbook.WhenToUse,
                 runbook.Do.Take(3).ToArray(),
                 runbook.Verify.Take(2).ToArray(),
-                runbook.References.Take(3).ToArray())).ToArray(),
+                runbook.References.Take(3).ToArray(),
+                (runbook.Preconditions ?? Array.Empty<string>()).Take(3).ToArray(),
+                (runbook.FailureSignals ?? Array.Empty<string>()).Take(3).ToArray(),
+                (runbook.EscalationBoundary ?? Array.Empty<string>()).Take(2).ToArray())).ToArray(),
             runbookSelection.Available.Select(runbook => runbook.Title).ToArray(),
             guidance);
     }
@@ -1984,7 +2029,8 @@ public sealed class CtxApplicationService : ICtxApplicationService
         var guidance = new List<string>
         {
             $"Review {pendingItems.Count} pending cognitive artifact(s) before the next Git closeout.",
-            "If this block is complete, capture these changes with `ctx commit -m \"<message>\"` before the Git commit."
+            "If this block is complete, capture these changes with `ctx commit -m \"<message>\"` before the Git commit.",
+            "Run `ctx preflight --operation git-closeout` before the Git closeout so the matching operational runbooks are reviewed explicitly."
         };
 
         if (diff.Evidence.Count > 0 && diff.Decisions.Count == 0 && diff.Conclusions.Count == 0)
@@ -2000,6 +2046,98 @@ public sealed class CtxApplicationService : ICtxApplicationService
         if (!context.Dirty)
         {
             guidance.Add("Working state is marked clean, but the pending diff preview is non-empty; verify branch and HEAD alignment before closing.");
+        }
+
+        return guidance;
+    }
+
+    private static (string Operation, string Label, string Purpose) NormalizePreflightOperation(string operation)
+    {
+        var normalized = operation.Trim().ToLowerInvariant();
+        return normalized switch
+        {
+            "git-closeout" or "git" or "git-commit" or "closeout" => ("git-closeout", "Git closeout", "git-commit git-push closeout"),
+            "publish-local" or "publish" or "local-publish" => ("publish-local", "Local publish", "publish-local local publish install refresh"),
+            "viewer-validation" or "viewer" => ("viewer-validation", "Viewer validation", "viewer local validation refresh"),
+            "recover-index-lock" or "index-lock" or "lock-recovery" => ("recover-index-lock", "Index.lock recovery", "index.lock lock recovery git closeout"),
+            _ => throw new InvalidOperationException($"Unsupported preflight operation '{operation}'. Use git-closeout, publish-local, viewer-validation, or recover-index-lock.")
+        };
+    }
+
+    private static (IReadOnlyList<Goal> Goals, IReadOnlyList<Ctx.Domain.Task> Tasks, string Scope) ResolvePreflightScope(WorkingContext context, string? goalId, string? taskId)
+    {
+        if (!string.IsNullOrWhiteSpace(taskId))
+        {
+            var task = ResolveTask(context, taskId);
+            var goal = task.GoalId is null
+                ? null
+                : context.Goals.SingleOrDefault(item => item.Id == task.GoalId);
+            return (
+                goal is null ? Array.Empty<Goal>() : new[] { goal },
+                new[] { task },
+                $"task:{task.Id.Value}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(goalId))
+        {
+            var goal = ResolveGoal(context, goalId);
+            var tasks = context.Tasks.Where(item => item.GoalId == goal.Id).ToArray();
+            return (new[] { goal }, tasks, $"goal:{goal.Id.Value}");
+        }
+
+        var openTasks = context.Tasks.Where(item => item.State != TaskExecutionState.Done).ToArray();
+        if (openTasks.Length == 1)
+        {
+            var task = openTasks[0];
+            var goal = task.GoalId is null
+                ? null
+                : context.Goals.SingleOrDefault(item => item.Id == task.GoalId);
+            return (
+                goal is null ? Array.Empty<Goal>() : new[] { goal },
+                new[] { task },
+                $"task:{task.Id.Value} (only open task)");
+        }
+
+        return (Array.Empty<Goal>(), Array.Empty<Ctx.Domain.Task>(), "workspace");
+    }
+
+    private static IReadOnlyList<string> BuildPreflightGuidance(
+        string operation,
+        (IReadOnlyList<OperationalRunbook> Selected, IReadOnlyList<OperationalRunbook> Available) selection)
+    {
+        var guidance = new List<string>();
+
+        if (selection.Selected.Count > 0)
+        {
+            guidance.Add($"Review {selection.Selected.Count} selected runbook(s) before executing the operation.");
+        }
+        else
+        {
+            guidance.Add("No direct runbook match was found for this operation. Review `ctx runbook list` if the procedure should still be formalized.");
+        }
+
+        if (selection.Available.Count > 0)
+        {
+            guidance.Add($"Additional runbooks remain available if the operation widens: {string.Join(", ", selection.Available.Select(item => item.Title))}.");
+        }
+
+        switch (operation)
+        {
+            case "git-closeout":
+                guidance.Add("Run `ctx audit` and `ctx closeout` before the Git commit or push.");
+                guidance.Add("If `index.lock` appears, switch to `ctx preflight --operation recover-index-lock` before touching the lock manually.");
+                break;
+            case "publish-local":
+                guidance.Add("Use the canonical local publish script instead of ad-hoc copy steps.");
+                guidance.Add("Validate the installed CLI or viewer immediately after publish.");
+                break;
+            case "viewer-validation":
+                guidance.Add("Use the canonical local viewer port and validate the installed instance, not only the dev server.");
+                break;
+            case "recover-index-lock":
+                guidance.Add("Check for live Git processes first and only remove orphaned locks.");
+                guidance.Add("Return to `ctx preflight --operation git-closeout` once the lock condition is gone.");
+                break;
         }
 
         return guidance;

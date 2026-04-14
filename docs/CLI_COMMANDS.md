@@ -211,6 +211,32 @@ Typical usage:
 dotnet run --project .\Ctx.Cli -- closeout
 ```
 
+### `ctx preflight`
+
+Runs a compact operational preflight for a critical operation before execution or Git closeout.
+
+Options:
+- `--operation <git-closeout|publish-local|viewer-validation|recover-index-lock>`
+- `--goal <goalId>` optional
+- `--task <taskId>` optional
+
+Returns:
+- normalized operation id and label
+- resolved scope (`workspace`, `goal:<id>`, or `task:<id>`)
+- compact `runbookSuggestions`
+- `additionalRunbooksAvailable` when more matches exist than the suggestion limit allows
+- short guidance for the specific critical operation
+
+Typical usage:
+- before Git commit or push: `ctx preflight --operation git-closeout`
+- before local publish: `ctx preflight --operation publish-local`
+- when Git is blocked by `index.lock`: `ctx preflight --operation recover-index-lock`
+
+```powershell
+dotnet run --project .\Ctx.Cli -- preflight --operation git-closeout
+dotnet run --project .\Ctx.Cli -- preflight --operation publish-local --task <taskId>
+```
+
 ### `ctx runbook add`
 
 Adds a compact `OperationalRunbook` for recurring procedures, troubleshooting, policies, or guardrails.
@@ -220,8 +246,11 @@ Options:
 - `--kind Procedure|Troubleshooting|Policy|Guardrail`
 - `--when <text>`
 - `--trigger <text>` repeatable
+- `--precondition <text>` repeatable
 - `--do <text>` repeatable
 - `--verify <text>` repeatable
+- `--signal <text>` repeatable
+- `--escalate <text>` repeatable
 - `--reference <text>` repeatable
 - `--goal <goalId>` repeatable
 - `--task <taskId>` repeatable
@@ -230,9 +259,10 @@ Design rules:
 - keep the runbook compact
 - summarize the operational path instead of duplicating long docs
 - prefer canonical scripts, commands, and references
+- keep `Preconditions`, `FailureSignals`, and `EscalationBoundary` short and checkable
 
 ```powershell
-dotnet run --project .\Ctx.Cli -- runbook add --title "Local publish" --kind Procedure --trigger publish-local --when "Use when refreshing the installed local viewer" --do "Run scripts/publish-local.ps1" --verify "Viewer responds locally" --reference "scripts/publish-local.ps1"
+dotnet run --project .\Ctx.Cli -- runbook add --title "Local publish" --kind Procedure --trigger publish-local --when "Use when refreshing the installed local viewer" --precondition "No installed CTX binary is locked" --do "Run scripts/publish-local.ps1" --verify "Viewer responds locally" --signal "Failed to copy Ctx.Viewer.exe" --escalate "Stop retrying publish if binaries remain locked" --reference "scripts/publish-local.ps1"
 ```
 
 ### `ctx runbook list`

@@ -96,6 +96,15 @@ Use it when the work:
 
 Do not create a new `goal` when the work is only a thematic branch of an already active strategic lane.
 
+Strategic goals are allowed to remain `Active` even when no daily execution thread is currently open under them.
+That is not a closure bug by itself. It means the goal still represents a durable product or operational lane.
+
+Closure rule:
+
+- keep a `goal` active if it still names a living strategic lane
+- close or supersede a `goal` when it described a bounded objective that is no longer the active lane
+- do not close a strategic goal only to make the graph look quieter
+
 ### `Sub-goal`
 
 A `sub-goal` is a tactical line under an existing goal.
@@ -107,6 +116,12 @@ Use it when the work:
 - groups several related tasks that should not hang directly from the umbrella goal
 
 This is the right layer for things like a UI branch under a viewer goal or a packaging branch under a distribution goal.
+
+Closure rule:
+
+- keep a `sub-goal` active while it still groups current tactical work
+- close a `sub-goal` when its branch of execution is complete and no longer needs its own working lane
+- prefer opening a new `sub-goal` over attaching unrelated tasks directly to the umbrella goal
 
 ### Canonical structure rule
 
@@ -123,6 +138,13 @@ Operationally:
 - open new UI or product lines under them as `sub-goals`
 - attach new tasks to the nearest tactical line, not to the umbrella goal by default
 - use `ctx line open` when the operator intent is "open a tactical line here and start working inside it"
+
+Viewer rule:
+
+- the daily `Working` focus should prioritize `task -> sub-goal -> parent goal`
+- the nearest tactical line should carry most of the visual weight
+- umbrella strategic goals may remain active in the repository without dominating the working view
+- a strategic goal should appear in `Working` mainly as lightweight context for the active tactical line, not as the main subject when no direct task hangs from it
 
 ### `Issue`
 
