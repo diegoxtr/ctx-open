@@ -33,7 +33,7 @@ Si queres entender CTX rapido, este es el orden recomendado:
 - [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-public/docs/V1_FUNCTIONAL_SPEC.md)
   Define modulos, requisitos, criterios de aceptacion y definicion de terminado de V1.
 
-- [RELEASE_1_0_2.md](C:/sources/ctx-public/docs/RELEASE_1_0_2.md)
+- [RELEASE_1_0_3.md](../RELEASE_1_0_3.md)
   Resume la linea base funcional de la release estable actual.
 
 - [archive/README.md](C:/sources/ctx-public/docs/es/archive/README.md)

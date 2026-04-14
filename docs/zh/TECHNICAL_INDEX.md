@@ -25,7 +25,7 @@
 
 - [V1_PLAN.md](C:/sources/ctx-public/docs/V1_PLAN.md)
 - [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-public/docs/V1_FUNCTIONAL_SPEC.md)
-- [RELEASE_1_0_2.md](C:/sources/ctx-public/docs/RELEASE_1_0_2.md)
+- [RELEASE_1_0_3.md](../RELEASE_1_0_3.md)
 
 ### 架构与设计
 

@@ -77,19 +77,19 @@ The strongest demos are not graph demos. They are continuity demos.
 - Tiene un valor muy alto para generar inputs estructurados de entrenamiento porque el camino de razonamiento queda preservado y no reconstruido a posteriori.
 - Esto no es solo otra herramienta de IA. Es parte de la capa de infraestructura que va a necesitar la próxima generación de workflows con agentes.
 
-Current version: `1.0.2`
+Current version: `1.0.3`
 
 ## Download
 
 Download the portable packages from the latest public release:
 
-- [CTX 1.0.2 release](https://github.com/diegoxtr/ctx-open/releases/tag/v1.0.2)
-- [Windows x64](https://github.com/diegoxtr/ctx-open/releases/download/v1.0.2/ctx-win-x64.zip)
-- [Windows x86](https://github.com/diegoxtr/ctx-open/releases/download/v1.0.2/ctx-win-x86.zip)
-- [Linux x64](https://github.com/diegoxtr/ctx-open/releases/download/v1.0.2/ctx-linux-x64.tar.gz)
-- [Linux arm64](https://github.com/diegoxtr/ctx-open/releases/download/v1.0.2/ctx-linux-arm64.tar.gz)
-- [macOS x64](https://github.com/diegoxtr/ctx-open/releases/download/v1.0.2/ctx-osx-x64.tar.gz)
-- [macOS arm64](https://github.com/diegoxtr/ctx-open/releases/download/v1.0.2/ctx-osx-arm64.tar.gz)
+- [CTX 1.0.3 release](https://github.com/diegoxtr/ctx-open/releases/tag/v1.0.3)
+- [Windows x64](https://github.com/diegoxtr/ctx-open/releases/download/v1.0.3/ctx-win-x64.zip)
+- [Windows x86](https://github.com/diegoxtr/ctx-open/releases/download/v1.0.3/ctx-win-x86.zip)
+- [Linux x64](https://github.com/diegoxtr/ctx-open/releases/download/v1.0.3/ctx-linux-x64.tar.gz)
+- [Linux arm64](https://github.com/diegoxtr/ctx-open/releases/download/v1.0.3/ctx-linux-arm64.tar.gz)
+- [macOS x64](https://github.com/diegoxtr/ctx-open/releases/download/v1.0.3/ctx-osx-x64.tar.gz)
+- [macOS arm64](https://github.com/diegoxtr/ctx-open/releases/download/v1.0.3/ctx-osx-arm64.tar.gz)
 
 Portable quick start:
 
@@ -113,6 +113,8 @@ The repository includes:
 - `docs/LIVE_DEMO.md`
 - `docs/live-demo/index.html`
 - `.github/workflows/live-demo-pages.yml`
+
+The Codespaces scaffold now starts the viewer on workspace start instead of waiting for a manual attach, and it includes SSH support so the demo can also be operated remotely through GitHub CLI.
 
 ## Viewer
 
@@ -321,7 +323,7 @@ This is a planned direction, not a statement of current capability.
 - Formal V1 functional specification is documented in `docs/V1_FUNCTIONAL_SPEC.md`.
 - Pilot execution guidance is documented in `docs/PILOT_TESTING_GUIDE.md`.
 - Installation and first-use guidance are documented in `docs/INSTALLATION_AND_USAGE_GUIDE.md`.
-- Release baseline details are documented in `docs/RELEASE_1_0_2.md`.
+- Release baseline details are documented in `docs/RELEASE_1_0_3.md`.
 - A repeatable smoke test is available at `scripts/run-smoke-test.ps1`.
 - A repeatable branch/merge conflict demo is available at `scripts/run-merge-conflict-demo.ps1`.
 - A local publish script is available at `scripts/publish-local.ps1`.
