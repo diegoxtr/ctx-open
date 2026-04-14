@@ -34,12 +34,14 @@ El repo ahora incluye:
 - `docs/live-demo/index.html`
 - `.github/workflows/live-demo-pages.yml`
 
-Cuando el codespace se adjunta:
+Cuando el codespace inicia:
 
 1. `dotnet restore Ctx.sln` corre una vez al crear el entorno
 2. `scripts/start-codespaces-demo.sh` levanta el viewer en `0.0.0.0:5271`
 3. el script configura `CTX_VIEWER_DEFAULT_REPOSITORY_PATH` con `examples/ctx/agent-session-continuity`
 4. Codespaces expone públicamente el puerto `5271`
+
+El devcontainer también incluye un servidor SSH para que el codespace pueda operarse remotamente a través de GitHub CLI cuando haga falta.
 
 ## Lanzamiento manual dentro del codespace
 

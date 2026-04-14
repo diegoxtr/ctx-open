@@ -2,6 +2,29 @@
 
 All notable changes to CTX will be documented in this file.
 
+## [1.0.3] - 2026-04-14
+
+### Added
+
+- GitHub-native live demo delivery scaffolding with Codespaces startup flow, tri-language live-demo docs, and a Pages landing surface.
+- `ctx preflight --operation ...` as a stronger runbook-aware preflight for critical operations.
+
+### Changed
+
+- The working graph now focuses on immediate tactical lineage instead of mixing sibling tactical lines by default.
+- Graph inspection now supports full lineage highlighting from the selected node, with better node badges, tighter spacing, and improved long-edge lane routing.
+- `ctx-open` is now aligned with the current public-safe baseline and carries the live-demo/public landing surface.
+
+### Fixed
+
+- Historical tasks without goals are normalized under a legacy parent goal in the current working state, avoiding new orphan tasks.
+- Graph columns now stack tall cards by measured height and avoid the worst node overlap cases from the earlier fixed-gap layout.
+- The GitHub Codespaces live-demo scaffold now starts the viewer on workspace start and includes SSH support for remote operations instead of depending on a manual attach step.
+
+### Notes
+
+- This patch release freezes the current stable line after the viewer graph readability pass, runbook preflight hardening, and the first GitHub-native demo/public delivery flow converged into one releaseable state.
+
 ## [1.0.2] - 2026-04-14
 
 ### Added

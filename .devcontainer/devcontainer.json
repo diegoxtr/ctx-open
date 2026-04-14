@@ -1,8 +1,13 @@
 {
   "name": "CTX Live Demo",
   "image": "mcr.microsoft.com/devcontainers/dotnet:1-8.0-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/sshd:1": {
+      "version": "latest"
+    }
+  },
   "postCreateCommand": "dotnet restore Ctx.sln",
-  "postAttachCommand": "bash scripts/start-codespaces-demo.sh",
+  "postStartCommand": "bash scripts/start-codespaces-demo.sh",
   "forwardPorts": [
     5271
   ],

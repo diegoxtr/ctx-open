@@ -13,7 +13,7 @@ The top-level demo folders are the examples you should open first:
 The top-level `version.json`, `config.json`, `HEAD`, `branches/`, and `metrics/` files are legacy repository artifacts for this folder itself. They are not the primary demo entry points.
 Treat them as folder-level residue from an older workspace, not as the recommended way to understand the examples.
 
-The three operational example repositories in this folder are currently aligned to the CTX `1.0.2` repository baseline.
+The three operational example repositories in this folder are currently aligned to the CTX `1.0.3` repository baseline.
 `futbol-mundial` remains present as a sanitized public-style artifact set, but it is not part of the recommended internal showcase because it is not a fully live CTX workspace.
 
 If you want to review the strongest commercial examples first, use this order:

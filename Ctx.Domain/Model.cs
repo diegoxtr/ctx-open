@@ -495,7 +495,7 @@ public static class DomainConstants
 {
     public const string RepositoryFolderName = ".ctx";
     public const string CurrentRepositoryVersion = "1.0";
-    public const string ProductVersion = "1.0.2";
+    public const string ProductVersion = "1.0.3";
 }
 
 public static class HypothesisScoring
