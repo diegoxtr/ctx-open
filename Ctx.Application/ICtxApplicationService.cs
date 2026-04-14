@@ -6,6 +6,7 @@ public interface ICtxApplicationService
     System.Threading.Tasks.Task<CommandResult> StatusAsync(string repositoryPath, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> CheckAsync(string repositoryPath, string? taskId, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> CloseoutAsync(string repositoryPath, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> PreflightAsync(string repositoryPath, string operation, string? goalId, string? taskId, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddGoalAsync(string repositoryPath, AddGoalRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> OpenWorkLineAsync(string repositoryPath, OpenWorkLineRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddOperationalRunbookAsync(string repositoryPath, AddOperationalRunbookRequest request, CancellationToken cancellationToken);

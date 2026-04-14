@@ -1,0 +1,29 @@
+{
+  "name": "CTX Live Demo",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:1-8.0-bookworm",
+  "postCreateCommand": "dotnet restore Ctx.sln",
+  "postAttachCommand": "bash scripts/start-codespaces-demo.sh",
+  "forwardPorts": [
+    5271
+  ],
+  "portsAttributes": {
+    "5271": {
+      "label": "CTX Viewer",
+      "onAutoForward": "openBrowserOnce",
+      "visibility": "public"
+    }
+  },
+  "customizations": {
+    "codespaces": {
+      "openFiles": [
+        "README.md",
+        "docs/LIVE_DEMO.md"
+      ]
+    },
+    "vscode": {
+      "settings": {
+        "dotnet.defaultSolution": "Ctx.sln"
+      }
+    }
+  }
+}

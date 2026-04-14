@@ -78,6 +78,7 @@ public record Conclusion(
     IReadOnlyList<GoalId> GoalIds,
     IReadOnlyList<TaskId> TaskIds) : CognitiveEntity<ConclusionId>(Id, Trace);
 
+[method: JsonConstructor]
 public record OperationalRunbook(
     OperationalRunbookId Id,
     string Title,
@@ -87,10 +88,46 @@ public record OperationalRunbook(
     IReadOnlyList<string> Do,
     IReadOnlyList<string> Verify,
     IReadOnlyList<string> References,
+    IReadOnlyList<string> Preconditions,
+    IReadOnlyList<string> FailureSignals,
+    IReadOnlyList<string> EscalationBoundary,
     IReadOnlyList<GoalId> GoalIds,
     IReadOnlyList<TaskId> TaskIds,
     LifecycleState State,
-    Traceability Trace) : CognitiveEntity<OperationalRunbookId>(Id, Trace);
+    Traceability Trace) : CognitiveEntity<OperationalRunbookId>(Id, Trace)
+{
+    public OperationalRunbook(
+        OperationalRunbookId id,
+        string title,
+        OperationalRunbookKind kind,
+        IReadOnlyList<string> triggers,
+        string whenToUse,
+        IReadOnlyList<string> @do,
+        IReadOnlyList<string> verify,
+        IReadOnlyList<string> references,
+        IReadOnlyList<GoalId> goalIds,
+        IReadOnlyList<TaskId> taskIds,
+        LifecycleState state,
+        Traceability trace)
+        : this(
+            id,
+            title,
+            kind,
+            triggers,
+            whenToUse,
+            @do,
+            verify,
+            references,
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            goalIds,
+            taskIds,
+            state,
+            trace)
+    {
+    }
+}
 
 public record CognitiveTrigger(
     CognitiveTriggerId Id,

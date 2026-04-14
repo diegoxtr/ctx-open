@@ -57,6 +57,7 @@ static async Task<CommandResult> DispatchAsync(IReadOnlyList<string> args, ICtxA
         "audit" => await service.AuditAsync(repositoryPath, cancellationToken),
         "check" => await service.CheckAsync(repositoryPath, GetOption(args, "--task"), cancellationToken),
         "closeout" => await service.CloseoutAsync(repositoryPath, cancellationToken),
+        "preflight" => await service.PreflightAsync(repositoryPath, RequireOption(args, "--operation"), GetOption(args, "--goal"), GetOption(args, "--task"), cancellationToken),
         "graph" when Match(args, "graph", "summary") => await service.GraphSummaryAsync(repositoryPath, cancellationToken),
         "graph" when Match(args, "graph", "show") => await service.GraphShowAsync(repositoryPath, RequirePositional(args, 2, "node id"), cancellationToken),
         "graph" when Match(args, "graph", "export") => await service.ExportGraphAsync(repositoryPath, GetOption(args, "--format") ?? "json", GetOption(args, "--commit"), cancellationToken),
@@ -98,7 +99,10 @@ static async Task<CommandResult> DispatchAsync(IReadOnlyList<string> args, ICtxA
                 GetMultiOption(args, "--reference", "--references"),
                 GetMultiOption(args, "--goal", "--goals"),
                 GetMultiOption(args, "--task", "--tasks"),
-                Environment.UserName),
+                Environment.UserName,
+                GetMultiOption(args, "--precondition", "--preconditions"),
+                GetMultiOption(args, "--signal", "--signals", "--failure-signal", "--failure-signals"),
+                GetMultiOption(args, "--escalate", "--escalation", "--escalation-boundary")),
             cancellationToken),
         "runbook" when Match(args, "runbook", "list") => await service.ListOperationalRunbooksAsync(repositoryPath, cancellationToken),
         "runbook" when Match(args, "runbook", "show") => await service.ShowOperationalRunbookAsync(repositoryPath, RequirePositional(args, 2, "runbook id"), cancellationToken),
@@ -495,6 +499,7 @@ Commands:
   ctx audit
   ctx check [--task <taskId>]
   ctx closeout
+  ctx preflight --operation <git-closeout|publish-local|viewer-validation|recover-index-lock> [--goal <goalId>] [--task <taskId>]
   ctx graph summary
   ctx graph show <nodeId>
   ctx graph export [--format json|mermaid] [--commit <commitId>]
@@ -509,7 +514,7 @@ Commands:
     ctx init --name <project> [--description <text>] [--branch <name>]
   ctx status
   ctx line open --goal <goalId> --title <text> [--description <text>] [--priority <n>] [--task-title <text>] [--task-description <text>]
-  ctx runbook add --title <text> [--kind <Procedure|Troubleshooting|Policy|Guardrail>] --when <text> [--trigger <a,b>] [--do <a,b>] [--verify <a,b>] [--reference <a,b>] [--goal <id,id>] [--task <id,id>]
+  ctx runbook add --title <text> [--kind <Procedure|Troubleshooting|Policy|Guardrail>] --when <text> [--trigger <a,b>] [--do <a,b>] [--verify <a,b>] [--reference <a,b>] [--precondition <a,b>] [--signal <a,b>] [--escalate <a,b>] [--goal <id,id>] [--task <id,id>]
   ctx runbook list
   ctx runbook show <runbookId>
   ctx trigger add --summary <text> [--kind <UserPrompt|AgentPrompt|Continuation|RunbookTrigger|IssueTrigger>] [--text <text>] [--goal <id,id>] [--task <id,id>] [--runbook <id,id>]

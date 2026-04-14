@@ -96,6 +96,7 @@ app.MapGet("/api/overview", async (string? path, string? branch, CancellationTok
 
     return Results.Json(new
     {
+        productVersion = DomainConstants.ProductVersion,
         repositoryPath,
         currentBranch = head.Branch,
         selectedBranch,

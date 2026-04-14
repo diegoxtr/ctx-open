@@ -17,7 +17,10 @@ public record AddOperationalRunbookRequest(
     IReadOnlyList<string> References,
     IReadOnlyList<string> GoalIds,
     IReadOnlyList<string> TaskIds,
-    string CreatedBy);
+    string CreatedBy,
+    IReadOnlyList<string>? Preconditions = null,
+    IReadOnlyList<string>? FailureSignals = null,
+    IReadOnlyList<string>? EscalationBoundary = null);
 public record AddCognitiveTriggerRequest(
     string Kind,
     string Summary,
@@ -81,7 +84,10 @@ public record RunbookSuggestion(
     string WhenToUse,
     IReadOnlyList<string> Do,
     IReadOnlyList<string> Verify,
-    IReadOnlyList<string> References);
+    IReadOnlyList<string> References,
+    IReadOnlyList<string> Preconditions,
+    IReadOnlyList<string> FailureSignals,
+    IReadOnlyList<string> EscalationBoundary);
 public record OpenWorkLineSummary(
     string ParentGoalId,
     string ParentGoalTitle,
@@ -118,6 +124,13 @@ public record CloseoutSummary(
     IReadOnlyList<CloseoutPendingItem> PendingItems,
     IReadOnlyList<string> Guidance,
     MicroCloseoutSuggestion? MicroCloseout);
+public record PreflightSummary(
+    string Operation,
+    string OperationLabel,
+    string Scope,
+    IReadOnlyList<RunbookSuggestion> RunbookSuggestions,
+    IReadOnlyList<string> AdditionalRunbooksAvailable,
+    IReadOnlyList<string> Guidance);
 
 public interface IWorkingContextRepository
 {

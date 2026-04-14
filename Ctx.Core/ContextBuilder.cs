@@ -175,8 +175,15 @@ public sealed class ContextBuilder : IContextBuilder
         {
             var doSummary = string.Join("; ", runbook.Do.Take(3));
             var verifySummary = string.Join("; ", runbook.Verify.Take(2));
+            var preconditionSummary = string.Join("; ", (runbook.Preconditions ?? Array.Empty<string>()).Take(2));
+            var escalationSummary = string.Join("; ", (runbook.EscalationBoundary ?? Array.Empty<string>()).Take(1));
             lines.Add($"- {runbook.Title}");
             lines.Add($"  When: {runbook.WhenToUse}");
+            if (!string.IsNullOrWhiteSpace(preconditionSummary))
+            {
+                lines.Add($"  Preconditions: {preconditionSummary}");
+            }
+
             if (!string.IsNullOrWhiteSpace(doSummary))
             {
                 lines.Add($"  Do: {doSummary}");
@@ -185,6 +192,11 @@ public sealed class ContextBuilder : IContextBuilder
             if (!string.IsNullOrWhiteSpace(verifySummary))
             {
                 lines.Add($"  Verify: {verifySummary}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(escalationSummary))
+            {
+                lines.Add($"  Escalate: {escalationSummary}");
             }
         }
 
