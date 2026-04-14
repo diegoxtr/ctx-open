@@ -33,7 +33,7 @@ Si queres entender CTX rapido, este es el orden recomendado:
 - [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-public/docs/V1_FUNCTIONAL_SPEC.md)
   Define modulos, requisitos, criterios de aceptacion y definicion de terminado de V1.
 
-- [RELEASE_1_0_1.md](C:/sources/ctx-public/docs/RELEASE_1_0_1.md)
+- [RELEASE_1_0_2.md](C:/sources/ctx-public/docs/RELEASE_1_0_2.md)
   Resume la linea base funcional de la release estable actual.
 
 - [archive/README.md](C:/sources/ctx-public/docs/es/archive/README.md)
@@ -58,6 +58,9 @@ Si queres entender CTX rapido, este es el orden recomendado:
 
 - [WORK_MODEL_AND_PRIORITIZATION.md](C:/sources/ctx-public/docs/WORK_MODEL_AND_PRIORITIZATION.md)
   Define la taxonomia canonica entre issue, gap, task, subtask, duplicate y blocker, ademas de la prioridad por cercania dentro de CTX.
+
+- [OPERATIONAL_RUNBOOKS.md](C:/sources/ctx-public/docs/OPERATIONAL_RUNBOOKS.md)
+  Define el diseno compacto de conocimiento operativo recurrente, su inyeccion en packets y el manejo de overflow.
 
 - [WORK_TOPOLOGY_AND_EXECUTION_SCORING.md](C:/sources/ctx-public/docs/es/WORK_TOPOLOGY_AND_EXECUTION_SCORING.md)
   Explica como clasificar trabajo nuevo, evitar duplicacion y combinar prioridad con cercania operativa.

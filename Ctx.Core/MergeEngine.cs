@@ -5,31 +5,39 @@ using Ctx.Domain;
 
 public sealed class MergeEngine : IMergeEngine
 {
-    public MergeResult Merge(WorkingContext current, ContextCommit sourceCommit)
+    public MergeResult Merge(RepositorySnapshot current, ContextCommit sourceCommit)
     {
         var source = sourceCommit.Snapshot;
+        var currentWorking = current.WorkingContext;
+        var sourceWorking = source.WorkingContext;
         var conflicts = new List<CognitiveConflict>();
 
-        conflicts.AddRange(FindConflicts(current.Tasks, source.Tasks, item => item.Id.Value, item => $"{item.Title} [{item.State}]"));
-        conflicts.AddRange(FindConflicts(current.Hypotheses, source.Hypotheses, item => item.Id.Value, item => $"{item.Statement} [{item.State}]"));
-        conflicts.AddRange(FindConflicts(current.Decisions, source.Decisions, item => item.Id.Value, item => $"{item.Title} [{item.State}]"));
-        conflicts.AddRange(FindConflicts(current.Evidence, source.Evidence, item => item.Id.Value, item => $"{item.Title} [{item.Kind}]"));
-        conflicts.AddRange(FindConflicts(current.Conclusions, source.Conclusions, item => item.Id.Value, item => $"{item.Summary} [{item.State}]"));
+        conflicts.AddRange(FindConflicts(currentWorking.Tasks, sourceWorking.Tasks, item => item.Id.Value, item => $"{item.Title} [{item.State}]"));
+        conflicts.AddRange(FindConflicts(currentWorking.Hypotheses, sourceWorking.Hypotheses, item => item.Id.Value, item => $"{item.Statement} [{item.State}]"));
+        conflicts.AddRange(FindConflicts(currentWorking.Decisions, sourceWorking.Decisions, item => item.Id.Value, item => $"{item.Title} [{item.State}]"));
+        conflicts.AddRange(FindConflicts(currentWorking.Evidence, sourceWorking.Evidence, item => item.Id.Value, item => $"{item.Title} [{item.Kind}]"));
+        conflicts.AddRange(FindConflicts(currentWorking.Conclusions, sourceWorking.Conclusions, item => item.Id.Value, item => $"{item.Summary} [{item.State}]"));
+        conflicts.AddRange(FindConflicts(current.Runbooks, source.Runbooks, item => item.Id.Value, item => $"{item.Title} [{item.Kind}]"));
+        conflicts.AddRange(FindConflicts(current.Triggers, source.Triggers, item => item.Id.Value, item => $"{item.Kind}:{item.Summary}"));
 
-        var merged = current with
+        var mergedWorking = currentWorking with
         {
             Dirty = true,
-            Goals = MergeById(current.Goals, source.Goals, item => item.Id.Value),
-            Tasks = MergeById(current.Tasks, source.Tasks, item => item.Id.Value),
-            Hypotheses = MergeById(current.Hypotheses, source.Hypotheses, item => item.Id.Value),
-            Decisions = MergeById(current.Decisions, source.Decisions, item => item.Id.Value),
-            Evidence = MergeById(current.Evidence, source.Evidence, item => item.Id.Value),
-            Conclusions = MergeById(current.Conclusions, source.Conclusions, item => item.Id.Value),
-            Runs = MergeById(current.Runs, source.Runs, item => item.Id.Value)
+            Goals = MergeById(currentWorking.Goals, sourceWorking.Goals, item => item.Id.Value),
+            Tasks = MergeById(currentWorking.Tasks, sourceWorking.Tasks, item => item.Id.Value),
+            Hypotheses = MergeById(currentWorking.Hypotheses, sourceWorking.Hypotheses, item => item.Id.Value),
+            Decisions = MergeById(currentWorking.Decisions, sourceWorking.Decisions, item => item.Id.Value),
+            Evidence = MergeById(currentWorking.Evidence, sourceWorking.Evidence, item => item.Id.Value),
+            Conclusions = MergeById(currentWorking.Conclusions, sourceWorking.Conclusions, item => item.Id.Value),
+            Runs = MergeById(currentWorking.Runs, sourceWorking.Runs, item => item.Id.Value)
         };
+        var mergedSnapshot = new RepositorySnapshot(
+            mergedWorking,
+            MergeById(current.Runbooks, source.Runbooks, item => item.Id.Value),
+            MergeById(current.Triggers, source.Triggers, item => item.Id.Value));
 
         return new MergeResult(
-            merged,
+            mergedSnapshot,
             conflicts,
             conflicts.Count == 0,
             conflicts.Count == 0

@@ -1,0 +1,317 @@
+{
+  "branch": "main",
+  "message": "Seed main branch for viewer demo",
+  "parentIds": [],
+  "createdAtUtc": "2026-04-08T21:09:08.6695588+00:00",
+  "snapshotHash": "100a97ed95f2b5ae71a8e0e3b5b6a897b43bf99a7904cde658fc30c0e1787a0b",
+  "diff": {
+    "fromCommitId": null,
+    "toCommitId": {
+      "value": "b6d7a847766948d4abfde590af3b9af6"
+    },
+    "decisions": [
+      {
+        "changeType": "Added",
+        "entityType": "Decision",
+        "entityId": "ed6c9b31bb2043d78507812cc0bf94a9",
+        "summary": "Keep the first viewer local-first and read-only [Accepted]"
+      }
+    ],
+    "hypotheses": [
+      {
+        "changeType": "Added",
+        "entityType": "Hypothesis",
+        "entityId": "eda0d10b62fb4538a7e7682346d953b7",
+        "summary": "A combined timeline and graph view reduces context recovery time [Proposed]"
+      }
+    ],
+    "evidence": [
+      {
+        "changeType": "Added",
+        "entityType": "Evidence",
+        "entityId": "19c555f43b3044a8979c39fdc7406e60",
+        "summary": "Pilot feedback from architecture review [Observation]"
+      }
+    ],
+    "tasks": [
+      {
+        "changeType": "Added",
+        "entityType": "Task",
+        "entityId": "c2879258c1ad4ad68bac5feeb39c9c76",
+        "summary": "Build a minimal viewer shell [Ready]"
+      }
+    ],
+    "conclusions": [
+      {
+        "changeType": "Added",
+        "entityType": "Conclusion",
+        "entityId": "7d7225e027444f2da0b820d4367d365f",
+        "summary": "A lightweight visual trace is sufficient for the first evaluation round [Accepted]"
+      }
+    ],
+    "conflicts": [],
+    "summary": "decisions:1 hypotheses:1 evidence:1 tasks:1 conclusions:1"
+  },
+  "snapshot": {
+    "repositoryVersion": "1.0",
+    "currentBranch": "main",
+    "headCommitId": {
+      "value": "b6d7a847766948d4abfde590af3b9af6"
+    },
+    "dirty": false,
+    "project": {
+      "name": "CTX Viewer Demo",
+      "description": "Timeline and graph sample repository",
+      "defaultBranch": "main",
+      "state": 1,
+      "id": {
+        "value": "dd2f3e64f94e471d8033ce5b4c8d1787"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-08T21:08:45.8279165+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "project"
+        ],
+        "relatedIds": []
+      }
+    },
+    "goals": [
+      {
+        "parentGoalId": null,
+        "title": "Ship a navigable reasoning timeline",
+        "description": "Make CTX history explorable from a simple UI",
+        "priority": 1,
+        "state": 1,
+        "taskIds": [],
+        "id": {
+          "value": "f7200e04aac043e6ba31c70642eec457"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-08T21:08:48.8268936+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "goal"
+          ],
+          "relatedIds": []
+        }
+      },
+      {
+        "parentGoalId": {
+          "value": "f7200e04aac043e6ba31c70642eec457"
+        },
+        "title": "Model the trace graph",
+        "description": "Represent goals, tasks, hypotheses and decisions visually",
+        "priority": 2,
+        "state": 1,
+        "taskIds": [
+          {
+            "value": "c2879258c1ad4ad68bac5feeb39c9c76"
+          }
+        ],
+        "id": {
+          "value": "a2b8ce935aa74ff78cab2eb177b543bf"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-08T21:08:51.8327858+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "goal"
+          ],
+          "relatedIds": []
+        }
+      }
+    ],
+    "tasks": [
+      {
+        "goalId": {
+          "value": "a2b8ce935aa74ff78cab2eb177b543bf"
+        },
+        "title": "Build a minimal viewer shell",
+        "description": "Render branches, commits and node details",
+        "state": 1,
+        "dependsOnTaskIds": [],
+        "hypothesisIds": [
+          {
+            "value": "eda0d10b62fb4538a7e7682346d953b7"
+          }
+        ],
+        "id": {
+          "value": "c2879258c1ad4ad68bac5feeb39c9c76"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-08T21:08:54.6723219+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "task"
+          ],
+          "relatedIds": []
+        }
+      }
+    ],
+    "hypotheses": [
+      {
+        "statement": "A combined timeline and graph view reduces context recovery time",
+        "rationale": "Users can inspect cognitive evolution without reading every artifact",
+        "confidence": 0.82,
+        "state": 0,
+        "taskIds": [
+          {
+            "value": "c2879258c1ad4ad68bac5feeb39c9c76"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "19c555f43b3044a8979c39fdc7406e60"
+          }
+        ],
+        "id": {
+          "value": "eda0d10b62fb4538a7e7682346d953b7"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-08T21:08:57.4637083+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "hypothesis"
+          ],
+          "relatedIds": []
+        }
+      }
+    ],
+    "decisions": [
+      {
+        "title": "Keep the first viewer local-first and read-only",
+        "rationale": "A lightweight viewer is enough to validate the trace model before editing workflows",
+        "state": 1,
+        "hypothesisIds": [
+          {
+            "value": "eda0d10b62fb4538a7e7682346d953b7"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "19c555f43b3044a8979c39fdc7406e60"
+          }
+        ],
+        "id": {
+          "value": "ed6c9b31bb2043d78507812cc0bf94a9"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-08T21:09:03.2595784+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "decision"
+          ],
+          "relatedIds": []
+        }
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Pilot feedback from architecture review",
+        "summary": "Reviewers asked for a visual trace of how conclusions were reached",
+        "source": "pilot-arch-01",
+        "kind": 0,
+        "confidence": 0.74,
+        "state": 2,
+        "supports": [
+          {
+            "entityType": "Hypothesis",
+            "entityId": "eda0d10b62fb4538a7e7682346d953b7"
+          }
+        ],
+        "id": {
+          "value": "19c555f43b3044a8979c39fdc7406e60"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-08T21:09:00.4014108+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "evidence"
+          ],
+          "relatedIds": []
+        }
+      }
+    ],
+    "conclusions": [
+      {
+        "summary": "A lightweight visual trace is sufficient for the first evaluation round",
+        "state": 1,
+        "decisionIds": [
+          {
+            "value": "ed6c9b31bb2043d78507812cc0bf94a9"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "19c555f43b3044a8979c39fdc7406e60"
+          }
+        ],
+        "goalIds": [
+          {
+            "value": "a2b8ce935aa74ff78cab2eb177b543bf"
+          }
+        ],
+        "taskIds": [
+          {
+            "value": "c2879258c1ad4ad68bac5feeb39c9c76"
+          }
+        ],
+        "id": {
+          "value": "7d7225e027444f2da0b820d4367d365f"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-08T21:09:05.9621202+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "conclusion"
+          ],
+          "relatedIds": []
+        }
+      }
+    ],
+    "runs": [],
+    "id": {
+      "value": "6abdd8f7955046f0943a25e9ccb45557"
+    },
+    "trace": {
+      "createdBy": "diegoxtr",
+      "createdAtUtc": "2026-04-08T21:08:45.8279165+00:00",
+      "updatedBy": "diegoxtr",
+      "updatedAtUtc": "2026-04-08T21:09:08.6043714+00:00",
+      "tags": [
+        "project"
+      ],
+      "relatedIds": []
+    }
+  },
+  "id": {
+    "value": "b6d7a847766948d4abfde590af3b9af6"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-08T21:09:08.669459+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "commit"
+    ],
+    "relatedIds": []
+  }
+}

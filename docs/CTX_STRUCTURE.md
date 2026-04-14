@@ -180,6 +180,19 @@ Responsibilities:
 - reproducible history
 - base for `log`, `diff`, `merge`, `export`
 
+Snapshot rule:
+- commits no longer snapshot only `WorkingContext`
+- commits now persist a `RepositorySnapshot`
+- `RepositorySnapshot` contains:
+  - `WorkingContext` for active cognitive state
+  - `Runbooks` for stable operational memory versioned with the repo
+  - `Triggers` for stable origin memory versioned with the repo
+
+Why this matters:
+- `OperationalRunbook` stays outside mutable `working-context.json`
+- `CognitiveTrigger` stays outside mutable `working-context.json`
+- but still becomes part of CTX history, diff, merge, export, and import semantics
+
 Invariant:
 - a commit must not mutate after being persisted
 
@@ -214,6 +227,7 @@ Responsibilities:
 - mutable in-progress state
 - artifacts added but not necessarily committed
 - base for `status`, `context`, `run`, and `commit`
+- intentionally excludes stable operational memory such as `OperationalRunbook`
 
 CLI relation:
 - `ctx status`

@@ -1,4 +1,4 @@
-# Guia CTX Viewer
+﻿# Guia CTX Viewer
 Si un modelo de lenguaje y su agente pierden el contexto, esta es la herramienta que necesitas.
 
 ## Que es
@@ -44,23 +44,23 @@ Comportamiento por defecto actual:
 
 - si no hay una ruta guardada ni ingresada, el viewer primero revisa `CTX_VIEWER_DEFAULT_REPOSITORY_PATH` o `Viewer__DefaultRepositoryPath`
 - si no existe una ruta configurada, el viewer resuelve la raiz por defecto desde el `.git` mas cercano del proyecto
-- en este repositorio de codigo fuente esa raiz de fallback resuelve a `<repo-root>`
-- este repositorio publico no incluye un workspace `.ctx` vivo en la raiz, asi que el demo incluido o una ruta explicita a un repositorio CTX son el mejor punto de partida
+- en este repositorio self-host esa raiz de fallback resuelve a `C:\sources\ctx-public`
 - la branch cognitiva por defecto es `main`
 - `Auto-refresh` arranca activado por defecto salvo que el navegador ya recuerde que lo apagaste
 - despues recuerda el ultimo `Repository` y la ultima `Branch` usados en el navegador
 - tambien recuerda la preferencia de `Auto-refresh`
 - los paneles laterales se pueden redimensionar con los divisores verticales y esa anchura se guarda por modo (`History`, `Split`, `Graph`)
+- los paneles laterales tambien se pueden colapsar en rails compactos desde los divisores verticales y ese estado se guarda por modo
 
 Ejemplo:
 
-- `<repo-root>\\examples\\viewer-demo`
-- `<path-to-your-ctx-repository>`
+- `C:\sources\ctx-public\examples\viewer-demo`
+- `C:\ctx\workspace\ctx-self-host`
 
 Ejemplo de override:
 
 ```powershell
-$env:CTX_VIEWER_DEFAULT_REPOSITORY_PATH = "<path-to-your-ctx-repository>"
+$env:CTX_VIEWER_DEFAULT_REPOSITORY_PATH = "C:\ctx\workspace\ctx-self-host"
 dotnet run --project .\Ctx.Viewer --urls http://127.0.0.1:5271
 ```
 
@@ -103,6 +103,7 @@ Interpretacion:
 - si una hipotesis aparece arriba, hoy es una de las mas importantes para mirar o validar
 - si los valores `impact`, `evidenceStrength` o `costToValidate` estan en `0`, probablemente esa hipotesis es vieja y todavia no fue enriquecida con el modelo nuevo
 - las superficies principales del viewer ahora reparten la altura disponible del viewport y dejan el scroll dentro de cada panel, para que `History`, `Split` y `Graph` no se desbalanceen al cambiar de modo
+- cuando entras a `Working context`, el grafo ahora prioriza la linea tactica mas cercana de cada task activa; si una task pertenece a un sub-goal, ese sub-goal queda visible y los umbrella goals no se expanden salvo que la task apunte a ellos directamente
 
 ### Tasks
 
@@ -134,6 +135,31 @@ Interpretacion:
 - si queres saber en que se esta trabajando ahora, miras `Active`
 - si queres saber que lineas ya quedaron cerradas, miras `Closed`
 - esta vista evita tener que deducir el trabajo solo desde commits o desde el grafo
+
+## 3. Panel derecho
+
+El panel `Details` ahora usa tabs en lugar de apilar todas las superficies al mismo tiempo:
+
+- `Details`: metadata del commit seleccionado mas detalle crudo del nodo
+- `Origin`: procedencia compacta de `CognitiveTrigger` para la task, goal o foco de commit actual
+- `Playbook`: guia compacta de `OperationalRunbook` para la task, goal o foco de commit actual
+- `Hypotheses`: ranking actual mas estado de frescura
+
+La tab activa queda recordada localmente, asi que el viewer vuelve a la ultima superficie de inspeccion que estabas usando.
+
+La seccion `Playbook` esta pensada para ser compacta:
+
+- muestra hasta dos runbooks principales
+- mantiene `When`, `Do`, `Verify` y `References` cortos
+- los matches extra quedan colapsados bajo `Additional runbooks available`
+- no convierte runbooks en nodos del grafo; la guia queda al costado del grafo en lugar de competir con el
+
+La tab `Origin` usa dos estados de procedencia:
+
+- `Direct`: el foco actual tiene su propio trigger
+- `Inherited`: el foco actual esta continuando la linea cognitiva compatible mas cercana y reutiliza ese origen
+
+Por eso, que se repita el mismo texto en `Origin` a veces es el comportamiento correcto. Si una task es una continuacion y no abrio una direccion nueva material, el viewer debe seguir mostrando ese origen heredado en lugar de inventar uno nuevo.
 
 ### History
 
@@ -489,7 +515,7 @@ Supongamos esto:
 3. creas `feature/ux-timeline`
 4. cambias a esa rama
 5. haces dos commits
-6. volvés a `main`
+6. volvÃ©s a `main`
 
 Que significa eso:
 

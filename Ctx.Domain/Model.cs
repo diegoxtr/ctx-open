@@ -1,5 +1,7 @@
 namespace Ctx.Domain;
 
+using System.Text.Json.Serialization;
+
 public record Project(
     ProjectId Id,
     string Name,
@@ -76,6 +78,32 @@ public record Conclusion(
     IReadOnlyList<GoalId> GoalIds,
     IReadOnlyList<TaskId> TaskIds) : CognitiveEntity<ConclusionId>(Id, Trace);
 
+public record OperationalRunbook(
+    OperationalRunbookId Id,
+    string Title,
+    OperationalRunbookKind Kind,
+    IReadOnlyList<string> Triggers,
+    string WhenToUse,
+    IReadOnlyList<string> Do,
+    IReadOnlyList<string> Verify,
+    IReadOnlyList<string> References,
+    IReadOnlyList<GoalId> GoalIds,
+    IReadOnlyList<TaskId> TaskIds,
+    LifecycleState State,
+    Traceability Trace) : CognitiveEntity<OperationalRunbookId>(Id, Trace);
+
+public record CognitiveTrigger(
+    CognitiveTriggerId Id,
+    CognitiveTriggerKind Kind,
+    string Summary,
+    string? Text,
+    string Fingerprint,
+    IReadOnlyList<GoalId> GoalIds,
+    IReadOnlyList<TaskId> TaskIds,
+    IReadOnlyList<OperationalRunbookId> OperationalRunbookIds,
+    LifecycleState State,
+    Traceability Trace) : CognitiveEntity<CognitiveTriggerId>(Id, Trace);
+
 public record RunArtifact(
     string ArtifactType,
     string Title,
@@ -109,6 +137,8 @@ public record ContextPacket(
     IReadOnlyList<DecisionId> DecisionIds,
     IReadOnlyList<EvidenceId> EvidenceIds,
     IReadOnlyList<ConclusionId> ConclusionIds,
+    IReadOnlyList<OperationalRunbookId>? RunbookIds,
+    IReadOnlyList<CognitiveTriggerId>? TriggerIds,
     IReadOnlyList<ContentSection> Sections);
 
 public record ContextGraph(
@@ -148,6 +178,18 @@ public record WorkingContext(
         Runs);
 }
 
+[method: JsonConstructor]
+public record RepositorySnapshot(
+    WorkingContext WorkingContext,
+    IReadOnlyList<OperationalRunbook> Runbooks,
+    IReadOnlyList<CognitiveTrigger> Triggers)
+{
+    public RepositorySnapshot(WorkingContext workingContext, IReadOnlyList<OperationalRunbook> runbooks)
+        : this(workingContext, runbooks, Array.Empty<CognitiveTrigger>())
+    {
+    }
+}
+
 public record ContextDiffChange(
     string ChangeType,
     string EntityType,
@@ -161,6 +203,7 @@ public record CognitiveConflict(
     string CurrentSummary,
     string IncomingSummary);
 
+[method: JsonConstructor]
 public record ContextDiff(
     ContextCommitId? FromCommitId,
     ContextCommitId? ToCommitId,
@@ -169,11 +212,29 @@ public record ContextDiff(
     IReadOnlyList<ContextDiffChange> Evidence,
     IReadOnlyList<ContextDiffChange> Tasks,
     IReadOnlyList<ContextDiffChange> Conclusions,
+    IReadOnlyList<ContextDiffChange> Runbooks,
+    IReadOnlyList<ContextDiffChange> Triggers,
     IReadOnlyList<CognitiveConflict> Conflicts,
-    string Summary);
+    string Summary)
+{
+    public ContextDiff(
+        ContextCommitId? fromCommitId,
+        ContextCommitId? toCommitId,
+        IReadOnlyList<ContextDiffChange> decisions,
+        IReadOnlyList<ContextDiffChange> hypotheses,
+        IReadOnlyList<ContextDiffChange> evidence,
+        IReadOnlyList<ContextDiffChange> tasks,
+        IReadOnlyList<ContextDiffChange> conclusions,
+        IReadOnlyList<ContextDiffChange> runbooks,
+        IReadOnlyList<CognitiveConflict> conflicts,
+        string summary)
+        : this(fromCommitId, toCommitId, decisions, hypotheses, evidence, tasks, conclusions, runbooks, Array.Empty<ContextDiffChange>(), conflicts, summary)
+    {
+    }
+}
 
 public record MergeResult(
-    WorkingContext MergedContext,
+    RepositorySnapshot MergedSnapshot,
     IReadOnlyList<CognitiveConflict> Conflicts,
     bool AutoMerged,
     string Summary);
@@ -186,7 +247,7 @@ public record ContextCommit(
     DateTimeOffset CreatedAtUtc,
     string SnapshotHash,
     ContextDiff Diff,
-    WorkingContext Snapshot,
+    RepositorySnapshot Snapshot,
     Traceability Trace) : CognitiveEntity<ContextCommitId>(Id, Trace);
 
 public record ProviderConfiguration(
@@ -315,7 +376,7 @@ public record RepositoryExport(
     RepositoryVersion RepositoryVersion,
     RepositoryConfig Config,
     HeadReference Head,
-    WorkingContext WorkingContext,
+    RepositorySnapshot Snapshot,
     MetricsSnapshot Metrics,
     IReadOnlyList<BranchReference> Branches,
     IReadOnlyList<ContextCommit> Commits);
@@ -397,7 +458,7 @@ public static class DomainConstants
 {
     public const string RepositoryFolderName = ".ctx";
     public const string CurrentRepositoryVersion = "1.0";
-    public const string ProductVersion = "1.0.0";
+    public const string ProductVersion = "1.0.2";
 }
 
 public static class HypothesisScoring

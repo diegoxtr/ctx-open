@@ -154,8 +154,7 @@ Sub-goals propuestos:
 #### Flujo con sub-goal
 
 ```powershell
-ctx goal add --title "Viewer commit focus UX" --parent <goalId>
-ctx task add --title "Focus commit graph on cognitive path" --goal <subGoalId>
+ctx line open --goal <goalId> --title "Viewer commit focus UX" --task-title "Focus commit graph on cognitive path"
 ctx hypo add --statement "Path-only focus makes commit review faster" --task <taskId>
 ctx evidence add --title "Commit focus shows only path" --summary "Graph now renders just the commit path when Focus is on." --source "Ctx.Viewer/wwwroot/app.js" --kind Observation --supports hypothesis:<hypothesisId>
 ctx conclusion add --summary "Commit focus now filters to the selected path." --state Accepted --evidence <evidenceId> --goals <subGoalId> --tasks <taskId>

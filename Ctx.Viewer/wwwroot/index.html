@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>CTX Viewer</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231d3e70'/%3E%3Ctext x='32' y='41' text-anchor='middle' font-family='Segoe UI, Arial, sans-serif' font-size='26' font-weight='700' fill='white'%3ECTX%3C/text%3E%3C/svg%3E">
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -42,56 +43,61 @@
     <main class="layout" data-view-mode="history">
         <aside class="panel panel-left">
             <h2>Commits</h2>
-            <section class="sidebar-section history-section">
-                <div class="section-heading">
-                    <h3>History</h3>
-                    <span id="commit-count" class="detail-count"></span>
-                </div>
-                <div class="history-toolbar">
-                    <label class="history-toolbar-label" for="history-sort-select">Order</label>
-                    <select id="history-sort-select" class="history-sort-select">
-                        <option value="newest">Newest first</option>
-                        <option value="oldest">Oldest first</option>
-                    </select>
-                </div>
-                <div id="commit-list" class="commit-list"></div>
-            </section>
-            <div id="summary-cards" class="cards"></div>
-            <section class="sidebar-section">
-                <div class="section-heading">
-                    <h3>Top Hypotheses</h3>
-                    <span id="hypothesis-count" class="detail-count"></span>
-                </div>
-                <p id="last-loaded" class="last-loaded">Not loaded yet</p>
-                <p id="freshness-status" class="freshness-status">Auto-refresh off</p>
-                <ul id="hypothesis-ranking" class="hypothesis-ranking"></ul>
-            </section>
-            <section class="sidebar-section">
-                <div class="section-heading">
-                    <h3>Tasks</h3>
-                    <span id="task-count" class="detail-count"></span>
-                </div>
-                <div id="task-summary" class="task-summary"></div>
-                <div id="task-lists" class="task-lists">
-                    <div class="task-group">
-                        <div class="task-group-heading">
-                            <h4>Active</h4>
-                            <span id="task-active-count" class="detail-count"></span>
-                        </div>
-                        <ul id="task-active-list" class="task-list"></ul>
+            <div class="panel-rail-tabs panel-rail-tabs-left" aria-label="Collapsed left rail">
+                <button type="button" class="panel-rail-tab active" data-left-rail-tab="history">History</button>
+                <button type="button" class="panel-rail-tab" data-left-rail-tab="tasks">Tasks</button>
+            </div>
+            <div class="sidebar-tab-bar" role="tablist" aria-label="Left rail tabs">
+                <button type="button" class="sidebar-tab-button active" data-left-tab="history" role="tab" aria-selected="true">History</button>
+                <button type="button" class="sidebar-tab-button" data-left-tab="tasks" role="tab" aria-selected="false">Tasks</button>
+            </div>
+            <section class="sidebar-tab-panel active" data-left-panel="history" role="tabpanel">
+                <section class="sidebar-section history-section">
+                    <div class="section-heading">
+                        <h3>History</h3>
+                        <span id="commit-count" class="detail-count"></span>
                     </div>
-                    <div class="task-group">
-                        <div class="task-group-heading">
-                            <h4>Closed</h4>
-                            <span id="task-closed-count" class="detail-count"></span>
-                        </div>
-                        <ul id="task-closed-list" class="task-list"></ul>
+                    <div class="history-toolbar">
+                        <label class="history-toolbar-label" for="history-sort-select">Order</label>
+                        <select id="history-sort-select" class="history-sort-select">
+                            <option value="newest">Newest first</option>
+                            <option value="oldest">Oldest first</option>
+                        </select>
                     </div>
-                </div>
+                    <div id="commit-list" class="commit-list"></div>
+                </section>
+                <div id="summary-cards" class="cards"></div>
+            </section>
+            <section class="sidebar-tab-panel" data-left-panel="tasks" role="tabpanel" hidden>
+                <section class="sidebar-section">
+                    <div class="section-heading">
+                        <h3>Tasks</h3>
+                        <span id="task-count" class="detail-count"></span>
+                    </div>
+                    <div id="task-summary" class="task-summary"></div>
+                    <div id="task-lists" class="task-lists">
+                        <div class="task-group">
+                            <div class="task-group-heading">
+                                <h4>Active</h4>
+                                <span id="task-active-count" class="detail-count"></span>
+                            </div>
+                            <ul id="task-active-list" class="task-list"></ul>
+                        </div>
+                        <div class="task-group">
+                            <div class="task-group-heading">
+                                <h4>Closed</h4>
+                                <span id="task-closed-count" class="detail-count"></span>
+                            </div>
+                            <ul id="task-closed-list" class="task-list"></ul>
+                        </div>
+                    </div>
+                </section>
             </section>
         </aside>
 
-        <div class="panel-divider panel-divider-left" data-divider="left" role="separator" aria-orientation="vertical" aria-label="Resize left panel"></div>
+        <div class="panel-divider panel-divider-left" data-divider="left" role="separator" aria-orientation="vertical" aria-label="Resize left panel">
+            <button type="button" class="panel-collapse-toggle" data-toggle-panel="left" aria-label="Collapse left panel">‹</button>
+        </div>
 
         <section class="panel panel-center">
             <div class="panel-header">
@@ -139,17 +145,56 @@
             <p id="viewer-hint" class="viewer-hint">Load a local `.ctx` repository to inspect its timeline and graph.</p>
         </section>
 
-        <div class="panel-divider panel-divider-right" data-divider="right" role="separator" aria-orientation="vertical" aria-label="Resize right panel"></div>
+        <div class="panel-divider panel-divider-right" data-divider="right" role="separator" aria-orientation="vertical" aria-label="Resize right panel">
+            <button type="button" class="panel-collapse-toggle" data-toggle-panel="right" aria-label="Collapse right panel">›</button>
+        </div>
 
         <aside class="panel panel-right">
             <h2>Details</h2>
-            <section>
-                <h3>Commit</h3>
-                <div id="commit-detail" class="detail-surface">Select a commit.</div>
+            <div class="panel-rail-tabs panel-rail-tabs-right" aria-label="Collapsed right rail">
+                <button type="button" class="panel-rail-tab active" data-detail-rail-tab="details">Details</button>
+                <button type="button" class="panel-rail-tab" data-detail-rail-tab="origin">Origin</button>
+                <button type="button" class="panel-rail-tab" data-detail-rail-tab="playbook">Playbook</button>
+                <button type="button" class="panel-rail-tab" data-detail-rail-tab="hypotheses">Hypotheses</button>
+            </div>
+            <div class="detail-tab-bar" role="tablist" aria-label="Right rail tabs">
+                <button type="button" class="detail-tab-button active" data-detail-tab="details" role="tab" aria-selected="true">Details</button>
+                <button type="button" class="detail-tab-button" data-detail-tab="origin" role="tab" aria-selected="false">Origin</button>
+                <button type="button" class="detail-tab-button" data-detail-tab="playbook" role="tab" aria-selected="false">Playbook</button>
+                <button type="button" class="detail-tab-button" data-detail-tab="hypotheses" role="tab" aria-selected="false">Hypotheses</button>
+            </div>
+            <section class="detail-tab-panel active" data-detail-panel="details" role="tabpanel">
+                <section class="detail-subsection">
+                    <h3>Commit</h3>
+                    <div id="commit-detail" class="detail-surface">Select a commit.</div>
+                </section>
+                <section class="detail-subsection">
+                    <h3>Node</h3>
+                    <pre id="node-detail" class="detail-box">Click a node.</pre>
+                </section>
             </section>
-            <section>
-                <h3>Node</h3>
-                <pre id="node-detail" class="detail-box">Click a node.</pre>
+            <section class="detail-tab-panel" data-detail-panel="origin" role="tabpanel" hidden>
+                <section class="detail-subsection">
+                    <h3>Origin</h3>
+                    <div id="origin-detail" class="detail-surface">Select a task, goal, or commit focus to view the origin of this cognitive line.</div>
+                </section>
+            </section>
+            <section class="detail-tab-panel" data-detail-panel="playbook" role="tabpanel" hidden>
+                <section class="detail-subsection">
+                    <h3>Playbook</h3>
+                    <div id="playbook-detail" class="detail-surface">Select a task, goal, or commit focus to view operational runbooks.</div>
+                </section>
+            </section>
+            <section class="detail-tab-panel" data-detail-panel="hypotheses" role="tabpanel" hidden>
+                <section class="detail-subsection">
+                    <div class="section-heading">
+                        <h3>Top Hypotheses</h3>
+                        <span id="hypothesis-count" class="detail-count"></span>
+                    </div>
+                    <p id="last-loaded" class="last-loaded">Not loaded yet</p>
+                    <p id="freshness-status" class="freshness-status">Auto-refresh off</p>
+                    <ul id="hypothesis-ranking" class="hypothesis-ranking hypothesis-ranking-detail"></ul>
+                </section>
             </section>
         </aside>
     </main>

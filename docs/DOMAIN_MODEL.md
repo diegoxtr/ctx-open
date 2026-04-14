@@ -39,6 +39,7 @@ Current types:
 - `DecisionId`
 - `EvidenceId`
 - `ConclusionId`
+- `OperationalRunbookId`
 - `RunId`
 - `ContextCommitId`
 - `ContextPacketId`
@@ -226,6 +227,62 @@ Responsibility:
 - record explicit choices
 - link a decision to its basis
 
+### OperationalRunbook
+
+Compact reusable operational memory.
+
+Fields:
+- `Id`
+- `Title`
+- `Kind`
+- `Triggers`
+- `WhenToUse`
+- `Do`
+- `Verify`
+- `References`
+- `GoalIds`
+- `TaskIds`
+- `State`
+- `Trace`
+
+State:
+- `LifecycleState`
+
+Relations:
+- can scope to `Goal`
+- can scope to `Task`
+- can enter `ContextPacket`
+- is versioned in repository snapshots
+
+Responsibility:
+- preserve recurring procedures, guardrails, and troubleshooting without mixing them into mutable working execution state
+
+### CognitiveTrigger
+
+Compact typed origin for a cognitive line.
+
+Fields:
+- `Id`
+- `Kind`
+- `Summary`
+- `Text`
+- `Fingerprint`
+- `GoalIds`
+- `TaskIds`
+- `OperationalRunbookIds`
+- `State`
+- `Trace`
+
+Relations:
+- can scope to `Goal`
+- can scope to `Task`
+- can reference `OperationalRunbook`
+- can enter `ContextPacket`
+- is versioned in repository snapshots
+
+Responsibility:
+- preserve what materially opened or redirected a cognitive line without storing full prompt history as the default model
+
 ### Evidence
 
 Traceable evidence supporting or contradicting artifacts.
@@ -375,14 +432,27 @@ Responsibility:
 - centralize in-progress state
 - base for `status`, `context`, `run`, and `commit`
 - rebuild the current cognitive graph
+- intentionally excludes stable `OperationalRunbook` state
 
 Relevant method:
 
 - `ToGraph()` builds a `ContextGraph`
 
+### RepositorySnapshot
+
+Versioned repository-level snapshot used by `ContextCommit`.
+
+Fields:
+- `WorkingContext`
+- `Runbooks`
+
+Responsibility:
+- keep active cognitive state and stable operational memory separate
+- version both together in commits, diffs, merges, export, and import
+
 ### ContextCommit
 
-Immutable snapshot of cognitive state.
+Immutable snapshot of repository state.
 
 Fields:
 - `Id`
@@ -399,6 +469,10 @@ Responsibility:
 - persist reproducible history
 - capture diff for the snapshot
 - enable `log`, `diff`, `branching`, `merge`
+
+Snapshot contents:
+- `Snapshot.WorkingContext`
+- `Snapshot.Runbooks`
 
 Rule:
 - once persisted, it is immutable

@@ -1,0 +1,196 @@
+{
+  "id": {
+    "value": "516e942c9a4748feb05e1eb475d5d21d"
+  },
+  "projectId": {
+    "value": "3f9f186589ea4eb1958cbc5e898ffeb9"
+  },
+  "createdAtUtc": "2026-04-12T00:05:39.2321461+00:00",
+  "purpose": "Summarize why the notification digest repo demonstrates continuity across agent sessions.",
+  "fingerprint": "4b46134ea585996ab58bd0e69d79925179757abd571ae8e2bd1f6385beb7c78c",
+  "estimatedTokens": 893,
+  "goalIds": [
+    {
+      "value": "530f4816323f474d8e944d006685831a"
+    }
+  ],
+  "taskIds": [
+    {
+      "value": "5e82de0dbe974dbf98f37e5d1f47aaec"
+    },
+    {
+      "value": "7d25cb20f7dc4523b3896f33c5d0447a"
+    },
+    {
+      "value": "1acfeee35e614a45b8c8395660200bdd"
+    }
+  ],
+  "hypothesisIds": [
+    {
+      "value": "278f5ae4a52840aaa6729f7ee0d979f5"
+    },
+    {
+      "value": "6903760cb2294d189f3c59f4cad4b4a4"
+    },
+    {
+      "value": "6c4f6a58c01b470eb326b31b8a880f06"
+    }
+  ],
+  "decisionIds": [
+    {
+      "value": "4d514125399d44ad943825dce7e016f7"
+    },
+    {
+      "value": "c58b21901f45484f961689e6cea1476b"
+    },
+    {
+      "value": "3d320d2d72004a78bfaf2e9ee54b1c17"
+    },
+    {
+      "value": "16753195dd0a46ee9e77472c3acb4d55"
+    }
+  ],
+  "evidenceIds": [
+    {
+      "value": "d37b68926725410b910c4fe26626c90c"
+    },
+    {
+      "value": "19b0528ffa9a4d8e9961e9f9773f9d79"
+    },
+    {
+      "value": "d1c3847b01c5439e91d7bd8c82feafec"
+    },
+    {
+      "value": "9dd56ae1918840be8bc2ccdfc30b1880"
+    },
+    {
+      "value": "e9bf7dfb0af4467b9e0896c02f0ae7b1"
+    }
+  ],
+  "conclusionIds": [
+    {
+      "value": "ab81a217237945f7ae0ed55b4e2130d0"
+    }
+  ],
+  "sections": [
+    {
+      "title": "Purpose",
+      "content": "Summarize why the notification digest repo demonstrates continuity across agent sessions.",
+      "references": []
+    },
+    {
+      "title": "Project",
+      "content": "agent-session-continuity: Cognitive repo for demonstrating multi-session agent continuity",
+      "references": [
+        {
+          "entityType": "Project",
+          "entityId": "3f9f186589ea4eb1958cbc5e898ffeb9"
+        }
+      ]
+    },
+    {
+      "title": "Goals",
+      "content": "- [Active] Ship a notification digest that an agent can continue across sessions: Keep the feature state explicit enough that a later session can resume and close it without relying on chat history.",
+      "references": [
+        {
+          "entityType": "Goal",
+          "entityId": "530f4816323f474d8e944d006685831a"
+        }
+      ]
+    },
+    {
+      "title": "Tasks",
+      "content": "- [Done] Define the first digest output contract: Create the first pass of the digest around unread notifications and leave the next missing behavior explicit.\r\n- [Done] Lock the final behavior with executable tests: Close the feature with repeatable evidence so the next session does not reopen solved ground.\r\n- [Done] Resume later and add quiet-hours filtering: Continue from the recorded state instead of chat memory and finish the remaining digest behavior.",
+      "references": [
+        {
+          "entityType": "Task",
+          "entityId": "5e82de0dbe974dbf98f37e5d1f47aaec"
+        },
+        {
+          "entityType": "Task",
+          "entityId": "7d25cb20f7dc4523b3896f33c5d0447a"
+        },
+        {
+          "entityType": "Task",
+          "entityId": "1acfeee35e614a45b8c8395660200bdd"
+        }
+      ]
+    },
+    {
+      "title": "Hypotheses",
+      "content": "- [Supported] (90%) A later agent session can continue correctly if the unfinished behavior is recorded explicitly as task state, hypothesis, and evidence instead of being left in chat.\r\n- [Supported] (89%) Executable evidence is required to preserve session continuity because later sessions should trust the repository state instead of re-evaluating finished behavior from scratch.\r\n- [Supported] (87%) Quiet-hours filtering should exclude unread notifications that arrive inside the blocked time window while keeping daytime unread items in the digest.",
+      "references": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "278f5ae4a52840aaa6729f7ee0d979f5"
+        },
+        {
+          "entityType": "Hypothesis",
+          "entityId": "6903760cb2294d189f3c59f4cad4b4a4"
+        },
+        {
+          "entityType": "Hypothesis",
+          "entityId": "6c4f6a58c01b470eb326b31b8a880f06"
+        }
+      ]
+    },
+    {
+      "title": "Decisions",
+      "content": "- [Accepted] Treat quiet-hours filtering as the explicit continuation point: The first session should stop after defining the digest contract and leave the next missing behavior visible in CTX.\r\n- [Accepted] Resume from recorded state instead of restating the feature in chat: The session transition worked because the pending behavior was already explicit in CTX and the next step was discoverable without conversational reconstruction.\r\n- [Accepted] Keep quiet-hours filtering in the digest builder: The implementation keeps the unread digest contract from session 1 and adds the deferred filtering rule in a targeted way.\r\n- [Accepted] Close the digest feature with executable state, not conversational memory: The feature is only ready for future agent continuity once behavior and tests are both recorded in CTX-backed evidence.",
+      "references": [
+        {
+          "entityType": "Decision",
+          "entityId": "4d514125399d44ad943825dce7e016f7"
+        },
+        {
+          "entityType": "Decision",
+          "entityId": "c58b21901f45484f961689e6cea1476b"
+        },
+        {
+          "entityType": "Decision",
+          "entityId": "3d320d2d72004a78bfaf2e9ee54b1c17"
+        },
+        {
+          "entityType": "Decision",
+          "entityId": "16753195dd0a46ee9e77472c3acb4d55"
+        }
+      ]
+    },
+    {
+      "title": "Evidence",
+      "content": "- [Experiment] (99%) Executable tests confirm unread selection and quiet-hours suppression: The digest test suite verifies unread notification selection and confirms that notifications inside quiet hours are excluded while daytime notifications remain visible.\r\n- [Experiment] (97%) Regression tests anchor the final feature state for later sessions: The passing test suite gives the next session a concrete artifact that the digest behavior is already correct and does not need to be rediscovered.\r\n- [Document] (93%) Session 2 resumes from explicit continuation notes: The second session note resumes from the recorded pending work and focuses directly on quiet-hours filtering instead of rediscovering the feature scope.\r\n- [Document] (92%) Session 1 leaves quiet-hours as explicit unfinished work: The first session note records that the digest shape is defined and quiet-hours filtering remains intentionally pending for the next session.\r\n- [Observation] (90%) Digest builder implements quiet-hours filtering: The digest builder now excludes unread notifications that fall inside the configured quiet-hours window.",
+      "references": [
+        {
+          "entityType": "Evidence",
+          "entityId": "d37b68926725410b910c4fe26626c90c"
+        },
+        {
+          "entityType": "Evidence",
+          "entityId": "19b0528ffa9a4d8e9961e9f9773f9d79"
+        },
+        {
+          "entityType": "Evidence",
+          "entityId": "d1c3847b01c5439e91d7bd8c82feafec"
+        },
+        {
+          "entityType": "Evidence",
+          "entityId": "9dd56ae1918840be8bc2ccdfc30b1880"
+        },
+        {
+          "entityType": "Evidence",
+          "entityId": "e9bf7dfb0af4467b9e0896c02f0ae7b1"
+        }
+      ]
+    },
+    {
+      "title": "Conclusions",
+      "content": "- [Accepted] The notification digest feature now demonstrates multi-session continuity: session 1 left explicit pending work, session 2 resumed from CTX, implemented quiet-hours filtering, and closed the feature with executable evidence.",
+      "references": [
+        {
+          "entityType": "Conclusion",
+          "entityId": "ab81a217237945f7ae0ed55b4e2130d0"
+        }
+      ]
+    }
+  ]
+}

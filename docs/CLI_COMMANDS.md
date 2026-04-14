@@ -1,7 +1,7 @@
-# CTX CLI Commands
+﻿# CTX CLI Commands
 If a language model and its agent lose context, this is the tool you need.
 
-This document describes the current CTX CLI surface in `<repo-root>`.
+This document describes the current CTX CLI surface in `C:\sources\ctx-public`.
 
 CTX returns structured JSON output with this base format:
 
@@ -72,6 +72,11 @@ Includes:
 - `HEAD`
 - `dirty` state
 - counts for goals, tasks, hypotheses, decisions, evidence, conclusions, and runs
+- when `dirty`, a bounded pending preview with:
+  - compact diff summary
+  - pending artifact count
+  - up to five pending items
+  - a suggested next action toward `ctx closeout`
 
 ```powershell
 dotnet run --project .\Ctx.Cli -- status
@@ -130,6 +135,11 @@ Returns:
 - composite score
 - score factors
 - ranked candidates
+- diagnostics with:
+  - task-state counts
+  - eligible gap counts
+  - gap exclusion counts
+  - short recovery guidance when no recommendation is available
 
 Current types:
 - `Task`
@@ -140,6 +150,7 @@ Important rules:
 - can promote gaps from strong hypotheses when no tasks are open
 - only hypotheses in `Proposed` or `UnderEvaluation` are eligible as `Gap`
 - hypotheses already closed by accepted conclusions should not resurface
+- malformed metrics telemetry should not break `ctx next` or other normal CLI commands
 
 Current task factors:
 - `stateScore`
@@ -149,6 +160,127 @@ Current task factors:
 
 ```powershell
 dotnet run --project .\Ctx.Cli -- next
+```
+
+### `ctx check`
+
+Checks whether a task thread is ready for a cognitive commit.
+
+Options:
+- `--task <taskId>` to force a specific task
+
+If `--task` is omitted, CTX resolves the focus task by:
+- the single `InProgress` task, when that is unambiguous
+- otherwise the top-ranked `Task` candidate from `ctx next`
+- otherwise the only remaining open task
+
+Returns:
+- focused task id and title
+- selection reason
+- counts for linked hypotheses, evidence, decisions, and conclusions
+- accepted decision and conclusion counts
+- `readyForCommit`
+- explicit missing closure items
+- compact `runbookSuggestions` when matching `OperationalRunbook` entries apply to the focused task thread
+- `additionalRunbooksAvailable` when more runbooks match than the suggestion limit allows
+- short guidance for the next closeout step
+
+```powershell
+dotnet run --project .\Ctx.Cli -- check
+dotnet run --project .\Ctx.Cli -- check --task <taskId>
+```
+
+### `ctx closeout`
+
+Explains what still separates the current `working` state from `HEAD`.
+
+Returns:
+- `dirty`
+- whether pending cognitive changes exist
+- a compact diff summary
+- pending artifacts with `changeType`, `entityType`, `entityId`, and `summary`
+- short operator guidance for cognitive closeout
+- optional `microCloseout` guidance when the pending delta is small enough to treat as a trailing closure instead of a full new block
+
+Typical usage:
+- run after recording evidence or conclusions
+- run before `ctx commit`
+- run before the Git commit when you are unsure whether CTX is fully closed
+
+```powershell
+dotnet run --project .\Ctx.Cli -- closeout
+```
+
+### `ctx runbook add`
+
+Adds a compact `OperationalRunbook` for recurring procedures, troubleshooting, policies, or guardrails.
+
+Options:
+- `--title <text>`
+- `--kind Procedure|Troubleshooting|Policy|Guardrail`
+- `--when <text>`
+- `--trigger <text>` repeatable
+- `--do <text>` repeatable
+- `--verify <text>` repeatable
+- `--reference <text>` repeatable
+- `--goal <goalId>` repeatable
+- `--task <taskId>` repeatable
+
+Design rules:
+- keep the runbook compact
+- summarize the operational path instead of duplicating long docs
+- prefer canonical scripts, commands, and references
+
+```powershell
+dotnet run --project .\Ctx.Cli -- runbook add --title "Local publish" --kind Procedure --trigger publish-local --when "Use when refreshing the installed local viewer" --do "Run scripts/publish-local.ps1" --verify "Viewer responds locally" --reference "scripts/publish-local.ps1"
+```
+
+### `ctx runbook list`
+
+Lists stored `OperationalRunbook` entries for the current repository.
+
+```powershell
+dotnet run --project .\Ctx.Cli -- runbook list
+```
+
+### `ctx runbook show <runbookId>`
+
+Shows a specific `OperationalRunbook`.
+
+```powershell
+dotnet run --project .\Ctx.Cli -- runbook show <runbookId>
+```
+
+### `ctx trigger add`
+
+Adds a compact `CognitiveTrigger` for the origin of a cognitive line.
+
+Options:
+- `--summary <text>`
+- `--kind UserPrompt|AgentPrompt|Continuation|RunbookTrigger|IssueTrigger`
+- `--text <text>`
+- `--goal <goalId>` repeatable
+- `--task <taskId>` repeatable
+- `--runbook <runbookId>` repeatable
+
+```powershell
+dotnet run --project .\Ctx.Cli -- trigger add --kind UserPrompt --summary "Fix viewer collapse interaction" --text "The collapse button feels broken and should move to a cleaner rail pattern." --task <taskId>
+```
+
+### `ctx trigger list`
+
+Lists stored `CognitiveTrigger` entries for the current repository.
+
+```powershell
+dotnet run --project .\Ctx.Cli -- trigger list
+```
+
+### `ctx trigger show <triggerId>`
+
+Shows a specific `CognitiveTrigger`.
+
+```powershell
+dotnet run --project .\Ctx.Cli -- trigger show <triggerId>
 ```
 
 ## Cognitive Graph
@@ -272,6 +404,27 @@ Options:
 dotnet run --project .\Ctx.Cli -- goal add --title "Ship first CVCS core" --priority 1
 dotnet run --project .\Ctx.Cli -- goal add --title "Improve viewer" --parent <goalId>
 ```
+
+### `ctx line open`
+
+Opens a tactical work line under an existing goal by creating a child goal and, optionally, the first task under that child goal.
+
+Options:
+- `--goal <goalId>` required parent goal
+- `--title <text>` required tactical line title
+- `--description <text>`
+- `--priority <n>` defaults to the parent goal priority
+- `--task-title <text>` optional first task title
+- `--task-description <text>`
+
+```powershell
+dotnet run --project .\Ctx.Cli -- line open --goal <goalId> --title "Viewer working-focus UX"
+dotnet run --project .\Ctx.Cli -- line open --goal <goalId> --title "Viewer working-focus UX" --task-title "Reduce umbrella-goal noise in Working view"
+```
+
+Notes:
+- use this when the strategic goal should stay active but the new work needs its own tactical cognitive line
+- this is a convenience flow over `goal add --parent` plus `task add --goal <subGoalId>`
 
 ### `ctx goal list`
 
@@ -544,6 +697,8 @@ Options:
 - `--goal <goalId>`
 - `--task <taskId>`
 
+When matching `OperationalRunbook` entries exist, CTX injects up to `2` compact runbook summaries into the packet and exposes any overflow as `Additional runbooks available`.
+
 ```powershell
 dotnet run --project .\Ctx.Cli -- context --purpose "Prepare architecture review" --goal <goalId>
 ```
@@ -764,6 +919,7 @@ Short cognitive workflow:
 dotnet run --project .\Ctx.Cli -- status
 dotnet run --project .\Ctx.Cli -- audit
 dotnet run --project .\Ctx.Cli -- next
+dotnet run --project .\Ctx.Cli -- closeout
 dotnet run --project .\Ctx.Cli -- goal add --title "Validate flow"
 dotnet run --project .\Ctx.Cli -- task add --title "Execute end-to-end case" --goal <goalId>
 dotnet run --project .\Ctx.Cli -- hypo add --statement "CTX reduces rework" --task <taskId>

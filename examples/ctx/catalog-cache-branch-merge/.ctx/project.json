@@ -1,0 +1,21 @@
+﻿{
+  "name": "catalog-cache-branch-merge",
+  "description": "Cognitive repo for evaluating cache invalidation strategies with branches",
+  "defaultBranch": "main",
+  "state": 1,
+  "id": {
+    "value": "6c602857017143338004b7cb096fe360"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-12T00:00:58.9104602+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "project"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

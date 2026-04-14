@@ -1,0 +1,919 @@
+{
+  "branch": "main",
+  "message": "merge cache strategy branches and close architecture decision",
+  "parentIds": [
+    {
+      "value": "ff74f8f6488e42888f5c06447f8e6f0d"
+    }
+  ],
+  "createdAtUtc": "2026-04-12T00:01:58.6973547+00:00",
+  "snapshotHash": "088febf942bd7d14bce1de7cc0f91e806e31127c135d1b405ed6f412a2e6b770",
+  "diff": {
+    "fromCommitId": {
+      "value": "ff74f8f6488e42888f5c06447f8e6f0d"
+    },
+    "toCommitId": {
+      "value": "6ef300df312145c6b476a3f591cc1139"
+    },
+    "decisions": [
+      {
+        "changeType": "Added",
+        "entityType": "Decision",
+        "entityId": "f2535c205bee48e69cd1ca4d3de23900",
+        "summary": "Do not choose TTL-only as the final catalog strategy [Rejected]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Decision",
+        "entityId": "bd49e6cbb4244b229803e1b77e9da9db",
+        "summary": "Treat tag-aware invalidation as the preferred candidate [Accepted]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Decision",
+        "entityId": "d4e82cd7492b4a3c9f1cfa1b562b1b55",
+        "summary": "Choose tag-aware invalidation for the catalog cache [Accepted]"
+      }
+    ],
+    "hypotheses": [
+      {
+        "changeType": "Modified",
+        "entityType": "Hypothesis",
+        "entityId": "62344fd9f3a1405a8e2fcbc1c9a0a09a",
+        "summary": "Evaluating each cache strategy in its own cognitive branch will make the final architecture decision easier to justify and review. [Supported]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Hypothesis",
+        "entityId": "da74efeb6b4944dfa74ec00f616f1075",
+        "summary": "TTL-only invalidation is sufficient for the catalog because operational simplicity outweighs short-lived staleness. [Refuted]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Hypothesis",
+        "entityId": "7c4dc593774a4b45b0b88f55a029000e",
+        "summary": "Tag-aware invalidation is the better catalog strategy because it preserves freshness without invalidating unrelated entries. [Supported]"
+      }
+    ],
+    "evidence": [
+      {
+        "changeType": "Added",
+        "entityType": "Evidence",
+        "entityId": "55655cdc5350446089fe4be53333a7bb",
+        "summary": "TTL-only keeps the implementation minimal [Document]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Evidence",
+        "entityId": "d1cbc7a38eca4283b1240659aa115c8b",
+        "summary": "TTL-only leaves stale catalog risk unresolved [Observation]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Evidence",
+        "entityId": "d84b88417c55428ba69f9b356881069a",
+        "summary": "Tag-aware strategy supports targeted invalidation [Document]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Evidence",
+        "entityId": "0e69933a231b4736a3d25d72d0c8324a",
+        "summary": "Executable tests confirm targeted invalidation works [Experiment]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Evidence",
+        "entityId": "30f57b7c15b04ce8a8e212ccdf53f57c",
+        "summary": "Both candidate branches are preserved on main for comparison [Observation]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Evidence",
+        "entityId": "8af5bb50d1ba47869888a8964d61f190",
+        "summary": "Tag-aware branch carries stronger consistency evidence [Observation]"
+      }
+    ],
+    "tasks": [
+      {
+        "changeType": "Modified",
+        "entityType": "Task",
+        "entityId": "107013c0ef794f9a88572f01a2f3792d",
+        "summary": "Compare branch outcomes and choose the final cache design [Done]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Task",
+        "entityId": "41922709e3664068a4650e1b201bbe62",
+        "summary": "Evaluate TTL-only invalidation [Done]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Task",
+        "entityId": "00601f88a7d042fb8c980288699da1ed",
+        "summary": "Evaluate tag-aware invalidation [Done]"
+      }
+    ],
+    "conclusions": [
+      {
+        "changeType": "Added",
+        "entityType": "Conclusion",
+        "entityId": "9313a032e24244a39d0929c8590cd906",
+        "summary": "TTL-only remains useful as a low-cost baseline, but it is not strong enough for the catalog path that needs targeted freshness. [Accepted]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Conclusion",
+        "entityId": "bb1b9c29745146b88424e438134c1f71",
+        "summary": "Tag-aware invalidation provides the best balance for the catalog because it keeps freshness high without clearing unrelated entries. [Accepted]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Conclusion",
+        "entityId": "b6dde6a4cd524649ba0d9b21e8044825",
+        "summary": "The catalog cache decision is closed on main: CTX preserved both reasoning branches, and tag-aware invalidation was selected as the production direction. [Accepted]"
+      }
+    ],
+    "conflicts": [],
+    "summary": "decisions:3 hypotheses:3 evidence:6 tasks:3 conclusions:3"
+  },
+  "snapshot": {
+    "repositoryVersion": "1.0",
+    "currentBranch": "main",
+    "headCommitId": {
+      "value": "6ef300df312145c6b476a3f591cc1139"
+    },
+    "dirty": false,
+    "project": {
+      "name": "catalog-cache-branch-merge",
+      "description": "Cognitive repo for evaluating cache invalidation strategies with branches",
+      "defaultBranch": "main",
+      "state": 1,
+      "id": {
+        "value": "6c602857017143338004b7cb096fe360"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-12T00:00:58.9104602+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "project"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    "goals": [
+      {
+        "parentGoalId": null,
+        "title": "Choose a cache invalidation strategy for the product catalog",
+        "description": "Compare two candidate approaches and keep the final architecture decision auditable across branches.",
+        "priority": 1,
+        "state": 1,
+        "taskIds": [
+          {
+            "value": "107013c0ef794f9a88572f01a2f3792d"
+          },
+          {
+            "value": "00601f88a7d042fb8c980288699da1ed"
+          }
+        ],
+        "id": {
+          "value": "951ceb82dcec475898b00780c4143861"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:44.327149+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "goal"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "tasks": [
+      {
+        "goalId": {
+          "value": "951ceb82dcec475898b00780c4143861"
+        },
+        "title": "Compare branch outcomes and choose the final cache design",
+        "description": "Use separate cognitive branches to evaluate TTL-only and tag-aware invalidation before deciding on main.",
+        "state": 4,
+        "dependsOnTaskIds": [],
+        "hypothesisIds": [
+          {
+            "value": "62344fd9f3a1405a8e2fcbc1c9a0a09a"
+          }
+        ],
+        "parentTaskId": null,
+        "id": {
+          "value": "107013c0ef794f9a88572f01a2f3792d"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:44.6894719+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-12T00:01:57.8564688+00:00",
+          "tags": [
+            "task"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "goalId": {
+          "value": "951ceb82dcec475898b00780c4143861"
+        },
+        "title": "Evaluate TTL-only invalidation",
+        "description": "Measure the simplicity and freshness risk of expiring catalog entries only by time window.",
+        "state": 4,
+        "dependsOnTaskIds": [],
+        "hypothesisIds": [
+          {
+            "value": "da74efeb6b4944dfa74ec00f616f1075"
+          }
+        ],
+        "parentTaskId": {
+          "value": "107013c0ef794f9a88572f01a2f3792d"
+        },
+        "id": {
+          "value": "41922709e3664068a4650e1b201bbe62"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:46.9937855+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-12T00:01:49.8243096+00:00",
+          "tags": [
+            "task"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "goalId": {
+          "value": "951ceb82dcec475898b00780c4143861"
+        },
+        "title": "Evaluate tag-aware invalidation",
+        "description": "Test whether targeted invalidation provides the consistency needed for catalog updates.",
+        "state": 4,
+        "dependsOnTaskIds": [],
+        "hypothesisIds": [
+          {
+            "value": "7c4dc593774a4b45b0b88f55a029000e"
+          }
+        ],
+        "parentTaskId": {
+          "value": "107013c0ef794f9a88572f01a2f3792d"
+        },
+        "id": {
+          "value": "00601f88a7d042fb8c980288699da1ed"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:50.8404523+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-12T00:01:53.7138208+00:00",
+          "tags": [
+            "task"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "hypotheses": [
+      {
+        "statement": "Evaluating each cache strategy in its own cognitive branch will make the final architecture decision easier to justify and review.",
+        "rationale": "The team needs a clean comparison between simplicity and consistency before selecting the production path.",
+        "confidence": 0.88,
+        "impact": 0.82,
+        "evidenceStrength": 0.50,
+        "costToValidate": 0.15,
+        "state": 2,
+        "taskIds": [
+          {
+            "value": "107013c0ef794f9a88572f01a2f3792d"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "30f57b7c15b04ce8a8e212ccdf53f57c"
+          },
+          {
+            "value": "8af5bb50d1ba47869888a8964d61f190"
+          }
+        ],
+        "probability": 0.88,
+        "score": 0.6800,
+        "id": {
+          "value": "62344fd9f3a1405a8e2fcbc1c9a0a09a"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:45.2480498+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-12T00:01:56.6526249+00:00",
+          "tags": [
+            "hypothesis"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "statement": "TTL-only invalidation is sufficient for the catalog because operational simplicity outweighs short-lived staleness.",
+        "rationale": "A simpler cache policy lowers implementation cost and operational overhead.",
+        "confidence": 0.62,
+        "impact": 0.64,
+        "evidenceStrength": 0.40,
+        "costToValidate": 0.18,
+        "state": 3,
+        "taskIds": [
+          {
+            "value": "41922709e3664068a4650e1b201bbe62"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "55655cdc5350446089fe4be53333a7bb"
+          },
+          {
+            "value": "d1cbc7a38eca4283b1240659aa115c8b"
+          }
+        ],
+        "probability": 0.62,
+        "score": 0.5030,
+        "id": {
+          "value": "da74efeb6b4944dfa74ec00f616f1075"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:47.5910936+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-12T00:01:48.8767297+00:00",
+          "tags": [
+            "hypothesis"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "statement": "Tag-aware invalidation is the better catalog strategy because it preserves freshness without invalidating unrelated entries.",
+        "rationale": "The catalog needs targeted updates after price and stock changes, not just eventual expiration.",
+        "confidence": 0.86,
+        "impact": 0.90,
+        "evidenceStrength": 0.55,
+        "costToValidate": 0.20,
+        "state": 2,
+        "taskIds": [
+          {
+            "value": "00601f88a7d042fb8c980288699da1ed"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "d84b88417c55428ba69f9b356881069a"
+          },
+          {
+            "value": "0e69933a231b4736a3d25d72d0c8324a"
+          }
+        ],
+        "probability": 0.86,
+        "score": 0.7060,
+        "id": {
+          "value": "7c4dc593774a4b45b0b88f55a029000e"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:51.4446616+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-12T00:01:52.7772227+00:00",
+          "tags": [
+            "hypothesis"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "decisions": [
+      {
+        "title": "Do not choose TTL-only as the final catalog strategy",
+        "rationale": "The strategy is attractive for simplicity but does not meet the freshness requirement for price and stock updates.",
+        "state": 2,
+        "hypothesisIds": [
+          {
+            "value": "da74efeb6b4944dfa74ec00f616f1075"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "55655cdc5350446089fe4be53333a7bb"
+          },
+          {
+            "value": "d1cbc7a38eca4283b1240659aa115c8b"
+          }
+        ],
+        "id": {
+          "value": "f2535c205bee48e69cd1ca4d3de23900"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:49.1798107+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "decision"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "title": "Treat tag-aware invalidation as the preferred candidate",
+        "rationale": "The strategy keeps catalog reads coherent after updates and the executable test confirms the targeted invalidation behavior.",
+        "state": 1,
+        "hypothesisIds": [
+          {
+            "value": "7c4dc593774a4b45b0b88f55a029000e"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "d84b88417c55428ba69f9b356881069a"
+          },
+          {
+            "value": "0e69933a231b4736a3d25d72d0c8324a"
+          }
+        ],
+        "id": {
+          "value": "bd49e6cbb4244b229803e1b77e9da9db"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:53.0701228+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "decision"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "title": "Choose tag-aware invalidation for the catalog cache",
+        "rationale": "The branch comparison is now explicit on main, and the tag-aware line offers the strongest consistency story with executable evidence.",
+        "state": 1,
+        "hypothesisIds": [
+          {
+            "value": "62344fd9f3a1405a8e2fcbc1c9a0a09a"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "30f57b7c15b04ce8a8e212ccdf53f57c"
+          },
+          {
+            "value": "8af5bb50d1ba47869888a8964d61f190"
+          }
+        ],
+        "id": {
+          "value": "d4e82cd7492b4a3c9f1cfa1b562b1b55"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:57.0128005+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "decision"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "evidence": [
+      {
+        "title": "TTL-only keeps the implementation minimal",
+        "summary": "The TTL-only strategy note shows the smallest operational surface: entries expire by time without explicit invalidation logic.",
+        "source": "file:docs/ttl-strategy.md",
+        "kind": 2,
+        "confidence": 0.84,
+        "state": 2,
+        "supports": [
+          {
+            "entityType": "Task",
+            "entityId": "41922709e3664068a4650e1b201bbe62"
+          },
+          {
+            "entityType": "Hypothesis",
+            "entityId": "da74efeb6b4944dfa74ec00f616f1075"
+          }
+        ],
+        "id": {
+          "value": "55655cdc5350446089fe4be53333a7bb"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:48.2103132+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "evidence"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "title": "TTL-only leaves stale catalog risk unresolved",
+        "summary": "The TTL-only strategy still allows stale price or stock reads until expiration, which is risky for a freshness-sensitive catalog.",
+        "source": "file:docs/ttl-strategy.md",
+        "kind": 0,
+        "confidence": 0.91,
+        "state": 2,
+        "supports": [
+          {
+            "entityType": "Task",
+            "entityId": "41922709e3664068a4650e1b201bbe62"
+          },
+          {
+            "entityType": "Hypothesis",
+            "entityId": "da74efeb6b4944dfa74ec00f616f1075"
+          }
+        ],
+        "id": {
+          "value": "d1cbc7a38eca4283b1240659aa115c8b"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:48.5351624+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "evidence"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "title": "Tag-aware strategy supports targeted invalidation",
+        "summary": "The strategy note records that related products can be invalidated immediately by tag instead of waiting for expiration.",
+        "source": "file:docs/tag-strategy.md",
+        "kind": 2,
+        "confidence": 0.90,
+        "state": 2,
+        "supports": [
+          {
+            "entityType": "Task",
+            "entityId": "00601f88a7d042fb8c980288699da1ed"
+          },
+          {
+            "entityType": "Hypothesis",
+            "entityId": "7c4dc593774a4b45b0b88f55a029000e"
+          }
+        ],
+        "id": {
+          "value": "d84b88417c55428ba69f9b356881069a"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:52.0541276+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "evidence"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "title": "Executable tests confirm targeted invalidation works",
+        "summary": "The catalog cache tests verify that invalidating the boots category clears only related entries while preserving unrelated products.",
+        "source": "command:node tests/catalogCache.test.js",
+        "kind": 3,
+        "confidence": 0.99,
+        "state": 2,
+        "supports": [
+          {
+            "entityType": "Task",
+            "entityId": "00601f88a7d042fb8c980288699da1ed"
+          },
+          {
+            "entityType": "Hypothesis",
+            "entityId": "7c4dc593774a4b45b0b88f55a029000e"
+          }
+        ],
+        "id": {
+          "value": "0e69933a231b4736a3d25d72d0c8324a"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:52.4059403+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "evidence"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "title": "Both candidate branches are preserved on main for comparison",
+        "summary": "Main now contains the TTL-only and tag-aware reasoning lines, which makes the final cache choice auditable instead of conversational.",
+        "source": "ctx:branches:experiment/ttl-only,experiment/tag-aware",
+        "kind": 0,
+        "confidence": 0.94,
+        "state": 2,
+        "supports": [
+          {
+            "entityType": "Task",
+            "entityId": "107013c0ef794f9a88572f01a2f3792d"
+          },
+          {
+            "entityType": "Hypothesis",
+            "entityId": "62344fd9f3a1405a8e2fcbc1c9a0a09a"
+          }
+        ],
+        "id": {
+          "value": "30f57b7c15b04ce8a8e212ccdf53f57c"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:55.9059029+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "evidence"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "title": "Tag-aware branch carries stronger consistency evidence",
+        "summary": "The selected branch combines targeted invalidation semantics with passing tests, while the TTL-only branch records unresolved freshness risk.",
+        "source": "comparison:ttl-vs-tag-aware",
+        "kind": 0,
+        "confidence": 0.96,
+        "state": 2,
+        "supports": [
+          {
+            "entityType": "Task",
+            "entityId": "107013c0ef794f9a88572f01a2f3792d"
+          },
+          {
+            "entityType": "Hypothesis",
+            "entityId": "62344fd9f3a1405a8e2fcbc1c9a0a09a"
+          }
+        ],
+        "id": {
+          "value": "8af5bb50d1ba47869888a8964d61f190"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:56.2400747+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "evidence"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "conclusions": [
+      {
+        "summary": "TTL-only remains useful as a low-cost baseline, but it is not strong enough for the catalog path that needs targeted freshness.",
+        "state": 1,
+        "decisionIds": [
+          {
+            "value": "f2535c205bee48e69cd1ca4d3de23900"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "55655cdc5350446089fe4be53333a7bb"
+          },
+          {
+            "value": "d1cbc7a38eca4283b1240659aa115c8b"
+          }
+        ],
+        "goalIds": [
+          {
+            "value": "951ceb82dcec475898b00780c4143861"
+          }
+        ],
+        "taskIds": [
+          {
+            "value": "41922709e3664068a4650e1b201bbe62"
+          }
+        ],
+        "id": {
+          "value": "9313a032e24244a39d0929c8590cd906"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:49.5138441+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "conclusion"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "summary": "Tag-aware invalidation provides the best balance for the catalog because it keeps freshness high without clearing unrelated entries.",
+        "state": 1,
+        "decisionIds": [
+          {
+            "value": "bd49e6cbb4244b229803e1b77e9da9db"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "d84b88417c55428ba69f9b356881069a"
+          },
+          {
+            "value": "0e69933a231b4736a3d25d72d0c8324a"
+          }
+        ],
+        "goalIds": [
+          {
+            "value": "951ceb82dcec475898b00780c4143861"
+          }
+        ],
+        "taskIds": [
+          {
+            "value": "00601f88a7d042fb8c980288699da1ed"
+          }
+        ],
+        "id": {
+          "value": "bb1b9c29745146b88424e438134c1f71"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:53.4126555+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "conclusion"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "summary": "The catalog cache decision is closed on main: CTX preserved both reasoning branches, and tag-aware invalidation was selected as the production direction.",
+        "state": 1,
+        "decisionIds": [],
+        "evidenceIds": [
+          {
+            "value": "30f57b7c15b04ce8a8e212ccdf53f57c"
+          },
+          {
+            "value": "8af5bb50d1ba47869888a8964d61f190"
+          }
+        ],
+        "goalIds": [
+          {
+            "value": "951ceb82dcec475898b00780c4143861"
+          }
+        ],
+        "taskIds": [
+          {
+            "value": "107013c0ef794f9a88572f01a2f3792d"
+          }
+        ],
+        "id": {
+          "value": "b6dde6a4cd524649ba0d9b21e8044825"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:57.4624905+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "conclusion"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "runs": [
+      {
+        "provider": "openai",
+        "model": "gpt-4.1",
+        "state": 2,
+        "startedAtUtc": "2026-04-12T00:01:58.2204701+00:00",
+        "completedAtUtc": "2026-04-12T00:01:58.270595+00:00",
+        "packetId": {
+          "value": "e7ca0ca76c49435eb3ad4656cea99a14"
+        },
+        "usage": {
+          "inputTokens": 825,
+          "outputTokens": 120,
+          "acuCost": 0.01,
+          "duration": "00:00:00.0500000",
+          "totalTokens": 945
+        },
+        "promptFingerprint": "efe01226f4580415f38bb9a860cffcd2a77c1c75ef99e240b6c861a229b5654f",
+        "summary": "Offline structured result for \u0027Summarize the final tradeoff between TTL-only and tag-aware cache invalidation.\u0027. Configure credentials to reach the live provider.",
+        "artifacts": [
+          {
+            "artifactType": "summary",
+            "title": "offline-result",
+            "content": "Packet e7ca0ca76c49435eb3ad4656cea99a14 built with 825 estimated tokens.",
+            "references": []
+          }
+        ],
+        "id": {
+          "value": "3bfbf547fc9b41c1bdec40da0e9a0d99"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:58.2711219+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "run",
+            "openai"
+          ],
+          "relatedIds": [
+            "e7ca0ca76c49435eb3ad4656cea99a14"
+          ],
+          "modelName": "gpt-4.1",
+          "modelVersion": null
+        }
+      }
+    ],
+    "id": {
+      "value": "8d2c7bc7f0bc40abb01d86039d5d0f49"
+    },
+    "trace": {
+      "createdBy": "diegoxtr",
+      "createdAtUtc": "2026-04-12T00:00:58.9104602+00:00",
+      "updatedBy": "diegoxtr",
+      "updatedAtUtc": "2026-04-12T00:01:58.6416432+00:00",
+      "tags": [
+        "project"
+      ],
+      "relatedIds": [],
+      "modelName": null,
+      "modelVersion": null
+    }
+  },
+  "id": {
+    "value": "6ef300df312145c6b476a3f591cc1139"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-12T00:01:58.6972595+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "commit"
+    ],
+    "relatedIds": [
+      "ff74f8f6488e42888f5c06447f8e6f0d"
+    ],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

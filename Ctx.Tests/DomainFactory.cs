@@ -4,7 +4,7 @@ using Ctx.Domain;
 
 internal static class DomainFactory
 {
-    private static readonly Traceability Trace = new(
+    public static readonly Traceability Trace = new(
         "tester",
         new DateTimeOffset(2026, 4, 7, 12, 0, 0, TimeSpan.Zero),
         null,

@@ -23,11 +23,11 @@ public sealed class DiffEngineTests
             Array.Empty<ContextCommitId>(),
             new DateTimeOffset(2026, 4, 7, 11, 0, 0, TimeSpan.Zero),
             "hash",
-            new ContextDiff(null, null, Array.Empty<ContextDiffChange>(), Array.Empty<ContextDiffChange>(), Array.Empty<ContextDiffChange>(), Array.Empty<ContextDiffChange>(), Array.Empty<ContextDiffChange>(), Array.Empty<CognitiveConflict>(), string.Empty),
-            previousContext,
+            new ContextDiff(null, null, Array.Empty<ContextDiffChange>(), Array.Empty<ContextDiffChange>(), Array.Empty<ContextDiffChange>(), Array.Empty<ContextDiffChange>(), Array.Empty<ContextDiffChange>(), Array.Empty<ContextDiffChange>(), Array.Empty<CognitiveConflict>(), string.Empty),
+            new RepositorySnapshot(previousContext, Array.Empty<OperationalRunbook>()),
             previousContext.Trace);
 
-        var diff = new DiffEngine().Diff(previousCommit, current);
+        var diff = new DiffEngine().Diff(previousCommit, new RepositorySnapshot(current, Array.Empty<OperationalRunbook>()));
 
         Assert.Contains(diff.Tasks, change => change.ChangeType == "Added");
         Assert.Contains(diff.Hypotheses, change => change.ChangeType == "Added");

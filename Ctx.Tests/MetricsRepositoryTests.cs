@@ -73,6 +73,37 @@ public sealed class MetricsRepositoryTests
         }
     }
 
+    [Fact]
+    public async System.Threading.Tasks.Task LoadAsync_ReturnsEmptySnapshotWhenMetricsJsonIsMalformed()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var jsonSerializer = new DefaultJsonSerializer();
+            var metricsRepository = new FileSystemMetricsRepository(jsonSerializer);
+            var service = CreateService(jsonSerializer);
+
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Metrics malformed test", "main", "tester"), CancellationToken.None);
+            var metricsPath = Path.Combine(repositoryPath, ".ctx", "metrics", "usage.json");
+            await File.WriteAllTextAsync(metricsPath, "{ not-valid-json");
+
+            var snapshot = await metricsRepository.LoadAsync(repositoryPath, CancellationToken.None);
+
+            Assert.Equal(0, snapshot.TotalRuns);
+            Assert.Equal(0, snapshot.TotalCommandInvocations);
+            Assert.Empty(snapshot.CommandUsage);
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
     private static Ctx.Core.CtxApplicationService CreateService(DefaultJsonSerializer jsonSerializer)
     {
         var clock = new FixedClock(new DateTimeOffset(2026, 4, 9, 12, 0, 0, TimeSpan.Zero));

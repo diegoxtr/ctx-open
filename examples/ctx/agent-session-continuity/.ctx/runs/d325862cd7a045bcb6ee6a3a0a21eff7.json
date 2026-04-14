@@ -1,0 +1,45 @@
+{
+  "provider": "openai",
+  "model": "gpt-4.1",
+  "state": 2,
+  "startedAtUtc": "2026-04-12T00:05:39.2161387+00:00",
+  "completedAtUtc": "2026-04-12T00:05:39.2661825+00:00",
+  "packetId": {
+    "value": "516e942c9a4748feb05e1eb475d5d21d"
+  },
+  "usage": {
+    "inputTokens": 893,
+    "outputTokens": 120,
+    "acuCost": 0.01,
+    "duration": "00:00:00.0500000",
+    "totalTokens": 1013
+  },
+  "promptFingerprint": "b081754fccf435d06fa868598d6e24e0fc7f40cdeb159fe9c581c05493e017d7",
+  "summary": "Offline structured result for \u0027Summarize why the notification digest repo demonstrates continuity across agent sessions.\u0027. Configure credentials to reach the live provider.",
+  "artifacts": [
+    {
+      "artifactType": "summary",
+      "title": "offline-result",
+      "content": "Packet 516e942c9a4748feb05e1eb475d5d21d built with 893 estimated tokens.",
+      "references": []
+    }
+  ],
+  "id": {
+    "value": "d325862cd7a045bcb6ee6a3a0a21eff7"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-12T00:05:39.266319+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "run",
+      "openai"
+    ],
+    "relatedIds": [
+      "516e942c9a4748feb05e1eb475d5d21d"
+    ],
+    "modelName": "gpt-4.1",
+    "modelVersion": null
+  }
+}

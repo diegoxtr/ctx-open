@@ -1,0 +1,353 @@
+{
+  "branch": "main",
+  "message": "record session 1 digest baseline and pending continuation",
+  "parentIds": [],
+  "createdAtUtc": "2026-04-12T00:05:32.1389756+00:00",
+  "snapshotHash": "4f56200da65419e77ad04a8c2dc5cb06592600575809aa13e0fe1d6078548b5a",
+  "diff": {
+    "fromCommitId": null,
+    "toCommitId": {
+      "value": "fa39d8faa31d4382a169f86f7b534f91"
+    },
+    "decisions": [
+      {
+        "changeType": "Added",
+        "entityType": "Decision",
+        "entityId": "4d514125399d44ad943825dce7e016f7",
+        "summary": "Treat quiet-hours filtering as the explicit continuation point [Accepted]"
+      }
+    ],
+    "hypotheses": [
+      {
+        "changeType": "Added",
+        "entityType": "Hypothesis",
+        "entityId": "278f5ae4a52840aaa6729f7ee0d979f5",
+        "summary": "A later agent session can continue correctly if the unfinished behavior is recorded explicitly as task state, hypothesis, and evidence instead of being left in chat. [UnderEvaluation]"
+      }
+    ],
+    "evidence": [
+      {
+        "changeType": "Added",
+        "entityType": "Evidence",
+        "entityId": "9dd56ae1918840be8bc2ccdfc30b1880",
+        "summary": "Session 1 leaves quiet-hours as explicit unfinished work [Document]"
+      }
+    ],
+    "tasks": [
+      {
+        "changeType": "Added",
+        "entityType": "Task",
+        "entityId": "5e82de0dbe974dbf98f37e5d1f47aaec",
+        "summary": "Define the first digest output contract [Done]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Task",
+        "entityId": "1acfeee35e614a45b8c8395660200bdd",
+        "summary": "Resume later and add quiet-hours filtering [Ready]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Task",
+        "entityId": "7d25cb20f7dc4523b3896f33c5d0447a",
+        "summary": "Lock the final behavior with executable tests [Ready]"
+      }
+    ],
+    "conclusions": [],
+    "conflicts": [],
+    "summary": "decisions:1 hypotheses:1 evidence:1 tasks:3 conclusions:0"
+  },
+  "snapshot": {
+    "repositoryVersion": "1.0",
+    "currentBranch": "main",
+    "headCommitId": {
+      "value": "fa39d8faa31d4382a169f86f7b534f91"
+    },
+    "dirty": false,
+    "project": {
+      "name": "agent-session-continuity",
+      "description": "Cognitive repo for demonstrating multi-session agent continuity",
+      "defaultBranch": "main",
+      "state": 1,
+      "id": {
+        "value": "3f9f186589ea4eb1958cbc5e898ffeb9"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-12T00:04:59.0598563+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "project"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    "goals": [
+      {
+        "parentGoalId": null,
+        "title": "Ship a notification digest that an agent can continue across sessions",
+        "description": "Keep the feature state explicit enough that a later session can resume and close it without relying on chat history.",
+        "priority": 1,
+        "state": 1,
+        "taskIds": [
+          {
+            "value": "5e82de0dbe974dbf98f37e5d1f47aaec"
+          },
+          {
+            "value": "1acfeee35e614a45b8c8395660200bdd"
+          },
+          {
+            "value": "7d25cb20f7dc4523b3896f33c5d0447a"
+          }
+        ],
+        "id": {
+          "value": "530f4816323f474d8e944d006685831a"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:05:28.5399844+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "goal"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "tasks": [
+      {
+        "goalId": {
+          "value": "530f4816323f474d8e944d006685831a"
+        },
+        "title": "Define the first digest output contract",
+        "description": "Create the first pass of the digest around unread notifications and leave the next missing behavior explicit.",
+        "state": 4,
+        "dependsOnTaskIds": [],
+        "hypothesisIds": [
+          {
+            "value": "278f5ae4a52840aaa6729f7ee0d979f5"
+          }
+        ],
+        "parentTaskId": null,
+        "id": {
+          "value": "5e82de0dbe974dbf98f37e5d1f47aaec"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:05:28.8495672+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-12T00:05:31.7198389+00:00",
+          "tags": [
+            "task"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "goalId": {
+          "value": "530f4816323f474d8e944d006685831a"
+        },
+        "title": "Resume later and add quiet-hours filtering",
+        "description": "Continue from the recorded state instead of chat memory and finish the remaining digest behavior.",
+        "state": 1,
+        "dependsOnTaskIds": [
+          {
+            "value": "5e82de0dbe974dbf98f37e5d1f47aaec"
+          }
+        ],
+        "hypothesisIds": [],
+        "parentTaskId": null,
+        "id": {
+          "value": "1acfeee35e614a45b8c8395660200bdd"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:05:29.5718663+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "task"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "goalId": {
+          "value": "530f4816323f474d8e944d006685831a"
+        },
+        "title": "Lock the final behavior with executable tests",
+        "description": "Close the feature with repeatable evidence so the next session does not reopen solved ground.",
+        "state": 1,
+        "dependsOnTaskIds": [
+          {
+            "value": "1acfeee35e614a45b8c8395660200bdd"
+          }
+        ],
+        "hypothesisIds": [],
+        "parentTaskId": null,
+        "id": {
+          "value": "7d25cb20f7dc4523b3896f33c5d0447a"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:05:29.89846+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "task"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "hypotheses": [
+      {
+        "statement": "A later agent session can continue correctly if the unfinished behavior is recorded explicitly as task state, hypothesis, and evidence instead of being left in chat.",
+        "rationale": "Continuity breaks when pending work exists only in the previous transcript.",
+        "confidence": 0.90,
+        "impact": 0.88,
+        "evidenceStrength": 0.50,
+        "costToValidate": 0.12,
+        "state": 1,
+        "taskIds": [
+          {
+            "value": "5e82de0dbe974dbf98f37e5d1f47aaec"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "9dd56ae1918840be8bc2ccdfc30b1880"
+          }
+        ],
+        "probability": 0.90,
+        "score": 0.7110,
+        "id": {
+          "value": "278f5ae4a52840aaa6729f7ee0d979f5"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:05:30.2440161+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-12T00:05:30.6121504+00:00",
+          "tags": [
+            "hypothesis"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "decisions": [
+      {
+        "title": "Treat quiet-hours filtering as the explicit continuation point",
+        "rationale": "The first session should stop after defining the digest contract and leave the next missing behavior visible in CTX.",
+        "state": 1,
+        "hypothesisIds": [
+          {
+            "value": "278f5ae4a52840aaa6729f7ee0d979f5"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "9dd56ae1918840be8bc2ccdfc30b1880"
+          }
+        ],
+        "id": {
+          "value": "4d514125399d44ad943825dce7e016f7"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:05:31.4009738+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "decision"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Session 1 leaves quiet-hours as explicit unfinished work",
+        "summary": "The first session note records that the digest shape is defined and quiet-hours filtering remains intentionally pending for the next session.",
+        "source": "file:docs/session-1-notes.md",
+        "kind": 2,
+        "confidence": 0.92,
+        "state": 2,
+        "supports": [
+          {
+            "entityType": "Task",
+            "entityId": "5e82de0dbe974dbf98f37e5d1f47aaec"
+          },
+          {
+            "entityType": "Hypothesis",
+            "entityId": "278f5ae4a52840aaa6729f7ee0d979f5"
+          }
+        ],
+        "id": {
+          "value": "9dd56ae1918840be8bc2ccdfc30b1880"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:05:31.053691+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "evidence"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "conclusions": [],
+    "runs": [],
+    "id": {
+      "value": "ca06a2cb5ed24fdf87612770a1c67dcb"
+    },
+    "trace": {
+      "createdBy": "diegoxtr",
+      "createdAtUtc": "2026-04-12T00:04:59.0598563+00:00",
+      "updatedBy": "diegoxtr",
+      "updatedAtUtc": "2026-04-12T00:05:32.0938753+00:00",
+      "tags": [
+        "project"
+      ],
+      "relatedIds": [],
+      "modelName": null,
+      "modelVersion": null
+    }
+  },
+  "id": {
+    "value": "fa39d8faa31d4382a169f86f7b534f91"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-12T00:05:32.1387865+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "commit"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

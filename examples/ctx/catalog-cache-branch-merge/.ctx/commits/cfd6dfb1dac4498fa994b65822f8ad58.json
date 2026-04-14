@@ -1,0 +1,457 @@
+{
+  "branch": "experiment/tag-aware",
+  "message": "evaluate tag-aware cache branch",
+  "parentIds": [
+    {
+      "value": "ff74f8f6488e42888f5c06447f8e6f0d"
+    }
+  ],
+  "createdAtUtc": "2026-04-12T00:01:54.1640018+00:00",
+  "snapshotHash": "8e224b647631398dbc8737ed85423a180085f377eda190a0976a32ac8b96a4ef",
+  "diff": {
+    "fromCommitId": {
+      "value": "ff74f8f6488e42888f5c06447f8e6f0d"
+    },
+    "toCommitId": {
+      "value": "cfd6dfb1dac4498fa994b65822f8ad58"
+    },
+    "decisions": [
+      {
+        "changeType": "Added",
+        "entityType": "Decision",
+        "entityId": "bd49e6cbb4244b229803e1b77e9da9db",
+        "summary": "Treat tag-aware invalidation as the preferred candidate [Accepted]"
+      }
+    ],
+    "hypotheses": [
+      {
+        "changeType": "Modified",
+        "entityType": "Hypothesis",
+        "entityId": "62344fd9f3a1405a8e2fcbc1c9a0a09a",
+        "summary": "Evaluating each cache strategy in its own cognitive branch will make the final architecture decision easier to justify and review. [UnderEvaluation]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Hypothesis",
+        "entityId": "7c4dc593774a4b45b0b88f55a029000e",
+        "summary": "Tag-aware invalidation is the better catalog strategy because it preserves freshness without invalidating unrelated entries. [Supported]"
+      }
+    ],
+    "evidence": [
+      {
+        "changeType": "Added",
+        "entityType": "Evidence",
+        "entityId": "d84b88417c55428ba69f9b356881069a",
+        "summary": "Tag-aware strategy supports targeted invalidation [Document]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Evidence",
+        "entityId": "0e69933a231b4736a3d25d72d0c8324a",
+        "summary": "Executable tests confirm targeted invalidation works [Experiment]"
+      }
+    ],
+    "tasks": [
+      {
+        "changeType": "Modified",
+        "entityType": "Task",
+        "entityId": "107013c0ef794f9a88572f01a2f3792d",
+        "summary": "Compare branch outcomes and choose the final cache design [InProgress]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Task",
+        "entityId": "00601f88a7d042fb8c980288699da1ed",
+        "summary": "Evaluate tag-aware invalidation [Done]"
+      }
+    ],
+    "conclusions": [
+      {
+        "changeType": "Added",
+        "entityType": "Conclusion",
+        "entityId": "bb1b9c29745146b88424e438134c1f71",
+        "summary": "Tag-aware invalidation provides the best balance for the catalog because it keeps freshness high without clearing unrelated entries. [Accepted]"
+      }
+    ],
+    "conflicts": [],
+    "summary": "decisions:1 hypotheses:2 evidence:2 tasks:2 conclusions:1"
+  },
+  "snapshot": {
+    "repositoryVersion": "1.0",
+    "currentBranch": "experiment/tag-aware",
+    "headCommitId": {
+      "value": "cfd6dfb1dac4498fa994b65822f8ad58"
+    },
+    "dirty": false,
+    "project": {
+      "name": "catalog-cache-branch-merge",
+      "description": "Cognitive repo for evaluating cache invalidation strategies with branches",
+      "defaultBranch": "main",
+      "state": 1,
+      "id": {
+        "value": "6c602857017143338004b7cb096fe360"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-12T00:00:58.9104602+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "project"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    "goals": [
+      {
+        "parentGoalId": null,
+        "title": "Choose a cache invalidation strategy for the product catalog",
+        "description": "Compare two candidate approaches and keep the final architecture decision auditable across branches.",
+        "priority": 1,
+        "state": 1,
+        "taskIds": [
+          {
+            "value": "107013c0ef794f9a88572f01a2f3792d"
+          },
+          {
+            "value": "00601f88a7d042fb8c980288699da1ed"
+          }
+        ],
+        "id": {
+          "value": "951ceb82dcec475898b00780c4143861"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:44.327149+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "goal"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "tasks": [
+      {
+        "goalId": {
+          "value": "951ceb82dcec475898b00780c4143861"
+        },
+        "title": "Compare branch outcomes and choose the final cache design",
+        "description": "Use separate cognitive branches to evaluate TTL-only and tag-aware invalidation before deciding on main.",
+        "state": 2,
+        "dependsOnTaskIds": [],
+        "hypothesisIds": [
+          {
+            "value": "62344fd9f3a1405a8e2fcbc1c9a0a09a"
+          }
+        ],
+        "parentTaskId": null,
+        "id": {
+          "value": "107013c0ef794f9a88572f01a2f3792d"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:44.6894719+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-12T00:01:44.9756038+00:00",
+          "tags": [
+            "task"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "goalId": {
+          "value": "951ceb82dcec475898b00780c4143861"
+        },
+        "title": "Evaluate tag-aware invalidation",
+        "description": "Test whether targeted invalidation provides the consistency needed for catalog updates.",
+        "state": 4,
+        "dependsOnTaskIds": [],
+        "hypothesisIds": [
+          {
+            "value": "7c4dc593774a4b45b0b88f55a029000e"
+          }
+        ],
+        "parentTaskId": {
+          "value": "107013c0ef794f9a88572f01a2f3792d"
+        },
+        "id": {
+          "value": "00601f88a7d042fb8c980288699da1ed"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:50.8404523+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-12T00:01:53.7138208+00:00",
+          "tags": [
+            "task"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "hypotheses": [
+      {
+        "statement": "Evaluating each cache strategy in its own cognitive branch will make the final architecture decision easier to justify and review.",
+        "rationale": "The team needs a clean comparison between simplicity and consistency before selecting the production path.",
+        "confidence": 0.88,
+        "impact": 0.82,
+        "evidenceStrength": 0.50,
+        "costToValidate": 0.15,
+        "state": 1,
+        "taskIds": [
+          {
+            "value": "107013c0ef794f9a88572f01a2f3792d"
+          }
+        ],
+        "evidenceIds": [],
+        "probability": 0.88,
+        "score": 0.6800,
+        "id": {
+          "value": "62344fd9f3a1405a8e2fcbc1c9a0a09a"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:45.2480498+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-12T00:01:45.583356+00:00",
+          "tags": [
+            "hypothesis"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "statement": "Tag-aware invalidation is the better catalog strategy because it preserves freshness without invalidating unrelated entries.",
+        "rationale": "The catalog needs targeted updates after price and stock changes, not just eventual expiration.",
+        "confidence": 0.86,
+        "impact": 0.90,
+        "evidenceStrength": 0.55,
+        "costToValidate": 0.20,
+        "state": 2,
+        "taskIds": [
+          {
+            "value": "00601f88a7d042fb8c980288699da1ed"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "d84b88417c55428ba69f9b356881069a"
+          },
+          {
+            "value": "0e69933a231b4736a3d25d72d0c8324a"
+          }
+        ],
+        "probability": 0.86,
+        "score": 0.7060,
+        "id": {
+          "value": "7c4dc593774a4b45b0b88f55a029000e"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:51.4446616+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-12T00:01:52.7772227+00:00",
+          "tags": [
+            "hypothesis"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "decisions": [
+      {
+        "title": "Treat tag-aware invalidation as the preferred candidate",
+        "rationale": "The strategy keeps catalog reads coherent after updates and the executable test confirms the targeted invalidation behavior.",
+        "state": 1,
+        "hypothesisIds": [
+          {
+            "value": "7c4dc593774a4b45b0b88f55a029000e"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "d84b88417c55428ba69f9b356881069a"
+          },
+          {
+            "value": "0e69933a231b4736a3d25d72d0c8324a"
+          }
+        ],
+        "id": {
+          "value": "bd49e6cbb4244b229803e1b77e9da9db"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:53.0701228+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "decision"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Tag-aware strategy supports targeted invalidation",
+        "summary": "The strategy note records that related products can be invalidated immediately by tag instead of waiting for expiration.",
+        "source": "file:docs/tag-strategy.md",
+        "kind": 2,
+        "confidence": 0.90,
+        "state": 2,
+        "supports": [
+          {
+            "entityType": "Task",
+            "entityId": "00601f88a7d042fb8c980288699da1ed"
+          },
+          {
+            "entityType": "Hypothesis",
+            "entityId": "7c4dc593774a4b45b0b88f55a029000e"
+          }
+        ],
+        "id": {
+          "value": "d84b88417c55428ba69f9b356881069a"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:52.0541276+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "evidence"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "title": "Executable tests confirm targeted invalidation works",
+        "summary": "The catalog cache tests verify that invalidating the boots category clears only related entries while preserving unrelated products.",
+        "source": "command:node tests/catalogCache.test.js",
+        "kind": 3,
+        "confidence": 0.99,
+        "state": 2,
+        "supports": [
+          {
+            "entityType": "Task",
+            "entityId": "00601f88a7d042fb8c980288699da1ed"
+          },
+          {
+            "entityType": "Hypothesis",
+            "entityId": "7c4dc593774a4b45b0b88f55a029000e"
+          }
+        ],
+        "id": {
+          "value": "0e69933a231b4736a3d25d72d0c8324a"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:52.4059403+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "evidence"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "conclusions": [
+      {
+        "summary": "Tag-aware invalidation provides the best balance for the catalog because it keeps freshness high without clearing unrelated entries.",
+        "state": 1,
+        "decisionIds": [
+          {
+            "value": "bd49e6cbb4244b229803e1b77e9da9db"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "d84b88417c55428ba69f9b356881069a"
+          },
+          {
+            "value": "0e69933a231b4736a3d25d72d0c8324a"
+          }
+        ],
+        "goalIds": [
+          {
+            "value": "951ceb82dcec475898b00780c4143861"
+          }
+        ],
+        "taskIds": [
+          {
+            "value": "00601f88a7d042fb8c980288699da1ed"
+          }
+        ],
+        "id": {
+          "value": "bb1b9c29745146b88424e438134c1f71"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:53.4126555+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "conclusion"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "runs": [],
+    "id": {
+      "value": "8d2c7bc7f0bc40abb01d86039d5d0f49"
+    },
+    "trace": {
+      "createdBy": "diegoxtr",
+      "createdAtUtc": "2026-04-12T00:00:58.9104602+00:00",
+      "updatedBy": "diegoxtr",
+      "updatedAtUtc": "2026-04-12T00:01:54.1152861+00:00",
+      "tags": [
+        "project"
+      ],
+      "relatedIds": [],
+      "modelName": null,
+      "modelVersion": null
+    }
+  },
+  "id": {
+    "value": "cfd6dfb1dac4498fa994b65822f8ad58"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-12T00:01:54.1639077+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "commit"
+    ],
+    "relatedIds": [
+      "ff74f8f6488e42888f5c06447f8e6f0d"
+    ],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

@@ -1,0 +1,19 @@
+﻿{
+  "name": "CTX Viewer Demo",
+  "description": "Timeline and graph sample repository",
+  "defaultBranch": "main",
+  "state": 1,
+  "id": {
+    "value": "dd2f3e64f94e471d8033ce5b4c8d1787"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-08T21:08:45.8279165+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "project"
+    ],
+    "relatedIds": []
+  }
+}

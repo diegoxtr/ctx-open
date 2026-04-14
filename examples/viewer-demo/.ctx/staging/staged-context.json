@@ -1,0 +1,405 @@
+﻿{
+  "repositoryVersion": "1.0",
+  "currentBranch": "research/validation",
+  "headCommitId": {
+    "value": "3770f2c330c540ee9dedbe1d231749cf"
+  },
+  "dirty": false,
+  "project": {
+    "name": "CTX Viewer Demo",
+    "description": "Timeline and graph sample repository",
+    "defaultBranch": "main",
+    "state": 1,
+    "id": {
+      "value": "dd2f3e64f94e471d8033ce5b4c8d1787"
+    },
+    "trace": {
+      "createdBy": "diegoxtr",
+      "createdAtUtc": "2026-04-08T21:08:45.8279165+00:00",
+      "updatedBy": null,
+      "updatedAtUtc": null,
+      "tags": [
+        "project"
+      ],
+      "relatedIds": []
+    }
+  },
+  "goals": [
+    {
+      "parentGoalId": null,
+      "title": "Ship a navigable reasoning timeline",
+      "description": "Make CTX history explorable from a simple UI",
+      "priority": 1,
+      "state": 1,
+      "taskIds": [
+        {
+          "value": "d0d738f2e1b54803aa1f3bd8db41c13d"
+        }
+      ],
+      "id": {
+        "value": "f7200e04aac043e6ba31c70642eec457"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-08T21:08:48.8268936+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "goal"
+        ],
+        "relatedIds": []
+      }
+    },
+    {
+      "parentGoalId": {
+        "value": "f7200e04aac043e6ba31c70642eec457"
+      },
+      "title": "Model the trace graph",
+      "description": "Represent goals, tasks, hypotheses and decisions visually",
+      "priority": 2,
+      "state": 1,
+      "taskIds": [
+        {
+          "value": "c2879258c1ad4ad68bac5feeb39c9c76"
+        }
+      ],
+      "id": {
+        "value": "a2b8ce935aa74ff78cab2eb177b543bf"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-08T21:08:51.8327858+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "goal"
+        ],
+        "relatedIds": []
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "goalId": {
+        "value": "a2b8ce935aa74ff78cab2eb177b543bf"
+      },
+      "title": "Build a minimal viewer shell",
+      "description": "Render branches, commits and node details",
+      "state": 1,
+      "dependsOnTaskIds": [],
+      "hypothesisIds": [
+        {
+          "value": "eda0d10b62fb4538a7e7682346d953b7"
+        }
+      ],
+      "id": {
+        "value": "c2879258c1ad4ad68bac5feeb39c9c76"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-08T21:08:54.6723219+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "task"
+        ],
+        "relatedIds": []
+      }
+    },
+    {
+      "goalId": {
+        "value": "f7200e04aac043e6ba31c70642eec457"
+      },
+      "title": "Validate historical snapshots from the viewer",
+      "description": "Ensure the graph can be inspected commit by commit",
+      "state": 1,
+      "dependsOnTaskIds": [],
+      "hypothesisIds": [
+        {
+          "value": "e49dca2c5d6f4180a2f8e465d9593b22"
+        }
+      ],
+      "id": {
+        "value": "d0d738f2e1b54803aa1f3bd8db41c13d"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-08T21:09:41.5802141+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "task"
+        ],
+        "relatedIds": []
+      }
+    }
+  ],
+  "hypotheses": [
+    {
+      "statement": "A combined timeline and graph view reduces context recovery time",
+      "rationale": "Users can inspect cognitive evolution without reading every artifact",
+      "confidence": 0.82,
+      "state": 0,
+      "taskIds": [
+        {
+          "value": "c2879258c1ad4ad68bac5feeb39c9c76"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "19c555f43b3044a8979c39fdc7406e60"
+        }
+      ],
+      "id": {
+        "value": "eda0d10b62fb4538a7e7682346d953b7"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-08T21:08:57.4637083+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "hypothesis"
+        ],
+        "relatedIds": []
+      }
+    },
+    {
+      "statement": "Historical graph snapshots make reasoning drift visible",
+      "rationale": "A stable commit graph should expose when decisions lost their supporting evidence",
+      "confidence": 0.79,
+      "state": 0,
+      "taskIds": [
+        {
+          "value": "d0d738f2e1b54803aa1f3bd8db41c13d"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "51df8faf2e674d12bf24633c06bb3e41"
+        }
+      ],
+      "id": {
+        "value": "e49dca2c5d6f4180a2f8e465d9593b22"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-08T21:09:44.285238+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "hypothesis"
+        ],
+        "relatedIds": []
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "title": "Keep the first viewer local-first and read-only",
+      "rationale": "A lightweight viewer is enough to validate the trace model before editing workflows",
+      "state": 1,
+      "hypothesisIds": [
+        {
+          "value": "eda0d10b62fb4538a7e7682346d953b7"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "19c555f43b3044a8979c39fdc7406e60"
+        }
+      ],
+      "id": {
+        "value": "ed6c9b31bb2043d78507812cc0bf94a9"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-08T21:09:03.2595784+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "decision"
+        ],
+        "relatedIds": []
+      }
+    },
+    {
+      "title": "Keep historical graph export in the baseline product",
+      "rationale": "Without snapshot replay the viewer cannot explain evolution over time",
+      "state": 1,
+      "hypothesisIds": [
+        {
+          "value": "e49dca2c5d6f4180a2f8e465d9593b22"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "51df8faf2e674d12bf24633c06bb3e41"
+        }
+      ],
+      "id": {
+        "value": "1109b9c67c6142109037d3634649f258"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-08T21:09:50.3205082+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "decision"
+        ],
+        "relatedIds": []
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "title": "Pilot feedback from architecture review",
+      "summary": "Reviewers asked for a visual trace of how conclusions were reached",
+      "source": "pilot-arch-01",
+      "kind": 0,
+      "confidence": 0.74,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "eda0d10b62fb4538a7e7682346d953b7"
+        }
+      ],
+      "id": {
+        "value": "19c555f43b3044a8979c39fdc7406e60"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-08T21:09:00.4014108+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": []
+      }
+    },
+    {
+      "title": "Replay of commit snapshots",
+      "summary": "Commit-by-commit replay exposed gaps in branch reasoning",
+      "source": "snapshot-replay",
+      "kind": 3,
+      "confidence": 0.81,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "e49dca2c5d6f4180a2f8e465d9593b22"
+        },
+        {
+          "entityType": "Task",
+          "entityId": "d0d738f2e1b54803aa1f3bd8db41c13d"
+        }
+      ],
+      "id": {
+        "value": "51df8faf2e674d12bf24633c06bb3e41"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-08T21:09:47.2867077+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": []
+      }
+    }
+  ],
+  "conclusions": [
+    {
+      "summary": "A lightweight visual trace is sufficient for the first evaluation round",
+      "state": 1,
+      "decisionIds": [
+        {
+          "value": "ed6c9b31bb2043d78507812cc0bf94a9"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "19c555f43b3044a8979c39fdc7406e60"
+        }
+      ],
+      "goalIds": [
+        {
+          "value": "a2b8ce935aa74ff78cab2eb177b543bf"
+        }
+      ],
+      "taskIds": [
+        {
+          "value": "c2879258c1ad4ad68bac5feeb39c9c76"
+        }
+      ],
+      "id": {
+        "value": "7d7225e027444f2da0b820d4367d365f"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-08T21:09:05.9621202+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "conclusion"
+        ],
+        "relatedIds": []
+      }
+    },
+    {
+      "summary": "Historical graph inspection is part of the core viewer story",
+      "state": 1,
+      "decisionIds": [
+        {
+          "value": "1109b9c67c6142109037d3634649f258"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "51df8faf2e674d12bf24633c06bb3e41"
+        }
+      ],
+      "goalIds": [
+        {
+          "value": "f7200e04aac043e6ba31c70642eec457"
+        }
+      ],
+      "taskIds": [
+        {
+          "value": "d0d738f2e1b54803aa1f3bd8db41c13d"
+        }
+      ],
+      "id": {
+        "value": "3170fecef4db45e38d1ebdf42b8afc98"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-08T21:09:53.2228783+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "conclusion"
+        ],
+        "relatedIds": []
+      }
+    }
+  ],
+  "runs": [],
+  "id": {
+    "value": "6abdd8f7955046f0943a25e9ccb45557"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-08T21:08:45.8279165+00:00",
+    "updatedBy": "diegoxtr",
+    "updatedAtUtc": "2026-04-08T21:09:55.8922906+00:00",
+    "tags": [
+      "project"
+    ],
+    "relatedIds": []
+  }
+}

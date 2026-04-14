@@ -1,0 +1,21 @@
+﻿{
+  "name": "agent-session-continuity",
+  "description": "Cognitive repo for demonstrating multi-session agent continuity",
+  "defaultBranch": "main",
+  "state": 1,
+  "id": {
+    "value": "3f9f186589ea4eb1958cbc5e898ffeb9"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-12T00:04:59.0598563+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "project"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

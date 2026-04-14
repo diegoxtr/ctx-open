@@ -24,6 +24,8 @@ CTX necesita distinguir mejor entre:
 
 Antes de decidir si algo merece una `task`, CTX deberia distinguir estos niveles:
 
+- `goal`
+- `sub-goal`
 - `issue`
 - `gap`
 - `task`
@@ -35,6 +37,9 @@ Antes de decidir si algo merece una `task`, CTX deberia distinguir estos niveles
 
 La regla base es:
 
+- `goal` define una linea estrategica durable
+- `sub-goal` define una linea tactica debajo de un goal mas amplio
+- `operational runbook` define conocimiento operativo reusable y compacto
 - `issue` describe que algo molesta, falla o genera friccion
 - `gap` nombra la brecha concreta entre el estado actual y el estado que deberia existir
 - `task` define el trabajo para cerrar ese gap
@@ -42,8 +47,83 @@ La regla base es:
 Formula corta:
 
 ```text
+goal -> sub-goal -> task
+operational runbook -> guia de ejecucion
 issue -> gap -> task
 ```
+
+### `OperationalRunbook`
+
+Un `OperationalRunbook` guarda conocimiento operativo recurrente y compacto, por ejemplo:
+
+- flujos de publish local
+- reglas de closeout Git
+- troubleshooting recurrente
+- guardrails reutilizables
+
+Usarlo cuando el conocimiento:
+
+- aplica mas de una vez
+- debe guiar la ejecucion antes de que el agente improvise
+- es demasiado importante para quedar enterrado solo en docs o evidencia pasada
+- debe seguir siendo lo bastante chico como para entrar en un packet sin inflar mucho el costo
+
+No usarlo para historial de una sola ejecucion.
+Eso sigue perteneciendo a `evidence`, `decision`, `conclusion` y al cierre normal de la task.
+
+### `CognitiveTrigger`
+
+Un `CognitiveTrigger` guarda el origen compacto que abre o redirige una linea cognitiva.
+
+Usarlo cuando:
+
+- un mensaje del usuario abre una linea nueva
+- una continuacion del agente redirige materialmente la linea
+- un issue recurrente o una activacion de runbook pasa a formar parte del origen de la linea
+- el origen debe quedar auditable sin depender del historial externo del chat
+
+No usarlo para cada mensaje chico.
+Mensajes como `ok`, `continua` o nudges triviales de continuidad no deberian convertirse en triggers independientes.
+
+### `Goal`
+
+Un `goal` es una linea estrategica que debe seguir teniendo sentido a traves de muchas tasks y commits.
+
+Usarlo cuando el trabajo:
+
+- abre o expande una direccion durable de producto, plataforma u operacion
+- debe seguir siendo entendible aunque no haya una sola ejecucion activa
+- es mas amplio que una rama tactica puntual
+
+No conviene crear un `goal` nuevo cuando el trabajo solo es una rama tematica de una linea estrategica ya activa.
+
+### `Sub-goal`
+
+Un `sub-goal` es una linea tactica debajo de un goal existente.
+
+Usarlo cuando el trabajo:
+
+- pertenece a un goal estrategico ya activo
+- necesita su propio carril cognitivo porque el goal padre mezcla varios temas
+- agrupa varias tasks relacionadas que no conviene colgar directo del goal paraguas
+
+Es la capa correcta para cosas como una rama de UI debajo de un goal del viewer o una rama de packaging debajo de un goal de distribucion.
+
+### Regla canonica de estructura
+
+Cuando aparece trabajo nuevo, clasificarlo en este orden:
+
+1. crear un `goal` si el trabajo abre o cambia una linea estrategica durable
+2. crear un `sub-goal` si el trabajo pertenece a un goal existente pero necesita su propia rama tematica
+3. crear una `task` si el trabajo es una unidad ejecutable concreta dentro de una linea ya existente
+4. crear `subtask` solo si el trabajo existe principalmente para ayudar a cerrar una task padre actual
+
+Operativamente:
+
+- mantener abiertos los goals estrategicos
+- abrir debajo de ellos las lineas nuevas de UI o producto como `sub-goals`
+- apuntar las tasks nuevas a la linea tactica mas cercana y no al goal paraguas por defecto
+- usar `ctx line open` cuando la intencion del operador sea "abrir una linea tactica aca y empezar a trabajar dentro de ella"
 
 ### `Issue`
 

@@ -1,0 +1,192 @@
+{
+  "branch": "main",
+  "message": "seed cache strategy evaluation on main",
+  "parentIds": [],
+  "createdAtUtc": "2026-04-12T00:01:45.915545+00:00",
+  "snapshotHash": "582662184d58dae0109b1a18b127ed12495c255400c21515525c729f3b244e2d",
+  "diff": {
+    "fromCommitId": null,
+    "toCommitId": {
+      "value": "ff74f8f6488e42888f5c06447f8e6f0d"
+    },
+    "decisions": [],
+    "hypotheses": [
+      {
+        "changeType": "Added",
+        "entityType": "Hypothesis",
+        "entityId": "62344fd9f3a1405a8e2fcbc1c9a0a09a",
+        "summary": "Evaluating each cache strategy in its own cognitive branch will make the final architecture decision easier to justify and review. [UnderEvaluation]"
+      }
+    ],
+    "evidence": [],
+    "tasks": [
+      {
+        "changeType": "Added",
+        "entityType": "Task",
+        "entityId": "107013c0ef794f9a88572f01a2f3792d",
+        "summary": "Compare branch outcomes and choose the final cache design [InProgress]"
+      }
+    ],
+    "conclusions": [],
+    "conflicts": [],
+    "summary": "decisions:0 hypotheses:1 evidence:0 tasks:1 conclusions:0"
+  },
+  "snapshot": {
+    "repositoryVersion": "1.0",
+    "currentBranch": "main",
+    "headCommitId": {
+      "value": "ff74f8f6488e42888f5c06447f8e6f0d"
+    },
+    "dirty": false,
+    "project": {
+      "name": "catalog-cache-branch-merge",
+      "description": "Cognitive repo for evaluating cache invalidation strategies with branches",
+      "defaultBranch": "main",
+      "state": 1,
+      "id": {
+        "value": "6c602857017143338004b7cb096fe360"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-12T00:00:58.9104602+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "project"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    "goals": [
+      {
+        "parentGoalId": null,
+        "title": "Choose a cache invalidation strategy for the product catalog",
+        "description": "Compare two candidate approaches and keep the final architecture decision auditable across branches.",
+        "priority": 1,
+        "state": 1,
+        "taskIds": [
+          {
+            "value": "107013c0ef794f9a88572f01a2f3792d"
+          }
+        ],
+        "id": {
+          "value": "951ceb82dcec475898b00780c4143861"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:44.327149+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "goal"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "tasks": [
+      {
+        "goalId": {
+          "value": "951ceb82dcec475898b00780c4143861"
+        },
+        "title": "Compare branch outcomes and choose the final cache design",
+        "description": "Use separate cognitive branches to evaluate TTL-only and tag-aware invalidation before deciding on main.",
+        "state": 2,
+        "dependsOnTaskIds": [],
+        "hypothesisIds": [
+          {
+            "value": "62344fd9f3a1405a8e2fcbc1c9a0a09a"
+          }
+        ],
+        "parentTaskId": null,
+        "id": {
+          "value": "107013c0ef794f9a88572f01a2f3792d"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:44.6894719+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-12T00:01:44.9756038+00:00",
+          "tags": [
+            "task"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "hypotheses": [
+      {
+        "statement": "Evaluating each cache strategy in its own cognitive branch will make the final architecture decision easier to justify and review.",
+        "rationale": "The team needs a clean comparison between simplicity and consistency before selecting the production path.",
+        "confidence": 0.88,
+        "impact": 0.82,
+        "evidenceStrength": 0.50,
+        "costToValidate": 0.15,
+        "state": 1,
+        "taskIds": [
+          {
+            "value": "107013c0ef794f9a88572f01a2f3792d"
+          }
+        ],
+        "evidenceIds": [],
+        "probability": 0.88,
+        "score": 0.6800,
+        "id": {
+          "value": "62344fd9f3a1405a8e2fcbc1c9a0a09a"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-12T00:01:45.2480498+00:00",
+          "updatedBy": "diegoxtr",
+          "updatedAtUtc": "2026-04-12T00:01:45.583356+00:00",
+          "tags": [
+            "hypothesis"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ],
+    "decisions": [],
+    "evidence": [],
+    "conclusions": [],
+    "runs": [],
+    "id": {
+      "value": "8d2c7bc7f0bc40abb01d86039d5d0f49"
+    },
+    "trace": {
+      "createdBy": "diegoxtr",
+      "createdAtUtc": "2026-04-12T00:00:58.9104602+00:00",
+      "updatedBy": "diegoxtr",
+      "updatedAtUtc": "2026-04-12T00:01:45.8773877+00:00",
+      "tags": [
+        "project"
+      ],
+      "relatedIds": [],
+      "modelName": null,
+      "modelVersion": null
+    }
+  },
+  "id": {
+    "value": "ff74f8f6488e42888f5c06447f8e6f0d"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-12T00:01:45.9153863+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "commit"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

@@ -3,6 +3,7 @@ namespace Ctx.Persistence;
 using System.Text;
 using Ctx.Application;
 using Ctx.Domain;
+using System.Text.Json;
 
 public sealed class FileSystemMetricsRepository : IMetricsRepository
 {
@@ -29,7 +30,14 @@ public sealed class FileSystemMetricsRepository : IMetricsRepository
 
         using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
         var json = await reader.ReadToEndAsync(cancellationToken);
-        return _jsonSerializer.Deserialize<MetricsSnapshot>(json);
+        try
+        {
+            return _jsonSerializer.Deserialize<MetricsSnapshot>(json);
+        }
+        catch (JsonException)
+        {
+            return new MetricsSnapshot(0, 0, 0m, 0, 0, TimeSpan.Zero);
+        }
     }
 
     public async System.Threading.Tasks.Task SaveAsync(string repositoryPath, MetricsSnapshot snapshot, CancellationToken cancellationToken)

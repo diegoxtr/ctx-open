@@ -1,0 +1,146 @@
+﻿{
+  "totalRuns": 1,
+  "totalTokens": 564,
+  "totalAcuCost": 0.01,
+  "repeatedIterations": 0,
+  "avoidedRedundancyCount": 1,
+  "totalExecutionTime": "00:00:00.0500000",
+  "totalCommandInvocations": 47,
+  "commandUsage": [
+    {
+      "command": "audit",
+      "totalInvocations": 1,
+      "successfulInvocations": 1,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:00.3592694",
+      "lastInvokedAtUtc": "2026-04-11T23:56:51.8495012+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "commit",
+      "totalInvocations": 4,
+      "successfulInvocations": 4,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:01.0162989",
+      "lastInvokedAtUtc": "2026-04-11T23:57:30.3206252+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "conclusion add",
+      "totalInvocations": 1,
+      "successfulInvocations": 1,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:00.2318234",
+      "lastInvokedAtUtc": "2026-04-11T23:56:37.7803181+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "decision add",
+      "totalInvocations": 3,
+      "successfulInvocations": 3,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:00.6260873",
+      "lastInvokedAtUtc": "2026-04-11T23:57:12.0507215+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "evidence add",
+      "totalInvocations": 6,
+      "successfulInvocations": 6,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:01.3992668",
+      "lastInvokedAtUtc": "2026-04-11T23:57:29.9229479+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "goal add",
+      "totalInvocations": 1,
+      "successfulInvocations": 1,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:00.1197380",
+      "lastInvokedAtUtc": "2026-04-11T23:56:31.0389473+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "graph summary",
+      "totalInvocations": 2,
+      "successfulInvocations": 2,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:00.6399209",
+      "lastInvokedAtUtc": "2026-04-11T23:57:19.7608975+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "hypo add",
+      "totalInvocations": 4,
+      "successfulInvocations": 4,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:00.6675852",
+      "lastInvokedAtUtc": "2026-04-11T23:57:11.2844182+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "hypo update",
+      "totalInvocations": 7,
+      "successfulInvocations": 7,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:01.4133402",
+      "lastInvokedAtUtc": "2026-04-11T23:57:11.6386465+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "init",
+      "totalInvocations": 1,
+      "successfulInvocations": 1,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:00.2213855",
+      "lastInvokedAtUtc": "2026-04-11T23:53:27.1985104+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "log",
+      "totalInvocations": 3,
+      "successfulInvocations": 3,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:00.9617222",
+      "lastInvokedAtUtc": "2026-04-11T23:57:39.2943204+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "run openai",
+      "totalInvocations": 1,
+      "successfulInvocations": 1,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:00.2090965",
+      "lastInvokedAtUtc": "2026-04-11T23:56:34.9124159+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "status",
+      "totalInvocations": 4,
+      "successfulInvocations": 4,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:00.5983076",
+      "lastInvokedAtUtc": "2026-04-11T23:57:10.4561946+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "task add",
+      "totalInvocations": 3,
+      "successfulInvocations": 3,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:00.3935906",
+      "lastInvokedAtUtc": "2026-04-11T23:56:31.650637+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "task update",
+      "totalInvocations": 6,
+      "successfulInvocations": 6,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:01.0261176",
+      "lastInvokedAtUtc": "2026-04-11T23:56:38.1248713+00:00",
+      "lastOutcome": "success"
+    }
+  ]
+}

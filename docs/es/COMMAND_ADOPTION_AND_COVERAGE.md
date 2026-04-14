@@ -1,7 +1,7 @@
 ﻿# Adopcion y Cobertura de Comandos
 Si un modelo de lenguaje y su agente pierden el contexto, esta es la herramienta que necesitas.
 
-Este documento resume como se esta usando actualmente la CLI de CTX en el flujo de trabajo de autor y que conviene hacer con los comandos poco usados o todavia frios.
+Este documento resume como se esta usando realmente la CLI de CTX en el workspace self-hosted y que conviene hacer con los comandos poco usados o todavia frios.
 
 La idea no es perseguir cobertura por cobertura.
 
@@ -107,7 +107,7 @@ Superficies sin uso real todavia:
 Interpretacion:
 
 - algunos estan frios porque el flujo todavia no los necesita
-- otros estan frios porque el producto todavia no los empuja desde el flujo real actual
+- otros estan frios porque el producto todavia no los empuja desde el self-hosting real
 - otros estan frios porque son capacidades de borde, no del camino feliz principal
 
 ## No todos los comandos frios son igual de importantes
@@ -147,7 +147,7 @@ Conviene validar despues:
 Motivo:
 
 - son claves para el modelo completo de CTX
-- pero hoy no forman parte del camino diario principal
+- pero hoy no forman parte del camino de self-hosting diario
 - necesitan escenarios mas controlados y pruebas mas intencionales
 
 ### Tier 3: valor futuro o especializado
@@ -164,7 +164,7 @@ Conviene dejar mas adelante:
 Motivo:
 
 - dependen de proveedores, integraciones o workflows mas avanzados
-- hoy no son la friccion principal del trabajo diario
+- hoy no son la friccion principal del self-hosting real
 
 ### Tier 4: no priorizar por ahora
 

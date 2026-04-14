@@ -65,3 +65,15 @@ public readonly record struct WorkingContextId(string Value)
     public static WorkingContextId New() => new(Guid.NewGuid().ToString("N"));
     public override string ToString() => Value;
 }
+
+public readonly record struct OperationalRunbookId(string Value)
+{
+    public static OperationalRunbookId New() => new(Guid.NewGuid().ToString("N"));
+    public override string ToString() => Value;
+}
+
+public readonly record struct CognitiveTriggerId(string Value)
+{
+    public static CognitiveTriggerId New() => new(Guid.NewGuid().ToString("N"));
+    public override string ToString() => Value;
+}

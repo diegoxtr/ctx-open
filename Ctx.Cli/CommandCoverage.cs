@@ -18,6 +18,7 @@ public static class CommandCoverage
         "import",
         "init",
         "status",
+        "line open",
         "goal add",
         "goal list",
         "goal show",

@@ -12,6 +12,8 @@ public sealed class RunOrchestrator : IRunOrchestrator
     private readonly IMetricsRepository _metricsRepository;
     private readonly IClock _clock;
     private readonly IHashingService _hashingService;
+    private readonly IOperationalRunbookRepository? _runbookRepository;
+    private readonly ICognitiveTriggerRepository? _triggerRepository;
 
     public RunOrchestrator(
         IContextBuilder contextBuilder,
@@ -20,7 +22,9 @@ public sealed class RunOrchestrator : IRunOrchestrator
         IRunRepository runRepository,
         IMetricsRepository metricsRepository,
         IClock clock,
-        IHashingService hashingService)
+        IHashingService hashingService,
+        IOperationalRunbookRepository? runbookRepository = null,
+        ICognitiveTriggerRepository? triggerRepository = null)
     {
         _contextBuilder = contextBuilder;
         _providerRegistry = providerRegistry;
@@ -29,11 +33,20 @@ public sealed class RunOrchestrator : IRunOrchestrator
         _metricsRepository = metricsRepository;
         _clock = clock;
         _hashingService = hashingService;
+        _runbookRepository = runbookRepository;
+        _triggerRepository = triggerRepository;
     }
 
     public async System.Threading.Tasks.Task<Run> ExecuteAsync(string repositoryPath, WorkingContext workingContext, RunRequest request, CancellationToken cancellationToken)
     {
-        var packet = _contextBuilder.Build(workingContext, request.Purpose, request.GoalId, request.TaskId);
+        var runbooks = _runbookRepository is null
+            ? Array.Empty<OperationalRunbook>()
+            : await _runbookRepository.ListAsync(repositoryPath, cancellationToken);
+        var triggers = _triggerRepository is null
+            ? Array.Empty<CognitiveTrigger>()
+            : await _triggerRepository.ListAsync(repositoryPath, cancellationToken);
+
+        var packet = _contextBuilder.Build(workingContext, runbooks, triggers, request.Purpose, request.GoalId, request.TaskId);
         await _packetRepository.SaveAsync(repositoryPath, packet, cancellationToken);
 
         var provider = _providerRegistry.Get(request.Provider);

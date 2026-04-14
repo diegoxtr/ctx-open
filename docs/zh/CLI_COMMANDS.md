@@ -1,9 +1,9 @@
-# CTX CLI 命令
-????????????????,??????????
+﻿# CTX CLI å‘½ä»¤
+如果语言模型及其代理丢失了上下文，这就是你需要的工具。
 
-本文档描述 `<repo-root>` 中当前 CTX CLI 的命令表面。
+æœ¬æ–‡æ¡£æè¿° `C:\sources\ctx-public` ä¸­å½“å‰ CTX CLI çš„å‘½ä»¤è¡¨é¢ã€‚
 
-CTX 返回结构化 JSON 输出，基本格式为：
+CTX è¿”å›žç»“æž„åŒ– JSON è¾“å‡ºï¼ŒåŸºæœ¬æ ¼å¼ä¸ºï¼š
 
 ```json
 {
@@ -13,30 +13,30 @@ CTX 返回结构化 JSON 输出，基本格式为：
 }
 ```
 
-## 约定
+## çº¦å®š
 
-- 从认知仓库目录运行命令。
-- 本地开发常用格式：
+- ä»Žè®¤çŸ¥ä»“åº“ç›®å½•è¿è¡Œå‘½ä»¤ã€‚
+- æœ¬åœ°å¼€å‘å¸¸ç”¨æ ¼å¼ï¼š
 
 ```powershell
 dotnet run --project .\Ctx.Cli -- <command>
 ```
 
-- 已发布本地安装：
+- å·²å‘å¸ƒæœ¬åœ°å®‰è£…ï¼š
 
 ```powershell
 ctx <command>
 ```
 
-- `<goalId>`, `<taskId>`, `<hypothesisId>`, `<commitId>` 等来自先前命令输出。
-- 多值列表使用逗号分隔。
-- 变更通常影响 `.ctx/working`、`.ctx/staging`、`.ctx/graph`，并在后续认知提交中落盘。
+- `<goalId>`, `<taskId>`, `<hypothesisId>`, `<commitId>` ç­‰æ¥è‡ªå…ˆå‰å‘½ä»¤è¾“å‡ºã€‚
+- å¤šå€¼åˆ—è¡¨ä½¿ç”¨é€—å·åˆ†éš”ã€‚
+- å˜æ›´é€šå¸¸å½±å“ `.ctx/working`ã€`.ctx/staging`ã€`.ctx/graph`ï¼Œå¹¶åœ¨åŽç»­è®¤çŸ¥æäº¤ä¸­è½ç›˜ã€‚
 
-## 通用命令
+## é€šç”¨å‘½ä»¤
 
 ### `ctx`
 
-无参数时显示基础帮助。
+æ— å‚æ•°æ—¶æ˜¾ç¤ºåŸºç¡€å¸®åŠ©ã€‚
 
 ```powershell
 dotnet run --project .\Ctx.Cli --
@@ -44,7 +44,7 @@ dotnet run --project .\Ctx.Cli --
 
 ### `ctx version`
 
-显示产品版本与仓库格式版本。
+æ˜¾ç¤ºäº§å“ç‰ˆæœ¬ä¸Žä»“åº“æ ¼å¼ç‰ˆæœ¬ã€‚
 
 ```powershell
 dotnet run --project .\Ctx.Cli -- version
@@ -52,9 +52,9 @@ dotnet run --project .\Ctx.Cli -- version
 
 ### `ctx init`
 
-在当前目录初始化认知仓库。
+åœ¨å½“å‰ç›®å½•åˆå§‹åŒ–è®¤çŸ¥ä»“åº“ã€‚
 
-选项：
+é€‰é¡¹ï¼š
 - `--name <project>`
 - `--description <text>`
 - `--branch <name>`
@@ -65,12 +65,12 @@ dotnet run --project .\Ctx.Cli -- init --name "CTX Demo" --description "Sample r
 
 ### `ctx status`
 
-显示当前仓库状态：
+æ˜¾ç¤ºå½“å‰ä»“åº“çŠ¶æ€ï¼š
 
-- 当前 branch
+- å½“å‰ branch
 - `HEAD`
-- `dirty` 状态
-- goals/tasks/hypotheses/decisions/evidence/conclusions/runs 计数
+- `dirty` çŠ¶æ€
+- goals/tasks/hypotheses/decisions/evidence/conclusions/runs è®¡æ•°
 
 ```powershell
 dotnet run --project .\Ctx.Cli -- status
@@ -78,15 +78,15 @@ dotnet run --project .\Ctx.Cli -- status
 
 ### `ctx doctor`
 
-运行环境诊断：
+è¿è¡ŒçŽ¯å¢ƒè¯Šæ–­ï¼š
 
-- 产品版本
-- `.ctx/` 是否存在
+- äº§å“ç‰ˆæœ¬
+- `.ctx/` æ˜¯å¦å­˜åœ¨
 - `HEAD`
 - working context
 - metrics
-- provider 配置
-- 环境凭证
+- provider é…ç½®
+- çŽ¯å¢ƒå‡­è¯
 
 ```powershell
 dotnet run --project .\Ctx.Cli -- doctor
@@ -94,14 +94,14 @@ dotnet run --project .\Ctx.Cli -- doctor
 
 ### `ctx audit`
 
-认知一致性审计。会检查：
+è®¤çŸ¥ä¸€è‡´æ€§å®¡è®¡ã€‚ä¼šæ£€æŸ¥ï¼š
 
-- 无 hypothesis 的 task
-- `Done` 但无 Accepted conclusion 的 task
-- 无 evidence 的 hypothesis
-- 仅关联已关闭 task 的开放 hypothesis
-- `Accepted` 但无 `rationale`/`evidence` 的 decision
-- 关联 `Done` task 的 `Draft` conclusion
+- æ—  hypothesis çš„ task
+- `Done` ä½†æ—  Accepted conclusion çš„ task
+- æ—  evidence çš„ hypothesis
+- ä»…å…³è”å·²å…³é—­ task çš„å¼€æ”¾ hypothesis
+- `Accepted` ä½†æ—  `rationale`/`evidence` çš„ decision
+- å…³è” `Done` task çš„ `Draft` conclusion
 
 ```powershell
 dotnet run --project .\Ctx.Cli -- audit
@@ -109,7 +109,7 @@ dotnet run --project .\Ctx.Cli -- audit
 
 ### `ctx next`
 
-根据当前状态推荐下一步：
+æ ¹æ®å½“å‰çŠ¶æ€æŽ¨èä¸‹ä¸€æ­¥ï¼š
 
 - `Task`
 - `Gap`
@@ -118,7 +118,7 @@ dotnet run --project .\Ctx.Cli -- audit
 dotnet run --project .\Ctx.Cli -- next
 ```
 
-## 认知图谱
+## è®¤çŸ¥å›¾è°±
 
 ### `ctx graph summary`
 
@@ -150,7 +150,7 @@ dotnet run --project .\Ctx.Cli -- graph lineage --hypothesis <hypothesisId> --fo
 dotnet run --project .\Ctx.Cli -- graph lineage --decision <decisionId> --output .\tmp\decision-lineage.json
 ```
 
-## 线程重构
+## çº¿ç¨‹é‡æž„
 
 ### `ctx thread reconstruct --task <id>`
 
@@ -161,9 +161,9 @@ dotnet run --project .\Ctx.Cli -- thread reconstruct --task <taskId> --format ma
 
 ## Goals / Tasks / Hypotheses / Evidence / Decisions / Conclusions
 
-请参考英文版 [CLI_COMMANDS.md](C:/sources/ctx-public/docs/CLI_COMMANDS.md) 的完整示例与选项。
+è¯·å‚è€ƒè‹±æ–‡ç‰ˆ [CLI_COMMANDS.md](C:/sources/ctx-public/docs/CLI_COMMANDS.md) çš„å®Œæ•´ç¤ºä¾‹ä¸Žé€‰é¡¹ã€‚
 
-## 可移植性
+## å¯ç§»æ¤æ€§
 
 ```powershell
 dotnet run --project .\Ctx.Cli -- export --output .\tmp\ctx-export.json

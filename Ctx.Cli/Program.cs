@@ -55,6 +55,8 @@ static async Task<CommandResult> DispatchAsync(IReadOnlyList<string> args, ICtxA
         "next" => await service.NextAsync(repositoryPath, cancellationToken),
         "doctor" => await service.DoctorAsync(repositoryPath, cancellationToken),
         "audit" => await service.AuditAsync(repositoryPath, cancellationToken),
+        "check" => await service.CheckAsync(repositoryPath, GetOption(args, "--task"), cancellationToken),
+        "closeout" => await service.CloseoutAsync(repositoryPath, cancellationToken),
         "graph" when Match(args, "graph", "summary") => await service.GraphSummaryAsync(repositoryPath, cancellationToken),
         "graph" when Match(args, "graph", "show") => await service.GraphShowAsync(repositoryPath, RequirePositional(args, 2, "node id"), cancellationToken),
         "graph" when Match(args, "graph", "export") => await service.ExportGraphAsync(repositoryPath, GetOption(args, "--format") ?? "json", GetOption(args, "--commit"), cancellationToken),
@@ -73,6 +75,46 @@ static async Task<CommandResult> DispatchAsync(IReadOnlyList<string> args, ICtxA
             cancellationToken),
 
         "status" => await service.StatusAsync(repositoryPath, cancellationToken),
+        "line" when Match(args, "line", "open") => await service.OpenWorkLineAsync(
+            repositoryPath,
+            new OpenWorkLineRequest(
+                RequireOption(args, "--goal"),
+                RequireOption(args, "--title"),
+                GetOption(args, "--description") ?? string.Empty,
+                int.TryParse(GetOption(args, "--priority"), out var linePriority) ? linePriority : null,
+                GetOption(args, "--task-title"),
+                GetOption(args, "--task-description"),
+                Environment.UserName),
+            cancellationToken),
+        "runbook" when Match(args, "runbook", "add") => await service.AddOperationalRunbookAsync(
+            repositoryPath,
+            new AddOperationalRunbookRequest(
+                RequireOption(args, "--title"),
+                GetOption(args, "--kind") ?? "Procedure",
+                GetMultiOption(args, "--trigger", "--triggers"),
+                RequireOption(args, "--when"),
+                GetMultiOption(args, "--do"),
+                GetMultiOption(args, "--verify"),
+                GetMultiOption(args, "--reference", "--references"),
+                GetMultiOption(args, "--goal", "--goals"),
+                GetMultiOption(args, "--task", "--tasks"),
+                Environment.UserName),
+            cancellationToken),
+        "runbook" when Match(args, "runbook", "list") => await service.ListOperationalRunbooksAsync(repositoryPath, cancellationToken),
+        "runbook" when Match(args, "runbook", "show") => await service.ShowOperationalRunbookAsync(repositoryPath, RequirePositional(args, 2, "runbook id"), cancellationToken),
+        "trigger" when Match(args, "trigger", "add") => await service.AddCognitiveTriggerAsync(
+            repositoryPath,
+            new AddCognitiveTriggerRequest(
+                GetOption(args, "--kind") ?? "UserPrompt",
+                RequireOption(args, "--summary"),
+                GetOption(args, "--text"),
+                GetMultiOption(args, "--goal", "--goals"),
+                GetMultiOption(args, "--task", "--tasks"),
+                GetMultiOption(args, "--runbook", "--runbooks"),
+                Environment.UserName),
+            cancellationToken),
+        "trigger" when Match(args, "trigger", "list") => await service.ListCognitiveTriggersAsync(repositoryPath, cancellationToken),
+        "trigger" when Match(args, "trigger", "show") => await service.ShowCognitiveTriggerAsync(repositoryPath, RequirePositional(args, 2, "trigger id"), cancellationToken),
 
         "goal" when Match(args, "goal", "add") => await service.AddGoalAsync(
             repositoryPath,
@@ -451,6 +493,8 @@ Commands:
   ctx version
   ctx doctor
   ctx audit
+  ctx check [--task <taskId>]
+  ctx closeout
   ctx graph summary
   ctx graph show <nodeId>
   ctx graph export [--format json|mermaid] [--commit <commitId>]
@@ -461,9 +505,16 @@ Commands:
   ctx graph lineage --task <id>
   ctx thread reconstruct --task <id> [--format json|markdown]
   ctx export [--output <path>]
-  ctx import --input <path>
-  ctx init --name <project> [--description <text>] [--branch <name>]
+    ctx import --input <path>
+    ctx init --name <project> [--description <text>] [--branch <name>]
   ctx status
+  ctx line open --goal <goalId> --title <text> [--description <text>] [--priority <n>] [--task-title <text>] [--task-description <text>]
+  ctx runbook add --title <text> [--kind <Procedure|Troubleshooting|Policy|Guardrail>] --when <text> [--trigger <a,b>] [--do <a,b>] [--verify <a,b>] [--reference <a,b>] [--goal <id,id>] [--task <id,id>]
+  ctx runbook list
+  ctx runbook show <runbookId>
+  ctx trigger add --summary <text> [--kind <UserPrompt|AgentPrompt|Continuation|RunbookTrigger|IssueTrigger>] [--text <text>] [--goal <id,id>] [--task <id,id>] [--runbook <id,id>]
+  ctx trigger list
+  ctx trigger show <triggerId>
   ctx goal add --title <text> [--description <text>] [--priority <n>] [--parent <goalId>]
   ctx goal list
   ctx goal show <goalId>
@@ -518,9 +569,16 @@ static async Task RecordCommandTelemetryAsync(
         return;
     }
 
-    var snapshot = await runtime.MetricsRepository.LoadAsync(repositoryPath, CancellationToken.None);
-    var updated = snapshot.RecordCommandUsage(BuildCommandTelemetryName(args), success, duration, DateTimeOffset.UtcNow);
-    await runtime.MetricsRepository.SaveAsync(repositoryPath, updated, CancellationToken.None);
+    try
+    {
+        var snapshot = await runtime.MetricsRepository.LoadAsync(repositoryPath, CancellationToken.None);
+        var updated = snapshot.RecordCommandUsage(BuildCommandTelemetryName(args), success, duration, DateTimeOffset.UtcNow);
+        await runtime.MetricsRepository.SaveAsync(repositoryPath, updated, CancellationToken.None);
+    }
+    catch
+    {
+        // Telemetry is best-effort and must not break normal CLI operation.
+    }
 }
 
 static string BuildCommandTelemetryName(IReadOnlyList<string> args)

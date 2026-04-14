@@ -20,6 +20,8 @@ internal static class RepositoryPaths
     public static string Staging(string repositoryPath) => Path.Combine(Root(repositoryPath), "staging");
     public static string Runs(string repositoryPath) => Path.Combine(Root(repositoryPath), "runs");
     public static string Packets(string repositoryPath) => Path.Combine(Root(repositoryPath), "packets");
+    public static string Runbooks(string repositoryPath) => Path.Combine(Root(repositoryPath), "runbooks");
+    public static string Triggers(string repositoryPath) => Path.Combine(Root(repositoryPath), "triggers");
     public static string Index(string repositoryPath) => Path.Combine(Root(repositoryPath), "index");
     public static string Metrics(string repositoryPath) => Path.Combine(Root(repositoryPath), "metrics");
     public static string Providers(string repositoryPath) => Path.Combine(Root(repositoryPath), "providers");
@@ -32,6 +34,8 @@ internal static class RepositoryPaths
     public static string Branch(string repositoryPath, string branchName) => Path.Combine(Branches(repositoryPath), $"{SanitizeBranchFileName(branchName)}.json");
     public static string Run(string repositoryPath, RunId runId) => Path.Combine(Runs(repositoryPath), $"{runId.Value}.json");
     public static string Packet(string repositoryPath, ContextPacketId packetId) => Path.Combine(Packets(repositoryPath), $"{packetId.Value}.json");
+    public static string Runbook(string repositoryPath, OperationalRunbookId runbookId) => Path.Combine(Runbooks(repositoryPath), $"{runbookId.Value}.json");
+    public static string Trigger(string repositoryPath, CognitiveTriggerId triggerId) => Path.Combine(Triggers(repositoryPath), $"{triggerId.Value}.json");
 
     private static string SanitizeBranchFileName(string branchName)
     {
@@ -91,11 +95,11 @@ public sealed class FileSystemWorkingContextRepository : IWorkingContextReposito
         CreateStructure(repositoryPath);
         await WriteAsync(RepositoryPaths.Version(repositoryPath), exportData.RepositoryVersion, cancellationToken);
         await WriteAsync(RepositoryPaths.Config(repositoryPath), exportData.Config, cancellationToken);
-        await WriteAsync(RepositoryPaths.Project(repositoryPath), exportData.WorkingContext.Project, cancellationToken);
+        await WriteAsync(RepositoryPaths.Project(repositoryPath), exportData.Snapshot.WorkingContext.Project, cancellationToken);
         await SaveHeadAsync(repositoryPath, exportData.Head, cancellationToken);
-        await SaveWorkingAsync(repositoryPath, exportData.WorkingContext, cancellationToken);
-        await SaveStagingAsync(repositoryPath, exportData.WorkingContext, cancellationToken);
-        await WriteAsync(RepositoryPaths.GraphState(repositoryPath), exportData.WorkingContext.ToGraph(), cancellationToken);
+        await SaveWorkingAsync(repositoryPath, exportData.Snapshot.WorkingContext, cancellationToken);
+        await SaveStagingAsync(repositoryPath, exportData.Snapshot.WorkingContext, cancellationToken);
+        await WriteAsync(RepositoryPaths.GraphState(repositoryPath), exportData.Snapshot.WorkingContext.ToGraph(), cancellationToken);
         await WriteAsync(RepositoryPaths.MetricsState(repositoryPath), exportData.Metrics, cancellationToken);
         await WriteTextAsync(Path.Combine(RepositoryPaths.Index(repositoryPath), "README.txt"), "Reserved for lexical and graph indexes.", cancellationToken);
         await WriteTextAsync(Path.Combine(RepositoryPaths.Providers(repositoryPath), "README.txt"), "Provider-specific cached data and credentials references.", cancellationToken);
@@ -138,6 +142,8 @@ public sealed class FileSystemWorkingContextRepository : IWorkingContextReposito
         Directory.CreateDirectory(RepositoryPaths.Staging(repositoryPath));
         Directory.CreateDirectory(RepositoryPaths.Runs(repositoryPath));
         Directory.CreateDirectory(RepositoryPaths.Packets(repositoryPath));
+        Directory.CreateDirectory(RepositoryPaths.Runbooks(repositoryPath));
+        Directory.CreateDirectory(RepositoryPaths.Triggers(repositoryPath));
         Directory.CreateDirectory(RepositoryPaths.Index(repositoryPath));
         Directory.CreateDirectory(RepositoryPaths.Metrics(repositoryPath));
         Directory.CreateDirectory(RepositoryPaths.Providers(repositoryPath));

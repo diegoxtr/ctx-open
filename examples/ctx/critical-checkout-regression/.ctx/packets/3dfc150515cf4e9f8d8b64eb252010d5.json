@@ -1,0 +1,140 @@
+{
+  "id": {
+    "value": "3dfc150515cf4e9f8d8b64eb252010d5"
+  },
+  "projectId": {
+    "value": "ce2daf896870426791d6ffedb57dd810"
+  },
+  "createdAtUtc": "2026-04-11T23:56:34.8314285+00:00",
+  "purpose": "Summarize the next validation step for the checkout pricing regression.",
+  "fingerprint": "9533cc7b5fac38b5b15346363ddab0be9aca949f69ed08afec3c57e4f83a7c4c",
+  "estimatedTokens": 444,
+  "goalIds": [
+    {
+      "value": "45cc3736c95d451881f5dafd35f31a26"
+    }
+  ],
+  "taskIds": [
+    {
+      "value": "9c36b828ca2d4327adb8be481509cef2"
+    },
+    {
+      "value": "7a6bb7620fb447c7bf4970bd70e41509"
+    },
+    {
+      "value": "30b4fec86b6645c29b5f0ad2584521e0"
+    }
+  ],
+  "hypothesisIds": [
+    {
+      "value": "d9088d373355446e99c530f36c8403ac"
+    },
+    {
+      "value": "1e58f23b52dc41d8bf00ffc89981250e"
+    },
+    {
+      "value": "7a225cbc059941d0a70daea44721de77"
+    }
+  ],
+  "decisionIds": [
+    {
+      "value": "71952171534d43e1b8458ea342b10435"
+    }
+  ],
+  "evidenceIds": [
+    {
+      "value": "d470ab62a07b4ec1a69434415773c3d1"
+    },
+    {
+      "value": "b708f61539a84bb9b43f6a890a59c0e5"
+    }
+  ],
+  "conclusionIds": [],
+  "sections": [
+    {
+      "title": "Purpose",
+      "content": "Summarize the next validation step for the checkout pricing regression.",
+      "references": []
+    },
+    {
+      "title": "Project",
+      "content": "critical-checkout-regression: Cognitive repo for a critical VIP discount regression",
+      "references": [
+        {
+          "entityType": "Project",
+          "entityId": "ce2daf896870426791d6ffedb57dd810"
+        }
+      ]
+    },
+    {
+      "title": "Goals",
+      "content": "- [Active] Restore checkout pricing consistency: Investigate and close a critical regression affecting VIP discount totals in checkout.",
+      "references": [
+        {
+          "entityType": "Goal",
+          "entityId": "45cc3736c95d451881f5dafd35f31a26"
+        }
+      ]
+    },
+    {
+      "title": "Tasks",
+      "content": "- [Ready] Ship the fix and regression coverage: Lock the corrected pricing rule with executable tests.\r\n- [InProgress] Validate the real cause inside discount composition: Confirm whether the defect is discount duplication, tax logic, or rate normalization.\r\n- [Done] Reproduce and isolate the incorrect VIP total: Capture the failing business scenario and identify the suspicious pricing path.",
+      "references": [
+        {
+          "entityType": "Task",
+          "entityId": "9c36b828ca2d4327adb8be481509cef2"
+        },
+        {
+          "entityType": "Task",
+          "entityId": "7a6bb7620fb447c7bf4970bd70e41509"
+        },
+        {
+          "entityType": "Task",
+          "entityId": "30b4fec86b6645c29b5f0ad2584521e0"
+        }
+      ]
+    },
+    {
+      "title": "Hypotheses",
+      "content": "- [UnderEvaluation] (82%) The VIP discount is applied twice when coupon handling is enabled, producing an undercharged checkout total.\r\n- [UnderEvaluation] (76%) The defect is in discount composition and can be stabilized by keeping the stacked rate explicit before downstream calculations.\r\n- [UnderEvaluation] (45%) The checkout total drift comes from tax or subtotal rounding rather than duplicated discount logic.",
+      "references": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "d9088d373355446e99c530f36c8403ac"
+        },
+        {
+          "entityType": "Hypothesis",
+          "entityId": "1e58f23b52dc41d8bf00ffc89981250e"
+        },
+        {
+          "entityType": "Hypothesis",
+          "entityId": "7a225cbc059941d0a70daea44721de77"
+        }
+      ]
+    },
+    {
+      "title": "Decisions",
+      "content": "- [Accepted] Treat discount composition as the primary fix surface: Evidence points to the combined VIP-plus-coupon path, so the remediation should be applied in discount composition before chasing tax logic.",
+      "references": [
+        {
+          "entityType": "Decision",
+          "entityId": "71952171534d43e1b8458ea342b10435"
+        }
+      ]
+    },
+    {
+      "title": "Evidence",
+      "content": "- [Observation] (89%) Incident reconstruction identifies VIP coupon path as the only risky scenario: The incident summary narrows the failure to VIP checkout when promotional coupon input is present; regular checkout is not implicated.\r\n- [Document] (84%) Code inspection shows discount composition as the unstable area: The pricing function composes VIP and coupon discounts in one accumulation path, which is the highest-risk location for duplicated application or unstable rates.",
+      "references": [
+        {
+          "entityType": "Evidence",
+          "entityId": "d470ab62a07b4ec1a69434415773c3d1"
+        },
+        {
+          "entityType": "Evidence",
+          "entityId": "b708f61539a84bb9b43f6a890a59c0e5"
+        }
+      ]
+    }
+  ]
+}

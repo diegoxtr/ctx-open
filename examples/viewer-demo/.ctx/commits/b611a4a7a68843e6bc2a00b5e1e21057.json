@@ -1,0 +1,514 @@
+{
+  "branch": "feature/ux-timeline",
+  "message": "Add UX timeline exploration",
+  "parentIds": [
+    {
+      "value": "b6d7a847766948d4abfde590af3b9af6"
+    }
+  ],
+  "createdAtUtc": "2026-04-08T21:09:30.4887933+00:00",
+  "snapshotHash": "6dcfb9be826b00f1e446078d3ddbb2230c4f9399aaba91e4cb63ba8a94b8e3c3",
+  "diff": {
+    "fromCommitId": {
+      "value": "b6d7a847766948d4abfde590af3b9af6"
+    },
+    "toCommitId": {
+      "value": "b611a4a7a68843e6bc2a00b5e1e21057"
+    },
+    "decisions": [
+      {
+        "changeType": "Modified",
+        "entityType": "Decision",
+        "entityId": "ed6c9b31bb2043d78507812cc0bf94a9",
+        "summary": "Keep the first viewer local-first and read-only [Accepted]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Decision",
+        "entityId": "ef445527741e49d98735d25e1613016c",
+        "summary": "Highlight branch phases in the UI [Accepted]"
+      }
+    ],
+    "hypotheses": [
+      {
+        "changeType": "Modified",
+        "entityType": "Hypothesis",
+        "entityId": "eda0d10b62fb4538a7e7682346d953b7",
+        "summary": "A combined timeline and graph view reduces context recovery time [Proposed]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Hypothesis",
+        "entityId": "859e3eb64a294ea6bc990891d6c6ab69",
+        "summary": "Grouping commits by milestone makes long traces readable [Proposed]"
+      }
+    ],
+    "evidence": [
+      {
+        "changeType": "Modified",
+        "entityType": "Evidence",
+        "entityId": "19c555f43b3044a8979c39fdc7406e60",
+        "summary": "Pilot feedback from architecture review [Observation]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Evidence",
+        "entityId": "c49cb32a825942968615d1b7a1beb13a",
+        "summary": "Viewer walkthrough notes [Observation]"
+      }
+    ],
+    "tasks": [
+      {
+        "changeType": "Modified",
+        "entityType": "Task",
+        "entityId": "c2879258c1ad4ad68bac5feeb39c9c76",
+        "summary": "Build a minimal viewer shell [Ready]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Task",
+        "entityId": "c1515103b1c444909be773ceca7e4220",
+        "summary": "Group commits by cognitive milestone [Ready]"
+      }
+    ],
+    "conclusions": [
+      {
+        "changeType": "Modified",
+        "entityType": "Conclusion",
+        "entityId": "7d7225e027444f2da0b820d4367d365f",
+        "summary": "A lightweight visual trace is sufficient for the first evaluation round [Accepted]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Conclusion",
+        "entityId": "7f30a7c5fd5d4668805124029f0ed51b",
+        "summary": "The UX branch should emphasize milestones and local context [Accepted]"
+      }
+    ],
+    "conflicts": [],
+    "summary": "decisions:2 hypotheses:2 evidence:2 tasks:2 conclusions:2"
+  },
+  "snapshot": {
+    "repositoryVersion": "1.0",
+    "currentBranch": "feature/ux-timeline",
+    "headCommitId": {
+      "value": "b611a4a7a68843e6bc2a00b5e1e21057"
+    },
+    "dirty": false,
+    "project": {
+      "name": "CTX Viewer Demo",
+      "description": "Timeline and graph sample repository",
+      "defaultBranch": "main",
+      "state": 1,
+      "id": {
+        "value": "dd2f3e64f94e471d8033ce5b4c8d1787"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-08T21:08:45.8279165+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "project"
+        ],
+        "relatedIds": []
+      }
+    },
+    "goals": [
+      {
+        "parentGoalId": null,
+        "title": "Ship a navigable reasoning timeline",
+        "description": "Make CTX history explorable from a simple UI",
+        "priority": 1,
+        "state": 1,
+        "taskIds": [],
+        "id": {
+          "value": "f7200e04aac043e6ba31c70642eec457"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-08T21:08:48.8268936+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "goal"
+          ],
+          "relatedIds": []
+        }
+      },
+      {
+        "parentGoalId": {
+          "value": "f7200e04aac043e6ba31c70642eec457"
+        },
+        "title": "Model the trace graph",
+        "description": "Represent goals, tasks, hypotheses and decisions visually",
+        "priority": 2,
+        "state": 1,
+        "taskIds": [
+          {
+            "value": "c2879258c1ad4ad68bac5feeb39c9c76"
+          },
+          {
+            "value": "c1515103b1c444909be773ceca7e4220"
+          }
+        ],
+        "id": {
+          "value": "a2b8ce935aa74ff78cab2eb177b543bf"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-08T21:08:51.8327858+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "goal"
+          ],
+          "relatedIds": []
+        }
+      }
+    ],
+    "tasks": [
+      {
+        "goalId": {
+          "value": "a2b8ce935aa74ff78cab2eb177b543bf"
+        },
+        "title": "Build a minimal viewer shell",
+        "description": "Render branches, commits and node details",
+        "state": 1,
+        "dependsOnTaskIds": [],
+        "hypothesisIds": [
+          {
+            "value": "eda0d10b62fb4538a7e7682346d953b7"
+          }
+        ],
+        "id": {
+          "value": "c2879258c1ad4ad68bac5feeb39c9c76"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-08T21:08:54.6723219+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "task"
+          ],
+          "relatedIds": []
+        }
+      },
+      {
+        "goalId": {
+          "value": "a2b8ce935aa74ff78cab2eb177b543bf"
+        },
+        "title": "Group commits by cognitive milestone",
+        "description": "Make the timeline easier to scan",
+        "state": 1,
+        "dependsOnTaskIds": [
+          {
+            "value": "c2879258c1ad4ad68bac5feeb39c9c76"
+          }
+        ],
+        "hypothesisIds": [
+          {
+            "value": "859e3eb64a294ea6bc990891d6c6ab69"
+          }
+        ],
+        "id": {
+          "value": "c1515103b1c444909be773ceca7e4220"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-08T21:09:16.5135226+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "task"
+          ],
+          "relatedIds": []
+        }
+      }
+    ],
+    "hypotheses": [
+      {
+        "statement": "A combined timeline and graph view reduces context recovery time",
+        "rationale": "Users can inspect cognitive evolution without reading every artifact",
+        "confidence": 0.82,
+        "state": 0,
+        "taskIds": [
+          {
+            "value": "c2879258c1ad4ad68bac5feeb39c9c76"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "19c555f43b3044a8979c39fdc7406e60"
+          }
+        ],
+        "id": {
+          "value": "eda0d10b62fb4538a7e7682346d953b7"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-08T21:08:57.4637083+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "hypothesis"
+          ],
+          "relatedIds": []
+        }
+      },
+      {
+        "statement": "Grouping commits by milestone makes long traces readable",
+        "rationale": "Readers scan phases faster than raw commit lists",
+        "confidence": 0.76,
+        "state": 0,
+        "taskIds": [
+          {
+            "value": "c1515103b1c444909be773ceca7e4220"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "c49cb32a825942968615d1b7a1beb13a"
+          }
+        ],
+        "id": {
+          "value": "859e3eb64a294ea6bc990891d6c6ab69"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-08T21:09:19.158229+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "hypothesis"
+          ],
+          "relatedIds": []
+        }
+      }
+    ],
+    "decisions": [
+      {
+        "title": "Keep the first viewer local-first and read-only",
+        "rationale": "A lightweight viewer is enough to validate the trace model before editing workflows",
+        "state": 1,
+        "hypothesisIds": [
+          {
+            "value": "eda0d10b62fb4538a7e7682346d953b7"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "19c555f43b3044a8979c39fdc7406e60"
+          }
+        ],
+        "id": {
+          "value": "ed6c9b31bb2043d78507812cc0bf94a9"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-08T21:09:03.2595784+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "decision"
+          ],
+          "relatedIds": []
+        }
+      },
+      {
+        "title": "Highlight branch phases in the UI",
+        "rationale": "This keeps the history useful even when the graph grows",
+        "state": 1,
+        "hypothesisIds": [
+          {
+            "value": "859e3eb64a294ea6bc990891d6c6ab69"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "c49cb32a825942968615d1b7a1beb13a"
+          }
+        ],
+        "id": {
+          "value": "ef445527741e49d98735d25e1613016c"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-08T21:09:24.5797494+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "decision"
+          ],
+          "relatedIds": []
+        }
+      }
+    ],
+    "evidence": [
+      {
+        "title": "Pilot feedback from architecture review",
+        "summary": "Reviewers asked for a visual trace of how conclusions were reached",
+        "source": "pilot-arch-01",
+        "kind": 0,
+        "confidence": 0.74,
+        "state": 2,
+        "supports": [
+          {
+            "entityType": "Hypothesis",
+            "entityId": "eda0d10b62fb4538a7e7682346d953b7"
+          }
+        ],
+        "id": {
+          "value": "19c555f43b3044a8979c39fdc7406e60"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-08T21:09:00.4014108+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "evidence"
+          ],
+          "relatedIds": []
+        }
+      },
+      {
+        "title": "Viewer walkthrough notes",
+        "summary": "Phase grouping reduced the time to explain branch divergence",
+        "source": "ux-walkthrough",
+        "kind": 0,
+        "confidence": 0.71,
+        "state": 2,
+        "supports": [
+          {
+            "entityType": "Hypothesis",
+            "entityId": "859e3eb64a294ea6bc990891d6c6ab69"
+          },
+          {
+            "entityType": "Task",
+            "entityId": "c1515103b1c444909be773ceca7e4220"
+          }
+        ],
+        "id": {
+          "value": "c49cb32a825942968615d1b7a1beb13a"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-08T21:09:21.8684075+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "evidence"
+          ],
+          "relatedIds": []
+        }
+      }
+    ],
+    "conclusions": [
+      {
+        "summary": "A lightweight visual trace is sufficient for the first evaluation round",
+        "state": 1,
+        "decisionIds": [
+          {
+            "value": "ed6c9b31bb2043d78507812cc0bf94a9"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "19c555f43b3044a8979c39fdc7406e60"
+          }
+        ],
+        "goalIds": [
+          {
+            "value": "a2b8ce935aa74ff78cab2eb177b543bf"
+          }
+        ],
+        "taskIds": [
+          {
+            "value": "c2879258c1ad4ad68bac5feeb39c9c76"
+          }
+        ],
+        "id": {
+          "value": "7d7225e027444f2da0b820d4367d365f"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-08T21:09:05.9621202+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "conclusion"
+          ],
+          "relatedIds": []
+        }
+      },
+      {
+        "summary": "The UX branch should emphasize milestones and local context",
+        "state": 1,
+        "decisionIds": [
+          {
+            "value": "ef445527741e49d98735d25e1613016c"
+          }
+        ],
+        "evidenceIds": [
+          {
+            "value": "c49cb32a825942968615d1b7a1beb13a"
+          }
+        ],
+        "goalIds": [
+          {
+            "value": "a2b8ce935aa74ff78cab2eb177b543bf"
+          }
+        ],
+        "taskIds": [
+          {
+            "value": "c1515103b1c444909be773ceca7e4220"
+          }
+        ],
+        "id": {
+          "value": "7f30a7c5fd5d4668805124029f0ed51b"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-08T21:09:27.5480565+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "conclusion"
+          ],
+          "relatedIds": []
+        }
+      }
+    ],
+    "runs": [],
+    "id": {
+      "value": "6abdd8f7955046f0943a25e9ccb45557"
+    },
+    "trace": {
+      "createdBy": "diegoxtr",
+      "createdAtUtc": "2026-04-08T21:08:45.8279165+00:00",
+      "updatedBy": "diegoxtr",
+      "updatedAtUtc": "2026-04-08T21:09:30.4002476+00:00",
+      "tags": [
+        "project"
+      ],
+      "relatedIds": []
+    }
+  },
+  "id": {
+    "value": "b611a4a7a68843e6bc2a00b5e1e21057"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-08T21:09:30.4887909+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "commit"
+    ],
+    "relatedIds": [
+      "b6d7a847766948d4abfde590af3b9af6"
+    ]
+  }
+}

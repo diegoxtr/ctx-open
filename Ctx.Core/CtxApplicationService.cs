@@ -3,6 +3,7 @@ namespace Ctx.Core;
 using Ctx.Application;
 using Ctx.Domain;
 using System.Globalization;
+using System.Text.Json;
 using System.Text;
 
 public sealed class CtxApplicationService : ICtxApplicationService
@@ -18,7 +19,10 @@ public sealed class CtxApplicationService : ICtxApplicationService
     private readonly ICommitEngine _commitEngine;
     private readonly IMergeEngine _mergeEngine;
     private readonly IClock _clock;
+    private readonly IHashingService _hashingService;
     private readonly IRepositoryWriteLock? _repositoryWriteLock;
+    private readonly IOperationalRunbookRepository? _operationalRunbookRepository;
+    private readonly ICognitiveTriggerRepository? _cognitiveTriggerRepository;
 
     public CtxApplicationService(
         IWorkingContextRepository workingContextRepository,
@@ -32,7 +36,10 @@ public sealed class CtxApplicationService : ICtxApplicationService
         ICommitEngine commitEngine,
         IMergeEngine mergeEngine,
         IClock clock,
-        IRepositoryWriteLock? repositoryWriteLock = null)
+        IHashingService hashingService,
+        IRepositoryWriteLock? repositoryWriteLock = null,
+        IOperationalRunbookRepository? operationalRunbookRepository = null,
+        ICognitiveTriggerRepository? cognitiveTriggerRepository = null)
     {
         _workingContextRepository = workingContextRepository;
         _commitRepository = commitRepository;
@@ -45,7 +52,44 @@ public sealed class CtxApplicationService : ICtxApplicationService
         _commitEngine = commitEngine;
         _mergeEngine = mergeEngine;
         _clock = clock;
+        _hashingService = hashingService;
         _repositoryWriteLock = repositoryWriteLock;
+        _operationalRunbookRepository = operationalRunbookRepository;
+        _cognitiveTriggerRepository = cognitiveTriggerRepository;
+    }
+
+    public CtxApplicationService(
+        IWorkingContextRepository workingContextRepository,
+        ICommitRepository commitRepository,
+        IBranchRepository branchRepository,
+        IRunRepository runRepository,
+        IPacketRepository packetRepository,
+        IMetricsRepository metricsRepository,
+        IRunOrchestrator runOrchestrator,
+        IContextBuilder contextBuilder,
+        ICommitEngine commitEngine,
+        IMergeEngine mergeEngine,
+        IClock clock,
+        IRepositoryWriteLock? repositoryWriteLock = null,
+        IOperationalRunbookRepository? operationalRunbookRepository = null,
+        ICognitiveTriggerRepository? cognitiveTriggerRepository = null)
+        : this(
+            workingContextRepository,
+            commitRepository,
+            branchRepository,
+            runRepository,
+            packetRepository,
+            metricsRepository,
+            runOrchestrator,
+            contextBuilder,
+            commitEngine,
+            mergeEngine,
+            clock,
+            new Sha256HashingService(),
+            repositoryWriteLock,
+            operationalRunbookRepository,
+            cognitiveTriggerRepository)
+    {
     }
 
     public async System.Threading.Tasks.Task<CommandResult> InitAsync(string repositoryPath, InitRepositoryRequest request, CancellationToken cancellationToken)
@@ -102,20 +146,76 @@ public sealed class CtxApplicationService : ICtxApplicationService
     public async System.Threading.Tasks.Task<CommandResult> StatusAsync(string repositoryPath, CancellationToken cancellationToken)
     {
         var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+        var runbooks = await LoadRunbooksAsync(repositoryPath, cancellationToken);
+        var triggers = await LoadTriggersAsync(repositoryPath, cancellationToken);
         var head = await _workingContextRepository.LoadHeadAsync(repositoryPath, cancellationToken);
-        return new(true, $"On branch {head.Branch}", new
-        {
-            branch = head.Branch,
-            head = head.CommitId?.Value,
+        var previous = head.CommitId is null
+            ? null
+            : await _commitRepository.LoadAsync(repositoryPath, head.CommitId.Value, cancellationToken);
+        var pending = BuildStatusPendingSummary(previous?.Snapshot, new RepositorySnapshot(context, runbooks, triggers));
+        var summary = new StatusSummary(
+            head.Branch,
+            head.CommitId?.Value,
             context.Dirty,
-            goals = context.Goals.Count,
-            tasks = context.Tasks.Count,
-            hypotheses = context.Hypotheses.Count,
-            decisions = context.Decisions.Count,
-            evidence = context.Evidence.Count,
-            conclusions = context.Conclusions.Count,
-            runs = context.Runs.Count
-        });
+            context.Goals.Count,
+            context.Tasks.Count,
+            context.Hypotheses.Count,
+            context.Decisions.Count,
+            context.Evidence.Count,
+            context.Conclusions.Count,
+            context.Runs.Count,
+            pending);
+        var message = context.Dirty
+            ? $"On branch {head.Branch} with pending cognitive changes"
+            : $"On branch {head.Branch}";
+        return new(true, message, summary);
+    }
+
+    public async System.Threading.Tasks.Task<CommandResult> CheckAsync(string repositoryPath, string? taskId, CancellationToken cancellationToken)
+    {
+        var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+        var (task, selectionReason) = ResolveCheckTask(context, taskId);
+        var runbooks = await LoadRunbooksAsync(repositoryPath, cancellationToken);
+        var summary = BuildBlockCheckSummary(context, task, selectionReason, runbooks);
+        var message = summary.ReadyForCommit
+            ? $"Task '{summary.TaskTitle}' is ready for cognitive commit."
+            : $"Task '{summary.TaskTitle}' still has block-level closure gaps.";
+
+        return new(true, message, summary);
+    }
+
+    public async System.Threading.Tasks.Task<CommandResult> CloseoutAsync(string repositoryPath, CancellationToken cancellationToken)
+    {
+        var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+        var runbooks = await LoadRunbooksAsync(repositoryPath, cancellationToken);
+        var triggers = await LoadTriggersAsync(repositoryPath, cancellationToken);
+        var head = await _workingContextRepository.LoadHeadAsync(repositoryPath, cancellationToken);
+        var previous = head.CommitId is null
+            ? null
+            : await _commitRepository.LoadAsync(repositoryPath, head.CommitId.Value, cancellationToken);
+        var diff = BuildCloseoutDiff(previous?.Snapshot, new RepositorySnapshot(context, runbooks, triggers));
+        var hasPendingChanges = context.Dirty;
+        var pendingItems = hasPendingChanges
+            ? EnumerateCloseoutPendingItems(diff)
+            : Array.Empty<CloseoutPendingItem>();
+        var diffSummary = hasPendingChanges ? BuildDiffSummary(diff) : "working matches HEAD";
+        var guidance = BuildCloseoutGuidance(context, diff, pendingItems);
+        var microCloseout = BuildMicroCloseoutSuggestion(diff, pendingItems);
+        var closeout = new CloseoutSummary(
+            head.Branch,
+            head.CommitId?.Value,
+            context.Dirty,
+            hasPendingChanges,
+            diffSummary,
+            pendingItems,
+            guidance,
+            microCloseout);
+
+        var message = hasPendingChanges
+            ? $"Closeout review for branch {head.Branch}: {diffSummary}"
+            : $"Closeout review for branch {head.Branch}: working matches HEAD";
+
+        return new(true, message, closeout);
     }
 
     public async System.Threading.Tasks.Task<CommandResult> AddGoalAsync(string repositoryPath, AddGoalRequest request, CancellationToken cancellationToken)
@@ -138,7 +238,160 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 Trace = context.Trace with { UpdatedAtUtc = _clock.UtcNow, UpdatedBy = request.CreatedBy }
             };
             await _workingContextRepository.SaveWorkingAsync(repositoryPath, context, cancellationToken);
+            await TryCreateAutomaticTriggerAsync(
+                repositoryPath,
+                CognitiveTriggerKind.AgentPrompt,
+                $"Open goal line: {goal.Title}",
+                goal.Description,
+                new[] { goal.Id },
+                Array.Empty<TaskId>(),
+                request.CreatedBy,
+                cancellationToken);
             return new CommandResult(true, $"Goal added: {goal.Title}", goal);
+        });
+    }
+
+    public async System.Threading.Tasks.Task<CommandResult> OpenWorkLineAsync(string repositoryPath, OpenWorkLineRequest request, CancellationToken cancellationToken)
+    {
+        return await ExecuteWriteLockedAsync(repositoryPath, cancellationToken, async () =>
+        {
+            var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+            var parentGoal = ResolveGoal(context, request.ParentGoalId);
+            var priority = request.Priority ?? parentGoal.Priority;
+            var goal = new Goal(
+                GoalId.New(),
+                parentGoal.Id,
+                request.Title,
+                request.Description,
+                priority,
+                LifecycleState.Active,
+                NewTrace(request.CreatedBy, "goal"),
+                Array.Empty<TaskId>());
+
+            Ctx.Domain.Task? seedTask = null;
+            var goals = context.Goals.Append(goal).ToArray();
+
+            if (!string.IsNullOrWhiteSpace(request.TaskTitle))
+            {
+                seedTask = new Ctx.Domain.Task(
+                    TaskId.New(),
+                    goal.Id,
+                    request.TaskTitle,
+                    request.TaskDescription ?? string.Empty,
+                    TaskExecutionState.Ready,
+                    NewTrace(request.CreatedBy, "task"),
+                    Array.Empty<TaskId>(),
+                    Array.Empty<HypothesisId>());
+                goals = goals
+                    .Select(item => item.Id == goal.Id ? item with { TaskIds = item.TaskIds.Append(seedTask.Id).ToArray() } : item)
+                    .ToArray();
+            }
+
+            context = context with
+            {
+                Dirty = true,
+                Goals = goals,
+                Tasks = seedTask is null ? context.Tasks : context.Tasks.Append(seedTask).ToArray(),
+                Trace = context.Trace with { UpdatedAtUtc = _clock.UtcNow, UpdatedBy = request.CreatedBy }
+            };
+            await _workingContextRepository.SaveWorkingAsync(repositoryPath, context, cancellationToken);
+            await TryCreateAutomaticTriggerAsync(
+                repositoryPath,
+                CognitiveTriggerKind.AgentPrompt,
+                $"Open tactical line: {goal.Title}",
+                string.IsNullOrWhiteSpace(goal.Description) ? request.TaskTitle : goal.Description,
+                new[] { goal.Id },
+                seedTask is null ? Array.Empty<TaskId>() : new[] { seedTask.Id },
+                request.CreatedBy,
+                cancellationToken);
+
+            var summary = new OpenWorkLineSummary(
+                parentGoal.Id.Value,
+                parentGoal.Title,
+                goal.Id.Value,
+                goal.Title,
+                seedTask?.Id.Value,
+                seedTask?.Title);
+            var message = seedTask is null
+                ? $"Opened tactical work line '{goal.Title}' under '{parentGoal.Title}'."
+                : $"Opened tactical work line '{goal.Title}' and seeded task '{seedTask.Title}'.";
+            return new CommandResult(true, message, summary);
+        });
+    }
+
+    public async System.Threading.Tasks.Task<CommandResult> AddOperationalRunbookAsync(string repositoryPath, AddOperationalRunbookRequest request, CancellationToken cancellationToken)
+    {
+        if (_operationalRunbookRepository is null)
+        {
+            throw new InvalidOperationException("Operational runbooks are not configured.");
+        }
+
+        return await ExecuteWriteLockedAsync(repositoryPath, cancellationToken, async () =>
+        {
+            var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+            var goalIds = request.GoalIds.Select(id => ResolveGoal(context, id).Id).ToArray();
+            var taskIds = request.TaskIds.Select(id => ResolveTask(context, id).Id).ToArray();
+            var kind = Enum.TryParse<OperationalRunbookKind>(request.Kind, true, out var parsedKind)
+                ? parsedKind
+                : throw new InvalidOperationException($"Runbook kind '{request.Kind}' is not supported.");
+
+            var runbook = new OperationalRunbook(
+                OperationalRunbookId.New(),
+                request.Title,
+                kind,
+                request.Triggers.Where(item => !string.IsNullOrWhiteSpace(item)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
+                request.WhenToUse,
+                request.Do.Where(item => !string.IsNullOrWhiteSpace(item)).ToArray(),
+                request.Verify.Where(item => !string.IsNullOrWhiteSpace(item)).ToArray(),
+                request.References.Where(item => !string.IsNullOrWhiteSpace(item)).ToArray(),
+                goalIds,
+                taskIds,
+                LifecycleState.Active,
+                NewTrace(request.CreatedBy, "runbook"));
+
+            await _operationalRunbookRepository.SaveAsync(repositoryPath, runbook, cancellationToken);
+            return new CommandResult(true, $"OperationalRunbook added: {runbook.Title}", runbook);
+        });
+    }
+
+    public async System.Threading.Tasks.Task<CommandResult> AddCognitiveTriggerAsync(string repositoryPath, AddCognitiveTriggerRequest request, CancellationToken cancellationToken)
+    {
+        if (_cognitiveTriggerRepository is null)
+        {
+            throw new InvalidOperationException("Cognitive triggers are not configured.");
+        }
+
+        return await ExecuteWriteLockedAsync(repositoryPath, cancellationToken, async () =>
+        {
+            var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+            var runbooks = await LoadRunbooksAsync(repositoryPath, cancellationToken);
+            var goalIds = request.GoalIds.Select(id => ResolveGoal(context, id).Id).Distinct().ToArray();
+            var taskIds = request.TaskIds.Select(id => ResolveTask(context, id).Id).Distinct().ToArray();
+            var runbookIds = request.RunbookIds
+                .Select(id => runbooks.SingleOrDefault(item => item.Id.Value.Equals(id, StringComparison.OrdinalIgnoreCase))?.Id
+                    ?? throw new InvalidOperationException($"OperationalRunbook '{id}' was not found."))
+                .Distinct()
+                .ToArray();
+            var kind = Enum.TryParse<CognitiveTriggerKind>(request.Kind, true, out var parsedKind)
+                ? parsedKind
+                : throw new InvalidOperationException($"Cognitive trigger kind '{request.Kind}' is not supported.");
+            var summary = request.Summary.Trim();
+            var text = string.IsNullOrWhiteSpace(request.Text) ? null : request.Text.Trim();
+
+            var trigger = new CognitiveTrigger(
+                CognitiveTriggerId.New(),
+                kind,
+                summary,
+                text,
+                _hashingService.Hash(text ?? summary),
+                goalIds,
+                taskIds,
+                runbookIds,
+                LifecycleState.Active,
+                NewTrace(request.CreatedBy, "trigger"));
+
+            await _cognitiveTriggerRepository.SaveAsync(repositoryPath, trigger, cancellationToken);
+            return new CommandResult(true, $"CognitiveTrigger added: {trigger.Summary}", trigger);
         });
     }
 
@@ -197,6 +450,19 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 Trace = context.Trace with { UpdatedAtUtc = _clock.UtcNow, UpdatedBy = request.CreatedBy }
             };
             await _workingContextRepository.SaveWorkingAsync(repositoryPath, context, cancellationToken);
+            if (ShouldCreateAutomaticTaskTrigger(task, parentTask, dependsOnTaskIds))
+            {
+                await TryCreateAutomaticTriggerAsync(
+                    repositoryPath,
+                    CognitiveTriggerKind.AgentPrompt,
+                    $"Open task line: {task.Title}",
+                    task.Description,
+                    goal is null ? Array.Empty<GoalId>() : new[] { goal.Id },
+                    new[] { task.Id },
+                    request.CreatedBy,
+                    cancellationToken);
+            }
+
             return new CommandResult(true, $"Task added: {task.Title}", task);
         });
     }
@@ -356,18 +622,18 @@ public sealed class CtxApplicationService : ICtxApplicationService
     {
         var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
         var candidates = BuildNextWorkCandidates(context);
+        var diagnostics = BuildNextWorkDiagnostics(context, candidates);
         var message = candidates.Count == 0
-            ? "No next-step candidates were found."
-            : $"Ranked {candidates.Count} next-step candidates.";
+            ? "No next-step candidates were found. Review diagnostics for recovery guidance."
+            : $"Ranked {candidates.Count} next-step candidates from {diagnostics.SelectionMode}.";
 
         return new CommandResult(
             true,
             message,
-            new
-            {
-                recommended = candidates.FirstOrDefault(),
-                candidates
-            });
+            new NextWorkSummary(
+                candidates.FirstOrDefault(),
+                candidates,
+                diagnostics));
     }
 
     public async System.Threading.Tasks.Task<CommandResult> AddDecisionAsync(string repositoryPath, AddDecisionRequest request, CancellationToken cancellationToken)
@@ -537,11 +803,13 @@ public sealed class CtxApplicationService : ICtxApplicationService
             var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
             var head = await _workingContextRepository.LoadHeadAsync(repositoryPath, cancellationToken);
             var previous = head.CommitId is null ? null : await _commitRepository.LoadAsync(repositoryPath, head.CommitId.Value, cancellationToken);
-            var commit = _commitEngine.CreateCommit(context, previous, request.Message, request.CreatedBy);
+            var runbooks = await LoadRunbooksAsync(repositoryPath, cancellationToken);
+            var triggers = await LoadTriggersAsync(repositoryPath, cancellationToken);
+            var commit = _commitEngine.CreateCommit(context, runbooks, triggers, previous, request.Message, request.CreatedBy);
 
             await _commitRepository.SaveAsync(repositoryPath, commit, cancellationToken);
-            await _workingContextRepository.SaveWorkingAsync(repositoryPath, commit.Snapshot, cancellationToken);
-            await _workingContextRepository.SaveStagingAsync(repositoryPath, commit.Snapshot, cancellationToken);
+            await _workingContextRepository.SaveWorkingAsync(repositoryPath, commit.Snapshot.WorkingContext, cancellationToken);
+            await _workingContextRepository.SaveStagingAsync(repositoryPath, commit.Snapshot.WorkingContext, cancellationToken);
             await _workingContextRepository.SaveHeadAsync(repositoryPath, new HeadReference(head.Branch, commit.Id), cancellationToken);
             await _branchRepository.SaveAsync(repositoryPath, new BranchReference(head.Branch, commit.Id, _clock.UtcNow), cancellationToken);
 
@@ -584,8 +852,14 @@ public sealed class CtxApplicationService : ICtxApplicationService
         }
 
         var diff = toCommit is not null
-            ? _commitEngine.CreateCommit(toCommit.Snapshot, fromCommit, "diff-preview", "ctx").Diff
-            : _commitEngine.CreateCommit(context, fromCommit, "diff-preview", "ctx").Diff;
+            ? _commitEngine.CreateCommit(toCommit.Snapshot.WorkingContext, toCommit.Snapshot.Runbooks, toCommit.Snapshot.Triggers, fromCommit, "diff-preview", "ctx").Diff
+            : _commitEngine.CreateCommit(
+                context,
+                await LoadRunbooksAsync(repositoryPath, cancellationToken),
+                await LoadTriggersAsync(repositoryPath, cancellationToken),
+                fromCommit,
+                "diff-preview",
+                "ctx").Diff;
 
         if (fromCommit is not null && toCommit is not null)
         {
@@ -625,7 +899,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
 
             var context = branch.CommitId is null
                 ? await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken)
-                : (await _commitRepository.LoadAsync(repositoryPath, branch.CommitId.Value, cancellationToken))?.Snapshot
+                : (await _commitRepository.LoadAsync(repositoryPath, branch.CommitId.Value, cancellationToken))?.Snapshot.WorkingContext
                     ?? throw new InvalidOperationException($"Commit '{branch.CommitId.Value}' was not found.");
 
             var switched = context with { CurrentBranch = branchName, HeadCommitId = branch.CommitId, Dirty = false };
@@ -652,9 +926,25 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 ?? throw new InvalidOperationException($"Commit '{source.CommitId.Value}' was not found.");
 
             var currentContext = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
-            var mergeResult = _mergeEngine.Merge(currentContext, sourceCommit);
+            var currentRunbooks = await LoadRunbooksAsync(repositoryPath, cancellationToken);
+            var currentTriggers = await LoadTriggersAsync(repositoryPath, cancellationToken);
+            var mergeResult = _mergeEngine.Merge(new RepositorySnapshot(currentContext, currentRunbooks, currentTriggers), sourceCommit);
 
-            await _workingContextRepository.SaveWorkingAsync(repositoryPath, mergeResult.MergedContext, cancellationToken);
+            await _workingContextRepository.SaveWorkingAsync(repositoryPath, mergeResult.MergedSnapshot.WorkingContext, cancellationToken);
+            if (_operationalRunbookRepository is not null)
+            {
+                foreach (var runbook in mergeResult.MergedSnapshot.Runbooks)
+                {
+                    await _operationalRunbookRepository.SaveAsync(repositoryPath, runbook, cancellationToken);
+                }
+            }
+            if (_cognitiveTriggerRepository is not null)
+            {
+                foreach (var trigger in mergeResult.MergedSnapshot.Triggers)
+                {
+                    await _cognitiveTriggerRepository.SaveAsync(repositoryPath, trigger, cancellationToken);
+                }
+            }
             return new CommandResult(true, $"Merged branch '{sourceBranch}' into '{targetHead.Branch}'. {mergeResult.Summary}", mergeResult);
         });
     }
@@ -662,8 +952,56 @@ public sealed class CtxApplicationService : ICtxApplicationService
     public async System.Threading.Tasks.Task<CommandResult> ContextAsync(string repositoryPath, string purpose, string? goalId, string? taskId, CancellationToken cancellationToken)
     {
         var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
-        var packet = _contextBuilder.Build(context, purpose, goalId, taskId);
+        var runbooks = await LoadRunbooksAsync(repositoryPath, cancellationToken);
+        var triggers = await LoadTriggersAsync(repositoryPath, cancellationToken);
+        var packet = _contextBuilder.Build(context, runbooks, triggers, purpose, goalId, taskId);
         return new(true, $"Built packet {packet.Id.Value}", packet);
+    }
+
+    public async System.Threading.Tasks.Task<CommandResult> ListOperationalRunbooksAsync(string repositoryPath, CancellationToken cancellationToken)
+    {
+        if (_operationalRunbookRepository is null)
+        {
+            throw new InvalidOperationException("Operational runbooks are not configured.");
+        }
+
+        var runbooks = await _operationalRunbookRepository.ListAsync(repositoryPath, cancellationToken);
+        return new(true, $"Listed {runbooks.Count} operational runbooks.", runbooks);
+    }
+
+    public async System.Threading.Tasks.Task<CommandResult> ShowOperationalRunbookAsync(string repositoryPath, string runbookId, CancellationToken cancellationToken)
+    {
+        if (_operationalRunbookRepository is null)
+        {
+            throw new InvalidOperationException("Operational runbooks are not configured.");
+        }
+
+        var runbook = await _operationalRunbookRepository.LoadAsync(repositoryPath, new OperationalRunbookId(runbookId), cancellationToken)
+            ?? throw new InvalidOperationException($"OperationalRunbook '{runbookId}' was not found.");
+        return new(true, $"Showing operational runbook '{runbookId}'.", runbook);
+    }
+
+    public async System.Threading.Tasks.Task<CommandResult> ListCognitiveTriggersAsync(string repositoryPath, CancellationToken cancellationToken)
+    {
+        if (_cognitiveTriggerRepository is null)
+        {
+            throw new InvalidOperationException("Cognitive triggers are not configured.");
+        }
+
+        var triggers = await _cognitiveTriggerRepository.ListAsync(repositoryPath, cancellationToken);
+        return new(true, $"Listed {triggers.Count} cognitive triggers.", triggers);
+    }
+
+    public async System.Threading.Tasks.Task<CommandResult> ShowCognitiveTriggerAsync(string repositoryPath, string triggerId, CancellationToken cancellationToken)
+    {
+        if (_cognitiveTriggerRepository is null)
+        {
+            throw new InvalidOperationException("Cognitive triggers are not configured.");
+        }
+
+        var trigger = await _cognitiveTriggerRepository.LoadAsync(repositoryPath, new CognitiveTriggerId(triggerId), cancellationToken)
+            ?? throw new InvalidOperationException($"CognitiveTrigger '{triggerId}' was not found.");
+        return new(true, $"Showing cognitive trigger '{triggerId}'.", trigger);
     }
 
     public async System.Threading.Tasks.Task<CommandResult> ListArtifactsAsync(string repositoryPath, string artifactType, CancellationToken cancellationToken)
@@ -1140,13 +1478,15 @@ public sealed class CtxApplicationService : ICtxApplicationService
         var metrics = await _metricsRepository.LoadAsync(repositoryPath, cancellationToken);
         var branches = await _branchRepository.ListAsync(repositoryPath, cancellationToken);
         var commits = await _commitRepository.GetHistoryAsync(repositoryPath, head.Branch, cancellationToken);
+        var runbooks = await LoadRunbooksAsync(repositoryPath, cancellationToken);
+        var triggers = await LoadTriggersAsync(repositoryPath, cancellationToken);
 
         var export = new RepositoryExport(
             DomainConstants.ProductVersion,
             version,
             config,
             head,
-            working,
+            new RepositorySnapshot(working, runbooks, triggers),
             metrics,
             branches,
             commits);
@@ -1217,6 +1557,22 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 await _commitRepository.SaveAsync(repositoryPath, commit, cancellationToken);
             }
 
+            if (_operationalRunbookRepository is not null)
+            {
+                foreach (var runbook in export.Snapshot.Runbooks)
+                {
+                    await _operationalRunbookRepository.SaveAsync(repositoryPath, runbook, cancellationToken);
+                }
+            }
+
+            if (_cognitiveTriggerRepository is not null)
+            {
+                foreach (var trigger in export.Snapshot.Triggers)
+                {
+                    await _cognitiveTriggerRepository.SaveAsync(repositoryPath, trigger, cancellationToken);
+                }
+            }
+
             await _workingContextRepository.SaveHeadAsync(repositoryPath, export.Head, cancellationToken);
 
             return new CommandResult(true, $"Repository imported from {finalInputPath}", new
@@ -1258,13 +1614,13 @@ public sealed class CtxApplicationService : ICtxApplicationService
         => context.Goals.SingleOrDefault(item => item.Id.Value.Equals(goalId, StringComparison.OrdinalIgnoreCase))
             ?? throw new InvalidOperationException($"Goal '{goalId}' was not found.");
 
-    private static Conclusion ResolveConclusion(WorkingContext context, string conclusionId)
-        => context.Conclusions.SingleOrDefault(item => item.Id.Value.Equals(conclusionId, StringComparison.OrdinalIgnoreCase))
-            ?? throw new InvalidOperationException($"Conclusion '{conclusionId}' was not found.");
-
     private static Ctx.Domain.Task ResolveTask(WorkingContext context, string taskId)
         => context.Tasks.SingleOrDefault(item => item.Id.Value.Equals(taskId, StringComparison.OrdinalIgnoreCase))
             ?? throw new InvalidOperationException($"Task '{taskId}' was not found.");
+
+    private static Conclusion ResolveConclusion(WorkingContext context, string conclusionId)
+        => context.Conclusions.SingleOrDefault(item => item.Id.Value.Equals(conclusionId, StringComparison.OrdinalIgnoreCase))
+            ?? throw new InvalidOperationException($"Conclusion '{conclusionId}' was not found.");
 
     private static Evidence ResolveEvidence(WorkingContext context, string evidenceId)
         => context.Evidence.SingleOrDefault(item => item.Id.Value.Equals(evidenceId, StringComparison.OrdinalIgnoreCase))
@@ -1302,6 +1658,75 @@ public sealed class CtxApplicationService : ICtxApplicationService
         _ => artifactType.Trim().ToLowerInvariant()
     };
 
+    private static bool ShouldCreateAutomaticTaskTrigger(
+        Ctx.Domain.Task task,
+        Ctx.Domain.Task? parentTask,
+        IReadOnlyCollection<TaskId> dependsOnTaskIds)
+        => parentTask is null
+            && task.ParentTaskId is null
+            && dependsOnTaskIds.Count == 0;
+
+    private async System.Threading.Tasks.Task TryCreateAutomaticTriggerAsync(
+        string repositoryPath,
+        CognitiveTriggerKind kind,
+        string summary,
+        string? text,
+        IReadOnlyList<GoalId> goalIds,
+        IReadOnlyList<TaskId> taskIds,
+        string createdBy,
+        CancellationToken cancellationToken)
+    {
+        if (_cognitiveTriggerRepository is null)
+        {
+            return;
+        }
+
+        var normalizedSummary = summary.Trim();
+        if (string.IsNullOrWhiteSpace(normalizedSummary))
+        {
+            return;
+        }
+
+        var normalizedText = string.IsNullOrWhiteSpace(text) ? null : text.Trim();
+        var existing = await LoadTriggersAsync(repositoryPath, cancellationToken);
+        var duplicate = existing.Any(item =>
+            item.State != LifecycleState.Archived
+            && item.Kind == kind
+            && string.Equals(item.Summary, normalizedSummary, StringComparison.Ordinal)
+            && string.Equals(item.Text, normalizedText, StringComparison.Ordinal)
+            && item.GoalIds.SequenceEqual(goalIds)
+            && item.TaskIds.SequenceEqual(taskIds));
+
+        if (duplicate)
+        {
+            return;
+        }
+
+        var trigger = new CognitiveTrigger(
+            CognitiveTriggerId.New(),
+            kind,
+            normalizedSummary,
+            normalizedText,
+            _hashingService.Hash(normalizedText ?? normalizedSummary),
+            goalIds.Distinct().ToArray(),
+            taskIds.Distinct().ToArray(),
+            Array.Empty<OperationalRunbookId>(),
+            LifecycleState.Active,
+            NewTrace(createdBy, "trigger"));
+
+        await _cognitiveTriggerRepository.SaveAsync(repositoryPath, trigger, cancellationToken);
+    }
+
+    private async System.Threading.Tasks.Task<IReadOnlyList<OperationalRunbook>> LoadRunbooksAsync(string repositoryPath, CancellationToken cancellationToken)
+        => _operationalRunbookRepository is null
+            ? Array.Empty<OperationalRunbook>()
+            : await _operationalRunbookRepository.ListAsync(repositoryPath, cancellationToken);
+
+    private async System.Threading.Tasks.Task<IReadOnlyList<CognitiveTrigger>> LoadTriggersAsync(string repositoryPath, CancellationToken cancellationToken)
+        => _cognitiveTriggerRepository is null
+            ? Array.Empty<CognitiveTrigger>()
+            : await _cognitiveTriggerRepository.ListAsync(repositoryPath, cancellationToken);
+
     private static string BuildDiffSummary(ContextDiff diff)
     {
         var parts = new List<string>
@@ -1310,7 +1735,9 @@ public sealed class CtxApplicationService : ICtxApplicationService
             $"hypotheses:{diff.Hypotheses.Count}",
             $"evidence:{diff.Evidence.Count}",
             $"tasks:{diff.Tasks.Count}",
-            $"conclusions:{diff.Conclusions.Count}"
+            $"conclusions:{diff.Conclusions.Count}",
+            $"runbooks:{diff.Runbooks.Count}",
+            $"triggers:{diff.Triggers.Count}"
         };
 
         if (diff.Conflicts.Count > 0)
@@ -1319,6 +1746,323 @@ public sealed class CtxApplicationService : ICtxApplicationService
         }
 
         return string.Join(" | ", parts);
+    }
+
+    private static IReadOnlyList<CloseoutPendingItem> EnumerateCloseoutPendingItems(ContextDiff diff)
+        => diff.Decisions
+            .Concat(diff.Hypotheses)
+            .Concat(diff.Evidence)
+            .Concat(diff.Tasks)
+            .Concat(diff.Conclusions)
+            .Concat(diff.Runbooks)
+            .Concat(diff.Triggers)
+            .Select(change => new CloseoutPendingItem(change.ChangeType, change.EntityType, change.EntityId, change.Summary))
+            .ToArray();
+
+    private static (Ctx.Domain.Task Task, string SelectionReason) ResolveCheckTask(WorkingContext context, string? taskId)
+    {
+        if (!string.IsNullOrWhiteSpace(taskId))
+        {
+            return (ResolveTask(context, taskId), "explicit task selection");
+        }
+
+        var inProgressTasks = context.Tasks.Where(item => item.State == TaskExecutionState.InProgress).ToArray();
+        if (inProgressTasks.Length == 1)
+        {
+            return (inProgressTasks[0], "single in-progress task");
+        }
+
+        var nextTask = BuildNextWorkCandidates(context).FirstOrDefault(candidate => candidate.CandidateType == "Task");
+        if (nextTask is not null)
+        {
+            return (ResolveTask(context, nextTask.EntityId), "top-ranked task from ctx next");
+        }
+
+        var onlyOpenTask = context.Tasks.Where(item => item.State != TaskExecutionState.Done).ToArray();
+        if (onlyOpenTask.Length == 1)
+        {
+            return (onlyOpenTask[0], "only open task");
+        }
+
+        throw new InvalidOperationException("No task could be resolved for block-level checking. Pass --task <taskId> or open a task first.");
+    }
+
+    private static BlockCheckSummary BuildBlockCheckSummary(WorkingContext context, Ctx.Domain.Task task, string selectionReason, IReadOnlyList<OperationalRunbook> runbooks)
+    {
+        var hypotheses = context.Hypotheses
+            .Where(item => item.TaskIds.Any(id => id == task.Id) || task.HypothesisIds.Contains(item.Id))
+            .DistinctBy(item => item.Id.Value)
+            .ToArray();
+
+        var evidence = context.Evidence
+            .Where(item =>
+                item.Supports.Any(reference => reference.EntityType == "Task" && reference.EntityId.Equals(task.Id.Value, StringComparison.OrdinalIgnoreCase))
+                || hypotheses.Any(hypothesis => item.Supports.Any(reference => reference.EntityType == nameof(Hypothesis) && reference.EntityId.Equals(hypothesis.Id.Value, StringComparison.OrdinalIgnoreCase)))
+                || hypotheses.Any(hypothesis => hypothesis.EvidenceIds.Contains(item.Id)))
+            .DistinctBy(item => item.Id.Value)
+            .ToArray();
+
+        var decisions = context.Decisions
+            .Where(item => item.HypothesisIds.Any(id => hypotheses.Any(hypothesis => hypothesis.Id == id)))
+            .DistinctBy(item => item.Id.Value)
+            .ToArray();
+
+        var acceptedDecisions = decisions.Where(item => item.State == DecisionState.Accepted).ToArray();
+
+        var conclusions = context.Conclusions
+            .Where(item =>
+                item.TaskIds.Contains(task.Id)
+                || item.DecisionIds.Any(id => decisions.Any(decision => decision.Id == id)))
+            .DistinctBy(item => item.Id.Value)
+            .ToArray();
+
+        var acceptedConclusions = conclusions.Where(item => item.State == ConclusionState.Accepted).ToArray();
+        var selectedGoal = task.GoalId is null
+            ? null
+            : context.Goals.SingleOrDefault(goal => goal.Id == task.GoalId);
+        var runbookSelection = OperationalRunbookSelection.Select(
+            runbooks,
+            $"{task.Title} {task.Description} {selectedGoal?.Title ?? string.Empty} {selectedGoal?.Description ?? string.Empty}",
+            task.GoalId?.Value,
+            task.Id.Value,
+            selectedGoal is null ? Array.Empty<Goal>() : new[] { selectedGoal },
+            new[] { task });
+        var missing = new List<BlockCheckMissingItem>();
+
+        if (task.State != TaskExecutionState.Done)
+        {
+            missing.Add(new BlockCheckMissingItem("TaskState", $"Task is still {task.State}; close the work state before commit if the block is meant to be finished."));
+        }
+
+        if (hypotheses.Length == 0)
+        {
+            missing.Add(new BlockCheckMissingItem("Hypothesis", "No hypotheses are linked to this task thread."));
+        }
+
+        if (hypotheses.Any(item => item.EvidenceIds.Count == 0))
+        {
+            missing.Add(new BlockCheckMissingItem("Evidence", "At least one linked hypothesis has no supporting evidence."));
+        }
+
+        if (acceptedDecisions.Length == 0)
+        {
+            missing.Add(new BlockCheckMissingItem("Decision", "No accepted decision has been linked to this task thread."));
+        }
+
+        if (acceptedConclusions.Length == 0)
+        {
+            missing.Add(new BlockCheckMissingItem("Conclusion", "No accepted conclusion closes this task thread yet."));
+        }
+
+        var readyForCommit = missing.Count == 0;
+        var guidance = new List<string>();
+
+        if (readyForCommit)
+        {
+            guidance.Add("This task thread has the expected closure elements for a cognitive commit.");
+            guidance.Add("Run `ctx closeout` and then `ctx commit -m \"<message>\"` when the code or docs block is also ready.");
+        }
+        else
+        {
+            guidance.Add("Use the missing items list to close the current task thread before the next cognitive commit.");
+            guidance.Add("Run `ctx closeout` after fixing the missing elements to confirm the working delta is coherent.");
+        }
+
+        if (runbookSelection.Selected.Count > 0)
+        {
+            guidance.Add($"Review {runbookSelection.Selected.Count} operational runbook suggestion(s) before continuing execution or closeout.");
+        }
+
+        return new BlockCheckSummary(
+            task.Id.Value,
+            task.Title,
+            task.State.ToString(),
+            selectionReason,
+            readyForCommit,
+            hypotheses.Length,
+            evidence.Length,
+            decisions.Length,
+            acceptedDecisions.Length,
+            conclusions.Length,
+            acceptedConclusions.Length,
+            missing,
+            runbookSelection.Selected.Select(runbook => new RunbookSuggestion(
+                runbook.Id.Value,
+                runbook.Title,
+                runbook.Kind.ToString(),
+                runbook.WhenToUse,
+                runbook.Do.Take(3).ToArray(),
+                runbook.Verify.Take(2).ToArray(),
+                runbook.References.Take(3).ToArray())).ToArray(),
+            runbookSelection.Available.Select(runbook => runbook.Title).ToArray(),
+            guidance);
+    }
+
+    private static StatusPendingSummary? BuildStatusPendingSummary(RepositorySnapshot? previousSnapshot, RepositorySnapshot currentSnapshot)
+    {
+        if (!currentSnapshot.WorkingContext.Dirty)
+        {
+            return null;
+        }
+
+        var diff = BuildCloseoutDiff(previousSnapshot, currentSnapshot);
+        var pendingItems = EnumerateCloseoutPendingItems(diff);
+        return new StatusPendingSummary(
+            pendingItems.Count > 0,
+            BuildDiffSummary(diff),
+            pendingItems.Count,
+            pendingItems.Take(5).ToArray(),
+            pendingItems.Count > 0
+                ? "Run `ctx closeout` for the full pending artifact review before the next cognitive or Git commit."
+                : "Run `ctx closeout` to verify whether the workspace and HEAD are aligned.");
+    }
+
+    private static ContextDiff BuildCloseoutDiff(RepositorySnapshot? previousSnapshot, RepositorySnapshot currentSnapshot)
+    {
+        var current = currentSnapshot.WorkingContext;
+        var previousWorkingContext = previousSnapshot?.WorkingContext;
+        var decisions = DiffCloseoutEntities(previousWorkingContext?.Decisions ?? Array.Empty<Decision>(), current.Decisions, item => item.Id.Value, item => $"{item.Title} [{item.State}]");
+        var hypotheses = DiffCloseoutEntities(previousWorkingContext?.Hypotheses ?? Array.Empty<Hypothesis>(), current.Hypotheses, item => item.Id.Value, item => $"{item.Statement} [{item.State}]");
+        var evidence = DiffCloseoutEntities(previousWorkingContext?.Evidence ?? Array.Empty<Evidence>(), current.Evidence, item => item.Id.Value, item => $"{item.Title} [{item.Kind}]");
+        var tasks = DiffCloseoutEntities(previousWorkingContext?.Tasks ?? Array.Empty<Ctx.Domain.Task>(), current.Tasks, item => item.Id.Value, item => $"{item.Title} [{item.State}]");
+        var conclusions = DiffCloseoutEntities(previousWorkingContext?.Conclusions ?? Array.Empty<Conclusion>(), current.Conclusions, item => item.Id.Value, item => $"{item.Summary} [{item.State}]");
+        var runbooks = DiffCloseoutEntities(previousSnapshot?.Runbooks ?? Array.Empty<OperationalRunbook>(), currentSnapshot.Runbooks, item => item.Id.Value, item => $"{item.Title} [{item.Kind}]");
+        var triggers = DiffCloseoutEntities(previousSnapshot?.Triggers ?? Array.Empty<CognitiveTrigger>(), currentSnapshot.Triggers, item => item.Id.Value, item => $"{item.Kind}:{item.Summary}");
+        var summary = $"decisions:{decisions.Count} hypotheses:{hypotheses.Count} evidence:{evidence.Count} tasks:{tasks.Count} conclusions:{conclusions.Count} runbooks:{runbooks.Count} triggers:{triggers.Count}";
+        return new ContextDiff(previousWorkingContext?.HeadCommitId, current.HeadCommitId, decisions, hypotheses, evidence, tasks, conclusions, runbooks, triggers, Array.Empty<CognitiveConflict>(), summary);
+    }
+
+    private static IReadOnlyList<ContextDiffChange> DiffCloseoutEntities<T>(
+        IEnumerable<T> previous,
+        IEnumerable<T> current,
+        Func<T, string> idSelector,
+        Func<T, string> summarySelector)
+    {
+        var previousMap = previous.ToDictionary(idSelector, item => item);
+        var currentMap = current.ToDictionary(idSelector, item => item);
+        var changes = new List<ContextDiffChange>();
+
+        foreach (var pair in currentMap)
+        {
+            if (!previousMap.TryGetValue(pair.Key, out var previousItem))
+            {
+                changes.Add(new("Added", typeof(T).Name, pair.Key, summarySelector(pair.Value)));
+                continue;
+            }
+
+            if (!JsonSerializer.Serialize(previousItem).Equals(JsonSerializer.Serialize(pair.Value), StringComparison.Ordinal))
+            {
+                changes.Add(new("Modified", typeof(T).Name, pair.Key, summarySelector(pair.Value)));
+            }
+        }
+
+        foreach (var pair in previousMap)
+        {
+            if (!currentMap.ContainsKey(pair.Key))
+            {
+                changes.Add(new("Removed", typeof(T).Name, pair.Key, summarySelector(pair.Value)));
+            }
+        }
+
+        return changes;
+    }
+
+    private static IReadOnlyList<string> BuildCloseoutGuidance(
+        WorkingContext context,
+        ContextDiff diff,
+        IReadOnlyList<CloseoutPendingItem> pendingItems)
+    {
+        if (pendingItems.Count == 0)
+        {
+            return new[]
+            {
+                "No pending cognitive changes remain between working and HEAD.",
+                "The current block is already closed at the cognitive level."
+            };
+        }
+
+        var guidance = new List<string>
+        {
+            $"Review {pendingItems.Count} pending cognitive artifact(s) before the next Git closeout.",
+            "If this block is complete, capture these changes with `ctx commit -m \"<message>\"` before the Git commit."
+        };
+
+        if (diff.Evidence.Count > 0 && diff.Decisions.Count == 0 && diff.Conclusions.Count == 0)
+        {
+            guidance.Add("Evidence changed without a matching decision or conclusion in this delta; verify whether the block still needs cognitive closure.");
+        }
+
+        if (diff.Tasks.Count > 0 && diff.Conclusions.Count == 0)
+        {
+            guidance.Add("Task changes are pending without a conclusion in this delta; check whether the current task should be explicitly closed.");
+        }
+
+        if (!context.Dirty)
+        {
+            guidance.Add("Working state is marked clean, but the pending diff preview is non-empty; verify branch and HEAD alignment before closing.");
+        }
+
+        return guidance;
+    }
+
+    private static MicroCloseoutSuggestion? BuildMicroCloseoutSuggestion(
+        ContextDiff diff,
+        IReadOnlyList<CloseoutPendingItem> pendingItems)
+    {
+        if (pendingItems.Count == 0 || pendingItems.Count > 3 || diff.Decisions.Count > 0)
+        {
+            return null;
+        }
+
+        if (diff.Evidence.Count > 0 && diff.Tasks.Count <= 1 && diff.Hypotheses.Count == 0 && diff.Conclusions.Count == 0)
+        {
+            return new MicroCloseoutSuggestion(
+                "EvidenceOnly",
+                "This looks like a small evidence-only delta.",
+                new[]
+                {
+                    "Confirm whether the new evidence extends an already valid thread instead of opening a fresh closure block.",
+                    "If no new decision or conclusion is required, a short cognitive commit may be enough after the evidence is recorded."
+                });
+        }
+
+        if (diff.Hypotheses.Count > 0 && diff.Evidence.Count > 0 && diff.Tasks.Count <= 1 && diff.Conclusions.Count == 0)
+        {
+            return new MicroCloseoutSuggestion(
+                "HypothesisEvidence",
+                "This looks like a small hypothesis-plus-evidence delta.",
+                new[]
+                {
+                    "Check whether the evidence is sufficient to support or refute the hypothesis before creating a larger closure chain.",
+                    "If the task thread remains open, keep the closeout small and avoid forcing a premature conclusion."
+                });
+        }
+
+        if (diff.Tasks.Count > 0 && diff.Conclusions.Count > 0 && pendingItems.Count <= 3)
+        {
+            return new MicroCloseoutSuggestion(
+                "TaskClosure",
+                "This looks like a small task-closure delta.",
+                new[]
+                {
+                    "Verify that the task state and accepted conclusion now match the real end of the block.",
+                    "If the task thread is coherent, run a short cognitive commit before the Git closeout."
+                });
+        }
+
+        if (pendingItems.Count <= 2)
+        {
+            return new MicroCloseoutSuggestion(
+                "SmallDelta",
+                "This looks like a small trailing cognitive delta.",
+                new[]
+                {
+                    "Prefer the smallest closure move that keeps the thread coherent.",
+                    "Use `ctx check` if you need to confirm whether the current task thread is already commit-ready."
+                });
+        }
+
+        return null;
     }
 
     private static string ParseGraphNodeId(string nodeId, WorkingContext context)
@@ -1376,7 +2120,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
         var commit = await _commitRepository.LoadAsync(repositoryPath, new ContextCommitId(commitId), cancellationToken)
             ?? throw new InvalidOperationException($"Commit '{commitId}' was not found.");
 
-        return commit.Snapshot;
+        return commit.Snapshot.WorkingContext;
     }
 
     private static CognitiveGraphExport BuildGraphExport(WorkingContext context, HeadReference head)
@@ -2443,6 +3187,127 @@ public sealed class CtxApplicationService : ICtxApplicationService
             .OrderByDescending(item => item.Score)
             .ThenBy(item => item.Title, StringComparer.OrdinalIgnoreCase)
             .ToArray();
+    }
+
+    private static NextWorkDiagnostics BuildNextWorkDiagnostics(WorkingContext context, IReadOnlyList<NextWorkCandidate> candidates)
+    {
+        var tasksById = context.Tasks.ToDictionary(item => item.Id.Value, StringComparer.OrdinalIgnoreCase);
+        var acceptedConclusionTaskIds = context.Conclusions
+            .Where(item => item.State == ConclusionState.Accepted)
+            .SelectMany(item => item.TaskIds)
+            .Select(item => item.Value)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var openTaskCount = context.Tasks.Count(task => task.State != TaskExecutionState.Done);
+        var draftTaskCount = context.Tasks.Count(task => task.State == TaskExecutionState.Draft);
+        var readyTaskCount = context.Tasks.Count(task => task.State == TaskExecutionState.Ready);
+        var inProgressTaskCount = context.Tasks.Count(task => task.State == TaskExecutionState.InProgress);
+        var blockedTaskCount = context.Tasks.Count(task => task.State == TaskExecutionState.Blocked);
+        var doneTaskCount = context.Tasks.Count(task => task.State == TaskExecutionState.Done);
+
+        var eligibleHypotheses = context.Hypotheses
+            .Where(hypothesis => hypothesis.State is HypothesisState.Proposed or HypothesisState.UnderEvaluation)
+            .ToArray();
+
+        var gapExcludedByNonClosedTasks = 0;
+        var gapExcludedByAcceptedConclusions = 0;
+        var gapCandidateCount = 0;
+
+        foreach (var hypothesis in eligibleHypotheses)
+        {
+            var relatedTasks = hypothesis.TaskIds
+                .Select(id => tasksById.TryGetValue(id.Value, out var task) ? task : null)
+                .Where(task => task is not null)
+                .Cast<Ctx.Domain.Task>()
+                .ToArray();
+
+            var hasOnlyClosedTasks = relatedTasks.Length > 0 && relatedTasks.All(task => task.State == TaskExecutionState.Done);
+            if (!hasOnlyClosedTasks)
+            {
+                gapExcludedByNonClosedTasks++;
+                continue;
+            }
+
+            var hasAcceptedTaskConclusion = relatedTasks.Any(task => acceptedConclusionTaskIds.Contains(task.Id.Value));
+            if (hasAcceptedTaskConclusion)
+            {
+                gapExcludedByAcceptedConclusions++;
+                continue;
+            }
+
+            gapCandidateCount++;
+        }
+
+        var selectionMode = candidates.FirstOrDefault()?.CandidateType ?? "None";
+        var guidance = BuildNextWorkGuidance(selectionMode, openTaskCount, gapCandidateCount, gapExcludedByNonClosedTasks, gapExcludedByAcceptedConclusions);
+
+        return new NextWorkDiagnostics(
+            selectionMode,
+            openTaskCount,
+            draftTaskCount,
+            readyTaskCount,
+            inProgressTaskCount,
+            blockedTaskCount,
+            doneTaskCount,
+            eligibleHypotheses.Length,
+            gapCandidateCount,
+            gapExcludedByNonClosedTasks,
+            gapExcludedByAcceptedConclusions,
+            guidance);
+    }
+
+    private static IReadOnlyList<string> BuildNextWorkGuidance(
+        string selectionMode,
+        int openTaskCount,
+        int gapCandidateCount,
+        int gapExcludedByNonClosedTasks,
+        int gapExcludedByAcceptedConclusions)
+    {
+        if (string.Equals(selectionMode, "Task", StringComparison.OrdinalIgnoreCase))
+        {
+            return new[]
+            {
+                "CTX prioritized open tasks before any gap candidates.",
+                "Use the top-ranked task unless recent evidence or blocking conditions change the thread."
+            };
+        }
+
+        if (string.Equals(selectionMode, "Gap", StringComparison.OrdinalIgnoreCase))
+        {
+            return new[]
+            {
+                "No open tasks remained, so CTX promoted the strongest unresolved gap from active hypotheses.",
+                "Open a new task from the recommended gap before continuing execution."
+            };
+        }
+
+        var guidance = new List<string>();
+        if (openTaskCount == 0)
+        {
+            guidance.Add("No open tasks remain in the current workspace.");
+        }
+        else
+        {
+            guidance.Add("Open tasks exist, but none produced a ranked next-step candidate. Review task states and dependencies.");
+        }
+
+        if (gapCandidateCount == 0)
+        {
+            guidance.Add("No eligible gap hypotheses were available for promotion into a new task.");
+        }
+
+        if (gapExcludedByNonClosedTasks > 0)
+        {
+            guidance.Add($"Gap promotion skipped {gapExcludedByNonClosedTasks} active hypothesis thread(s) because they still have non-closed tasks.");
+        }
+
+        if (gapExcludedByAcceptedConclusions > 0)
+        {
+            guidance.Add($"Gap promotion skipped {gapExcludedByAcceptedConclusions} hypothesis thread(s) because accepted conclusions already closed their task threads.");
+        }
+
+        guidance.Add("Run `ctx audit`, `ctx closeout`, or inspect task/hypothesis state if continuation still feels ambiguous.");
+        return guidance;
     }
 
     private static decimal NormalizeGoalPriority(int priority, IReadOnlyList<Goal> goals)
