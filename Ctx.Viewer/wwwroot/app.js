@@ -1566,9 +1566,7 @@ function renderGraph(graph, options = {}) {
         nodes.forEach((node, rowIndex) => {
             const y = 50 + rowIndex * rowGap;
             positions.set(node.id, { x: columnIndex * columnGap + 10, y });
-            const scoreBadge = node.type === "Hypothesis" && node.metadata?.score
-                ? `<span class="node-score">score ${escapeHtml(node.metadata.score)}</span>`
-                : "";
+            const scoreBadge = buildGraphNodeBadge(node);
             const displayType = node.type === "Goal" && subGoalIds.has(node.id) ? "Sub-goal" : node.type;
 
             const card = document.createElement("button");
@@ -2196,6 +2194,44 @@ function sortGraphNodes(nodes) {
         }
         return left.label.localeCompare(right.label, undefined, { sensitivity: "base" });
     });
+}
+
+function buildGraphNodeBadge(node) {
+    if (node.type === "Hypothesis" && node.metadata?.score) {
+        return `<span class="node-score">score ${escapeHtml(node.metadata.score)}</span>`;
+    }
+
+    const state = normalizeGraphNodeState(node.state);
+    if (!state) {
+        return "";
+    }
+
+    if (node.type === "Task") {
+        return `<span class="node-badge node-badge-task">${escapeHtml(state)}</span>`;
+    }
+
+    if (node.type === "Decision") {
+        return `<span class="node-badge node-badge-decision">${escapeHtml(state)}</span>`;
+    }
+
+    if (node.type === "Conclusion") {
+        return `<span class="node-badge node-badge-conclusion">${escapeHtml(state)}</span>`;
+    }
+
+    return "";
+}
+
+function normalizeGraphNodeState(state) {
+    if (!state) {
+        return "";
+    }
+
+    const normalized = String(state).trim();
+    if (!normalized) {
+        return "";
+    }
+
+    return normalized;
 }
 
 function buildCommitFocusCaption() {
