@@ -2258,26 +2258,45 @@ public sealed class CtxApplicationService : ICtxApplicationService
         var commit = await _commitRepository.LoadAsync(repositoryPath, new ContextCommitId(commitId), cancellationToken)
             ?? throw new InvalidOperationException($"Commit '{commitId}' was not found.");
 
-        return commit.Snapshot.WorkingContext;
+        if (commit.Snapshot.WorkingContext is not null)
+        {
+            return commit.Snapshot.WorkingContext;
+        }
+
+        return await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
     }
 
     private static CognitiveGraphExport BuildGraphExport(WorkingContext context, HeadReference head)
     {
         var nodes = new List<CognitiveGraphNode>();
         var edges = new List<CognitiveGraphEdge>();
+        var trace = context.Trace ?? new Traceability(
+            "legacy",
+            DateTimeOffset.UtcNow,
+            null,
+            null,
+            Array.Empty<string>(),
+            Array.Empty<string>());
+        var project = context.Project ?? new Project(
+            new ProjectId("legacy-project"),
+            "Legacy project",
+            string.Empty,
+            head.Branch,
+            LifecycleState.Active,
+            trace);
 
         nodes.Add(new CognitiveGraphNode(
-            NodeId("Project", context.Project.Id.Value),
+            NodeId("Project", project.Id.Value),
             "Project",
-            context.Project.Name,
-            context.Project.State.ToString(),
+            project.Name,
+            project.State.ToString(),
             new Dictionary<string, string>
             {
-                ["description"] = context.Project.Description,
-                ["defaultBranch"] = context.Project.DefaultBranch
+                ["description"] = project.Description,
+                ["defaultBranch"] = project.DefaultBranch
             }));
 
-        foreach (var goal in context.Goals)
+        foreach (var goal in context.Goals ?? Array.Empty<Goal>())
         {
             nodes.Add(new CognitiveGraphNode(
                 NodeId("Goal", goal.Id.Value),
@@ -2296,11 +2315,11 @@ public sealed class CtxApplicationService : ICtxApplicationService
             }
             else
             {
-                edges.Add(Edge(NodeId("Project", context.Project.Id.Value), NodeId("Goal", goal.Id.Value), "contains"));
+                edges.Add(Edge(NodeId("Project", project.Id.Value), NodeId("Goal", goal.Id.Value), "contains"));
             }
         }
 
-        foreach (var task in context.Tasks)
+        foreach (var task in context.Tasks ?? Array.Empty<Ctx.Domain.Task>())
         {
             nodes.Add(new CognitiveGraphNode(
                 NodeId("Task", task.Id.Value),
@@ -2323,7 +2342,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
             }
         }
 
-        foreach (var hypothesis in context.Hypotheses)
+        foreach (var hypothesis in context.Hypotheses ?? Array.Empty<Hypothesis>())
         {
             nodes.Add(new CognitiveGraphNode(
                 NodeId("Hypothesis", hypothesis.Id.Value),
@@ -2347,7 +2366,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
             }
         }
 
-        foreach (var evidence in context.Evidence)
+        foreach (var evidence in context.Evidence ?? Array.Empty<Evidence>())
         {
             nodes.Add(new CognitiveGraphNode(
                 NodeId("Evidence", evidence.Id.Value),
@@ -2367,7 +2386,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
             }
         }
 
-        foreach (var decision in context.Decisions)
+        foreach (var decision in context.Decisions ?? Array.Empty<Decision>())
         {
             nodes.Add(new CognitiveGraphNode(
                 NodeId("Decision", decision.Id.Value),
@@ -2390,7 +2409,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
             }
         }
 
-        foreach (var conclusion in context.Conclusions)
+        foreach (var conclusion in context.Conclusions ?? Array.Empty<Conclusion>())
         {
             nodes.Add(new CognitiveGraphNode(
                 NodeId("Conclusion", conclusion.Id.Value),
@@ -2420,7 +2439,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
             }
         }
 
-        foreach (var run in context.Runs)
+        foreach (var run in context.Runs ?? Array.Empty<Run>())
         {
             nodes.Add(new CognitiveGraphNode(
                 NodeId("Run", run.Id.Value),
@@ -2445,7 +2464,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
             }
         }
 
-        var packetIds = context.Runs
+        var packetIds = (context.Runs ?? Array.Empty<Run>())
             .Select(run => run.PacketId.Value)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
@@ -2464,7 +2483,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
         {
             ["branch"] = head.Branch,
             ["headCommitId"] = head.CommitId?.Value ?? "null",
-            ["generatedAtUtc"] = context.Trace.UpdatedAtUtc?.ToString("O") ?? context.Trace.CreatedAtUtc.ToString("O"),
+            ["generatedAtUtc"] = trace.UpdatedAtUtc?.ToString("O") ?? trace.CreatedAtUtc.ToString("O"),
             ["nodeCount"] = nodes.Count.ToString(),
             ["edgeCount"] = edges.Count.ToString()
         };
