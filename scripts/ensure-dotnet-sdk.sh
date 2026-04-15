@@ -11,6 +11,10 @@ print(payload["sdk"]["version"])
 PY
 )"
 
+if command -v apk >/dev/null 2>&1; then
+  apk add --no-cache icu-libs icu-data-full curl bash >/dev/null
+fi
+
 export DOTNET_ROOT="$INSTALL_DIR"
 export PATH="$DOTNET_ROOT:$DOTNET_ROOT/tools:$PATH"
 
