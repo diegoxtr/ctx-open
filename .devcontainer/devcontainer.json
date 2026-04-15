@@ -6,7 +6,7 @@
       "version": "latest"
     }
   },
-  "postCreateCommand": "dotnet restore Ctx.sln",
+  "postCreateCommand": "bash scripts/ensure-dotnet-sdk.sh && dotnet restore Ctx.sln",
   "postStartCommand": "bash scripts/start-codespaces-demo.sh",
   "forwardPorts": [
     5271

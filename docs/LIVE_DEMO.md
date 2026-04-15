@@ -38,10 +38,11 @@ The recommended public entrypoint is a `codespaces.new` quickstart link instead 
 
 When the codespace starts:
 
-1. `dotnet restore Ctx.sln` runs once on create
-2. `scripts/start-codespaces-demo.sh` starts the viewer on `0.0.0.0:5271`
-3. the script sets `CTX_VIEWER_DEFAULT_REPOSITORY_PATH` to `examples/ctx/agent-session-continuity`
-4. Codespaces forwards port `5271` publicly
+1. `scripts/ensure-dotnet-sdk.sh` installs the SDK pinned in `global.json` when the base image does not already have it
+2. `dotnet restore Ctx.sln` runs once on create
+3. `scripts/start-codespaces-demo.sh` starts the viewer on `0.0.0.0:5271`
+4. the script sets `CTX_VIEWER_DEFAULT_REPOSITORY_PATH` to `examples/ctx/agent-session-continuity`
+5. Codespaces forwards port `5271` publicly
 
 The devcontainer also includes an SSH server feature so the codespace can be operated remotely through GitHub CLI when needed.
 
@@ -56,6 +57,13 @@ bash scripts/start-codespaces-demo.sh
 The script writes logs to:
 
 - `/tmp/ctx-viewer-codespaces.log`
+
+If the viewer does not open, verify the local process inside the codespace first:
+
+```bash
+curl -I http://127.0.0.1:5271
+cat /tmp/ctx-viewer-codespaces.log
+```
 
 ## Public landing
 
