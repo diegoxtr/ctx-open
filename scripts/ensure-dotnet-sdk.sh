@@ -3,13 +3,14 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 INSTALL_DIR="${DOTNET_INSTALL_DIR:-$HOME/.dotnet}"
-REQUIRED_SDK="$(python3 - "$ROOT_DIR/global.json" <<'PY'
-import json, sys
-with open(sys.argv[1], "r", encoding="utf-8") as handle:
-    payload = json.load(handle)
-print(payload["sdk"]["version"])
-PY
+REQUIRED_SDK="$(
+  sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$ROOT_DIR/global.json" | head -n 1
 )"
+
+if [[ -z "$REQUIRED_SDK" ]]; then
+  echo "ERROR: Unable to resolve required SDK version from $ROOT_DIR/global.json" >&2
+  exit 1
+fi
 
 if command -v apk >/dev/null 2>&1; then
   APK_INSTALL=(apk add --no-cache icu-libs icu-data-full curl bash)
