@@ -106,6 +106,12 @@ The first GitHub-native live demo path for CTX is:
 - `examples/ctx/agent-session-continuity` as the default `.ctx` demo repository
 - `GitHub Pages` as a static landing page pointing to the live viewer URL and release downloads
 
+Public entrypoints:
+
+- Landing: `https://diegoxtr.github.io/ctx-open/`
+- Demo notes: `https://diegoxtr.github.io/ctx-open/notes.html`
+- Codespaces quickstart: `https://codespaces.new/diegoxtr/ctx-open?quickstart=1`
+
 The repository includes:
 
 - `.devcontainer/devcontainer.json`
