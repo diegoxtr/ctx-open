@@ -1434,6 +1434,30 @@ body {
     font-weight: 700;
 }
 
+.node-badge {
+    display: inline-block;
+    margin-top: 0.35rem;
+    padding: 0.14rem 0.45rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.node-badge-task {
+    background: #eef6ff;
+    color: #1f4c8a;
+}
+
+.node-badge-decision {
+    background: #eefaf4;
+    color: #21674a;
+}
+
+.node-badge-conclusion {
+    background: #fff6e8;
+    color: #8a5a11;
+}
+
 .detail-box {
     background: #0f1728;
     color: #dfe7f7;
