@@ -34,6 +34,8 @@ The repository now includes:
 - `docs/live-demo/index.html`
 - `.github/workflows/live-demo-pages.yml`
 
+The recommended public entrypoint is a `codespaces.new` quickstart link instead of the repository Codespaces tab, because the quickstart URL opens or resumes the codespace directly in the web client.
+
 When the codespace starts:
 
 1. `dotnet restore Ctx.sln` runs once on create
