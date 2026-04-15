@@ -91,6 +91,13 @@ body {
     font-size: 0.9rem;
 }
 
+.topbar-version {
+    color: #9fc0ff;
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
 .repo-form {
     display: grid;
     grid-template-columns: auto minmax(280px, 460px) auto minmax(120px, 180px) auto auto auto;
@@ -1357,6 +1364,34 @@ body {
 
 .graph-edge {
     transition: stroke 0.2s ease, stroke-width 0.2s ease, opacity 0.2s ease;
+    opacity: 0.92;
+    vector-effect: non-scaling-stroke;
+}
+
+.graph-edge.selected-outgoing {
+    stroke: #2563eb !important;
+    stroke-width: 4.6 !important;
+    opacity: 1;
+    filter: drop-shadow(0 0 4px rgba(37, 99, 235, 0.45));
+}
+
+.graph-edge.selected-incoming {
+    stroke: #059669 !important;
+    stroke-width: 4.6 !important;
+    opacity: 1;
+    filter: drop-shadow(0 0 4px rgba(5, 150, 105, 0.42));
+}
+
+.graph-edge.selected-shared {
+    stroke: #7c3aed !important;
+    stroke-width: 4.8 !important;
+    opacity: 1;
+    filter: drop-shadow(0 0 4px rgba(124, 58, 237, 0.4));
+}
+
+.graph-edge.edge-dimmed {
+    stroke: #c7d4e8;
+    opacity: 0.08;
 }
 
 .graph-edge.commit-path {
@@ -1374,12 +1409,13 @@ body {
 .graph-column {
     position: absolute;
     top: 0;
-    width: 180px;
+    width: 160px;
 }
 
 .graph-column h4 {
     margin: 0 0 0.8rem;
     color: #34517c;
+    text-align: center;
 }
 
 .graph-node {
@@ -1407,6 +1443,25 @@ body {
 .graph-node.active {
     outline: 3px solid #d7e7ff;
     border-color: #214a88;
+}
+
+.graph-node.path-outgoing {
+    border-color: #8eb8ff;
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16);
+}
+
+.graph-node.path-incoming {
+    border-color: #85d4bd;
+    box-shadow: 0 8px 18px rgba(5, 150, 105, 0.15);
+}
+
+.graph-node.path-shared {
+    border-color: #b79dff;
+    box-shadow: 0 8px 18px rgba(124, 58, 237, 0.16);
+}
+
+.graph-node.path-dimmed {
+    opacity: 0.35;
 }
 
 .graph-node small {

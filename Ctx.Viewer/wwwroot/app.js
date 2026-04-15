@@ -3,6 +3,7 @@ const repoPathInput = document.getElementById("repo-path");
 const branchSelect = document.getElementById("branch-select");
 const refreshButton = document.getElementById("refresh-button");
 const autoRefreshToggle = document.getElementById("auto-refresh-toggle");
+const topbarVersion = document.getElementById("topbar-version");
 const summaryCards = document.getElementById("summary-cards");
 const hypothesisRanking = document.getElementById("hypothesis-ranking");
 const hypothesisCount = document.getElementById("hypothesis-count");
@@ -252,6 +253,9 @@ async function loadOverview(branch) {
     repoPathInput.value = overview.repositoryPath;
     persistRepositoryPath(overview.repositoryPath);
     persistBranchSelection(overview.selectedBranch);
+    if (topbarVersion) {
+        topbarVersion.textContent = overview.productVersion ? `v${overview.productVersion}` : "";
+    }
     viewerHint.textContent = `Loaded ${overview.repositoryPath}`;
     currentHypothesisRanking = await loadHypothesisRanking();
     if (requestSequence !== overviewRequestSequence) {
@@ -1545,10 +1549,12 @@ function renderGraph(graph, options = {}) {
     }
 
     const positions = new Map();
-    const columnGap = 190;
-    const rowGap = 110;
+    const columnGap = 182;
+    const nodeVerticalGap = 2;
+    const topLaneBaseY = 48;
     let columnIndex = 0;
-    let maxRows = 1;
+    let maxColumnBottom = 0;
+    const selectedPathState = buildSelectedPathState(filteredGraph, selectedNodeId);
 
     for (const [type, nodes] of grouped.entries()) {
         if (nodes.length === 0 && !(type === "Sub-goal" && hasSubGoalNodes)) {
@@ -1556,29 +1562,42 @@ function renderGraph(graph, options = {}) {
         }
 
         sortGraphNodes(nodes);
-        maxRows = Math.max(maxRows, nodes.length);
         const column = document.createElement("div");
         column.className = "graph-column";
-        column.style.left = `${columnIndex * columnGap}px`;
+        column.style.left = `${columnIndex * columnGap + 10}px`;
         column.innerHTML = `<h4>${type}</h4>`;
         stage.appendChild(column);
+        let columnY = 64;
 
-        nodes.forEach((node, rowIndex) => {
-            const y = 50 + rowIndex * rowGap;
-            positions.set(node.id, { x: columnIndex * columnGap + 10, y });
-            const scoreBadge = buildGraphNodeBadge(node);
+        nodes.forEach((node) => {
+            const y = columnY;
+            const inlineBadge = buildGraphNodeBadge(node);
             const displayType = node.type === "Goal" && subGoalIds.has(node.id) ? "Sub-goal" : node.type;
 
             const card = document.createElement("button");
             const commitFocusClass = currentCommitFocus ? "commit-focus" : "";
             const commitChangedClass = currentCommitFocus?.changedIds.has(node.id) ? "commit-changed" : "";
-            card.className = `graph-node ${commitFocusClass} ${commitChangedClass} ${selectedNodeId === node.id ? "active" : ""}`;
+            const nodePathClass = buildSelectedNodePathClass(selectedPathState, node.id);
+            card.className = `graph-node ${commitFocusClass} ${commitChangedClass} ${selectedNodeId === node.id ? "active" : ""} ${nodePathClass}`;
             card.style.left = `${columnIndex * columnGap + 10}px`;
             card.style.top = `${y}px`;
-            card.innerHTML = `<small>${displayType}</small><strong>${escapeHtml(node.label)}</strong>${scoreBadge}`;
+            card.innerHTML = `<small>${displayType}</small><strong>${escapeHtml(node.label)}</strong>${inlineBadge}`;
             card.onclick = () => showNode(node.id, { scrollIntoView: false });
             stage.appendChild(card);
+
+            const cardHeight = card.offsetHeight || 56;
+            positions.set(node.id, {
+                x: columnIndex * columnGap + 10,
+                y,
+                width: 160,
+                height: cardHeight,
+                centerY: y + cardHeight / 2,
+                columnIndex
+            });
+            columnY += cardHeight + nodeVerticalGap;
         });
+
+        maxColumnBottom = Math.max(maxColumnBottom, columnY);
 
         if (nodes.length === 0 && type === "Sub-goal") {
             const empty = document.createElement("p");
@@ -1592,28 +1611,43 @@ function renderGraph(graph, options = {}) {
         columnIndex += 1;
     }
 
-    stage.style.width = `${Math.max(960, columnIndex * columnGap + 220)}px`;
-    stage.style.height = `${Math.max(720, maxRows * rowGap + 150)}px`;
-    svg.setAttribute("viewBox", `0 0 ${Math.max(960, columnIndex * columnGap + 220)} ${Math.max(720, maxRows * rowGap + 150)}`);
+    const stageWidth = Math.max(960, columnIndex * columnGap + 220);
+    const stageHeight = Math.max(720, maxColumnBottom + 90);
+    stage.style.width = `${stageWidth}px`;
+    stage.style.height = `${stageHeight}px`;
+    svg.setAttribute("viewBox", `0 0 ${stageWidth} ${stageHeight}`);
+    const edgePlans = buildGraphEdgePlans(filteredGraph.edges, positions, { topLaneBaseY });
 
-    for (const edge of filteredGraph.edges) {
+    filteredGraph.edges.forEach((edge, edgeIndex) => {
         const from = positions.get(edge.from);
         const to = positions.get(edge.to);
         if (!from || !to) {
-            continue;
+            return;
         }
 
         const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        const startX = from.x + 160;
-        const startY = from.y + 28;
-        const endX = to.x;
-        const endY = to.y + 28;
-        const midX = (startX + endX) / 2;
-        line.setAttribute("d", `M ${startX} ${startY} C ${midX} ${startY}, ${midX} ${endY}, ${endX} ${endY}`);
+        const sourceAnchor = resolveGraphNodeAnchor(from, to.centerY, "outgoing");
+        const targetAnchor = resolveGraphNodeAnchor(to, from.centerY, "incoming");
+        line.setAttribute("d", buildGraphEdgePath(sourceAnchor, targetAnchor, edgePlans[edgeIndex]));
         line.setAttribute("fill", "none");
         line.setAttribute("stroke", "#91a9ce");
         line.setAttribute("stroke-width", "2");
+        line.setAttribute("stroke-linecap", "round");
+        line.setAttribute("stroke-linejoin", "round");
         line.classList.add("graph-edge");
+
+        const edgeKey = `${edge.from}->${edge.to}`;
+        if (selectedPathState.hasSelection) {
+            if (selectedPathState.sharedEdges.has(edgeKey)) {
+                line.classList.add("selected-shared");
+            } else if (selectedPathState.outgoingEdges.has(edgeKey)) {
+                line.classList.add("selected-outgoing");
+            } else if (selectedPathState.incomingEdges.has(edgeKey)) {
+                line.classList.add("selected-incoming");
+            } else {
+                line.classList.add("edge-dimmed");
+            }
+        }
 
         if (currentCommitFocus?.nodeIds?.has(edge.from) && currentCommitFocus?.nodeIds?.has(edge.to)) {
             line.classList.add("commit-path");
@@ -1622,13 +1656,278 @@ function renderGraph(graph, options = {}) {
             line.classList.add("commit-path-changed");
         }
         svg.appendChild(line);
-    }
+    });
 
     if (preserveViewport) {
         restoreGraphViewport(viewportSnapshot);
     } else {
         resetGraphViewport();
     }
+}
+
+function resolveGraphNodeAnchor(nodeBox, targetCenterY, direction) {
+    const width = nodeBox.width ?? 160;
+    const centerY = nodeBox.centerY ?? (nodeBox.y + (nodeBox.height ?? 56) / 2);
+    const deltaY = (targetCenterY ?? centerY) - centerY;
+    const biasLimit = Math.max(8, Math.min(20, (nodeBox.height ?? 56) * 0.22));
+    const biasedY = centerY + Math.max(-biasLimit, Math.min(biasLimit, deltaY * 0.35));
+
+    return {
+        x: direction === "outgoing" ? nodeBox.x + width : nodeBox.x,
+        y: Math.round(biasedY * 10) / 10
+    };
+}
+
+function buildSelectedPathState(graph, selectedId) {
+    if (!selectedId || !graph?.nodes?.some(node => node.id === selectedId)) {
+        return {
+            hasSelection: false,
+            incomingNodes: new Set(),
+            outgoingNodes: new Set(),
+            sharedNodes: new Set(),
+            incomingEdges: new Set(),
+            outgoingEdges: new Set(),
+            sharedEdges: new Set()
+        };
+    }
+
+    const incomingAdjacency = new Map();
+    const outgoingAdjacency = new Map();
+    graph.edges.forEach((edge) => {
+        if (!outgoingAdjacency.has(edge.from)) {
+            outgoingAdjacency.set(edge.from, []);
+        }
+        outgoingAdjacency.get(edge.from).push(edge);
+
+        if (!incomingAdjacency.has(edge.to)) {
+            incomingAdjacency.set(edge.to, []);
+        }
+        incomingAdjacency.get(edge.to).push(edge);
+    });
+
+    const incomingNodes = new Set([selectedId]);
+    const outgoingNodes = new Set([selectedId]);
+    const incomingEdges = new Set();
+    const outgoingEdges = new Set();
+
+    walkSelectedPath(selectedId, incomingAdjacency, "incoming", incomingNodes, incomingEdges);
+    walkSelectedPath(selectedId, outgoingAdjacency, "outgoing", outgoingNodes, outgoingEdges);
+
+    const sharedNodes = new Set(
+        [...incomingNodes].filter(nodeId => outgoingNodes.has(nodeId) && nodeId !== selectedId)
+    );
+    const sharedEdges = new Set(
+        [...incomingEdges].filter(edgeKey => outgoingEdges.has(edgeKey))
+    );
+
+    return {
+        hasSelection: true,
+        incomingNodes,
+        outgoingNodes,
+        sharedNodes,
+        incomingEdges,
+        outgoingEdges,
+        sharedEdges
+    };
+}
+
+function walkSelectedPath(startNodeId, adjacency, direction, nodeSet, edgeSet) {
+    const queue = [startNodeId];
+    const visited = new Set([startNodeId]);
+
+    while (queue.length > 0) {
+        const currentNodeId = queue.shift();
+        const edges = adjacency.get(currentNodeId) ?? [];
+        edges.forEach((edge) => {
+            const edgeKey = `${edge.from}->${edge.to}`;
+            edgeSet.add(edgeKey);
+
+            const nextNodeId = direction === "incoming" ? edge.from : edge.to;
+            nodeSet.add(nextNodeId);
+            if (!visited.has(nextNodeId)) {
+                visited.add(nextNodeId);
+                queue.push(nextNodeId);
+            }
+        });
+    }
+}
+
+function buildSelectedNodePathClass(pathState, nodeId) {
+    if (!pathState?.hasSelection || nodeId === selectedNodeId) {
+        return "";
+    }
+
+    if (pathState.sharedNodes.has(nodeId)) {
+        return "path-shared";
+    }
+
+    if (pathState.outgoingNodes.has(nodeId)) {
+        return "path-outgoing";
+    }
+
+    if (pathState.incomingNodes.has(nodeId)) {
+        return "path-incoming";
+    }
+
+    return "path-dimmed";
+}
+
+function buildGraphEdgePlans(edges, positions, layout = {}) {
+    const plans = edges.map((edge) => {
+        const from = positions.get(edge.from);
+        const to = positions.get(edge.to);
+        const spanColumns = Math.max(0, (to?.columnIndex ?? 0) - (from?.columnIndex ?? 0));
+        const verticalDelta = Math.abs((to?.centerY ?? 0) - (from?.centerY ?? 0));
+        return {
+            mode: spanColumns >= 2 && verticalDelta >= 120 ? "top-lane" : "direct",
+            spanColumns,
+            verticalDelta,
+            laneIndex: 0,
+            from,
+            to
+        };
+    });
+
+    const grouped = new Map();
+    plans.forEach((plan, index) => {
+        if (plan.mode !== "top-lane" || !plan.from || !plan.to) {
+            return;
+        }
+
+        const key = `${plan.from.columnIndex}->${plan.to.columnIndex}`;
+        if (!grouped.has(key)) {
+            grouped.set(key, []);
+        }
+
+        grouped.get(key).push({ index, sortY: Math.min(plan.from.centerY, plan.to.centerY) });
+    });
+
+    for (const group of grouped.values()) {
+        group.sort((left, right) => left.sortY - right.sortY);
+        group.forEach((entry, laneIndex) => {
+            plans[entry.index].laneIndex = laneIndex;
+            plans[entry.index].laneY = Math.max(10, (layout.topLaneBaseY ?? 36) - laneIndex * 8);
+        });
+    }
+
+    return plans;
+}
+
+function buildGraphEdgePath(sourceAnchor, targetAnchor, plan) {
+    if (plan?.mode === "top-lane") {
+        return buildSeparatedTopLaneEdgePath(sourceAnchor, targetAnchor, plan);
+    }
+
+    const gap = Math.max(8, targetAnchor.x - sourceAnchor.x);
+    const stub = Math.max(2, Math.min(8, gap * 0.28));
+    const control = Math.max(4, Math.min(20, gap * 0.42));
+    const sourceStubX = sourceAnchor.x + stub;
+    const targetStubX = targetAnchor.x - stub;
+    const sourceControlX = sourceStubX + control;
+    const targetControlX = targetStubX - control;
+
+    return [
+        `M ${sourceAnchor.x} ${sourceAnchor.y}`,
+        `L ${sourceStubX} ${sourceAnchor.y}`,
+        `C ${sourceControlX} ${sourceAnchor.y}, ${targetControlX} ${targetAnchor.y}, ${targetStubX} ${targetAnchor.y}`,
+        `L ${targetAnchor.x} ${targetAnchor.y}`
+    ].join(" ");
+}
+
+function buildSeparatedTopLaneEdgePath(sourceAnchor, targetAnchor, plan) {
+    const laneIndex = plan?.laneIndex ?? 0;
+    const laneY = plan?.laneY ?? 36;
+    const sourceLaneInset = 10 + laneIndex * 10;
+    const targetLaneInset = 10 + laneIndex * 10;
+    const sourceLiftY = sourceAnchor.y - (8 + laneIndex * 5);
+    const targetDropY = targetAnchor.y - (8 + laneIndex * 5);
+    const sourceLaneX = sourceAnchor.x + sourceLaneInset;
+    const targetLaneX = targetAnchor.x - targetLaneInset;
+
+    return buildRoundedPolylinePath([
+        { x: sourceAnchor.x, y: sourceAnchor.y },
+        { x: sourceLaneX, y: sourceAnchor.y },
+        { x: sourceLaneX, y: sourceLiftY },
+        { x: sourceLaneX, y: laneY },
+        { x: targetLaneX, y: laneY },
+        { x: targetLaneX, y: targetDropY },
+        { x: targetLaneX, y: targetAnchor.y },
+        { x: targetAnchor.x, y: targetAnchor.y }
+    ], 10);
+}
+
+function buildRoundedPolylinePath(points, radius) {
+    if (!Array.isArray(points) || points.length < 2) {
+        return "";
+    }
+
+    const effectiveRadius = Math.max(0, radius ?? 0);
+    const commands = [`M ${points[0].x} ${points[0].y}`];
+
+    for (let index = 1; index < points.length - 1; index += 1) {
+        const previous = points[index - 1];
+        const current = points[index];
+        const next = points[index + 1];
+        const incomingLength = Math.hypot(current.x - previous.x, current.y - previous.y);
+        const outgoingLength = Math.hypot(next.x - current.x, next.y - current.y);
+
+        if (incomingLength === 0 || outgoingLength === 0 || effectiveRadius === 0) {
+            commands.push(`L ${current.x} ${current.y}`);
+            continue;
+        }
+
+        const cornerRadius = Math.min(effectiveRadius, incomingLength / 2, outgoingLength / 2);
+        const entryX = current.x - ((current.x - previous.x) / incomingLength) * cornerRadius;
+        const entryY = current.y - ((current.y - previous.y) / incomingLength) * cornerRadius;
+        const exitX = current.x + ((next.x - current.x) / outgoingLength) * cornerRadius;
+        const exitY = current.y + ((next.y - current.y) / outgoingLength) * cornerRadius;
+
+        commands.push(`L ${roundGraphCoordinate(entryX)} ${roundGraphCoordinate(entryY)}`);
+        commands.push(`Q ${current.x} ${current.y}, ${roundGraphCoordinate(exitX)} ${roundGraphCoordinate(exitY)}`);
+    }
+
+    const lastPoint = points[points.length - 1];
+    commands.push(`L ${lastPoint.x} ${lastPoint.y}`);
+    return commands.join(" ");
+}
+
+function roundGraphCoordinate(value) {
+    return Math.round(value * 10) / 10;
+}
+
+function buildGraphNodeBadge(node) {
+    if (node.type === "Hypothesis" && node.metadata?.score) {
+        return `<span class="node-score">score ${escapeHtml(node.metadata.score)}</span>`;
+    }
+
+    const state = normalizeGraphNodeState(node.state);
+    if (!state) {
+        return "";
+    }
+
+    if (node.type === "Task") {
+        return `<span class="node-badge node-badge-task">${escapeHtml(state)}</span>`;
+    }
+
+    if (node.type === "Decision") {
+        return `<span class="node-badge node-badge-decision">${escapeHtml(state)}</span>`;
+    }
+
+    if (node.type === "Conclusion") {
+        return `<span class="node-badge node-badge-conclusion">${escapeHtml(state)}</span>`;
+    }
+
+    return "";
+}
+
+function normalizeGraphNodeState(state) {
+    if (!state) {
+        return "";
+    }
+
+    return String(state)
+        .replace(/([a-z])([A-Z])/g, "$1 $2")
+        .trim();
 }
 
 function renderSelectedNodeDetail(nodeId, options = {}) {
@@ -1754,7 +2053,7 @@ function filterGraphByTaskState(graph) {
         return graph;
     }
 
-    const selectedTaskIds = new Set(
+    let selectedTaskIds = new Set(
         taskNodes
             .filter(node => effectiveStates.has(node.state))
             .map(node => node.id)
@@ -1793,6 +2092,11 @@ function filterGraphByTaskState(graph) {
         }
     }
 
+    const focusedTaskId = resolveWorkingFocusTaskId(graph, selectedTaskIds, taskGoalIds);
+    if (focusedTaskId && selectedTaskIds.has(focusedTaskId) && !selectedCommitId && !currentCommitFocus) {
+        selectedTaskIds = new Set([focusedTaskId]);
+    }
+
     for (const taskId of taskNodes.map(node => node.id)) {
         const queue = [taskId];
         const visited = new Set([taskId]);
@@ -1823,6 +2127,7 @@ function filterGraphByTaskState(graph) {
 
     const visibleIds = new Set();
     const directGoalIds = new Set();
+    const parentGoalIds = new Set();
     let hasSelectedSubGoal = false;
 
     for (const taskId of selectedTaskIds) {
@@ -1834,6 +2139,7 @@ function filterGraphByTaskState(graph) {
         directGoalIds.add(directGoalId);
         if (subGoalParentIds.has(directGoalId)) {
             hasSelectedSubGoal = true;
+            parentGoalIds.add(subGoalParentIds.get(directGoalId));
         }
     }
 
@@ -1860,7 +2166,7 @@ function filterGraphByTaskState(graph) {
 
         if (node.type === "Goal") {
             if (hasSelectedSubGoal) {
-                if (directGoalIds.has(node.id)) {
+                if (directGoalIds.has(node.id) || parentGoalIds.has(node.id)) {
                     visibleIds.add(node.id);
                 }
             } else if (hasSelectedAssociation) {
@@ -1878,6 +2184,85 @@ function filterGraphByTaskState(graph) {
         nodes: graph.nodes.filter(node => visibleIds.has(node.id)),
         edges: graph.edges.filter(edge => visibleIds.has(edge.from) && visibleIds.has(edge.to))
     };
+}
+
+function resolveWorkingFocusTaskId(graph, selectedTaskIds, taskGoalIds) {
+    if (!(selectedTaskIds instanceof Set) || selectedTaskIds.size === 0) {
+        return null;
+    }
+
+    if (!currentGraphFocusModes.has("working")) {
+        return null;
+    }
+
+    const selectedNodeTaskId = resolveFocusedTaskIdFromSelectedNode(graph, selectedTaskIds);
+    if (selectedNodeTaskId) {
+        return selectedNodeTaskId;
+    }
+
+    const preferredOverviewTask = (currentOverview?.tasks ?? []).find(task => task.state === "InProgress")
+        ?? (currentOverview?.tasks ?? []).find(task => task.state === "Ready")
+        ?? (currentOverview?.tasks ?? []).find(task => task.state !== "Done");
+
+    if (preferredOverviewTask) {
+        const preferredTaskNodeId = `Task:${preferredOverviewTask.id}`;
+        if (selectedTaskIds.has(preferredTaskNodeId)) {
+            return preferredTaskNodeId;
+        }
+    }
+
+    const orderedTasks = Array.from(selectedTaskIds).sort((left, right) => {
+        const leftGoal = taskGoalIds.get(left) ?? "";
+        const rightGoal = taskGoalIds.get(right) ?? "";
+        if (leftGoal !== rightGoal) {
+            return leftGoal.localeCompare(rightGoal);
+        }
+
+        return left.localeCompare(right);
+    });
+
+    return orderedTasks[0] ?? null;
+}
+
+function resolveFocusedTaskIdFromSelectedNode(graph, selectedTaskIds) {
+    if (!selectedNodeId) {
+        return null;
+    }
+
+    if (selectedNodeId.startsWith("Task:") && selectedTaskIds.has(selectedNodeId)) {
+        return selectedNodeId;
+    }
+
+    const adjacency = new Map();
+    for (const node of graph.nodes ?? []) {
+        adjacency.set(node.id, []);
+    }
+
+    for (const edge of graph.edges ?? []) {
+        adjacency.get(edge.from)?.push(edge.to);
+        adjacency.get(edge.to)?.push(edge.from);
+    }
+
+    const queue = [selectedNodeId];
+    const visited = new Set([selectedNodeId]);
+
+    while (queue.length > 0) {
+        const currentId = queue.shift();
+        for (const neighborId of adjacency.get(currentId) ?? []) {
+            if (visited.has(neighborId)) {
+                continue;
+            }
+
+            if (neighborId.startsWith("Task:") && selectedTaskIds.has(neighborId)) {
+                return neighborId;
+            }
+
+            visited.add(neighborId);
+            queue.push(neighborId);
+        }
+    }
+
+    return null;
 }
 
 function buildCommitFocus(detail, graph) {
@@ -2194,44 +2579,6 @@ function sortGraphNodes(nodes) {
         }
         return left.label.localeCompare(right.label, undefined, { sensitivity: "base" });
     });
-}
-
-function buildGraphNodeBadge(node) {
-    if (node.type === "Hypothesis" && node.metadata?.score) {
-        return `<span class="node-score">score ${escapeHtml(node.metadata.score)}</span>`;
-    }
-
-    const state = normalizeGraphNodeState(node.state);
-    if (!state) {
-        return "";
-    }
-
-    if (node.type === "Task") {
-        return `<span class="node-badge node-badge-task">${escapeHtml(state)}</span>`;
-    }
-
-    if (node.type === "Decision") {
-        return `<span class="node-badge node-badge-decision">${escapeHtml(state)}</span>`;
-    }
-
-    if (node.type === "Conclusion") {
-        return `<span class="node-badge node-badge-conclusion">${escapeHtml(state)}</span>`;
-    }
-
-    return "";
-}
-
-function normalizeGraphNodeState(state) {
-    if (!state) {
-        return "";
-    }
-
-    const normalized = String(state).trim();
-    if (!normalized) {
-        return "";
-    }
-
-    return normalized;
 }
 
 function buildCommitFocusCaption() {
