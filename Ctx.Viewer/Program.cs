@@ -334,6 +334,9 @@ app.MapGet("/api/origin", async (string? path, string? goalId, string? taskId, s
 
 app.Run();
 
+static string ResolveRepositoryPath(string? path)
+    => string.IsNullOrWhiteSpace(path) ? ResolveDefaultRepositoryRoot() : Path.GetFullPath(path);
+
 static async Task<string?> ResolveCommitReferenceAsync(
     string repositoryPath,
     string? commitId,
@@ -367,21 +370,13 @@ static async Task<string?> ResolveCommitReferenceAsync(
         }
     }
 
-    if (matches.Count == 1)
+    return matches.Count switch
     {
-        return matches.Single();
-    }
-
-    if (matches.Count > 1)
-    {
-        throw new InvalidOperationException($"Commit '{trimmedCommitId}' is ambiguous.");
-    }
-
-    throw new InvalidOperationException($"Commit '{trimmedCommitId}' was not found.");
+        0 => throw new InvalidOperationException($"Commit '{trimmedCommitId}' was not found."),
+        1 => matches.Single(),
+        _ => throw new InvalidOperationException($"Commit '{trimmedCommitId}' is ambiguous. Use a longer id.")
+    };
 }
-
-static string ResolveRepositoryPath(string? path)
-    => string.IsNullOrWhiteSpace(path) ? ResolveDefaultRepositoryRoot() : Path.GetFullPath(path);
 
 static (IReadOnlyList<(CognitiveTrigger Trigger, string Resolution)> Selected, IReadOnlyList<(CognitiveTrigger Trigger, string Resolution)> Available) SelectOriginTriggers(
     IReadOnlyList<CognitiveTrigger> triggers,
