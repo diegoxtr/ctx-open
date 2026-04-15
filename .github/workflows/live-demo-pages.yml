@@ -39,6 +39,7 @@ jobs:
           rm -rf site
           mkdir -p site/assets
           cp docs/live-demo/index.html site/index.html
+          cp docs/live-demo/notes.html site/notes.html
           cp docs/live-demo/styles.css site/styles.css
           cp assets/screenshots/ctx-viewer-working-context.jpg site/assets/
           cp assets/screenshots/ctx-viewer-commit-thread.jpg site/assets/
