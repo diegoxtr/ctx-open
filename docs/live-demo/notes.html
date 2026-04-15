@@ -17,7 +17,7 @@
       </p>
       <div class="actions">
         <a class="button primary" href="./index.html">Back To Landing</a>
-        <a class="button" href="https://github.com/diegoxtr/ctx-open?tab=codespaces">Open In Codespaces</a>
+        <a class="button" href="https://codespaces.new/diegoxtr/ctx-open?quickstart=1">Open In Codespaces</a>
       </div>
     </section>
 
@@ -39,6 +39,7 @@
       <article class="card">
         <h2>Codespaces flow</h2>
         <ol>
+          <li><code>scripts/ensure-dotnet-sdk.sh</code> installs the SDK pinned in <code>global.json</code> when needed.</li>
           <li><code>dotnet restore Ctx.sln</code> runs on create.</li>
           <li><code>scripts/start-codespaces-demo.sh</code> starts the viewer on <code>0.0.0.0:5271</code>.</li>
           <li>The script sets <code>CTX_VIEWER_DEFAULT_REPOSITORY_PATH</code> to the tracked demo repo.</li>
