@@ -157,35 +157,51 @@ app.MapGet("/api/hypotheses/rank", async (string? path, CancellationToken cancel
 
 app.MapGet("/api/graph", async (string? path, string? commitId, CancellationToken cancellationToken) =>
 {
-    var repositoryPath = ResolveRepositoryPath(path);
-    var result = await runtime.ApplicationService.ExportGraphAsync(repositoryPath, "json", commitId, cancellationToken);
-    return result.Success
-        ? Results.Json(result.Data)
-        : Results.BadRequest(new { message = result.Message });
+    try
+    {
+        var repositoryPath = ResolveRepositoryPath(path);
+        var resolvedCommitId = await ResolveCommitReferenceAsync(repositoryPath, commitId, commitRepository, branchRepository, cancellationToken);
+        var result = await runtime.ApplicationService.ExportGraphAsync(repositoryPath, "json", resolvedCommitId, cancellationToken);
+        return result.Success
+            ? Results.Json(result.Data)
+            : Results.BadRequest(new { message = result.Message });
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
 });
 
 app.MapGet("/api/commit", async (string id, string? path, CancellationToken cancellationToken) =>
 {
-    var repositoryPath = ResolveRepositoryPath(path);
-    var commit = await commitRepository.LoadAsync(repositoryPath, new ContextCommitId(id), cancellationToken);
-    return commit is null
-        ? Results.NotFound(new { message = $"Commit '{id}' was not found." })
-        : Results.Json(new
-        {
-            id = commit.Id.Value,
-            branch = commit.Branch,
-            author = commit.Trace.CreatedBy,
-            modelName = commit.Trace.ModelName,
-            modelVersion = commit.Trace.ModelVersion,
-            message = commit.Message,
-            createdAtUtc = commit.CreatedAtUtc,
-            snapshotHash = commit.SnapshotHash,
-            changedEntityCount = CountChangedEntities(commit.Diff),
-            changedEntitySummary = BuildChangeSummary(commit.Diff),
-            parentIds = commit.ParentIds.Select(parent => parent.Value),
-            diff = commit.Diff,
-            cognitivePath = BuildCognitivePath(commit)
-        });
+    try
+    {
+        var repositoryPath = ResolveRepositoryPath(path);
+        var resolvedCommitId = await ResolveCommitReferenceAsync(repositoryPath, id, commitRepository, branchRepository, cancellationToken);
+        var commit = await commitRepository.LoadAsync(repositoryPath, new ContextCommitId(resolvedCommitId ?? id), cancellationToken);
+        return commit is null
+            ? Results.NotFound(new { message = $"Commit '{id}' was not found." })
+            : Results.Json(new
+            {
+                id = commit.Id.Value,
+                branch = commit.Branch,
+                author = commit.Trace.CreatedBy,
+                modelName = commit.Trace.ModelName,
+                modelVersion = commit.Trace.ModelVersion,
+                message = commit.Message,
+                createdAtUtc = commit.CreatedAtUtc,
+                snapshotHash = commit.SnapshotHash,
+                changedEntityCount = CountChangedEntities(commit.Diff),
+                changedEntitySummary = BuildChangeSummary(commit.Diff),
+                parentIds = commit.ParentIds.Select(parent => parent.Value),
+                diff = commit.Diff,
+                cognitivePath = BuildCognitivePath(commit)
+            });
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
 });
 
 app.MapGet("/api/playbook", async (string? path, string? goalId, string? taskId, string? purpose, CancellationToken cancellationToken) =>
@@ -317,6 +333,52 @@ app.MapGet("/api/origin", async (string? path, string? goalId, string? taskId, s
 });
 
 app.Run();
+
+static async Task<string?> ResolveCommitReferenceAsync(
+    string repositoryPath,
+    string? commitId,
+    ICommitRepository commitRepository,
+    IBranchRepository branchRepository,
+    CancellationToken cancellationToken)
+{
+    if (string.IsNullOrWhiteSpace(commitId))
+    {
+        return commitId;
+    }
+
+    var trimmedCommitId = commitId.Trim();
+    var exactCommit = await commitRepository.LoadAsync(repositoryPath, new ContextCommitId(trimmedCommitId), cancellationToken);
+    if (exactCommit is not null)
+    {
+        return exactCommit.Id.Value;
+    }
+
+    var branches = await branchRepository.ListAsync(repositoryPath, cancellationToken);
+    var matches = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    foreach (var branch in branches)
+    {
+        var history = await commitRepository.GetHistoryAsync(repositoryPath, branch.Name, cancellationToken);
+        foreach (var commit in history)
+        {
+            if (commit.Id.Value.StartsWith(trimmedCommitId, StringComparison.OrdinalIgnoreCase))
+            {
+                matches.Add(commit.Id.Value);
+            }
+        }
+    }
+
+    if (matches.Count == 1)
+    {
+        return matches.Single();
+    }
+
+    if (matches.Count > 1)
+    {
+        throw new InvalidOperationException($"Commit '{trimmedCommitId}' is ambiguous.");
+    }
+
+    throw new InvalidOperationException($"Commit '{trimmedCommitId}' was not found.");
+}
 
 static string ResolveRepositoryPath(string? path)
     => string.IsNullOrWhiteSpace(path) ? ResolveDefaultRepositoryRoot() : Path.GetFullPath(path);
