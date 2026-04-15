@@ -12,6 +12,12 @@ Public demo entrypoints:
 - Demo notes: `https://diegoxtr.github.io/ctx-open/notes.html`
 - Codespaces quickstart: `https://codespaces.new/diegoxtr/ctx-open?quickstart=1`
 
+Demo repositories you can copy and paste:
+
+- Codespaces default: `/workspaces/ctx-open/examples/ctx/agent-session-continuity`
+- Codespaces alternate: `/workspaces/ctx-open/examples/ctx/catalog-cache-branch-merge`
+- Codespaces alternate: `/workspaces/ctx-open/examples/ctx/critical-checkout-regression`
+
 ## Why this split exists
 
 GitHub Pages is static hosting. It cannot run the CTX Viewer backend or inspect a `.ctx` repository by itself.
