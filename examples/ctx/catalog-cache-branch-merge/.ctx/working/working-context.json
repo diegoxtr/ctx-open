@@ -2,7 +2,7 @@
   "repositoryVersion": "1.0",
   "currentBranch": "main",
   "headCommitId": {
-    "value": "6ef300df312145c6b476a3f591cc1139"
+    "value": "004df2b267db454898b372121f7939d9"
   },
   "dirty": false,
   "project": {
@@ -39,6 +39,9 @@
         },
         {
           "value": "00601f88a7d042fb8c980288699da1ed"
+        },
+        {
+          "value": "838ab119c99e494781d43604a73f6389"
         }
       ],
       "id": {
@@ -145,6 +148,36 @@
         "createdAtUtc": "2026-04-12T00:01:50.8404523+00:00",
         "updatedBy": "diegoxtr",
         "updatedAtUtc": "2026-04-12T00:01:53.7138208+00:00",
+        "tags": [
+          "task"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "goalId": {
+        "value": "951ceb82dcec475898b00780c4143861"
+      },
+      "title": "Review the chosen cache strategy with a live checklist",
+      "description": "Keep the final architecture decision closed but leave one ready review task so the demo still shows actionable context.",
+      "state": 1,
+      "dependsOnTaskIds": [],
+      "hypothesisIds": [
+        {
+          "value": "adae8dcc344847aebe58193a86ce89bf"
+        }
+      ],
+      "parentTaskId": null,
+      "id": {
+        "value": "838ab119c99e494781d43604a73f6389"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-15T15:02:21.0355652+00:00",
+        "updatedBy": "diegoxtr",
+        "updatedAtUtc": "2026-04-15T15:02:21.7499947+00:00",
         "tags": [
           "task"
         ],
@@ -264,6 +297,42 @@
         "createdAtUtc": "2026-04-12T00:01:51.4446616+00:00",
         "updatedBy": "diegoxtr",
         "updatedAtUtc": "2026-04-12T00:01:52.7772227+00:00",
+        "tags": [
+          "hypothesis"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "statement": "A ready review task will make the branch-merge demo easier to inspect because the viewer can show the chosen strategy, the remaining checklist, and the origin of that follow-up.",
+      "rationale": "A fully closed example hides the operational surfaces that matter during a live walkthrough.",
+      "confidence": 0.78,
+      "impact": 0.72,
+      "evidenceStrength": 0.45,
+      "costToValidate": 0.18,
+      "state": 0,
+      "taskIds": [
+        {
+          "value": "838ab119c99e494781d43604a73f6389"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "5d03990a305549f88d4e5793304df097"
+        }
+      ],
+      "probability": 0.78,
+      "score": 0.5970,
+      "id": {
+        "value": "adae8dcc344847aebe58193a86ce89bf"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-15T15:02:22.4179418+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
         "tags": [
           "hypothesis"
         ],
@@ -572,6 +641,39 @@
         "modelName": null,
         "modelVersion": null
       }
+    },
+    {
+      "title": "The demo should keep a ready review checklist task",
+      "summary": "The example now carries a ready follow-up review task to expose Working, Origin, and Playbook in the viewer.",
+      "source": "demo",
+      "kind": 2,
+      "confidence": 0.84,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "adae8dcc344847aebe58193a86ce89bf"
+        },
+        {
+          "entityType": "Task",
+          "entityId": "838ab119c99e494781d43604a73f6389"
+        }
+      ],
+      "id": {
+        "value": "5d03990a305549f88d4e5793304df097"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-15T15:02:23.1450103+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
     }
   ],
   "conclusions": [
@@ -752,7 +854,7 @@
     "createdBy": "diegoxtr",
     "createdAtUtc": "2026-04-12T00:00:58.9104602+00:00",
     "updatedBy": "diegoxtr",
-    "updatedAtUtc": "2026-04-12T00:01:58.6416432+00:00",
+    "updatedAtUtc": "2026-04-15T15:03:01.5609164+00:00",
     "tags": [
       "project"
     ],

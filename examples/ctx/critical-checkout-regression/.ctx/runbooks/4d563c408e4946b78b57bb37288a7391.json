@@ -1,0 +1,49 @@
+{
+  "title": "Checkout regression demo validation",
+  "kind": 0,
+  "triggers": [
+    "demo",
+    "viewer-validation"
+  ],
+  "whenToUse": "Use when demonstrating how CTX keeps operational follow-up visible even after a critical fix is already shipped.",
+  "do": [
+    "Open the active task in the Working view."
+  ],
+  "verify": [
+    "Working shows one open task for the example."
+  ],
+  "references": [
+    "docs/LIVE_DEMO.md"
+  ],
+  "preconditions": [
+    "The example repository is loaded in CTX Viewer."
+  ],
+  "failureSignals": [],
+  "escalationBoundary": [],
+  "goalIds": [
+    {
+      "value": "45cc3736c95d451881f5dafd35f31a26"
+    }
+  ],
+  "taskIds": [
+    {
+      "value": "fc5d90079b414bafab4a6fb6827e6938"
+    }
+  ],
+  "state": 1,
+  "id": {
+    "value": "4d563c408e4946b78b57bb37288a7391"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-15T15:02:27.5565823+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "runbook"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

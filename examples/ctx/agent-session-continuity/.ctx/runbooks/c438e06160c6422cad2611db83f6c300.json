@@ -1,0 +1,49 @@
+{
+  "title": "Session continuity demo validation",
+  "kind": 0,
+  "triggers": [
+    "demo",
+    "viewer-validation"
+  ],
+  "whenToUse": "Use when demonstrating how a later session resumes the digest feature from recorded state.",
+  "do": [
+    "Open the active task in the Working view."
+  ],
+  "verify": [
+    "Working shows one open task for the example."
+  ],
+  "references": [
+    "docs/LIVE_DEMO.md"
+  ],
+  "preconditions": [
+    "The example repository is loaded in CTX Viewer."
+  ],
+  "failureSignals": [],
+  "escalationBoundary": [],
+  "goalIds": [
+    {
+      "value": "530f4816323f474d8e944d006685831a"
+    }
+  ],
+  "taskIds": [
+    {
+      "value": "37bd7935aaf447cfadb382ef1af5e2d7"
+    }
+  ],
+  "state": 1,
+  "id": {
+    "value": "c438e06160c6422cad2611db83f6c300"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-15T15:02:19.9777217+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "runbook"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

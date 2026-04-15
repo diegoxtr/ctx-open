@@ -1,0 +1,49 @@
+{
+  "title": "Cache strategy demo validation",
+  "kind": 0,
+  "triggers": [
+    "demo",
+    "viewer-validation"
+  ],
+  "whenToUse": "Use when demonstrating how the chosen cache strategy can still be reviewed and validated from CTX without reopening the branch comparison itself.",
+  "do": [
+    "Open the active task in the Working view."
+  ],
+  "verify": [
+    "Working shows one open task for the example."
+  ],
+  "references": [
+    "docs/LIVE_DEMO.md"
+  ],
+  "preconditions": [
+    "The example repository is loaded in CTX Viewer."
+  ],
+  "failureSignals": [],
+  "escalationBoundary": [],
+  "goalIds": [
+    {
+      "value": "951ceb82dcec475898b00780c4143861"
+    }
+  ],
+  "taskIds": [
+    {
+      "value": "838ab119c99e494781d43604a73f6389"
+    }
+  ],
+  "state": 1,
+  "id": {
+    "value": "63aa88628a2d43b2ab807135f9d8a763"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-15T15:02:23.7534766+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "runbook"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

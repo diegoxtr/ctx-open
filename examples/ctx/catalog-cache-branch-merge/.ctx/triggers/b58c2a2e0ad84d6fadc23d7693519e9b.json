@@ -1,0 +1,33 @@
+{
+  "kind": 1,
+  "summary": "Open task line: Review the chosen cache strategy with a live checklist",
+  "text": "Keep the final architecture decision closed but leave one ready review task so the demo still shows actionable context.",
+  "fingerprint": "9fe5657c577db5b027e262c997cbfeea26dc89254727ebf563e6cb1388b0c605",
+  "goalIds": [
+    {
+      "value": "951ceb82dcec475898b00780c4143861"
+    }
+  ],
+  "taskIds": [
+    {
+      "value": "838ab119c99e494781d43604a73f6389"
+    }
+  ],
+  "operationalRunbookIds": [],
+  "state": 1,
+  "id": {
+    "value": "b58c2a2e0ad84d6fadc23d7693519e9b"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-15T15:02:21.2456191+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "trigger"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

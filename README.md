@@ -118,6 +118,12 @@ Demo repositories you can copy and paste:
 - Codespaces alternate: `/workspaces/ctx-open/examples/ctx/catalog-cache-branch-merge`
 - Codespaces alternate: `/workspaces/ctx-open/examples/ctx/critical-checkout-regression`
 
+What each demo should show:
+
+- `agent-session-continuity`: `Working` shows one ready handoff audit task, `Origin` shows why the follow-up line stayed open, and `Playbook` shows the session continuity validation runbook.
+- `catalog-cache-branch-merge`: `Working` shows one ready cache-review checklist, `Origin` explains why the review line stayed visible, and `Playbook` shows the cache strategy validation runbook.
+- `critical-checkout-regression`: `Working` shows one ready post-fix monitoring task, `Origin` explains why monitoring stayed open after the fix, and `Playbook` shows the checkout regression validation runbook.
+
 The repository includes:
 
 - `.devcontainer/devcontainer.json`

@@ -1,0 +1,33 @@
+{
+  "kind": 1,
+  "summary": "Open task line: Audit the digest handoff one more time",
+  "text": "Leave one explicit follow-up task so the demo shows resumable work instead of a fully closed archive.",
+  "fingerprint": "64b479dc68372990c66e4dc85d2d7922a80889cec00b1733000f1efeddd232e3",
+  "goalIds": [
+    {
+      "value": "530f4816323f474d8e944d006685831a"
+    }
+  ],
+  "taskIds": [
+    {
+      "value": "37bd7935aaf447cfadb382ef1af5e2d7"
+    }
+  ],
+  "operationalRunbookIds": [],
+  "state": 1,
+  "id": {
+    "value": "d25b139034474c60850555849d319201"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-15T15:02:17.5377388+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "trigger"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

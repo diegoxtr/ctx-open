@@ -2,7 +2,7 @@
   "repositoryVersion": "1.0",
   "currentBranch": "main",
   "headCommitId": {
-    "value": "9785fdf6818a484cb8579b0cde377d26"
+    "value": "8c43a427a23d4c0d8a73e8d80ffe53d5"
   },
   "dirty": false,
   "project": {
@@ -42,6 +42,9 @@
         },
         {
           "value": "7d25cb20f7dc4523b3896f33c5d0447a"
+        },
+        {
+          "value": "37bd7935aaf447cfadb382ef1af5e2d7"
         }
       ],
       "id": {
@@ -159,6 +162,36 @@
         "modelName": null,
         "modelVersion": null
       }
+    },
+    {
+      "goalId": {
+        "value": "530f4816323f474d8e944d006685831a"
+      },
+      "title": "Audit the digest handoff one more time",
+      "description": "Leave one explicit follow-up task so the demo shows resumable work instead of a fully closed archive.",
+      "state": 1,
+      "dependsOnTaskIds": [],
+      "hypothesisIds": [
+        {
+          "value": "9c9a469ae3db4bf287f0b2ef0e3c0fb4"
+        }
+      ],
+      "parentTaskId": null,
+      "id": {
+        "value": "37bd7935aaf447cfadb382ef1af5e2d7"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-15T15:02:17.4120559+00:00",
+        "updatedBy": "diegoxtr",
+        "updatedAtUtc": "2026-04-15T15:02:18.2453407+00:00",
+        "tags": [
+          "task"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
     }
   ],
   "hypotheses": [
@@ -268,6 +301,42 @@
         "createdAtUtc": "2026-04-12T00:05:36.9671288+00:00",
         "updatedBy": "diegoxtr",
         "updatedAtUtc": "2026-04-12T00:05:37.3183233+00:00",
+        "tags": [
+          "hypothesis"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "statement": "A visible handoff audit task will make the continuity demo clearer because the viewer can show active work, its origin, and the supporting playbook together.",
+      "rationale": "The public demo is easier to understand when at least one task is still open and explicitly linked to its origin and operator guidance.",
+      "confidence": 0.78,
+      "impact": 0.72,
+      "evidenceStrength": 0.45,
+      "costToValidate": 0.18,
+      "state": 0,
+      "taskIds": [
+        {
+          "value": "37bd7935aaf447cfadb382ef1af5e2d7"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "fbb4d4a790844cc0a5e07cffede67f67"
+        }
+      ],
+      "probability": 0.78,
+      "score": 0.5970,
+      "id": {
+        "value": "9c9a469ae3db4bf287f0b2ef0e3c0fb4"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-15T15:02:18.9089466+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
         "tags": [
           "hypothesis"
         ],
@@ -566,6 +635,39 @@
         "modelName": null,
         "modelVersion": null
       }
+    },
+    {
+      "title": "The demo should preserve one open handoff audit task",
+      "summary": "The example now keeps a ready follow-up task so Working, Origin, and Playbook all expose meaningful demo state.",
+      "source": "demo",
+      "kind": 2,
+      "confidence": 0.84,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "9c9a469ae3db4bf287f0b2ef0e3c0fb4"
+        },
+        {
+          "entityType": "Task",
+          "entityId": "37bd7935aaf447cfadb382ef1af5e2d7"
+        }
+      ],
+      "id": {
+        "value": "fbb4d4a790844cc0a5e07cffede67f67"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-15T15:02:19.448386+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
     }
   ],
   "conclusions": [
@@ -684,7 +786,7 @@
     "createdBy": "diegoxtr",
     "createdAtUtc": "2026-04-12T00:04:59.0598563+00:00",
     "updatedBy": "diegoxtr",
-    "updatedAtUtc": "2026-04-12T00:05:39.7448713+00:00",
+    "updatedAtUtc": "2026-04-15T15:03:01.4306271+00:00",
     "tags": [
       "project"
     ],

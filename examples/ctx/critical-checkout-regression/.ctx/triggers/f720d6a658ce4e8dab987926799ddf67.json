@@ -1,0 +1,33 @@
+{
+  "kind": 1,
+  "summary": "Open task line: Monitor VIP checkout totals after the shipped fix",
+  "text": "Leave one ready post-fix monitoring task so the regression example still demonstrates active operational context.",
+  "fingerprint": "7264e4840e9421df185e453be04feb0ac4bd4714b9657bfbd07ef06bccbc2e32",
+  "goalIds": [
+    {
+      "value": "45cc3736c95d451881f5dafd35f31a26"
+    }
+  ],
+  "taskIds": [
+    {
+      "value": "fc5d90079b414bafab4a6fb6827e6938"
+    }
+  ],
+  "operationalRunbookIds": [],
+  "state": 1,
+  "id": {
+    "value": "f720d6a658ce4e8dab987926799ddf67"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-15T15:02:25.0842062+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "trigger"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

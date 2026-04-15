@@ -1,0 +1,37 @@
+{
+  "kind": 0,
+  "summary": "Expose one review checklist in the cache strategy demo",
+  "text": "Keep one ready follow-up task in the cache strategy example so the public demo shows active context, origin, and playbook guidance.",
+  "fingerprint": "b523eba01b3b1dbd99f3274040382e6feea6201cf7c83d209f05d71dfccd4b59",
+  "goalIds": [
+    {
+      "value": "951ceb82dcec475898b00780c4143861"
+    }
+  ],
+  "taskIds": [
+    {
+      "value": "838ab119c99e494781d43604a73f6389"
+    }
+  ],
+  "operationalRunbookIds": [
+    {
+      "value": "63aa88628a2d43b2ab807135f9d8a763"
+    }
+  ],
+  "state": 1,
+  "id": {
+    "value": "d0991e8a57ff4de68298362146f438fd"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-15T15:02:24.4577154+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "trigger"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}
