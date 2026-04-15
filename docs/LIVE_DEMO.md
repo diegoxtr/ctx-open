@@ -18,6 +18,12 @@ Demo repositories you can copy and paste:
 - Codespaces alternate: `/workspaces/ctx-open/examples/ctx/catalog-cache-branch-merge`
 - Codespaces alternate: `/workspaces/ctx-open/examples/ctx/critical-checkout-regression`
 
+Expected viewer surfaces:
+
+- `agent-session-continuity`: `Working` should show the ready handoff audit task, `Origin` should show the trigger that kept the handoff line open, and `Playbook` should show `Session continuity demo validation`.
+- `catalog-cache-branch-merge`: `Working` should show the ready cache review checklist, `Origin` should show the trigger that kept the review line open, and `Playbook` should show `Cache strategy demo validation`.
+- `critical-checkout-regression`: `Working` should show the ready post-fix monitoring task, `Origin` should show the trigger that kept monitoring visible, and `Playbook` should show `Checkout regression demo validation`.
+
 ## Why this split exists
 
 GitHub Pages is static hosting. It cannot run the CTX Viewer backend or inspect a `.ctx` repository by itself.

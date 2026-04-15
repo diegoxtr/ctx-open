@@ -1,0 +1,37 @@
+{
+  "kind": 0,
+  "summary": "Keep post-fix monitoring visible in the checkout demo",
+  "text": "Leave one ready monitoring task in the checkout regression example so the demo surfaces show active context instead of an entirely closed archive.",
+  "fingerprint": "0cbe61b24e473c8a92f870b62e324056729dc807a161921647bc922755bb0ad1",
+  "goalIds": [
+    {
+      "value": "45cc3736c95d451881f5dafd35f31a26"
+    }
+  ],
+  "taskIds": [
+    {
+      "value": "fc5d90079b414bafab4a6fb6827e6938"
+    }
+  ],
+  "operationalRunbookIds": [
+    {
+      "value": "4d563c408e4946b78b57bb37288a7391"
+    }
+  ],
+  "state": 1,
+  "id": {
+    "value": "77da99ced373450591119bf25a55b211"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-15T15:02:28.5004084+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "trigger"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

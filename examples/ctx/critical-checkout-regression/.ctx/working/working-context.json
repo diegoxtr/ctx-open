@@ -2,7 +2,7 @@
   "repositoryVersion": "1.0",
   "currentBranch": "main",
   "headCommitId": {
-    "value": "447cb8f27bba421e831a7367b2089441"
+    "value": "807d778b94734a7eb07ead61f6ce941c"
   },
   "dirty": false,
   "project": {
@@ -42,6 +42,9 @@
         },
         {
           "value": "9c36b828ca2d4327adb8be481509cef2"
+        },
+        {
+          "value": "fc5d90079b414bafab4a6fb6827e6938"
         }
       ],
       "id": {
@@ -155,6 +158,36 @@
         "createdAtUtc": "2026-04-11T23:56:31.618946+00:00",
         "updatedBy": "diegoxtr",
         "updatedAtUtc": "2026-04-11T23:56:38.0627721+00:00",
+        "tags": [
+          "task"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "goalId": {
+        "value": "45cc3736c95d451881f5dafd35f31a26"
+      },
+      "title": "Monitor VIP checkout totals after the shipped fix",
+      "description": "Leave one ready post-fix monitoring task so the regression example still demonstrates active operational context.",
+      "state": 1,
+      "dependsOnTaskIds": [],
+      "hypothesisIds": [
+        {
+          "value": "632e05901d94436fab51e5d2d79e24ae"
+        }
+      ],
+      "parentTaskId": null,
+      "id": {
+        "value": "fc5d90079b414bafab4a6fb6827e6938"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-15T15:02:24.9672623+00:00",
+        "updatedBy": "diegoxtr",
+        "updatedAtUtc": "2026-04-15T15:02:25.618709+00:00",
         "tags": [
           "task"
         ],
@@ -307,6 +340,42 @@
         "createdAtUtc": "2026-04-11T23:57:11.2003782+00:00",
         "updatedBy": "diegoxtr",
         "updatedAtUtc": "2026-04-11T23:57:11.5579333+00:00",
+        "tags": [
+          "hypothesis"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "statement": "A ready post-fix monitoring task will make the checkout regression demo clearer because users can inspect the open follow-up, its origin, and the validation playbook without altering the closed fix history.",
+      "rationale": "The regression itself is fixed, but the demo benefits from one explicit monitoring task that keeps Working, Origin, and Playbook populated.",
+      "confidence": 0.78,
+      "impact": 0.72,
+      "evidenceStrength": 0.45,
+      "costToValidate": 0.18,
+      "state": 0,
+      "taskIds": [
+        {
+          "value": "fc5d90079b414bafab4a6fb6827e6938"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "99e6379797174889a07accfcaf027350"
+        }
+      ],
+      "probability": 0.78,
+      "score": 0.5970,
+      "id": {
+        "value": "632e05901d94436fab51e5d2d79e24ae"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-15T15:02:26.2587296+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
         "tags": [
           "hypothesis"
         ],
@@ -607,6 +676,39 @@
         "modelName": null,
         "modelVersion": null
       }
+    },
+    {
+      "title": "The demo should retain a post-fix monitoring task",
+      "summary": "The example now keeps a ready monitoring task so the viewer shows active context, origin, and playbook guidance after the shipped fix.",
+      "source": "demo",
+      "kind": 2,
+      "confidence": 0.84,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "632e05901d94436fab51e5d2d79e24ae"
+        },
+        {
+          "entityType": "Task",
+          "entityId": "fc5d90079b414bafab4a6fb6827e6938"
+        }
+      ],
+      "id": {
+        "value": "99e6379797174889a07accfcaf027350"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-15T15:02:26.8536228+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
     }
   ],
   "conclusions": [
@@ -713,7 +815,7 @@
     "createdBy": "diegoxtr",
     "createdAtUtc": "2026-04-11T23:53:26.99512+00:00",
     "updatedBy": "diegoxtr",
-    "updatedAtUtc": "2026-04-11T23:57:30.2239449+00:00",
+    "updatedAtUtc": "2026-04-15T15:03:01.3988213+00:00",
     "tags": [
       "project"
     ],
