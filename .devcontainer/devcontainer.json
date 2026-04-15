@@ -14,7 +14,7 @@
   "portsAttributes": {
     "5271": {
       "label": "CTX Viewer",
-      "onAutoForward": "openBrowserOnce",
+      "onAutoForward": "openPreview",
       "visibility": "public"
     }
   },
