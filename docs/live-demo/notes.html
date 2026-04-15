@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CTX Live Demo Notes</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">Live Demo Notes</p>
+      <h1>How the GitHub-native CTX demo is delivered.</h1>
+      <p class="lede">
+        CTX uses GitHub Codespaces for the runnable viewer and GitHub Pages for the
+        static landing. Pages explains the demo. Codespaces runs it.
+      </p>
+      <div class="actions">
+        <a class="button primary" href="./index.html">Back To Landing</a>
+        <a class="button" href="https://github.com/diegoxtr/ctx-open?tab=codespaces">Open In Codespaces</a>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>Why the split exists</h2>
+        <p>
+          GitHub Pages is static hosting. It cannot run the CTX Viewer backend or inspect a
+          <code>.ctx</code> repository by itself. The runnable part therefore lives in a Codespace.
+        </p>
+      </article>
+      <article class="card">
+        <h2>Canonical demo repository</h2>
+        <p>
+          The default demo dataset is <code>examples/ctx/agent-session-continuity</code>,
+          chosen because it shows continuity across sessions instead of a one-shot graph.
+        </p>
+      </article>
+      <article class="card">
+        <h2>Codespaces flow</h2>
+        <ol>
+          <li><code>dotnet restore Ctx.sln</code> runs on create.</li>
+          <li><code>scripts/start-codespaces-demo.sh</code> starts the viewer on <code>0.0.0.0:5271</code>.</li>
+          <li>The script sets <code>CTX_VIEWER_DEFAULT_REPOSITORY_PATH</code> to the tracked demo repo.</li>
+          <li>Codespaces forwards port <code>5271</code> publicly.</li>
+        </ol>
+      </article>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>Manual relaunch</h2>
+        <pre><code>bash scripts/start-codespaces-demo.sh</code></pre>
+        <p>Logs are written to <code>/tmp/ctx-viewer-codespaces.log</code>.</p>
+      </article>
+      <article class="card">
+        <h2>Delivery model</h2>
+        <ul>
+          <li><code>GitHub Pages</code> = static landing</li>
+          <li><code>GitHub Codespaces</code> = live viewer</li>
+          <li>tracked <code>.ctx</code> example = demo data</li>
+        </ul>
+      </article>
+    </section>
+  </main>
+</body>
+</html>
