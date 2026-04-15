@@ -6,6 +6,12 @@ CTX can expose a GitHub-native live demo by combining:
 - a repo-hosted `.ctx` example for the default dataset
 - GitHub Pages as a static landing page that points users to the live viewer URL and release downloads
 
+Public demo entrypoints:
+
+- Landing: `https://diegoxtr.github.io/ctx-open/`
+- Demo notes: `https://diegoxtr.github.io/ctx-open/notes.html`
+- Codespaces quickstart: `https://codespaces.new/diegoxtr/ctx-open?quickstart=1`
+
 ## Why this split exists
 
 GitHub Pages is static hosting. It cannot run the CTX Viewer backend or inspect a `.ctx` repository by itself.
