@@ -43,7 +43,7 @@ Cuando el codespace inicia:
 4. El script configura `CTX_VIEWER_DEFAULT_REPOSITORY_PATH` con `examples/ctx/agent-session-continuity`.
 5. Codespaces expone publicamente el puerto `5271`.
 
-El devcontainer tambien incluye soporte SSH para que el codespace pueda operarse remotamente a traves de GitHub CLI cuando haga falta.
+La demo en vivo ya no depende de una feature de SSH dentro del contenedor. La prioridad es que Codespaces cree el entorno de forma confiable para uso en navegador, sin agregar riesgo extra de provisioning.
 
 ## Lanzamiento Manual Dentro Del Codespace
 
