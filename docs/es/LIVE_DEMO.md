@@ -71,6 +71,18 @@ Si hace falta relanzar la demo:
 bash scripts/start-codespaces-demo.sh
 ```
 
+Si un codespace reanudado o parcialmente inicializado todavia no levanta el viewer, ejecuta este bloque completo de recuperacion:
+
+```bash
+git pull --ff-only origin main
+bash scripts/ensure-dotnet-sdk.sh
+export DOTNET_ROOT="$HOME/.dotnet"
+export PATH="$DOTNET_ROOT:$DOTNET_ROOT/tools:/usr/share/dotnet:$PATH"
+dotnet restore Ctx.sln
+bash scripts/start-codespaces-demo.sh
+curl -I http://127.0.0.1:5271
+```
+
 El script escribe logs en:
 
 - `/tmp/ctx-viewer-codespaces.log`
