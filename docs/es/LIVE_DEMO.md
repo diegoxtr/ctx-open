@@ -11,6 +11,9 @@ Puntos de entrada publicos del demo:
 - Landing: `https://diegoxtr.github.io/ctx-open/`
 - Notas del demo: `https://diegoxtr.github.io/ctx-open/notes.html`
 - Quickstart de Codespaces: `https://codespaces.new/diegoxtr/ctx-open?quickstart=1`
+- Sesion live actual (temporal): `https://fuzzy-space-sniffle-59rjpw4x7w37r55-5271.app.github.dev/`
+
+Usa la URL de la sesion live actual cuando quieras entrar directo al viewer publico en ejecucion. Si la sesion expira, vuelve a la landing o al quickstart de Codespaces.
 
 Repositorios demo para copiar y pegar:
 
