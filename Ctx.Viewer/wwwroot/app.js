@@ -1421,6 +1421,9 @@ async function selectCommit(commitId, options = {}) {
             return;
         }
         currentCommitFocus = buildCommitFocus(detail, currentGraph);
+        if (!selectedNodeId) {
+            selectedNodeId = resolveCommitFocusSelectedNodeId(detail, currentGraph, currentCommitFocus);
+        }
         ensureAllTaskStateFiltersChecked();
         renderCommitDetail(detail);
         graphCaption.textContent = `Commit ${commitId.slice(0, 8)}`;
@@ -1916,6 +1919,34 @@ function buildCommitFocus(detail, graph) {
     });
 }
 
+function resolveCommitFocusSelectedNodeId(detail, graph, commitFocus) {
+    if (!graph?.nodes?.length) {
+        return null;
+    }
+
+    const availableNodeIds = new Set(graph.nodes.map(node => node.id));
+    const candidates = [];
+    collectPathNodeIds(detail?.cognitivePath, candidates, { strict: true, output: "array" });
+
+    const preferredTypes = ["Task", "Hypothesis", "Decision", "Conclusion", "Goal"];
+    for (const type of preferredTypes) {
+        const candidate = candidates.find(nodeId => nodeId.startsWith(`${type}:`) && availableNodeIds.has(nodeId));
+        if (candidate) {
+            return candidate;
+        }
+    }
+
+    const changedIds = Array.from(commitFocus?.changedIds ?? []);
+    for (const type of preferredTypes) {
+        const candidate = changedIds.find(nodeId => nodeId.startsWith(`${type}:`) && availableNodeIds.has(nodeId));
+        if (candidate) {
+            return candidate;
+        }
+    }
+
+    return graph.nodes.find(node => availableNodeIds.has(node.id))?.id ?? null;
+}
+
 function collectDiffNodeIds(diff, changedIds, options = {}) {
     const changeTypes = Array.isArray(options.changeTypes)
         ? new Set(options.changeTypes.map(value => String(value).toLowerCase()))
@@ -2028,6 +2059,7 @@ function shouldIncludeCommitFocusNeighbor(currentNode, neighborNode) {
 function collectPathNodeIds(cognitivePath, ids = new Set(), options = {}) {
     const path = cognitivePath ?? {};
     const strict = Boolean(options.strict);
+    const output = options.output === "array" ? [] : ids;
     const goalIds = Array.isArray(path.goalIds) ? path.goalIds : [];
     const subGoalIds = Array.isArray(path.subGoalIds) ? path.subGoalIds : [];
     const taskIds = Array.isArray(path.taskIds) ? path.taskIds : [];
@@ -2036,24 +2068,24 @@ function collectPathNodeIds(cognitivePath, ids = new Set(), options = {}) {
     const conclusionIds = Array.isArray(path.conclusionIds) ? path.conclusionIds : [];
     if (strict) {
         if (goalIds[0]) {
-            ids.add(`Goal:${goalIds[0]}`);
+            pushPathNodeId(output, `Goal:${goalIds[0]}`);
         }
         if (subGoalIds[0]) {
-            ids.add(`Goal:${subGoalIds[0]}`);
+            pushPathNodeId(output, `Goal:${subGoalIds[0]}`);
         }
         if (taskIds[0]) {
-            ids.add(`Task:${taskIds[0]}`);
+            pushPathNodeId(output, `Task:${taskIds[0]}`);
         }
         if (hypothesisIds[0]) {
-            ids.add(`Hypothesis:${hypothesisIds[0]}`);
+            pushPathNodeId(output, `Hypothesis:${hypothesisIds[0]}`);
         }
         if (decisionIds[0]) {
-            ids.add(`Decision:${decisionIds[0]}`);
+            pushPathNodeId(output, `Decision:${decisionIds[0]}`);
         }
         if (!decisionIds[0] && conclusionIds[0]) {
-            ids.add(`Conclusion:${conclusionIds[0]}`);
+            pushPathNodeId(output, `Conclusion:${conclusionIds[0]}`);
         }
-        return ids;
+        return output;
     }
 
     const pathGroups = [
@@ -2076,11 +2108,20 @@ function collectPathNodeIds(cognitivePath, ids = new Set(), options = {}) {
             }
 
             const normalized = normalizeGraphEntityType(type);
-            ids.add(`${normalized}:${value}`);
+            pushPathNodeId(output, `${normalized}:${value}`);
         }
     }
 
-    return ids;
+    return output;
+}
+
+function pushPathNodeId(output, nodeId) {
+    if (Array.isArray(output)) {
+        output.push(nodeId);
+        return;
+    }
+
+    output.add(nodeId);
 }
 
 function filterGraphByCommitFocus(graph, commitFocus) {
