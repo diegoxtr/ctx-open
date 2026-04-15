@@ -127,12 +127,25 @@ What each demo should show:
 The repository includes:
 
 - `.devcontainer/devcontainer.json`
+- `scripts/ensure-dotnet-sdk.sh`
 - `scripts/start-codespaces-demo.sh`
 - `docs/LIVE_DEMO.md`
 - `docs/live-demo/index.html`
 - `.github/workflows/live-demo-pages.yml`
 
-The Codespaces scaffold now starts the viewer on workspace start instead of waiting for a manual attach, and it includes SSH support so the demo can also be operated remotely through GitHub CLI.
+The Codespaces scaffold now bootstraps the SDK pinned in `global.json` before restore and starts the viewer on workspace start instead of waiting for a manual attach.
+
+If a resumed or partially initialized codespace does not launch the viewer automatically, use this recovery block:
+
+```bash
+git pull --ff-only origin main
+bash scripts/ensure-dotnet-sdk.sh
+export DOTNET_ROOT="$HOME/.dotnet"
+export PATH="$DOTNET_ROOT:$DOTNET_ROOT/tools:/usr/share/dotnet:$PATH"
+dotnet restore Ctx.sln
+bash scripts/start-codespaces-demo.sh
+curl -I http://127.0.0.1:5271
+```
 
 ## Viewer
 

@@ -71,6 +71,18 @@ If the demo needs to be restarted:
 bash scripts/start-codespaces-demo.sh
 ```
 
+If a resumed or partially initialized codespace still does not start the viewer, run the full recovery block:
+
+```bash
+git pull --ff-only origin main
+bash scripts/ensure-dotnet-sdk.sh
+export DOTNET_ROOT="$HOME/.dotnet"
+export PATH="$DOTNET_ROOT:$DOTNET_ROOT/tools:/usr/share/dotnet:$PATH"
+dotnet restore Ctx.sln
+bash scripts/start-codespaces-demo.sh
+curl -I http://127.0.0.1:5271
+```
+
 The script writes logs to:
 
 - `/tmp/ctx-viewer-codespaces.log`
