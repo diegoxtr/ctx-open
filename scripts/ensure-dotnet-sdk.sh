@@ -12,7 +12,17 @@ PY
 )"
 
 if command -v apk >/dev/null 2>&1; then
-  apk add --no-cache icu-libs icu-data-full curl bash >/dev/null
+  APK_INSTALL=(apk add --no-cache icu-libs icu-data-full curl bash)
+  if [[ "$(id -u)" -ne 0 ]]; then
+    if command -v sudo >/dev/null 2>&1; then
+      APK_INSTALL=(sudo "${APK_INSTALL[@]}")
+    else
+      echo "ERROR: apk dependencies require root or sudo in this environment." >&2
+      exit 1
+    fi
+  fi
+
+  "${APK_INSTALL[@]}" >/dev/null
 fi
 
 export DOTNET_ROOT="$INSTALL_DIR"
