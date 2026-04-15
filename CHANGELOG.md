@@ -2,6 +2,28 @@
 
 All notable changes to CTX will be documented in this file.
 
+## [1.0.4] - 2026-04-15
+
+### Added
+
+- Public live-demo docs now include explicit landing, notes, quickstart, and current session entrypoints plus copy/paste demo repository paths.
+- The public release line now documents an explicit Codespaces recovery block for resumed sessions that do not auto-start the viewer.
+
+### Changed
+
+- The viewer now auto-selects the primary commit-focus node so opening a historical commit immediately highlights the cognitive lineage without an extra graph click.
+- The public viewer surface is aligned again with the private workspace UI, including state badges and commit-focus behavior parity.
+- The Codespaces bootstrap no longer depends on Python to resolve the pinned SDK and is easier to recover in live-demo sessions.
+
+### Fixed
+
+- Historical graph export is more resilient with abbreviated commit IDs, safer legacy-snapshot handling, and controlled JSON failures instead of raw server errors.
+- The GitHub Codespaces live-demo flow is hardened against stale sessions, SDK mismatches, and missing recovery instructions.
+
+### Notes
+
+- This patch release freezes the current public-safe baseline after the live-demo hardening pass, viewer parity sync, and commit-focus lineage highlight behavior converged into one releaseable state.
+
 ## [1.0.3] - 2026-04-14
 
 ### Added
