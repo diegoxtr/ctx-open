@@ -1,4 +1,4 @@
-﻿# Guia CTX Viewer
+# Guia CTX Viewer
 Si un modelo de lenguaje y su agente pierden el contexto, esta es la herramienta que necesitas.
 
 ## Que es
@@ -44,7 +44,7 @@ Comportamiento por defecto actual:
 
 - si no hay una ruta guardada ni ingresada, el viewer primero revisa `CTX_VIEWER_DEFAULT_REPOSITORY_PATH` o `Viewer__DefaultRepositoryPath`
 - si no existe una ruta configurada, el viewer resuelve la raiz por defecto desde el `.git` mas cercano del proyecto
-- en este repositorio self-host esa raiz de fallback resuelve a `C:\sources\ctx-public`
+- en este repositorio self-host esa raiz de fallback resuelve a `C:\sources\ctx-open`
 - la branch cognitiva por defecto es `main`
 - `Auto-refresh` arranca activado por defecto salvo que el navegador ya recuerde que lo apagaste
 - despues recuerda el ultimo `Repository` y la ultima `Branch` usados en el navegador
@@ -54,7 +54,7 @@ Comportamiento por defecto actual:
 
 Ejemplo:
 
-- `C:\sources\ctx-public\examples\viewer-demo`
+- `C:\sources\ctx-open\examples\viewer-demo`
 - `C:\ctx\workspace\ctx-self-host`
 
 Ejemplo de override:

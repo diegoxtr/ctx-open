@@ -1,4 +1,4 @@
-﻿# CTX Viewer æŒ‡å—
+# CTX Viewer æŒ‡å—
 如果语言模型及其代理丢失了上下文，这就是你需要的工具。
 
 ## æ˜¯ä»€ä¹ˆ
@@ -44,7 +44,7 @@
 
 - å¦‚æžœæ²¡æœ‰ä¿å­˜æˆ–è¾“å…¥ä»“åº“è·¯å¾„ï¼Œviewer ä¼šå…ˆæ£€æŸ¥ `CTX_VIEWER_DEFAULT_REPOSITORY_PATH` æˆ– `Viewer__DefaultRepositoryPath`
 - å¦‚æžœæ²¡æœ‰é…ç½®é»˜è®¤è·¯å¾„ï¼Œviewer ä¼šä»Žé¡¹ç›®æœ€è¿‘çš„ `.git` ç›®å½•è§£æž fallback æ ¹è·¯å¾„
-- åœ¨è¿™ä¸ª self-host ä»“åº“ä¸­ï¼Œè¯¥ fallback æ ¹è·¯å¾„è§£æžä¸º `C:\sources\ctx-public`
+- åœ¨è¿™ä¸ª self-host ä»“åº“ä¸­ï¼Œè¯¥ fallback æ ¹è·¯å¾„è§£æžä¸º `C:\sources\ctx-open`
 - é»˜è®¤åˆ†æ”¯ `main`
 - `Auto-refresh` é»˜è®¤å¯ç”¨ï¼ˆæµè§ˆå™¨è®°å¿†ä¼˜å…ˆï¼‰
 - è®°ä½æœ€åŽçš„ä»“åº“è·¯å¾„ä¸Žåˆ†æ”¯
@@ -52,7 +52,7 @@
 
 ç¤ºä¾‹è·¯å¾„ï¼š
 
-- `C:\sources\ctx-public\examples\viewer-demo`
+- `C:\sources\ctx-open\examples\viewer-demo`
 - `C:\ctx\workspace\ctx-self-host`
 
 ## 2. å·¦ä¾§é¢æ¿

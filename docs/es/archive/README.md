@@ -9,5 +9,5 @@ La referencia operativa vigente para la release estable es:
 
 Releases archivadas:
 
-- [RELEASE_0_1_0_INTERNAL.md](C:/sources/ctx-public/docs/es/archive/RELEASE_0_1_0_INTERNAL.md)
-- [RELEASE_0_1_1_INTERNAL.md](C:/sources/ctx-public/docs/es/archive/RELEASE_0_1_1_INTERNAL.md)
+- [RELEASE_0_1_0_INTERNAL.md](C:/sources/ctx-open/docs/es/archive/RELEASE_0_1_0_INTERNAL.md)
+- [RELEASE_0_1_1_INTERNAL.md](C:/sources/ctx-open/docs/es/archive/RELEASE_0_1_1_INTERNAL.md)

@@ -1,0 +1,17 @@
+{
+  "channel": "stable",
+  "repo": {
+    "github": "diegoxtr/ctx-open",
+    "releasesApi": "https://api.github.com/repos/diegoxtr/ctx-open/releases",
+    "latestReleaseApi": "https://api.github.com/repos/diegoxtr/ctx-open/releases/latest",
+    "publicCloneUrl": "https://github.com/diegoxtr/ctx-open.git"
+  },
+  "assets": {
+    "win-x64": "ctx-win-x64.zip",
+    "win-x86": "ctx-win-x86.zip",
+    "linux-x64": "ctx-linux-x64.tar.gz",
+    "linux-arm64": "ctx-linux-arm64.tar.gz",
+    "osx-x64": "ctx-osx-x64.tar.gz",
+    "osx-arm64": "ctx-osx-arm64.tar.gz"
+  }
+}

@@ -1,4 +1,4 @@
-﻿# Arquitectura Tecnica de CTX
+# Arquitectura Tecnica de CTX
 Si un modelo de lenguaje y su agente pierden el contexto, esta es la herramienta que necesitas.
 
 Este documento describe la arquitectura tecnica actual de CTX.
@@ -495,8 +495,8 @@ Eso permite seguir evolucionando CTX sin colapsar toda la soluciÃ³n en una sol
 
 ## Referencias Relacionadas
 
-- [DOMAIN_MODEL.md](C:/sources/ctx-public/docs/DOMAIN_MODEL.md)
-- [CTX_STRUCTURE.md](C:/sources/ctx-public/docs/CTX_STRUCTURE.md)
-- [CLI_COMMANDS.md](C:/sources/ctx-public/docs/CLI_COMMANDS.md)
-- [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-public/docs/V1_FUNCTIONAL_SPEC.md)
+- [DOMAIN_MODEL.md](C:/sources/ctx-open/docs/DOMAIN_MODEL.md)
+- [CTX_STRUCTURE.md](C:/sources/ctx-open/docs/CTX_STRUCTURE.md)
+- [CLI_COMMANDS.md](C:/sources/ctx-open/docs/CLI_COMMANDS.md)
+- [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-open/docs/V1_FUNCTIONAL_SPEC.md)
 

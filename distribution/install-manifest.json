@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "installRoots": {
+    "windows": "C:\\ctx",
+    "linux": "$HOME/.local/share/ctx",
+    "macos": "$HOME/.local/share/ctx"
+  },
+  "paths": {
+    "bin": "bin",
+    "viewer": "viewer",
+    "prompts": "prompts",
+    "docs": "docs"
+  },
+  "helperPrompt": "prompts/CTX_HELPER_PROMPT.md",
+  "metadataFile": "ctx-install.json",
+  "defaultViewerUrl": "http://127.0.0.1:5271"
+}

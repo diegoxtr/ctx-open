@@ -1,4 +1,4 @@
-﻿# CTX Technical Architecture
+# CTX Technical Architecture
 If a language model and its agent lose context, this is the tool you need.
 
 This document describes the current CTX technical architecture.
@@ -203,8 +203,8 @@ Tests cover:
 
 ## Related references
 
-- [DOMAIN_MODEL.md](C:/sources/ctx-public/docs/DOMAIN_MODEL.md)
-- [CTX_STRUCTURE.md](C:/sources/ctx-public/docs/CTX_STRUCTURE.md)
-- [CLI_COMMANDS.md](C:/sources/ctx-public/docs/CLI_COMMANDS.md)
-- [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-public/docs/V1_FUNCTIONAL_SPEC.md)
+- [DOMAIN_MODEL.md](C:/sources/ctx-open/docs/DOMAIN_MODEL.md)
+- [CTX_STRUCTURE.md](C:/sources/ctx-open/docs/CTX_STRUCTURE.md)
+- [CLI_COMMANDS.md](C:/sources/ctx-open/docs/CLI_COMMANDS.md)
+- [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-open/docs/V1_FUNCTIONAL_SPEC.md)
 

@@ -1,7 +1,7 @@
-﻿# CTX CLI å‘½ä»¤
+# CTX CLI å‘½ä»¤
 如果语言模型及其代理丢失了上下文，这就是你需要的工具。
 
-æœ¬æ–‡æ¡£æè¿° `C:\sources\ctx-public` ä¸­å½“å‰ CTX CLI çš„å‘½ä»¤è¡¨é¢ã€‚
+æœ¬æ–‡æ¡£æè¿° `C:\sources\ctx-open` ä¸­å½“å‰ CTX CLI çš„å‘½ä»¤è¡¨é¢ã€‚
 
 CTX è¿”å›žç»“æž„åŒ– JSON è¾“å‡ºï¼ŒåŸºæœ¬æ ¼å¼ä¸ºï¼š
 
@@ -161,7 +161,7 @@ dotnet run --project .\Ctx.Cli -- thread reconstruct --task <taskId> --format ma
 
 ## Goals / Tasks / Hypotheses / Evidence / Decisions / Conclusions
 
-è¯·å‚è€ƒè‹±æ–‡ç‰ˆ [CLI_COMMANDS.md](C:/sources/ctx-public/docs/CLI_COMMANDS.md) çš„å®Œæ•´ç¤ºä¾‹ä¸Žé€‰é¡¹ã€‚
+è¯·å‚è€ƒè‹±æ–‡ç‰ˆ [CLI_COMMANDS.md](C:/sources/ctx-open/docs/CLI_COMMANDS.md) çš„å®Œæ•´ç¤ºä¾‹ä¸Žé€‰é¡¹ã€‚
 
 ## å¯ç§»æ¤æ€§
 

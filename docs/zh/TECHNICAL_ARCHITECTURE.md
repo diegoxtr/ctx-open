@@ -1,4 +1,4 @@
-﻿# CTX æŠ€æœ¯æž¶æž„
+# CTX æŠ€æœ¯æž¶æž„
 如果语言模型及其代理丢失了上下文，这就是你需要的工具。
 
 æœ¬æ–‡æ¡£æè¿° CTX å½“å‰æŠ€æœ¯æž¶æž„ã€‚
@@ -55,7 +55,7 @@ CTX åŸºäºŽ `.NET 8`ï¼Œé‡‡ç”¨ Clean Architecture/DDD é£Žæ 
 
 ## ç›¸å…³å‚è€ƒ
 
-- [DOMAIN_MODEL.md](C:/sources/ctx-public/docs/DOMAIN_MODEL.md)
-- [CTX_STRUCTURE.md](C:/sources/ctx-public/docs/CTX_STRUCTURE.md)
-- [CLI_COMMANDS.md](C:/sources/ctx-public/docs/CLI_COMMANDS.md)
+- [DOMAIN_MODEL.md](C:/sources/ctx-open/docs/DOMAIN_MODEL.md)
+- [CTX_STRUCTURE.md](C:/sources/ctx-open/docs/CTX_STRUCTURE.md)
+- [CLI_COMMANDS.md](C:/sources/ctx-open/docs/CLI_COMMANDS.md)
 

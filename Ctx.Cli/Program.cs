@@ -12,7 +12,7 @@ var argsList = args.ToList();
 
 if (argsList.Count == 0)
 {
-    WriteHelp();
+    WriteHelp(repositoryPath);
     return 1;
 }
 
@@ -44,6 +44,10 @@ static async Task<CommandResult> DispatchAsync(IReadOnlyList<string> args, ICtxA
 
     return command switch
     {
+        "help" => new CommandResult(true, "CTX help.", BuildHelpText(repositoryPath)),
+        "helper" => new CommandResult(true, "CTX helper.", BuildHelpText(repositoryPath)),
+        "--help" => new CommandResult(true, "CTX help.", BuildHelpText(repositoryPath)),
+        "-h" => new CommandResult(true, "CTX help.", BuildHelpText(repositoryPath)),
         "version" => new CommandResult(true, $"CTX {Ctx.Domain.DomainConstants.ProductVersion}", new
         {
             product = "CTX",
@@ -480,6 +484,12 @@ static async Task<CommandResult> DispatchUsageCoverageAsync(
 
 static void WriteResult(CommandResult result, JsonSerializerOptions options)
 {
+    if (result.Data is string text)
+    {
+        Console.WriteLine(text);
+        return;
+    }
+
     Console.WriteLine(JsonSerializer.Serialize(new
     {
         success = result.Success,
@@ -488,9 +498,17 @@ static void WriteResult(CommandResult result, JsonSerializerOptions options)
     }, options));
 }
 
-static void WriteHelp()
+static void WriteHelp(string repositoryPath)
 {
-    Console.WriteLine("""
+    Console.WriteLine(BuildHelpText(repositoryPath));
+}
+
+static string BuildHelpText(string repositoryPath)
+{
+    var projectRoot = ResolveProjectRoot(repositoryPath, AppContext.BaseDirectory);
+    var projectContext = BuildProjectContextText(projectRoot);
+
+    return $$"""
 CTX - Cognitive Version Control System
 
 Commands:
@@ -559,7 +577,80 @@ Commands:
   ctx packet show <packetId>
   ctx provider list
   ctx metrics show
-""");
+
+{{projectContext}}
+""";
+}
+
+static string BuildProjectContextText(string projectRoot)
+{
+    var templatePath = Path.Combine(projectRoot, "prompts", "CTX_HELPER_PROMPT.md");
+    var fallback = """
+Project Context:
+  We are continuing from previous context. Re-anchor on CTX before planning from chat.
+  CTX local install root: C:\ctx (if you exported the binaries there)
+  Local viewer URL: http://127.0.0.1:5271
+  Active project root: {{projectRoot}}
+
+Read These First:
+  {{viewerGuide}}
+  {{agentPrompt}}
+  {{autonomousProtocol}}
+
+Operating Reminder:
+  Analyze those files and use them for everything in this project.
+  Align the existing Playbook/runbook guidance before drifting into ad-hoc operation.
+  If CTX already knows what's next, continue from CTX instead of waiting for chat.
+""";
+
+    var viewerGuide = Path.Combine(projectRoot, "docs", "CTX_VIEWER_GUIDE.md");
+    var agentPrompt = Path.Combine(projectRoot, "prompts", "CTX_AGENT_PROMPT.md");
+    var autonomousProtocol = Path.Combine(projectRoot, "docs", "CTX_AUTONOMOUS_OPERATION_PROTOCOL.md");
+    var content = File.Exists(templatePath)
+        ? File.ReadAllText(templatePath)
+        : fallback;
+
+    return content
+        .Replace("{{projectRoot}}", projectRoot, StringComparison.Ordinal)
+        .Replace("{{viewerGuide}}", viewerGuide, StringComparison.Ordinal)
+        .Replace("{{agentPrompt}}", agentPrompt, StringComparison.Ordinal)
+        .Replace("{{autonomousProtocol}}", autonomousProtocol, StringComparison.Ordinal)
+        .Replace("{{viewerUrl}}", "http://127.0.0.1:5271", StringComparison.Ordinal)
+        .Replace("{{ctxRoot}}", @"C:\ctx", StringComparison.Ordinal);
+}
+
+static string ResolveProjectRoot(params string[] candidatePaths)
+{
+    foreach (var candidatePath in candidatePaths.Where(path => !string.IsNullOrWhiteSpace(path)))
+    {
+        var root = TryResolveProjectRoot(candidatePath);
+        if (!string.IsNullOrWhiteSpace(root))
+        {
+            return root;
+        }
+    }
+
+    return candidatePaths.FirstOrDefault(path => !string.IsNullOrWhiteSpace(path)) ?? Directory.GetCurrentDirectory();
+}
+
+static string? TryResolveProjectRoot(string candidatePath)
+{
+    var current = new DirectoryInfo(File.Exists(candidatePath) ? Path.GetDirectoryName(candidatePath)! : candidatePath);
+
+    while (current is not null)
+    {
+        if (Directory.Exists(Path.Combine(current.FullName, ".git"))
+            || File.Exists(Path.Combine(current.FullName, "Ctx.sln"))
+            || File.Exists(Path.Combine(current.FullName, "ctx-install.json"))
+            || File.Exists(Path.Combine(current.FullName, "prompts", "CTX_HELPER_PROMPT.md")))
+        {
+            return current.FullName;
+        }
+
+        current = current.Parent;
+    }
+
+    return null;
 }
 
 static async Task RecordCommandTelemetryAsync(
