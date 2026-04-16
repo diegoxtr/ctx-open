@@ -2,7 +2,7 @@
 
 All notable changes to CTX will be documented in this file.
 
-## [Unreleased]
+## [1.0.5] - 2026-04-16
 
 ### Added
 
@@ -19,7 +19,7 @@ All notable changes to CTX will be documented in this file.
 
 ### Notes
 
-- These changes are in the public repo and prepare the next release line; the latest published release remains `1.0.4` until a new tag and GitHub Release are cut.
+- This patch release freezes the first release-aware installer/bootstrap line for CTX 1.0, including dynamic helper guidance, public-safe distribution manifests, and GitHub Releases-based update detection.
 
 ## [1.0.4] - 2026-04-15
 

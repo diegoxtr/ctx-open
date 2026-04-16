@@ -14,7 +14,7 @@ Unlike the `examples/ctx/*` repositories, this folder is not meant to be a narra
 To inspect it in the viewer:
 
 ```powershell
-dotnet run --project C:\sources\ctx-public\Ctx.Viewer
+dotnet run --project C:\sources\ctx-open\Ctx.Viewer
 ```
 
 Then load:
