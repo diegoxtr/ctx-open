@@ -1,4 +1,4 @@
-﻿# `.ctx/` å†…éƒ¨ç»“æž„
+# `.ctx/` å†…éƒ¨ç»“æž„
 如果语言模型及其代理丢失了上下文，这就是你需要的工具。
 
 æœ¬æ–‡æ¡£æè¿° CTX çš„æœ¬åœ°å­˜å‚¨ç»“æž„ã€‚
@@ -69,7 +69,7 @@
 
 ## ç›¸å…³æ–‡æ¡£
 
-- [CLI_COMMANDS.md](C:/sources/ctx-public/docs/CLI_COMMANDS.md)
-- [INSTALLATION_AND_USAGE_GUIDE.md](C:/sources/ctx-public/docs/INSTALLATION_AND_USAGE_GUIDE.md)
-- [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-public/docs/V1_FUNCTIONAL_SPEC.md)
+- [CLI_COMMANDS.md](C:/sources/ctx-open/docs/CLI_COMMANDS.md)
+- [INSTALLATION_AND_USAGE_GUIDE.md](C:/sources/ctx-open/docs/INSTALLATION_AND_USAGE_GUIDE.md)
+- [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-open/docs/V1_FUNCTIONAL_SPEC.md)
 

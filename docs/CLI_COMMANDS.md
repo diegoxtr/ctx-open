@@ -1,7 +1,7 @@
-﻿# CTX CLI Commands
+# CTX CLI Commands
 If a language model and its agent lose context, this is the tool you need.
 
-This document describes the current CTX CLI surface in `C:\sources\ctx-public`.
+This document describes the current CTX CLI surface in `C:\sources\ctx-open`.
 
 CTX returns structured JSON output with this base format:
 

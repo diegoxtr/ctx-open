@@ -1,7 +1,7 @@
-﻿# Comandos CLI de CTX
+# Comandos CLI de CTX
 Si un modelo de lenguaje y su agente pierden el contexto, esta es la herramienta que necesitas.
 
-Este documento describe la superficie actual de la CLI de CTX en `C:\sources\ctx-public`.
+Este documento describe la superficie actual de la CLI de CTX en `C:\sources\ctx-open`.
 
 CTX devuelve salida estructurada en JSON con este formato base:
 

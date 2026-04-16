@@ -1,4 +1,4 @@
-﻿# Estructura Interna de `.ctx/`
+# Estructura Interna de `.ctx/`
 Si un modelo de lenguaje y su agente pierden el contexto, esta es la herramienta que necesitas.
 
 Este documento describe la estructura de almacenamiento local de CTX.
@@ -427,7 +427,7 @@ La fuente primaria siempre debe ser el conjunto de entidades estructuradas del d
 
 ## Documentos Relacionados
 
-- [CLI_COMMANDS.md](C:/sources/ctx-public/docs/CLI_COMMANDS.md)
-- [INSTALLATION_AND_USAGE_GUIDE.md](C:/sources/ctx-public/docs/INSTALLATION_AND_USAGE_GUIDE.md)
-- [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-public/docs/V1_FUNCTIONAL_SPEC.md)
+- [CLI_COMMANDS.md](C:/sources/ctx-open/docs/CLI_COMMANDS.md)
+- [INSTALLATION_AND_USAGE_GUIDE.md](C:/sources/ctx-open/docs/INSTALLATION_AND_USAGE_GUIDE.md)
+- [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-open/docs/V1_FUNCTIONAL_SPEC.md)
 

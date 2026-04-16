@@ -2,6 +2,25 @@
 
 All notable changes to CTX will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- Single-entry installer bootstraps: `install.ps1` for Windows and `install.sh` for Linux/macOS.
+- Cross-platform install engines in `scripts/install-ctx.ps1` and `scripts/install-ctx.sh`.
+- Dynamic helper prompt loading from `prompts/CTX_HELPER_PROMPT.md`.
+- Distribution manifests for install layout and GitHub Releases asset resolution.
+
+### Changed
+
+- The CLI `helper`/`--help` flow now prints project-specific bootstrap guidance by resolving the active repo or install root.
+- Distribution packaging now copies the helper prompt and canonical CTX docs into install bundles.
+- Installer documentation now follows a release-aware flow: `main` for integration, `release/x.y.z` for stabilization, and GitHub Releases as the public install/update source of truth.
+
+### Notes
+
+- These changes are in the public repo and prepare the next release line; the latest published release remains `1.0.4` until a new tag and GitHub Release are cut.
+
 ## [1.0.4] - 2026-04-15
 
 ### Added

@@ -1,4 +1,4 @@
-﻿# CTX Domain Model
+# CTX Domain Model
 If a language model and its agent lose context, this is the tool you need.
 
 This document describes the current CTX domain model.
@@ -798,7 +798,7 @@ This model enables:
 
 ## Related references
 
-- [CTX_STRUCTURE.md](C:/sources/ctx-public/docs/CTX_STRUCTURE.md)
-- [CLI_COMMANDS.md](C:/sources/ctx-public/docs/CLI_COMMANDS.md)
-- [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-public/docs/V1_FUNCTIONAL_SPEC.md)
+- [CTX_STRUCTURE.md](C:/sources/ctx-open/docs/CTX_STRUCTURE.md)
+- [CLI_COMMANDS.md](C:/sources/ctx-open/docs/CLI_COMMANDS.md)
+- [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-open/docs/V1_FUNCTIONAL_SPEC.md)
 

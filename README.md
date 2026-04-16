@@ -1,4 +1,4 @@
-﻿# CTX
+# CTX
 If a language model and its agent lose context, this is the tool you need.
 
 CTX is a Cognitive Version Control System for AI: a CLI for structured reasoning artifacts instead of chat transcripts.
@@ -79,24 +79,58 @@ The strongest demos are not graph demos. They are continuity demos.
 
 Current version: `1.0.4`
 
-## Download
+## Install
 
-Download the portable packages from the latest public release:
+CTX now supports a single user-facing bootstrap entrypoint per shell.
 
-- [CTX 1.0.4 release](https://github.com/diegoxtr/ctx-open/releases/tag/v1.0.4)
-- [Windows x64](https://github.com/diegoxtr/ctx-open/releases/download/v1.0.4/ctx-win-x64.zip)
-- [Windows x86](https://github.com/diegoxtr/ctx-open/releases/download/v1.0.4/ctx-win-x86.zip)
-- [Linux x64](https://github.com/diegoxtr/ctx-open/releases/download/v1.0.4/ctx-linux-x64.tar.gz)
-- [Linux arm64](https://github.com/diegoxtr/ctx-open/releases/download/v1.0.4/ctx-linux-arm64.tar.gz)
-- [macOS x64](https://github.com/diegoxtr/ctx-open/releases/download/v1.0.4/ctx-osx-x64.tar.gz)
-- [macOS arm64](https://github.com/diegoxtr/ctx-open/releases/download/v1.0.4/ctx-osx-arm64.tar.gz)
+Windows:
 
-Portable quick start:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+```
 
-1. Download the package for your platform.
-2. Extract it anywhere locally.
-3. Run `ctx` for the CLI.
-4. Run `ctx-viewer` to open the viewer.
+Linux/macOS:
+
+```bash
+bash ./install.sh
+```
+
+What the bootstrap does:
+
+- detects whether CTX is absent, outdated, or already current
+- chooses `install`, `update`, or `repair`
+- resolves the latest published version and matching asset from GitHub Releases
+- installs from a portable bundle or from source, depending on the selected mode
+- copies the helper prompt plus the canonical CTX docs into the install root
+- exposes `ctx` globally when possible
+
+Windows PATH/global exposure:
+
+- default: `-PathScope Auto`
+- user PATH only: `-PathScope User`
+- machine-wide PATH: `-PathScope Machine`
+- no PATH changes: `-PathScope None`
+
+Example:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -PathScope Machine
+```
+
+Linux/macOS shell exposure:
+
+- default: `LINK_SCOPE=auto`
+- user-level links: `LINK_SCOPE=user`
+- global links: `LINK_SCOPE=global`
+- no links: `LINK_SCOPE=none`
+
+The installed helper is dynamic: it resolves the install root or repository root and points agents to the copied `CTX_VIEWER_GUIDE`, `CTX_AGENT_PROMPT`, and `CTX_AUTONOMOUS_OPERATION_PROTOCOL` before they start operating.
+
+Release/install rule:
+
+- the bootstrap consumes published GitHub Releases only
+- unreleased `main` work is never treated as the latest installable version
+- recommended release flow is `main` -> `release/x.y.z` -> tag `vX.Y.Z` -> GitHub Release
 
 ## Live Demo
 
@@ -111,15 +145,16 @@ Public entrypoints:
 - Landing: `https://diegoxtr.github.io/ctx-open/`
 - Demo notes: `https://diegoxtr.github.io/ctx-open/notes.html`
 - Codespaces quickstart: `https://codespaces.new/diegoxtr/ctx-open?quickstart=1`
-- Current live session (temporary): `https://fuzzy-space-sniffle-59rjpw4x7w37r55-5271.app.github.dev/`
-
-The current live session link is a temporary direct entrypoint to the running public viewer. Use it while the session is alive; otherwise fall back to the landing or Codespaces quickstart.
+When a temporary public viewer session is alive, publish that URL on the landing page or demo notes. Otherwise use the landing page or the Codespaces quickstart.
 
 Demo repositories you can copy and paste:
 
-- Codespaces default: `/workspaces/ctx-open/examples/ctx/agent-session-continuity`
-- Codespaces alternate: `/workspaces/ctx-open/examples/ctx/catalog-cache-branch-merge`
-- Codespaces alternate: `/workspaces/ctx-open/examples/ctx/critical-checkout-regression`
+- Public Codespaces default: `/workspaces/ctx-open/examples/ctx/agent-session-continuity`
+- Public Codespaces alternate: `/workspaces/ctx-open/examples/ctx/catalog-cache-branch-merge`
+- Public Codespaces alternate: `/workspaces/ctx-open/examples/ctx/critical-checkout-regression`
+- Local clone default: `C:\sources\ctx-open\examples\ctx\agent-session-continuity`
+- Local clone alternate: `C:\sources\ctx-open\examples\ctx\catalog-cache-branch-merge`
+- Local clone alternate: `C:\sources\ctx-open\examples\ctx\critical-checkout-regression`
 
 What each demo should show:
 
@@ -136,7 +171,7 @@ The repository includes:
 - `docs/live-demo/index.html`
 - `.github/workflows/live-demo-pages.yml`
 
-The Codespaces scaffold now bootstraps the SDK pinned in `global.json` before restore and starts the viewer on workspace start instead of waiting for a manual attach.
+The Codespaces scaffold now starts the viewer on workspace start and bootstraps the SDK pinned in `global.json` before restore so the public demo does not depend on the base image already matching the repo.
 
 If a resumed or partially initialized codespace does not launch the viewer automatically, use this recovery block:
 
@@ -255,6 +290,7 @@ Documentation:
 - `docs/CTX_STRUCTURE.md`
 - `docs/DOMAIN_MODEL.md`
 - `docs/INSTALLER_AND_DISTRIBUTION.md`
+- `docs/LIVE_DEMO.md`
 - `docs/LOCAL_CTX_INSTALLATION.md`
 - `docs/TECHNICAL_ARCHITECTURE.md`
 - `docs/TECHNICAL_INDEX.md`
@@ -279,7 +315,7 @@ Viewer:
 - `dotnet run --project .\Ctx.Viewer`
 - Open `http://localhost:5271`
 - Load a `.ctx` repository path to inspect branches, timeline lanes, commits and graph traces over time
-- If no repository path is stored or entered, the viewer first uses `CTX_VIEWER_DEFAULT_REPOSITORY_PATH` or `Viewer__DefaultRepositoryPath` when configured, and otherwise falls back to the project git root, which for this self-hosting repository resolves to `C:\sources\ctx-public`
+- If no repository path is stored or entered, the viewer first uses `CTX_VIEWER_DEFAULT_REPOSITORY_PATH` or `Viewer__DefaultRepositoryPath` when configured, and otherwise falls back to the project git root, which for this self-hosting repository resolves to `C:\sources\ctx-open`
 - Default branch is `main` unless the browser already remembers a newer repository or branch selection
 - `Auto-refresh` starts enabled by default unless the browser already remembers that you turned it off, and the viewer remembers that preference across reloads
 - Use `Refresh` for manual reloads or keep `Auto-refresh` enabled for periodic sync
@@ -300,8 +336,8 @@ Viewer:
 - The viewer remembers the last repository, branch, focus combination and task-state filter mix across reloads
 - The left panel shows both active and closed tasks so current and completed work stay visible without opening the graph first
 - Task items in the left panel can now focus the corresponding `Task` node and restore the working graph context
-- Primary self-hosting repository: `C:\sources\ctx-public`
-- Bundled demo repository: `C:\sources\ctx-public\examples\viewer-demo`
+- Primary self-hosting repository: `C:\sources\ctx-open`
+- Bundled demo repository: `C:\sources\ctx-open\examples\viewer-demo`
 - The bundled demo includes `main`, `feature/ux-timeline` and `research/validation`
 - The repo-root `.ctx` workspace tracks the real product roadmap, evidence, decisions and cognitive commits for CTX itself
 - Local publish/install is documented in `docs/LOCAL_CTX_INSTALLATION.md`
@@ -382,4 +418,5 @@ This is a planned direction, not a statement of current capability.
 - `ctx thread reconstruct --format markdown` emits a readable narrative thread artifact in addition to the structured JSON model.
 - `docs/WORK_MODEL_AND_PRIORITIZATION.md` now defines the canonical distinction between `issue`, `gap`, `task`, `subtask`, `blocker`, `duplicate` and `follow-up`.
 - Distribution assets now live under `distribution/`, including target manifests, platform installer scaffolding, and the shipped agent-link prompt fragment.
+
 

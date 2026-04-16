@@ -1,4 +1,4 @@
-﻿# Modelo de Dominio de CTX
+# Modelo de Dominio de CTX
 Si un modelo de lenguaje y su agente pierden el contexto, esta es la herramienta que necesitas.
 
 Este documento describe el modelo de dominio actual de CTX.
@@ -791,7 +791,7 @@ Este modelo permite:
 
 ## Referencias Relacionadas
 
-- [CTX_STRUCTURE.md](C:/sources/ctx-public/docs/CTX_STRUCTURE.md)
-- [CLI_COMMANDS.md](C:/sources/ctx-public/docs/CLI_COMMANDS.md)
-- [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-public/docs/V1_FUNCTIONAL_SPEC.md)
+- [CTX_STRUCTURE.md](C:/sources/ctx-open/docs/CTX_STRUCTURE.md)
+- [CLI_COMMANDS.md](C:/sources/ctx-open/docs/CLI_COMMANDS.md)
+- [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-open/docs/V1_FUNCTIONAL_SPEC.md)
 

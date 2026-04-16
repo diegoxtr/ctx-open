@@ -1,4 +1,4 @@
-﻿# Internal Structure of `.ctx/`
+# Internal Structure of `.ctx/`
 If a language model and its agent lose context, this is the tool you need.
 
 This document describes CTX local storage structure.
@@ -441,7 +441,7 @@ The primary source is always the structured domain entities.
 
 ## Related documents
 
-- [CLI_COMMANDS.md](C:/sources/ctx-public/docs/CLI_COMMANDS.md)
-- [INSTALLATION_AND_USAGE_GUIDE.md](C:/sources/ctx-public/docs/INSTALLATION_AND_USAGE_GUIDE.md)
-- [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-public/docs/V1_FUNCTIONAL_SPEC.md)
+- [CLI_COMMANDS.md](C:/sources/ctx-open/docs/CLI_COMMANDS.md)
+- [INSTALLATION_AND_USAGE_GUIDE.md](C:/sources/ctx-open/docs/INSTALLATION_AND_USAGE_GUIDE.md)
+- [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-open/docs/V1_FUNCTIONAL_SPEC.md)
 

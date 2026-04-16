@@ -1,4 +1,4 @@
-﻿# CTX å®‰è£…ä¸Žä½¿ç”¨æŒ‡å—
+# CTX å®‰è£…ä¸Žä½¿ç”¨æŒ‡å—
 如果语言模型及其代理丢失了上下文，这就是你需要的工具。
 
 æœ¬æ–‡æ¡£è¯´æ˜Žå¦‚ä½•åœ¨æœ¬åœ°é¦–æ¬¡å®‰è£…ã€ç¼–è¯‘å¹¶ä½¿ç”¨ CTXã€‚
@@ -35,7 +35,7 @@ dotnet --version
 2. æ‹‰å–ä»£ç å¹¶è¿›å…¥æ ¹ç›®å½•ï¼š
 
 ```powershell
-cd C:\sources\ctx
+cd C:\sources\ctx-open
 ```
 
 3. æ¢å¤ã€æž„å»ºã€æµ‹è¯•ï¼š
@@ -55,7 +55,7 @@ dotnet run --project .\Ctx.Cli -- status
 5. åˆå§‹åŒ–ä»“åº“ï¼š
 
 ```powershell
-dotnet run --project C:\sources\ctx\Ctx.Cli -- init --name "CTX-DEMO" --description "First cognitive repo"
+dotnet run --project C:\sources\ctx-open\Ctx.Cli -- init --name "CTX-DEMO" --description "First cognitive repo"
 ```
 
 ## æŽ¨èé¦–ä¸ªæµç¨‹
@@ -71,5 +71,5 @@ dotnet run --project C:\sources\ctx\Ctx.Cli -- init --name "CTX-DEMO" --descript
 
 è¯¦ç»†ç¤ºä¾‹è¯·å‚è€ƒè‹±æ–‡ç‰ˆï¼š
 
-- [INSTALLATION_AND_USAGE_GUIDE.md](C:/sources/ctx-public/docs/INSTALLATION_AND_USAGE_GUIDE.md)
+- [INSTALLATION_AND_USAGE_GUIDE.md](C:/sources/ctx-open/docs/INSTALLATION_AND_USAGE_GUIDE.md)
 
