@@ -13,7 +13,7 @@ The top-level demo folders are the examples you should open first:
 The top-level `version.json`, `config.json`, `HEAD`, `branches/`, and `metrics/` files are legacy repository artifacts for this folder itself. They are not the primary demo entry points.
 Treat them as folder-level residue from an older workspace, not as the recommended way to understand the examples.
 
-The three operational example repositories in this folder are currently aligned to the CTX `1.0.4` repository baseline.
+The three operational example repositories in this folder are currently aligned to the CTX `1.0.5` repository baseline.
 `futbol-mundial` remains present as a sanitized public-style artifact set, but it is not part of the recommended internal showcase because it is not a fully live CTX workspace.
 
 If you want to review the strongest commercial examples first, use this order:
@@ -99,10 +99,10 @@ ctx graph summary
 If you are running directly from the source tree instead of the local install, the equivalent CLI surface is:
 
 ```powershell
-dotnet C:\sources\ctx-public\Ctx.Cli\bin\Debug\net8.0\Ctx.Cli.dll status
-dotnet C:\sources\ctx-public\Ctx.Cli\bin\Debug\net8.0\Ctx.Cli.dll log
-dotnet C:\sources\ctx-public\Ctx.Cli\bin\Debug\net8.0\Ctx.Cli.dll audit
-dotnet C:\sources\ctx-public\Ctx.Cli\bin\Debug\net8.0\Ctx.Cli.dll graph summary
+dotnet C:\sources\ctx-open\Ctx.Cli\bin\Debug\net8.0\Ctx.Cli.dll status
+dotnet C:\sources\ctx-open\Ctx.Cli\bin\Debug\net8.0\Ctx.Cli.dll log
+dotnet C:\sources\ctx-open\Ctx.Cli\bin\Debug\net8.0\Ctx.Cli.dll audit
+dotnet C:\sources\ctx-open\Ctx.Cli\bin\Debug\net8.0\Ctx.Cli.dll graph summary
 ```
 
 Viewer:
@@ -116,5 +116,5 @@ Then open `http://127.0.0.1:5271` and load one of the example directories above.
 If you prefer the source-tree viewer instead of the local publish:
 
 ```powershell
-dotnet run --project C:\sources\ctx-public\Ctx.Viewer --urls http://127.0.0.1:5271
+dotnet run --project C:\sources\ctx-open\Ctx.Viewer --urls http://127.0.0.1:5271
 ```

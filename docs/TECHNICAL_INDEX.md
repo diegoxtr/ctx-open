@@ -33,7 +33,7 @@ Recommended order:
 - [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-open/docs/V1_FUNCTIONAL_SPEC.md)
   Defines modules, requirements, acceptance criteria, and V1 definition of done.
 
-- [RELEASE_1_0_4.md](./RELEASE_1_0_4.md)
+- [RELEASE_1_0_5.md](./RELEASE_1_0_5.md)
   Summarizes the current stable release baseline.
 
 ## Architecture and design
