@@ -25,7 +25,7 @@
 
 - [V1_PLAN.md](C:/sources/ctx-open/docs/V1_PLAN.md)
 - [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-open/docs/V1_FUNCTIONAL_SPEC.md)
-- [RELEASE_1_0_5.md](../RELEASE_1_0_5.md)
+- [RELEASE_1_0_6.md](../RELEASE_1_0_6.md)
 
 ### æž¶æž„ä¸Žè®¾è®¡
 

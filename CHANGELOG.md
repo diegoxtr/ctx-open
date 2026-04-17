@@ -2,6 +2,24 @@
 
 All notable changes to CTX will be documented in this file.
 
+## [1.0.6] - 2026-04-17
+
+### Added
+
+- `ctx bootstrap map` and `ctx bootstrap apply` as public bootstrap surfaces for provisional cognitive extraction from articles and projects.
+- Public documentation for bootstrap cognitive indexing, bootstrap testing development, and branch-like hypothesis semantics.
+- Public bootstrap agriculture example packs for `v1`, `v2`, `v3`, and `v4`, including source texts, plans, and real-testing notes.
+
+### Changed
+
+- The domain model, CLI, and viewer now support branch-like hypothesis semantics through hypothesis lifecycle state, role, lineage grouping, inter-hypothesis relations, and evidence sharing.
+- The viewer now exposes an `Interpretations` detail surface plus an optional `Show interpretation relations` overlay so competing hypotheses can stay visible without overwhelming the main trace graph.
+- The public helper prompt and examples now explicitly preserve the private/public boundary while keeping all published examples sanitized and replayable.
+
+### Notes
+
+- This patch release freezes the first public line where bootstrap indexing, coexistence-first hypothesis handling, and interpretation-aware viewer surfaces ship together as a coherent public-safe baseline.
+
 ## [1.0.5] - 2026-04-16
 
 ### Added

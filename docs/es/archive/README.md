@@ -5,7 +5,7 @@ Este directorio conserva releases internas que ya no forman parte del flujo prin
 
 La referencia operativa vigente para la release estable es:
 
-- [RELEASE_1_0_5.md](../RELEASE_1_0_5.md)
+- [RELEASE_1_0_6.md](../RELEASE_1_0_6.md)
 
 Releases archivadas:
 

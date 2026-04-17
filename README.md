@@ -68,16 +68,17 @@ The strongest demos are not graph demos. They are continuity demos.
 - It has unusually high value for generating structured training inputs because the reasoning path is preserved instead of guessed after the fact.
 - This is not just another AI tool. It is part of the infrastructure layer that the next generation of agent workflows will need.
 
-**Español**
+**Espanol**
 
-- CTX es un Sistema de Control de Versiones Cognitivas para IA: ayuda a rastrear y explicar decisiones detrás de sistemas de IA y sistemas en general a partir de estado cognitivo durable en lugar de memoria efímera de chat.
-- CTX da memoria de trabajo estructurada a los agentes para que continúen el trabajo en lugar de arrancar de cero.
+- CTX es el estandar de contexto persistente para agentes de IA.
+- CTX ayuda a rastrear y explicar decisiones detras de sistemas de IA y sistemas en general a partir de estado cognitivo durable en lugar de memoria efimera de chat.
+- CTX da memoria de trabajo estructurada a los agentes para que continuen el trabajo en lugar de arrancar de cero.
 - Puede reconstruir una idea cognitiva paso a paso, con goals, tasks, evidencia, decisiones, conclusiones, runbooks y origins trazables.
-- No está limitado al desarrollo de software. También puede preservar planificación cognitiva, investigación, análisis y otros workflows intelectuales con la misma continuidad estructurada.
-- Tiene un valor muy alto para generar inputs estructurados de entrenamiento porque el camino de razonamiento queda preservado y no reconstruido a posteriori.
-- Esto no es solo otra herramienta de IA. Es parte de la capa de infraestructura que va a necesitar la próxima generación de workflows con agentes.
+- No esta limitado al desarrollo de software. Tambien puede preservar planificacion, investigacion, investigacion tecnica y workflows cognitivos mas amplios con la misma continuidad estructurada.
+- Tiene un valor inusualmente alto para generar inputs estructurados de entrenamiento porque el camino de razonamiento queda preservado en lugar de ser reconstruido a posteriori.
+- Esto no es solo otra herramienta de IA. Es parte de la capa de infraestructura que necesitara la proxima generacion de workflows con agentes.
 
-Current version: `1.0.5`
+Current version: `1.0.6`
 
 ## Install
 
@@ -393,7 +394,7 @@ This is a planned direction, not a statement of current capability.
 - Formal V1 functional specification is documented in `docs/V1_FUNCTIONAL_SPEC.md`.
 - Pilot execution guidance is documented in `docs/PILOT_TESTING_GUIDE.md`.
 - Installation and first-use guidance are documented in `docs/INSTALLATION_AND_USAGE_GUIDE.md`.
-- Release baseline details are documented in `docs/RELEASE_1_0_5.md`.
+- Release baseline details are documented in `docs/RELEASE_1_0_6.md`.
 - A repeatable smoke test is available at `scripts/run-smoke-test.ps1`.
 - A repeatable branch/merge conflict demo is available at `scripts/run-merge-conflict-demo.ps1`.
 - A local publish script is available at `scripts/publish-local.ps1`.
@@ -419,4 +420,5 @@ This is a planned direction, not a statement of current capability.
 - `docs/WORK_MODEL_AND_PRIORITIZATION.md` now defines the canonical distinction between `issue`, `gap`, `task`, `subtask`, `blocker`, `duplicate` and `follow-up`.
 - Distribution assets now live under `distribution/`, including target manifests, platform installer scaffolding, and the shipped agent-link prompt fragment.
 
-
+- Diego Mariano Verrastro   
+- diego.verrastro.ctx@gmail.com
