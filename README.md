@@ -1,5 +1,6 @@
 # CTX
 If a language model and its agent lose context, this is the tool you need.
+CTX is the standard for persistent context in AI agents.
 
 CTX is a Cognitive Version Control System for AI: a CLI for structured reasoning artifacts instead of chat transcripts.
 Agents do not just need context. They need continuity.
@@ -61,6 +62,7 @@ The strongest demos are not graph demos. They are continuity demos.
 
 **English**
 
+- CTX is the standard for persistent context in AI agents.
 - CTX helps track and explain decisions behind AI and systems through durable cognitive state instead of ephemeral chat memory.
 - CTX gives agents structured working memory so they can continue work instead of starting over.
 - It can reconstruct a cognitive idea step by step, with traceable goals, tasks, evidence, decisions, conclusions, runbooks, and origins.
