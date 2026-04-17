@@ -47,6 +47,9 @@ Recommended order:
 - [CTX_STRUCTURE.md](C:/sources/ctx-open/docs/CTX_STRUCTURE.md)
   `.ctx/` structure, base files, directories, and invariants.
 
+- [CTX_SPECIFICATION_V1.md](C:/sources/ctx-open/docs/CTX_SPECIFICATION_V1.md)
+  Minimal CTX v1 specification: how context is stored, versioned, and structured.
+
 - [COGNITIVE_GRAPH_AND_LINEAGE.md](C:/sources/ctx-open/docs/COGNITIVE_GRAPH_AND_LINEAGE.md)
   Defines the relational projection of knowledge and its visualization roadmap.
 

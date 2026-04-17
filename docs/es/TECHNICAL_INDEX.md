@@ -50,6 +50,9 @@ Si queres entender CTX rapido, este es el orden recomendado:
 - [CTX_STRUCTURE.md](C:/sources/ctx-open/docs/CTX_STRUCTURE.md)
   Explica la estructura fisica de `.ctx/`, archivos base, directorios e invariantes.
 
+- [CTX_SPECIFICATION_V1.md](C:/sources/ctx-open/docs/es/CTX_SPECIFICATION_V1.md)
+  Especificacion minima de CTX v1: como se guarda, se versiona y se estructura el contexto.
+
 - [COGNITIVE_GRAPH_AND_LINEAGE.md](C:/sources/ctx-open/docs/COGNITIVE_GRAPH_AND_LINEAGE.md)
   Define la proyeccion relacional del conocimiento, sus relaciones y su roadmap de visualizacion.
 

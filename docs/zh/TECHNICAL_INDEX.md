@@ -32,6 +32,7 @@
 - [TECHNICAL_ARCHITECTURE.md](C:/sources/ctx-open/docs/TECHNICAL_ARCHITECTURE.md)
 - [DOMAIN_MODEL.md](C:/sources/ctx-open/docs/DOMAIN_MODEL.md)
 - [CTX_STRUCTURE.md](C:/sources/ctx-open/docs/CTX_STRUCTURE.md)
+- [CTX_SPECIFICATION_V1.md](C:/sources/ctx-open/docs/zh/CTX_SPECIFICATION_V1.md)
 - [COGNITIVE_GRAPH_AND_LINEAGE.md](C:/sources/ctx-open/docs/COGNITIVE_GRAPH_AND_LINEAGE.md)
 - [COGNITIVE_THREAD_RECONSTRUCTION.md](C:/sources/ctx-open/docs/COGNITIVE_THREAD_RECONSTRUCTION.md)
 - [COGNITIVE_TRIGGERS.md](C:/sources/ctx-open/docs/COGNITIVE_TRIGGERS.md)
