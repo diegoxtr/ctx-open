@@ -31,6 +31,11 @@ public record Task(
     IReadOnlyList<HypothesisId> HypothesisIds,
     TaskId? ParentTaskId = null) : CognitiveEntity<TaskId>(Id, Trace);
 
+public record HypothesisRelation(
+    HypothesisRelationType RelationType,
+    HypothesisId TargetHypothesisId,
+    string? Note = null);
+
 public record Hypothesis(
     HypothesisId Id,
     string Statement,
@@ -42,7 +47,14 @@ public record Hypothesis(
     HypothesisState State,
     Traceability Trace,
     IReadOnlyList<TaskId> TaskIds,
-    IReadOnlyList<EvidenceId> EvidenceIds) : CognitiveEntity<HypothesisId>(Id, Trace)
+    IReadOnlyList<EvidenceId> EvidenceIds,
+    HypothesisBranchState? BranchState = null,
+    HypothesisBranchRole? BranchRole = null,
+    string? LineageGroupId = null,
+    IReadOnlyList<HypothesisId>? ParentHypothesisIds = null,
+    HypothesisId? MergedIntoHypothesisId = null,
+    IReadOnlyList<HypothesisId>? SupersedesHypothesisIds = null,
+    IReadOnlyList<HypothesisRelation>? Relations = null) : CognitiveEntity<HypothesisId>(Id, Trace)
 {
     public decimal Probability => Confidence;
     public decimal Score => HypothesisScoring.Calculate(Probability, Impact, EvidenceStrength, CostToValidate);
@@ -495,7 +507,7 @@ public static class DomainConstants
 {
     public const string RepositoryFolderName = ".ctx";
     public const string CurrentRepositoryVersion = "1.0";
-    public const string ProductVersion = "1.0.5";
+    public const string ProductVersion = "1.0.4";
 }
 
 public static class HypothesisScoring

@@ -599,6 +599,31 @@ Shows a specific hypothesis.
 dotnet run --project .\Ctx.Cli -- hypo show <hypothesisId>
 ```
 
+### Branch-like hypothesis commands
+
+These commands support the first branch-like hypothesis surface for competing interpretations.
+
+Implemented commands:
+
+- `ctx hypo update <id> --branch-state active|weakening|merged|deprecated|promoted`
+- `ctx hypo relate <a> --relation competes-with|merged-into|supersedes|derived-from|borrows-evidence-from --to <b>`
+- `ctx hypo merge <from> --into <to>`
+- `ctx hypo supersede <old> --by <new>`
+- `ctx evidence share <evidenceId> --to hypothesis:<id>`
+
+Design intent:
+
+- preserve several live interpretations without forcing immediate synthesis
+- expose explicit relations between competing hypotheses
+- keep evidence ownership or borrowing visible
+- avoid coupling these operations to repository branches in the first version
+
+Current surface:
+
+- the CLI surface is available now
+- the viewer exposes badges plus an `Interpretations` detail tab
+- graph-level interpretation relations stay behind an explicit toggle so the main trace graph remains readable
+
 ## Evidence
 
 ### `ctx evidence add`
@@ -919,6 +944,57 @@ dotnet run --project .\Ctx.Cli -- usage coverage
 
 ## Portability
 
+### `ctx bootstrap map`
+
+Builds a provisional cognitive map from a file or directory without persisting entities into `.ctx`.
+
+This is a bootstrap surface, not a final importer:
+
+- it infers candidate threads
+- it infers candidate hypotheses
+- it extracts supporting evidence-like excerpts
+- it highlights open questions and possible next tasks
+- it keeps everything provisional so CTX can stay idea-first instead of collapsing into raw entity extraction
+
+Options:
+- `--from <path>`
+- `--mode auto|article|project`
+- `--max-files <n>`
+
+```powershell
+dotnet run --project .\Ctx.Cli -- bootstrap map --from .\README.md
+dotnet run --project .\Ctx.Cli -- bootstrap map --from .\docs --mode project --max-files 12
+```
+
+### `ctx bootstrap apply`
+
+Promotes only the strongest provisional bootstrap thread into durable CTX as a reviewable work line.
+
+This command is intentionally conservative:
+
+- it opens one provisional goal
+- it seeds one review task
+- it promotes up to three candidate hypotheses
+- it attaches bootstrap evidence excerpts
+- it keeps all promoted artifacts explicitly provisional
+
+It does not:
+
+- import every candidate thread
+- accept decisions automatically
+- close the work line
+
+Options:
+- `--from <path>`
+- `--mode auto|article|project`
+- `--max-files <n>`
+- `--parent-goal <goalId>`
+
+```powershell
+dotnet run --project .\Ctx.Cli -- bootstrap apply --from .\README.md
+dotnet run --project .\Ctx.Cli -- bootstrap apply --from .\docs --mode project --max-files 12 --parent-goal e8ab03570a874529b292f6265a3a67ee
+```
+
 ### `ctx export`
 
 Exports the current repository to a portable JSON snapshot.
@@ -967,4 +1043,6 @@ dotnet run --project .\Ctx.Cli -- thread reconstruct --task <taskId> --format ma
 dotnet run --project .\Ctx.Cli -- log
 dotnet run --project .\Ctx.Cli -- diff
 ```
+
+
 

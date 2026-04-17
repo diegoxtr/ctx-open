@@ -15,10 +15,14 @@ public interface ICtxApplicationService
     System.Threading.Tasks.Task<CommandResult> UpdateTaskAsync(string repositoryPath, UpdateTaskRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddHypothesisAsync(string repositoryPath, AddHypothesisRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> UpdateHypothesisAsync(string repositoryPath, UpdateHypothesisRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> RelateHypothesisAsync(string repositoryPath, RelateHypothesisRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> MergeHypothesisAsync(string repositoryPath, MergeHypothesisRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> SupersedeHypothesisAsync(string repositoryPath, SupersedeHypothesisRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> RankHypothesesAsync(string repositoryPath, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> NextAsync(string repositoryPath, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddDecisionAsync(string repositoryPath, AddDecisionRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddEvidenceAsync(string repositoryPath, AddEvidenceRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> ShareEvidenceAsync(string repositoryPath, ShareEvidenceRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddConclusionAsync(string repositoryPath, AddConclusionRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> UpdateConclusionAsync(string repositoryPath, UpdateConclusionRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> RunAsync(string repositoryPath, RunRequest request, CancellationToken cancellationToken);
@@ -43,9 +47,11 @@ public interface ICtxApplicationService
     System.Threading.Tasks.Task<CommandResult> ShowMetricsAsync(string repositoryPath, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> GraphSummaryAsync(string repositoryPath, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> GraphShowAsync(string repositoryPath, string nodeId, CancellationToken cancellationToken);
-    System.Threading.Tasks.Task<CommandResult> ExportGraphAsync(string repositoryPath, string format, string? commitId, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> ExportGraphAsync(string repositoryPath, string format, string? commitId, string? mode, string? focusNodeId, int? depth, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> GraphLineageAsync(string repositoryPath, string focusType, string focusId, string format, string? outputPath, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> ThreadReconstructAsync(string repositoryPath, string focusType, string focusId, string format, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> BootstrapMapAsync(string repositoryPath, BootstrapMapRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> BootstrapApplyAsync(string repositoryPath, BootstrapApplyRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> DoctorAsync(string repositoryPath, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AuditAsync(string repositoryPath, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> ExportAsync(string repositoryPath, string outputPath, CancellationToken cancellationToken);

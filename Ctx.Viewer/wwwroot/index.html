@@ -118,6 +118,18 @@
                     <input id="commit-focus-toggle" type="checkbox" checked>
                     Focus
                 </label>
+                <label class="graph-filter-option graph-filter-commit">
+                    <input id="primary-lineage-toggle" type="checkbox">
+                    Primary lineage only
+                </label>
+                <label class="graph-filter-option">
+                    <input id="graph-expand-active-toggle" type="checkbox">
+                    All active lines
+                </label>
+                <label class="graph-filter-option graph-filter-commit">
+                    <input id="interpretation-relations-toggle" type="checkbox">
+                    Show interpretation relations
+                </label>
                 <span class="graph-filter-label">Task states</span>
                     <label class="graph-filter-option">
                         <input id="graph-filter-draft" type="checkbox" data-task-filter="Draft" checked>
@@ -142,6 +154,7 @@
                 </div>
             </div>
             <p id="graph-focus-caption" class="graph-focus-caption">Showing all task states.</p>
+            <div id="graph-node-actions" class="graph-node-actions" hidden></div>
             <div id="graph-canvas" class="graph-canvas"></div>
             <p id="viewer-hint" class="viewer-hint">Load a local `.ctx` repository to inspect its timeline and graph.</p>
         </section>
@@ -154,12 +167,14 @@
             <h2>Details</h2>
             <div class="panel-rail-tabs panel-rail-tabs-right" aria-label="Collapsed right rail">
                 <button type="button" class="panel-rail-tab active" data-detail-rail-tab="details">Details</button>
+                <button type="button" class="panel-rail-tab" data-detail-rail-tab="interpretations">Interpretations</button>
                 <button type="button" class="panel-rail-tab" data-detail-rail-tab="origin">Origin</button>
                 <button type="button" class="panel-rail-tab" data-detail-rail-tab="playbook">Playbook</button>
                 <button type="button" class="panel-rail-tab" data-detail-rail-tab="hypotheses">Hypotheses</button>
             </div>
             <div class="detail-tab-bar" role="tablist" aria-label="Right rail tabs">
                 <button type="button" class="detail-tab-button active" data-detail-tab="details" role="tab" aria-selected="true">Details</button>
+                <button type="button" class="detail-tab-button" data-detail-tab="interpretations" role="tab" aria-selected="false">Interpretations</button>
                 <button type="button" class="detail-tab-button" data-detail-tab="origin" role="tab" aria-selected="false">Origin</button>
                 <button type="button" class="detail-tab-button" data-detail-tab="playbook" role="tab" aria-selected="false">Playbook</button>
                 <button type="button" class="detail-tab-button" data-detail-tab="hypotheses" role="tab" aria-selected="false">Hypotheses</button>
@@ -178,6 +193,12 @@
                 <section class="detail-subsection">
                     <h3>Origin</h3>
                     <div id="origin-detail" class="detail-surface">Select a task, goal, or commit focus to view the origin of this cognitive line.</div>
+                </section>
+            </section>
+            <section class="detail-tab-panel" data-detail-panel="interpretations" role="tabpanel" hidden>
+                <section class="detail-subsection">
+                    <h3>Interpretations</h3>
+                    <div id="interpretation-detail" class="detail-surface">Select a hypothesis or load a lineage group with branch-like semantics to inspect competing interpretations.</div>
                 </section>
             </section>
             <section class="detail-tab-panel" data-detail-panel="playbook" role="tabpanel" hidden>

@@ -197,6 +197,48 @@ Responsibility:
 - make evaluable ideas explicit
 - avoid implicit reasoning
 
+#### Branch-like extension
+
+For contradiction-heavy work, CTX needs competing hypotheses to remain alive without collapsing immediately into one synthetic narrative.
+
+The current `Hypothesis` model now includes a first branch-like extension so hypotheses can behave like interpretation branches inside one lineage group.
+
+Additional fields:
+
+- `branchState`
+- `branchRole`
+- `lineageGroupId`
+- `parentHypothesisIds`
+- `mergedIntoHypothesisId`
+- `supersedesHypothesisIds`
+
+Intent:
+
+- `branchState`
+  - `active`
+  - `weakening`
+  - `merged`
+  - `deprecated`
+  - `promoted`
+- `branchRole`
+  - `competing`
+  - `integrative`
+  - `dominant`
+- `lineageGroupId`
+  - groups rival interpretations of the same unresolved problem
+- `parentHypothesisIds`
+  - shows derivation from one or more previous hypotheses
+- `mergedIntoHypothesisId`
+  - preserves explicit merge history
+- `supersedesHypothesisIds`
+  - records replacement by a stronger hypothesis
+
+Important boundary:
+
+- these semantics are proposed inside the hypothesis model
+- they are not the same as repository branches
+- repository branching should remain a later integration concern
+
 ### Decision
 
 Explicit decision in reasoning.
@@ -801,4 +843,6 @@ This model enables:
 - [CTX_STRUCTURE.md](C:/sources/ctx-open/docs/CTX_STRUCTURE.md)
 - [CLI_COMMANDS.md](C:/sources/ctx-open/docs/CLI_COMMANDS.md)
 - [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-open/docs/V1_FUNCTIONAL_SPEC.md)
+
+
 
