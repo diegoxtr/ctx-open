@@ -2,6 +2,16 @@
 
 All notable changes to CTX will be documented in this file.
 
+## [1.0.7] - 2026-04-17
+
+### Fixed
+
+- The published public binary now reports the correct product version instead of retaining the stale `1.0.4` constant in `ctx version` and other version surfaces.
+
+### Notes
+
+- This hotfix exists to restore end-to-end installer and version-reporting consistency after `1.0.6` shipped with the correct release metadata but an outdated hardcoded product version inside the binary.
+
 ## [1.0.6] - 2026-04-17
 
 ### Added
