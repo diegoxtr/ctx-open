@@ -21,8 +21,13 @@ const commitList = document.getElementById("commit-list");
 const graphCanvas = document.getElementById("graph-canvas");
 const graphCaption = document.getElementById("graph-caption");
 const graphFocusCaption = document.getElementById("graph-focus-caption");
+const graphNodeActions = document.getElementById("graph-node-actions");
+const primaryLineageToggle = document.getElementById("primary-lineage-toggle");
+const graphExpandActiveToggle = document.getElementById("graph-expand-active-toggle");
+const interpretationRelationsToggle = document.getElementById("interpretation-relations-toggle");
 const commitDetail = document.getElementById("commit-detail");
 const nodeDetail = document.getElementById("node-detail");
+const interpretationDetail = document.getElementById("interpretation-detail");
 const originDetail = document.getElementById("origin-detail");
 const playbookDetail = document.getElementById("playbook-detail");
 const leftTabButtons = Array.from(document.querySelectorAll("[data-left-tab]"));
@@ -47,7 +52,10 @@ const viewerModeKey = "ctx-viewer-mode";
 const graphPresetStorageKey = "ctx-viewer-graph-preset";
 const graphFocusModesStorageKey = "ctx-viewer-graph-focus-modes";
 const graphTaskFilterStorageKey = "ctx-viewer-graph-task-filters";
+const graphExpandActiveStorageKey = "ctx-viewer-graph-expand-active";
 const commitFocusStorageKey = "ctx-viewer-commit-focus";
+const primaryLineageStorageKey = "ctx-viewer-primary-lineage-only";
+const interpretationRelationsStorageKey = "ctx-viewer-interpretation-relations";
 const historyBranchFilterStorageKey = "ctx-viewer-history-branch-filters";
 const historySortStorageKey = "ctx-viewer-history-sort";
 const panelLayoutStorageKey = "ctx-viewer-panel-layout";
@@ -70,9 +78,22 @@ let selectedCommitId = null;
 let selectedNodeId = null;
 let lastLoadedAt = null;
 let autoRefreshHandle = null;
+let workingContextSignalHandle = null;
 const autoRefreshIntervalMs = 5000;
+const workingContextSignalIntervalMs = 1000;
+const historyPageSize = 40;
 let overviewRequestSequence = 0;
 let selectionRequestSequence = 0;
+let historyLoadRequestSequence = 0;
+let workingContextSignalFingerprint = null;
+let workingContextSignalRequestInFlight = false;
+let historyLoadMoreInFlight = false;
+let latestWorkingContextGraph = null;
+let recentWorkingContextNewNodeIds = new Set();
+let clearRecentWorkingContextNodesHandle = null;
+let pendingWorkingContextVisibilityRefresh = false;
+let currentGraphDemandMode = "full";
+let expandedAllGraphNodeIds = new Set();
 let currentViewMode = loadStoredViewMode();
 let currentGraphPreset = "all";
 let currentGraphFocusModes = new Set(["all"]);
@@ -81,12 +102,16 @@ let currentHistorySort = loadStoredHistorySort();
 let currentPanelLayout = loadStoredPanelLayout();
 let currentCommitFocus = null;
 let currentCommitFocusEnabled = loadStoredCommitFocus();
+let currentPrimaryLineageOnly = loadStoredPrimaryLineageOnly();
+let currentExpandActiveLines = loadStoredExpandActiveLines();
+let currentShowInterpretationRelations = loadStoredInterpretationRelations();
 let currentLeftTab = loadStoredLeftTab();
 let currentDetailTab = loadStoredDetailTab();
 let transientGraphFocusSnapshot = null;
 let suppressGraphFocusPersist = false;
 let playbookRequestSequence = 0;
 let originRequestSequence = 0;
+let pendingStartupWorkingFocus = true;
 
 const graphPresets = {
     all: ["Draft", "Ready", "InProgress", "Blocked", "Done"],
@@ -158,6 +183,44 @@ if (commitFocusToggle) {
     });
 }
 
+if (primaryLineageToggle) {
+    primaryLineageToggle.addEventListener("change", () => {
+        currentPrimaryLineageOnly = primaryLineageToggle.checked;
+        persistPrimaryLineageSelection();
+        if (currentGraph) {
+            selectedNodeId = null;
+            renderGraph(currentGraph, { preserveViewport: true });
+            nodeDetail.textContent = "Click a node.";
+        } else {
+            renderGraphFocusCaption();
+        }
+    });
+}
+
+if (graphExpandActiveToggle) {
+    graphExpandActiveToggle.addEventListener("change", () => {
+        currentExpandActiveLines = graphExpandActiveToggle.checked;
+        persistExpandActiveSelection();
+        if (currentGraph) {
+            selectedNodeId = null;
+            renderGraph(currentGraph, { preserveViewport: true });
+            nodeDetail.textContent = "Click a node.";
+        } else {
+            renderGraphFocusCaption();
+        }
+    });
+}
+
+if (interpretationRelationsToggle) {
+    interpretationRelationsToggle.addEventListener("change", () => {
+        currentShowInterpretationRelations = interpretationRelationsToggle.checked;
+        persistInterpretationRelationsSelection();
+        if (currentGraph) {
+            renderGraph(currentGraph, { preserveViewport: true });
+        }
+    });
+}
+
 window.addEventListener("load", async () => {
     applyViewMode(currentViewMode);
     applyLeftTab(currentLeftTab);
@@ -168,6 +231,15 @@ window.addEventListener("load", async () => {
     if (commitFocusToggle) {
         commitFocusToggle.checked = currentCommitFocusEnabled;
     }
+    if (primaryLineageToggle) {
+        primaryLineageToggle.checked = currentPrimaryLineageOnly;
+    }
+    if (graphExpandActiveToggle) {
+        graphExpandActiveToggle.checked = currentExpandActiveLines;
+    }
+    if (interpretationRelationsToggle) {
+        interpretationRelationsToggle.checked = currentShowInterpretationRelations;
+    }
     attachPanelDividerHandlers();
     applyPanelLayout();
 
@@ -176,10 +248,40 @@ window.addEventListener("load", async () => {
     const branch = params.get("branch");
     repoPathInput.value = path ?? loadStoredRepositoryPath() ?? "";
     await loadOverview(branch ?? loadStoredBranch() ?? defaultBranchName);
+    applyStartupWorkingContextFocus();
 });
 
 window.addEventListener("resize", () => {
     applyPanelLayout();
+});
+
+graphCanvas?.addEventListener("click", (event) => {
+    if (!currentGraph) {
+        return;
+    }
+
+    if (event.target instanceof Element && event.target.closest(".graph-node")) {
+        return;
+    }
+
+    clearGraphSelection();
+});
+
+window.addEventListener("focus", async () => {
+    await reconcileWorkingContextAfterBackground();
+});
+
+window.addEventListener("pageshow", async () => {
+    await reconcileWorkingContextAfterBackground();
+});
+
+document.addEventListener("visibilitychange", async () => {
+    if (document.visibilityState === "hidden") {
+        pendingWorkingContextVisibilityRefresh = true;
+        return;
+    }
+
+    await reconcileWorkingContextAfterBackground();
 });
 
 for (const button of viewModeButtons) {
@@ -227,8 +329,9 @@ async function loadOverview(branch) {
     if (branch) {
         params.set("branch", branch);
     }
+    params.set("historyLimit", String(historyPageSize));
 
-    const response = await fetch(`/api/overview?${params.toString()}`);
+    const response = await fetch(`/api/overview?${params.toString()}`, { cache: "no-store" });
     if (requestSequence !== overviewRequestSequence) {
         return;
     }
@@ -278,12 +381,8 @@ async function loadOverview(branch) {
     const effectiveSelectedNodeId = currentSelectedCommitId !== requestStartedCommitId
         ? currentSelectedNodeId
         : requestStartedNodeId;
-    const commitStillExists = effectiveSelectedCommitId
-        && overview.timelineCommits.some(commit => commit.id === effectiveSelectedCommitId);
     const preferredCommit =
-        commitStillExists ? effectiveSelectedCommitId :
-        previousOverview && effectiveSelectedCommitId === null ? null :
-        overview.timelineCommits[0]?.id ?? null;
+        effectiveSelectedCommitId === null ? null : effectiveSelectedCommitId;
     const preferredNodeId = effectiveSelectedCommitId === preferredCommit ? effectiveSelectedNodeId : null;
     const preserveViewport = previousOverview && effectiveSelectedCommitId === preferredCommit;
 
@@ -292,7 +391,164 @@ async function loadOverview(branch) {
         scrollSelectedNodeIntoView: false,
         preserveViewport
     });
+    applyStartupWorkingContextFocus();
     syncAutoRefresh();
+    syncWorkingContextSignal();
+}
+
+async function loadMoreHistory() {
+    if (!currentOverview?.timelinePage?.hasMore || historyLoadMoreInFlight) {
+        return;
+    }
+
+    const repositoryPath = repoPathInput.value.trim();
+    if (!repositoryPath) {
+        return;
+    }
+
+    historyLoadMoreInFlight = true;
+    renderCommits(currentOverview);
+
+    try {
+        const requestSequence = ++historyLoadRequestSequence;
+        const params = new URLSearchParams({
+            path: repositoryPath,
+            limit: String(currentOverview.timelinePage.limit ?? historyPageSize),
+            cursor: currentOverview.timelinePage.nextCursor ?? ""
+        });
+        if (branchSelect.value) {
+            params.set("branch", branchSelect.value);
+        }
+
+        const response = await fetch(`/api/history?${params.toString()}`, { cache: "no-store" });
+        if (!response.ok) {
+            return;
+        }
+
+        const page = await response.json();
+        if (requestSequence !== historyLoadRequestSequence) {
+            return;
+        }
+
+        const loadedCommits = Array.isArray(page.timelineCommits) ? page.timelineCommits : [];
+        const existingCommitIds = new Set(currentOverview.timelineCommits.map(commit => commit.id));
+        const appendedCommits = loadedCommits.filter(commit => !existingCommitIds.has(commit.id));
+        currentOverview.timelineCommits = [...currentOverview.timelineCommits, ...appendedCommits];
+        currentOverview.timelinePage = {
+            ...(currentOverview.timelinePage ?? {}),
+            ...(page.timelinePage ?? {}),
+            loadedCount: currentOverview.timelineCommits.length
+        };
+
+        renderSummary(currentOverview);
+        renderCommits(currentOverview);
+    } finally {
+        historyLoadMoreInFlight = false;
+        if (currentOverview) {
+            renderCommits(currentOverview);
+        }
+    }
+}
+
+function shouldUseDemandLoadedAllGraph() {
+    return selectedCommitId === null
+        && !currentCommitFocus
+        && currentGraphFocusModes.has("all");
+}
+
+function buildGraphRequestParams(commitId, options = {}) {
+    const params = new URLSearchParams({ path: repoPathInput.value });
+    if (commitId) {
+        params.set("commitId", commitId);
+        return params;
+    }
+
+    if (options.forceFull || !shouldUseDemandLoadedAllGraph()) {
+        return params;
+    }
+
+    params.set("mode", "seed");
+    return params;
+}
+
+function mergeGraphExports(baseGraph, expansionGraph) {
+    if (!baseGraph) {
+        return expansionGraph;
+    }
+
+    const nodeMap = new Map((baseGraph.nodes ?? []).map(node => [node.id, node]));
+    for (const node of expansionGraph?.nodes ?? []) {
+        nodeMap.set(node.id, node);
+    }
+
+    const edgeMap = new Map((baseGraph.edges ?? []).map(edge => [`${edge.from}->${edge.to}->${edge.relationship}`, edge]));
+    for (const edge of expansionGraph?.edges ?? []) {
+        edgeMap.set(`${edge.from}->${edge.to}->${edge.relationship}`, edge);
+    }
+
+    return {
+        nodes: Array.from(nodeMap.values()),
+        edges: Array.from(edgeMap.values()),
+        metadata: {
+            ...(baseGraph.metadata ?? {}),
+            ...(expansionGraph?.metadata ?? {}),
+            graphMode: shouldUseDemandLoadedAllGraph() ? "partial" : (expansionGraph?.metadata?.graphMode ?? baseGraph.metadata?.graphMode ?? "full")
+        }
+    };
+}
+
+async function ensureAllGraphExpansion(nodeId) {
+    if (!currentGraph || !shouldUseDemandLoadedAllGraph() || expandedAllGraphNodeIds.has(nodeId)) {
+        return;
+    }
+
+    const params = new URLSearchParams({
+        path: repoPathInput.value,
+        mode: "expand",
+        focusNodeId: nodeId,
+        depth: "2"
+    });
+    const response = await fetch(`/api/graph?${params.toString()}`, { cache: "no-store" });
+    if (!response.ok) {
+        return;
+    }
+
+    const expansionGraph = await response.json();
+    currentGraph = mergeGraphExports(currentGraph, expansionGraph);
+    expandedAllGraphNodeIds.add(nodeId);
+}
+
+function applyStartupWorkingContextFocus() {
+    if (!pendingStartupWorkingFocus) {
+        return;
+    }
+
+    if (selectedCommitId !== null || currentCommitFocus) {
+        return;
+    }
+
+    pendingStartupWorkingFocus = false;
+    applyWorkingContextFiltersTransient();
+}
+
+function normalizeOverviewHistoryState(overview) {
+    const timelineCommits = Array.isArray(overview?.timelineCommits)
+        ? overview.timelineCommits
+        : [];
+    const timelinePage = overview?.timelinePage ?? {};
+
+    return {
+        ...overview,
+        timelineCommits,
+        timelinePage: {
+            totalCount: Number.isFinite(timelinePage.totalCount) ? timelinePage.totalCount : timelineCommits.length,
+            loadedCount: Number.isFinite(timelinePage.loadedCount) ? timelinePage.loadedCount : timelineCommits.length,
+            limit: Number.isFinite(timelinePage.limit) ? timelinePage.limit : historyPageSize,
+            cursor: typeof timelinePage.cursor === "string" ? timelinePage.cursor : null,
+            nextCursor: typeof timelinePage.nextCursor === "string" ? timelinePage.nextCursor : null,
+            hasMore: Boolean(timelinePage.hasMore)
+        }
+    };
 }
 
 function renderBranchSelect(overview) {
@@ -344,6 +600,30 @@ function loadStoredCommitFocus() {
     return storedValue !== "false";
 }
 
+function loadStoredPrimaryLineageOnly() {
+    return window.localStorage.getItem(primaryLineageStorageKey) === "true";
+}
+
+function loadStoredExpandActiveLines() {
+    return window.localStorage.getItem(graphExpandActiveStorageKey) === "true";
+}
+
+function loadStoredInterpretationRelations() {
+    return window.localStorage.getItem(interpretationRelationsStorageKey) === "true";
+}
+
+function persistPrimaryLineageSelection() {
+    window.localStorage.setItem(primaryLineageStorageKey, currentPrimaryLineageOnly ? "true" : "false");
+}
+
+function persistExpandActiveSelection() {
+    window.localStorage.setItem(graphExpandActiveStorageKey, currentExpandActiveLines ? "true" : "false");
+}
+
+function persistInterpretationRelationsSelection() {
+    window.localStorage.setItem(interpretationRelationsStorageKey, currentShowInterpretationRelations ? "true" : "false");
+}
+
 function persistCommitFocusSelection() {
     window.localStorage.setItem(commitFocusStorageKey, currentCommitFocusEnabled ? "true" : "false");
 }
@@ -354,11 +634,12 @@ function persistAutoRefreshPreference() {
 
 function renderSummary(overview) {
     const summary = overview.graphSummary;
+    const timelineCount = overview.timelinePage?.totalCount ?? overview.timelineCommits.length;
     const cards = [
         ["Branch", overview.selectedBranch],
         ["Head", overview.headCommitId ? overview.headCommitId.slice(0, 8) : "working"],
         ["Branches", overview.branches.length],
-        ["Timeline", overview.timelineCommits.length],
+        ["Timeline", timelineCount],
         ["Open Tasks", overview.taskSummary.open],
         ["Closed Tasks", overview.taskSummary.closed],
         ["Nodes", summary.graph.nodes],
@@ -569,7 +850,7 @@ function applyLeftTab(tab) {
 
 function loadStoredDetailTab() {
     const stored = window.localStorage.getItem(detailTabStorageKey);
-    return stored === "origin" || stored === "playbook" || stored === "hypotheses" ? stored : "details";
+    return stored === "origin" || stored === "playbook" || stored === "hypotheses" || stored === "interpretations" ? stored : "details";
 }
 
 function persistDetailTab() {
@@ -577,7 +858,7 @@ function persistDetailTab() {
 }
 
 function applyDetailTab(tab) {
-    currentDetailTab = tab === "origin" || tab === "playbook" || tab === "hypotheses" ? tab : "details";
+    currentDetailTab = tab === "origin" || tab === "playbook" || tab === "hypotheses" || tab === "interpretations" ? tab : "details";
 
     for (const button of detailTabButtons) {
         const active = button.dataset.detailTab === currentDetailTab;
@@ -887,7 +1168,7 @@ function loadStoredTaskStateSelection() {
 function renderCommits(overview) {
     const historyScrollSnapshot = captureHistoryPanelScroll();
     commitList.innerHTML = "";
-    commitCount.textContent = `${overview.timelineCommits.length}`;
+    commitCount.textContent = `${overview.timelinePage?.totalCount ?? overview.timelineCommits.length}`;
     const lanes = buildLaneMap(overview);
     const laneCount = Math.max(overview.branches.length, 1);
     const filteredBranchNames = resolveVisibleHistoryBranches(overview);
@@ -976,10 +1257,11 @@ function renderBranchFirstHistory(overview, orderedBranches, groupedCommits, lan
         branchButton.type = "button";
         const isActive = currentHistoryBranchFilters.has(branch.name);
         branchButton.className = `history-branch-item ${isActive ? "active" : ""} ${branch.name === overview.selectedBranch ? "selected-branch" : ""}`;
+        const totalCommitCount = branch.timelineCommitCount ?? groupedCommits.get(branch.name)?.length ?? 0;
         branchButton.innerHTML = `
             <span class="history-branch-chip" style="--branch-color:${laneColor(lanes.get(branch.name))}"></span>
             <span class="history-branch-name">${escapeHtml(branch.name)}</span>
-            <span class="history-branch-count">${escapeHtml(String(groupedCommits.get(branch.name)?.length ?? 0))}</span>
+            <span class="history-branch-count">${escapeHtml(String(totalCommitCount))}</span>
         `;
         branchButton.onclick = () => {
             toggleHistoryBranchFilter(branch.name, overview);
@@ -1025,10 +1307,15 @@ function renderBranchFirstHistory(overview, orderedBranches, groupedCommits, lan
     for (const branch of orderedBranches) {
         const branchGroup = document.createElement("section");
         branchGroup.className = "history-branch-group";
+        const loadedCommitCount = groupedCommits.get(branch.name)?.length ?? 0;
+        const totalCommitCount = branch.timelineCommitCount ?? loadedCommitCount;
+        const branchGroupMeta = totalCommitCount > loadedCommitCount
+            ? `${loadedCommitCount}/${totalCommitCount} loaded`
+            : `${totalCommitCount} commits`;
         branchGroup.innerHTML = `
             <div class="history-branch-group-header">
                 <span class="branch-chip" style="--branch-color:${laneColor(lanes.get(branch.name))}"><span class="branch-chip-dot"></span>${escapeHtml(branch.name)}</span>
-                <span class="history-branch-group-meta">${escapeHtml(String(groupedCommits.get(branch.name)?.length ?? 0))} commits</span>
+                <span class="history-branch-group-meta">${escapeHtml(branchGroupMeta)}</span>
             </div>
         `;
 
@@ -1043,7 +1330,9 @@ function renderBranchFirstHistory(overview, orderedBranches, groupedCommits, lan
         rows.appendChild(branchGroup);
     }
 
+    attachHistoryLoadMoreOnScroll(rows);
     historyTable.appendChild(rows);
+    historyTable.appendChild(renderHistoryLoadMore(overview));
     historyLayout.appendChild(historyTable);
     commitList.appendChild(historyLayout);
 }
@@ -1090,9 +1379,58 @@ function renderCompactHistoryNavigator(overview, orderedBranches, groupedCommits
         rows.appendChild(renderHistoryCommitRow(commit, overview, lanes, laneCount, true));
     }
 
+    attachHistoryLoadMoreOnScroll(rows);
     compactList.appendChild(rows);
+    compactList.appendChild(renderHistoryLoadMore(overview, true));
     compactLayout.appendChild(compactList);
     commitList.appendChild(compactLayout);
+}
+
+function renderHistoryLoadMore(overview, compact = false) {
+    const wrapper = document.createElement("div");
+    wrapper.className = `history-load-more ${compact ? "compact" : ""}`;
+
+    const totalCount = overview.timelinePage?.totalCount ?? overview.timelineCommits.length;
+    const loadedCount = overview.timelineCommits.length;
+    const hasMore = Boolean(overview.timelinePage?.hasMore);
+
+    const summary = document.createElement("span");
+    summary.className = "history-load-more-summary";
+    summary.textContent = hasMore
+        ? `Loaded ${loadedCount} of ${totalCount} commits`
+        : `Loaded all ${totalCount} commits`;
+    wrapper.appendChild(summary);
+
+    if (hasMore) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "history-load-more-button";
+        button.textContent = historyLoadMoreInFlight ? "Loading..." : "Load more";
+        button.disabled = historyLoadMoreInFlight;
+        button.onclick = async () => {
+            await loadMoreHistory();
+        };
+        wrapper.appendChild(button);
+    }
+
+    return wrapper;
+}
+
+function attachHistoryLoadMoreOnScroll(container) {
+    if (!(container instanceof HTMLElement)) {
+        return;
+    }
+
+    container.addEventListener("scroll", () => {
+        if (!currentOverview?.timelinePage?.hasMore || historyLoadMoreInFlight) {
+            return;
+        }
+
+        const remaining = container.scrollHeight - container.scrollTop - container.clientHeight;
+        if (remaining <= 160) {
+            loadMoreHistory();
+        }
+    });
 }
 
 function renderWorkingHistoryRow(laneCount, compact = false) {
@@ -1337,7 +1675,7 @@ function toggleHistoryBranchFilter(branchName, overview) {
 
 async function loadHypothesisRanking() {
     const params = new URLSearchParams({ path: repoPathInput.value });
-    const response = await fetch(`/api/hypotheses/rank?${params.toString()}`);
+    const response = await fetch(`/api/hypotheses/rank?${params.toString()}`, { cache: "no-store" });
     if (!response.ok) {
         return [];
     }
@@ -1385,12 +1723,9 @@ async function selectCommit(commitId, options = {}) {
     renderCommits(currentOverview);
     currentCommitFocus = null;
 
-    const params = new URLSearchParams({ path: repoPathInput.value });
-    if (commitId) {
-        params.set("commitId", commitId);
-    }
+    const params = buildGraphRequestParams(commitId);
 
-    const graphResponse = await fetch(`/api/graph?${params.toString()}`);
+    const graphResponse = await fetch(`/api/graph?${params.toString()}`, { cache: "no-store" });
     if (requestSequence !== selectionRequestSequence) {
         return;
     }
@@ -1411,12 +1746,20 @@ async function selectCommit(commitId, options = {}) {
         return;
     }
 
+    currentGraphDemandMode = currentGraph?.metadata?.graphMode ?? "full";
+    expandedAllGraphNodeIds = new Set();
+
+    if (commitId === null) {
+        latestWorkingContextGraph = cloneGraphPayload(currentGraph);
+        recentWorkingContextNewNodeIds = new Set();
+    }
+
     selectedNodeId = preferredNodeId && currentGraph.nodes.some(node => node.id === preferredNodeId)
         ? preferredNodeId
         : null;
 
     if (commitId) {
-        const detailResponse = await fetch(`/api/commit?id=${encodeURIComponent(commitId)}&path=${encodeURIComponent(repoPathInput.value)}`);
+        const detailResponse = await fetch(`/api/commit?id=${encodeURIComponent(commitId)}&path=${encodeURIComponent(repoPathInput.value)}`, { cache: "no-store" });
         if (requestSequence !== selectionRequestSequence) {
             return;
         }
@@ -1446,6 +1789,8 @@ async function selectCommit(commitId, options = {}) {
     } else {
         nodeDetail.textContent = "Click a node.";
     }
+
+    syncWorkingContextSignal();
 }
 
 function captureGraphViewport() {
@@ -1479,6 +1824,8 @@ function renderGraph(graph, options = {}) {
     currentRenderedGraph = filteredGraph;
     graphCanvas.innerHTML = "";
     renderGraphFocusCaption(filteredGraph);
+    renderGraphNodeActions();
+    renderInterpretationDetail();
 
     if (filteredGraph.nodes.length === 0) {
         const manualStates = taskStateFilters
@@ -1498,6 +1845,7 @@ function renderGraph(graph, options = {}) {
         }
 
         graphCanvas.innerHTML = `<p class="detail-empty">No graph nodes match the selected task states.${hint ? ` ${hint}` : ""}</p>`;
+        clearGraphNodeActions();
         if (preserveViewport) {
             restoreGraphViewport(viewportSnapshot);
         } else {
@@ -1551,7 +1899,8 @@ function renderGraph(graph, options = {}) {
     const positions = new Map();
     const columnGap = 182;
     const nodeVerticalGap = 2;
-    const topLaneBaseY = 48;
+    const topLaneBaseY = 72;
+    const topLaneFloorY = 38;
     let columnIndex = 0;
     let maxColumnBottom = 0;
     const selectedPathState = buildSelectedPathState(filteredGraph, selectedNodeId);
@@ -1561,13 +1910,13 @@ function renderGraph(graph, options = {}) {
             continue;
         }
 
-        sortGraphNodes(nodes);
+        sortGraphNodes(type, nodes);
         const column = document.createElement("div");
         column.className = "graph-column";
         column.style.left = `${columnIndex * columnGap + 10}px`;
         column.innerHTML = `<h4>${type}</h4>`;
         stage.appendChild(column);
-        let columnY = 64;
+        let columnY = 88;
 
         nodes.forEach((node) => {
             const y = columnY;
@@ -1577,12 +1926,23 @@ function renderGraph(graph, options = {}) {
             const card = document.createElement("button");
             const commitFocusClass = currentCommitFocus ? "commit-focus" : "";
             const commitChangedClass = currentCommitFocus?.changedIds.has(node.id) ? "commit-changed" : "";
+            const commitToneClass = resolveCommitFocusNodeToneClass(currentCommitFocus, node.id);
+            const commitRoleClass = resolveCommitFocusRoleClass(currentCommitFocus, node.id, subGoalIds);
             const nodePathClass = buildSelectedNodePathClass(selectedPathState, node.id);
-            card.className = `graph-node ${commitFocusClass} ${commitChangedClass} ${selectedNodeId === node.id ? "active" : ""} ${nodePathClass}`;
+            const newNodeClass = !selectedCommitId && recentWorkingContextNewNodeIds.has(node.id) ? "graph-node-new" : "";
+            const relatedHint = buildCommitFocusNodeHint(currentCommitFocus, node.id);
+            card.className = `graph-node ${commitFocusClass} ${commitChangedClass} ${commitToneClass} ${commitRoleClass} ${newNodeClass} ${selectedNodeId === node.id ? "active" : ""} ${nodePathClass}`;
             card.style.left = `${columnIndex * columnGap + 10}px`;
             card.style.top = `${y}px`;
-            card.innerHTML = `<small>${displayType}</small><strong>${escapeHtml(node.label)}</strong>${inlineBadge}`;
-            card.onclick = () => showNode(node.id, { scrollIntoView: false });
+            if (newNodeClass) {
+                card.style.borderColor = "#63a98c";
+                card.style.background = "linear-gradient(180deg, #ffffff 0%, #f5fcf8 100%)";
+                card.style.boxShadow = "0 0 0 3px rgba(111, 191, 156, 0.16), 0 10px 22px rgba(92, 167, 133, 0.18)";
+            }
+            card.innerHTML = `<small>${displayType}</small><strong>${escapeHtml(node.label)}</strong>${relatedHint}${inlineBadge}`;
+            card.onclick = () => {
+                void showNode(node.id, { scrollIntoView: false });
+            };
             stage.appendChild(card);
 
             const cardHeight = card.offsetHeight || 56;
@@ -1616,9 +1976,10 @@ function renderGraph(graph, options = {}) {
     stage.style.width = `${stageWidth}px`;
     stage.style.height = `${stageHeight}px`;
     svg.setAttribute("viewBox", `0 0 ${stageWidth} ${stageHeight}`);
-    const edgePlans = buildGraphEdgePlans(filteredGraph.edges, positions, { topLaneBaseY });
+    const visibleEdges = filteredGraph.edges.filter(edge => currentShowInterpretationRelations || !isInterpretationRelationEdge(edge));
+    const edgePlans = buildGraphEdgePlans(visibleEdges, positions, { topLaneBaseY, topLaneFloorY });
 
-    filteredGraph.edges.forEach((edge, edgeIndex) => {
+    visibleEdges.forEach((edge, edgeIndex) => {
         const from = positions.get(edge.from);
         const to = positions.get(edge.to);
         if (!from || !to) {
@@ -1652,8 +2013,16 @@ function renderGraph(graph, options = {}) {
         if (currentCommitFocus?.nodeIds?.has(edge.from) && currentCommitFocus?.nodeIds?.has(edge.to)) {
             line.classList.add("commit-path");
         }
+        if (currentCommitFocus?.primaryIds?.has(edge.from) && currentCommitFocus?.primaryIds?.has(edge.to)) {
+            line.classList.add("commit-primary");
+        } else if (currentCommitFocus?.nodeIds?.has(edge.from) && currentCommitFocus?.nodeIds?.has(edge.to)) {
+            line.classList.add("commit-secondary");
+        }
         if (currentCommitFocus?.changedIds?.has(edge.from) && currentCommitFocus?.changedIds?.has(edge.to)) {
             line.classList.add("commit-path-changed");
+        }
+        if (isInterpretationRelationEdge(edge)) {
+            line.classList.add("graph-edge-interpretation", `graph-edge-${edge.relationship}`);
         }
         svg.appendChild(line);
     });
@@ -1772,14 +2141,40 @@ function buildSelectedNodePathClass(pathState, nodeId) {
     return "path-dimmed";
 }
 
+function filterGraphBySelectedCommitLineage(graph, selectedId) {
+    if (!graph?.nodes?.length || !selectedId || !graph.nodes.some(node => node.id === selectedId)) {
+        return graph;
+    }
+
+    const pathState = buildSelectedPathState(graph, selectedId);
+    if (!pathState.hasSelection) {
+        return graph;
+    }
+
+    const allowedNodeIds = new Set([
+        selectedId,
+        ...pathState.incomingNodes,
+        ...pathState.outgoingNodes
+    ]);
+    const allowedEdgeIds = new Set([
+        ...pathState.incomingEdges,
+        ...pathState.outgoingEdges
+    ]);
+
+    const nodes = graph.nodes.filter(node => allowedNodeIds.has(node.id));
+    const edges = graph.edges.filter(edge => allowedEdgeIds.has(`${edge.from}->${edge.to}`));
+    return { nodes, edges };
+}
+
 function buildGraphEdgePlans(edges, positions, layout = {}) {
     const plans = edges.map((edge) => {
         const from = positions.get(edge.from);
         const to = positions.get(edge.to);
         const spanColumns = Math.max(0, (to?.columnIndex ?? 0) - (from?.columnIndex ?? 0));
         const verticalDelta = Math.abs((to?.centerY ?? 0) - (from?.centerY ?? 0));
+        const shouldUseTopLane = spanColumns >= 3 && verticalDelta >= 160;
         return {
-            mode: spanColumns >= 2 && verticalDelta >= 120 ? "top-lane" : "direct",
+            mode: shouldUseTopLane ? "top-lane" : "direct",
             spanColumns,
             verticalDelta,
             laneIndex: 0,
@@ -1806,7 +2201,7 @@ function buildGraphEdgePlans(edges, positions, layout = {}) {
         group.sort((left, right) => left.sortY - right.sortY);
         group.forEach((entry, laneIndex) => {
             plans[entry.index].laneIndex = laneIndex;
-            plans[entry.index].laneY = Math.max(10, (layout.topLaneBaseY ?? 36) - laneIndex * 8);
+            plans[entry.index].laneY = Math.max(layout.topLaneFloorY ?? 10, (layout.topLaneBaseY ?? 36) - laneIndex * 8);
         });
     }
 
@@ -1896,8 +2291,27 @@ function roundGraphCoordinate(value) {
 }
 
 function buildGraphNodeBadge(node) {
-    if (node.type === "Hypothesis" && node.metadata?.score) {
-        return `<span class="node-score">score ${escapeHtml(node.metadata.score)}</span>`;
+    if (node.type === "Hypothesis") {
+        const parts = [];
+        if (node.metadata?.branchState) {
+            const stateSlug = String(node.metadata.branchState)
+                .replace(/([a-z])([A-Z])/g, "$1-$2")
+                .toLowerCase();
+            parts.push(`<span class="node-badge node-badge-hypothesis-branch node-badge-state-${escapeHtml(stateSlug)}">${escapeHtml(normalizeGraphNodeState(node.metadata.branchState))}</span>`);
+        }
+        if (node.metadata?.branchRole) {
+            const roleSlug = String(node.metadata.branchRole)
+                .replace(/([a-z])([A-Z])/g, "$1-$2")
+                .toLowerCase();
+            parts.push(`<span class="node-badge node-badge-hypothesis-role node-badge-role-${escapeHtml(roleSlug)}">${escapeHtml(normalizeGraphNodeState(node.metadata.branchRole))}</span>`);
+        }
+        if (node.metadata?.lineageGroupId) {
+            parts.push(`<span class="node-badge node-badge-lineage">${escapeHtml(node.metadata.lineageGroupId)}</span>`);
+        }
+        if (node.metadata?.score) {
+            parts.push(`<span class="node-score">score ${escapeHtml(node.metadata.score)}</span>`);
+        }
+        return parts.join("");
     }
 
     const state = normalizeGraphNodeState(node.state);
@@ -1957,14 +2371,33 @@ function renderSelectedNodeDetail(nodeId, options = {}) {
     }
 }
 
-function showNode(nodeId, options = {}) {
+async function showNode(nodeId, options = {}) {
+    await ensureAllGraphExpansion(nodeId);
     selectedNodeId = nodeId;
     renderGraph(currentGraph, { preserveViewport: true });
+    renderGraphNodeActions();
     if (currentOverview) {
         renderTasks(currentOverview);
     }
 
     renderSelectedNodeDetail(nodeId, options);
+    void loadOriginDetail();
+    void loadPlaybookDetail();
+}
+
+function clearGraphSelection() {
+    if (!selectedNodeId) {
+        return;
+    }
+
+    selectedNodeId = null;
+    renderGraph(currentGraph, { preserveViewport: true });
+    clearGraphNodeActions();
+    if (currentOverview) {
+        renderTasks(currentOverview);
+    }
+
+    nodeDetail.textContent = "Click a node.";
     void loadOriginDetail();
     void loadPlaybookDetail();
 }
@@ -1984,7 +2417,7 @@ async function focusTask(task) {
         applyViewMode("split");
     }
 
-    showNode(`Task:${task.id}`, { scrollIntoView: true });
+    await showNode(`Task:${task.id}`, { scrollIntoView: true });
 }
 
 function ensureTaskStateVisible(taskState) {
@@ -2007,6 +2440,8 @@ function resetViewer(message) {
     currentOverview = null;
     currentGraph = null;
     currentRenderedGraph = null;
+    currentGraphDemandMode = "full";
+    expandedAllGraphNodeIds = new Set();
     currentHypothesisRanking = [];
     selectedCommitId = null;
     selectedNodeId = null;
@@ -2028,8 +2463,12 @@ function resetViewer(message) {
     graphCanvas.innerHTML = "";
     graphCaption.textContent = "No repository loaded";
     graphFocusCaption.textContent = "Showing all task states.";
+    clearGraphNodeActions();
     commitDetail.innerHTML = `<p class="detail-empty">Select a commit.</p>`;
     nodeDetail.textContent = "Click a node.";
+    if (interpretationDetail) {
+        interpretationDetail.innerHTML = `<p class="detail-empty">Select a hypothesis or load a lineage group with branch-like semantics to inspect competing interpretations.</p>`;
+    }
     playbookDetail.innerHTML = `<p class="detail-empty">Select a task, goal, or commit focus to view operational runbooks.</p>`;
     viewerHint.textContent = message;
     stopAutoRefresh();
@@ -2191,6 +2630,10 @@ function resolveWorkingFocusTaskId(graph, selectedTaskIds, taskGoalIds) {
         return null;
     }
 
+    if (shouldExpandAllActiveLines()) {
+        return null;
+    }
+
     if (!currentGraphFocusModes.has("working")) {
         return null;
     }
@@ -2222,6 +2665,27 @@ function resolveWorkingFocusTaskId(graph, selectedTaskIds, taskGoalIds) {
     });
 
     return orderedTasks[0] ?? null;
+}
+
+function shouldExpandAllActiveLines() {
+    if (selectedCommitId || currentCommitFocus) {
+        return false;
+    }
+
+    if (!currentExpandActiveLines) {
+        return false;
+    }
+
+    return currentGraphFocusModes.has("working") || currentGraphFocusModes.has("thinking");
+}
+
+function countOverviewTasksInEffectiveStates(effectiveStates) {
+    if (!Array.isArray(currentOverview?.tasks) || effectiveStates.length === 0) {
+        return 0;
+    }
+
+    const stateSet = new Set(effectiveStates);
+    return currentOverview.tasks.filter(task => stateSet.has(task.state)).length;
 }
 
 function resolveFocusedTaskIdFromSelectedNode(graph, selectedTaskIds) {
@@ -2296,10 +2760,32 @@ function buildCommitFocus(detail, graph) {
         return null;
     }
 
-    return buildCommitFocusFromIds(changedIds, graph, {
+    const primarySeedIds = collectPathNodeIds(detail?.cognitivePath, [], { strict: true, output: "array" })
+        .filter(nodeId => (graph.nodes ?? []).some(node => node.id === nodeId));
+    const boundedFocus = buildCommitDirectContext(new Set([...changedIds, ...primarySeedIds]), changedIds, graph, {
         goalIds: focusGoalIds,
         subGoalIds: focusSubGoalIds
     });
+    const nodeIds = new Set(boundedFocus.nodeIds);
+    const primaryIds = buildPrimaryCommitLineage(graph, primarySeedIds, nodeIds);
+    const relatedContext = buildCommitRelatedContext(graph, nodeIds, primaryIds);
+    relatedContext.supportIds.forEach(nodeId => nodeIds.add(nodeId));
+
+    const secondaryIds = new Set(
+        [...nodeIds].filter(nodeId => !primaryIds.has(nodeId))
+    );
+
+    return {
+        nodeIds,
+        changedIds,
+        goalIds: boundedFocus.goalIds,
+        subGoalIds: boundedFocus.subGoalIds,
+        primaryIds,
+        secondaryIds,
+        primaryPath: buildPrimaryPathSnapshot(primarySeedIds, graph),
+        relatedItems: relatedContext.relatedItems,
+        nodeHints: relatedContext.nodeHints
+    };
 }
 
 function resolveCommitFocusSelectedNodeId(detail, graph, commitFocus) {
@@ -2373,7 +2859,7 @@ function collectDiffNodeIds(diff, changedIds, options = {}) {
     }
 }
 
-function buildCommitFocusFromIds(changedIds, graph, focusInfo = {}) {
+function buildCommitDirectContext(seedIds, changedIds, graph, focusInfo = {}) {
     const adjacency = new Map();
     const nodeMap = new Map();
     for (const node of graph.nodes) {
@@ -2385,55 +2871,273 @@ function buildCommitFocusFromIds(changedIds, graph, focusInfo = {}) {
         adjacency.get(edge.to)?.push({ id: edge.from, edge });
     }
 
-    const focusIds = new Set(changedIds);
-    const queue = Array.from(changedIds, id => ({ id, depth: 0 }));
-    const visited = new Set(changedIds);
-    const maxDepth = Number.isFinite(focusInfo.maxDepth) ? focusInfo.maxDepth : 3;
-
-    while (queue.length > 0) {
-        const current = queue.shift();
-        if (!current || current.depth >= maxDepth) {
+    const focusIds = new Set(seedIds);
+    for (const seedId of seedIds) {
+        const currentNode = nodeMap.get(seedId);
+        if (!currentNode) {
             continue;
         }
 
-        const currentNode = nodeMap.get(current.id);
-        if (!currentNode || currentNode.type === "Goal" || currentNode.type === "Project") {
-            continue;
-        }
-
-        for (const entry of adjacency.get(current.id) ?? []) {
+        for (const entry of adjacency.get(seedId) ?? []) {
             const neighborNode = nodeMap.get(entry.id);
-            if (!neighborNode || !shouldIncludeCommitFocusNeighbor(currentNode, neighborNode)) {
+            if (!neighborNode || !shouldIncludeCommitFocusNeighbor(currentNode, neighborNode, entry.edge)) {
                 continue;
             }
 
             focusIds.add(entry.id);
-            if (visited.has(entry.id)) {
-                continue;
-            }
-
-            visited.add(entry.id);
-            if (neighborNode.type !== "Goal" && neighborNode.type !== "Project") {
-                queue.push({ id: entry.id, depth: current.depth + 1 });
-            }
         }
     }
 
     return {
         nodeIds: focusIds,
-        changedIds,
+        changedIds: new Set(changedIds),
         goalIds: Array.isArray(focusInfo.goalIds) ? focusInfo.goalIds : [],
         subGoalIds: Array.isArray(focusInfo.subGoalIds) ? focusInfo.subGoalIds : []
     };
 }
 
-function shouldIncludeCommitFocusNeighbor(currentNode, neighborNode) {
-    if (!currentNode || !neighborNode) {
+function buildPrimaryCommitLineage(graph, seedIds, candidateNodeIds) {
+    const availableCandidates = new Set(
+        [...(candidateNodeIds ?? [])].filter(Boolean)
+    );
+    if (availableCandidates.size === 0) {
+        return new Set();
+    }
+
+    const orderedSeeds = (Array.isArray(seedIds) ? seedIds : [])
+        .filter(nodeId => availableCandidates.has(nodeId));
+    if (orderedSeeds.length === 0) {
+        return new Set(availableCandidates);
+    }
+
+    const primaryIds = new Set();
+    let previousSeed = null;
+    for (const seedId of orderedSeeds) {
+        primaryIds.add(seedId);
+        if (previousSeed) {
+            const path = findShortestPathWithinCommitContext(graph, previousSeed, seedId, availableCandidates);
+            if (path.length > 0) {
+                path.forEach(nodeId => primaryIds.add(nodeId));
+            }
+        }
+
+        previousSeed = seedId;
+    }
+
+    return primaryIds;
+}
+
+function findShortestPathWithinCommitContext(graph, startId, targetId, allowedIds) {
+    if (!startId || !targetId || startId === targetId) {
+        return startId === targetId && startId ? [startId] : [];
+    }
+
+    const adjacency = new Map();
+    for (const node of graph.nodes ?? []) {
+        if (allowedIds.has(node.id)) {
+            adjacency.set(node.id, []);
+        }
+    }
+
+    for (const edge of graph.edges ?? []) {
+        if (!allowedIds.has(edge.from) || !allowedIds.has(edge.to)) {
+            continue;
+        }
+
+        adjacency.get(edge.from)?.push(edge.to);
+        adjacency.get(edge.to)?.push(edge.from);
+    }
+
+    const queue = [startId];
+    const visited = new Set([startId]);
+    const previousById = new Map();
+
+    while (queue.length > 0) {
+        const currentId = queue.shift();
+        if (currentId === targetId) {
+            break;
+        }
+
+        for (const neighborId of adjacency.get(currentId) ?? []) {
+            if (visited.has(neighborId)) {
+                continue;
+            }
+
+            visited.add(neighborId);
+            previousById.set(neighborId, currentId);
+            queue.push(neighborId);
+        }
+    }
+
+    if (!visited.has(targetId)) {
+        return [];
+    }
+
+    const path = [];
+    let cursor = targetId;
+    while (cursor) {
+        path.push(cursor);
+        cursor = previousById.get(cursor) ?? null;
+    }
+
+    return path.reverse();
+}
+
+function buildCommitRelatedContext(graph, commitNodeIds, primaryIds) {
+    const nodeMap = new Map((graph.nodes ?? []).map(node => [node.id, node]));
+    const adjacency = new Map();
+    for (const node of graph.nodes ?? []) {
+        adjacency.set(node.id, []);
+    }
+
+    for (const edge of graph.edges ?? []) {
+        adjacency.get(edge.from)?.push(edge.to);
+        adjacency.get(edge.to)?.push(edge.from);
+    }
+
+    const supportIds = new Set();
+    const relatedItems = [];
+    const nodeHints = new Map();
+    const secondaryHypotheses = [...commitNodeIds]
+        .filter(nodeId => nodeId.startsWith("Hypothesis:") && !primaryIds.has(nodeId))
+        .map(nodeId => nodeMap.get(nodeId))
+        .filter(Boolean)
+        .sort((left, right) => String(left.label).localeCompare(String(right.label)));
+
+    for (const hypothesisNode of secondaryHypotheses) {
+        const parentTaskIds = (adjacency.get(hypothesisNode.id) ?? [])
+            .filter(nodeId => nodeId.startsWith("Task:"));
+        const parentTaskId = parentTaskIds.find(nodeId => primaryIds.has(nodeId)) ?? parentTaskIds[0] ?? null;
+        const parentTaskNode = parentTaskId ? nodeMap.get(parentTaskId) : null;
+
+        if (parentTaskId && !primaryIds.has(parentTaskId)) {
+            supportIds.add(parentTaskId);
+        }
+
+        const parentGoalId = parentTaskId
+            ? (adjacency.get(parentTaskId) ?? []).find(nodeId => nodeId.startsWith("Goal:"))
+            : null;
+        if (parentGoalId && !primaryIds.has(parentGoalId)) {
+            supportIds.add(parentGoalId);
+        }
+
+        const parentTaskState = parentTaskNode?.state ?? resolveTaskStateFromOverview(parentTaskId);
+        const originCommitId = parentTaskId ? findOriginCommitForTask(parentTaskId.replace("Task:", "")) : null;
+
+        nodeHints.set(hypothesisNode.id, {
+            parentTaskId,
+            parentTaskLabel: parentTaskNode?.label ?? null
+        });
+
+        relatedItems.push({
+            nodeId: hypothesisNode.id,
+            title: hypothesisNode.label,
+            state: hypothesisNode.state ?? "Unknown",
+            parentTaskId,
+            parentTaskLabel: parentTaskNode?.label ?? "Unknown task",
+            parentTaskState,
+            originCommitId
+        });
+    }
+
+    return {
+        supportIds,
+        relatedItems,
+        nodeHints
+    };
+}
+
+function resolveTaskStateFromOverview(taskNodeId) {
+    const taskId = String(taskNodeId ?? "").replace(/^Task:/, "");
+    const task = currentOverview?.tasks?.find(item => item.id === taskId);
+    return task?.state ?? null;
+}
+
+function findOriginCommitForTask(taskId) {
+    if (!taskId || !Array.isArray(currentOverview?.timelineCommits)) {
+        return null;
+    }
+
+    const commits = [...currentOverview.timelineCommits]
+        .sort((left, right) => new Date(left.createdAtUtc) - new Date(right.createdAtUtc));
+    const origin = commits.find(commit => Array.isArray(commit.cognitivePath?.taskIds)
+        && commit.cognitivePath.taskIds.includes(taskId));
+    return origin?.id ?? null;
+}
+
+function buildPrimaryPathSnapshot(primarySeedIds, graph) {
+    const nodeMap = new Map((graph?.nodes ?? []).map(node => [node.id, node]));
+    const groups = {
+        goalTitles: [],
+        subGoalTitles: [],
+        taskTitles: [],
+        hypothesisTitles: [],
+        decisionTitles: [],
+        conclusionSummaries: []
+    };
+    let goalPosition = 0;
+
+    for (const nodeId of primarySeedIds ?? []) {
+        const node = nodeMap.get(nodeId);
+        if (!node) {
+            continue;
+        }
+
+        if (nodeId.startsWith("Goal:")) {
+            if (goalPosition === 0) {
+                groups.goalTitles.push(node.label);
+            } else if (goalPosition === 1) {
+                groups.subGoalTitles.push(node.label);
+            }
+            goalPosition += 1;
+            continue;
+        }
+
+        if (nodeId.startsWith("Task:")) {
+            groups.taskTitles.push(node.label);
+        } else if (nodeId.startsWith("Hypothesis:")) {
+            groups.hypothesisTitles.push(node.label);
+        } else if (nodeId.startsWith("Decision:")) {
+            groups.decisionTitles.push(node.label);
+        } else if (nodeId.startsWith("Conclusion:")) {
+            groups.conclusionSummaries.push(node.label);
+        }
+    }
+
+    return groups;
+}
+
+function shouldIncludeCommitFocusNeighbor(currentNode, neighborNode, edge) {
+    if (!currentNode || !neighborNode || !edge) {
         return false;
     }
 
-    if (neighborNode.type === "Project" || neighborNode.type === "Evidence") {
+    if (neighborNode.type === "Project" || neighborNode.type === "Run" || neighborNode.type === "ContextPacket") {
         return false;
+    }
+
+    const relationship = String(edge.relationship ?? "").toLowerCase();
+    if (!relationship) {
+        return false;
+    }
+
+    const allowedRelationships = new Set([
+        "contains",
+        "subgoal",
+        "informs",
+        "supported-by",
+        "influences",
+        "leads-to",
+        "resolved-by",
+        "supports"
+    ]);
+
+    if (!allowedRelationships.has(relationship)) {
+        return false;
+    }
+
+    if (neighborNode.type === "Evidence") {
+        return currentNode.type === "Hypothesis" || currentNode.type === "Decision" || currentNode.type === "Conclusion";
     }
 
     return true;
@@ -2512,9 +3216,151 @@ function filterGraphByCommitFocus(graph, commitFocus) {
         return graph;
     }
 
-    const nodes = graph.nodes.filter(node => commitFocus.nodeIds.has(node.id));
-    const edges = graph.edges.filter(edge => commitFocus.nodeIds.has(edge.from) && commitFocus.nodeIds.has(edge.to));
+    const visibleIds = shouldShowPrimaryLineageOnly()
+        ? commitFocus.primaryIds
+        : commitFocus.nodeIds;
+
+    const nodes = graph.nodes.filter(node => visibleIds.has(node.id));
+    const edges = graph.edges.filter(edge => visibleIds.has(edge.from) && visibleIds.has(edge.to));
     return { nodes, edges };
+}
+
+function shouldShowPrimaryLineageOnly() {
+    return Boolean(currentCommitFocusEnabled && currentCommitFocus && currentPrimaryLineageOnly);
+}
+
+function resolveCommitFocusNodeToneClass(commitFocus, nodeId) {
+    if (!commitFocus || !nodeId) {
+        return "";
+    }
+
+    if (commitFocus.primaryIds?.has(nodeId)) {
+        return "commit-primary";
+    }
+
+    if (commitFocus.secondaryIds?.has(nodeId)) {
+        return "commit-secondary";
+    }
+
+    return "";
+}
+
+function resolveCommitFocusRoleClass(commitFocus, nodeId, subGoalIds = new Set()) {
+    if (!commitFocus?.primaryIds?.has(nodeId)) {
+        return "";
+    }
+
+    if (!String(nodeId).startsWith("Goal:")) {
+        return "";
+    }
+
+    const hasPrimarySubGoal = Array.isArray(commitFocus.subGoalIds) && commitFocus.subGoalIds.length > 0;
+    if (!hasPrimarySubGoal) {
+        return "";
+    }
+
+    if (subGoalIds.has(nodeId)) {
+        return "commit-subgoal-anchor";
+    }
+
+    return "commit-parent-goal";
+}
+
+function buildCommitFocusNodeHint(commitFocus, nodeId) {
+    if (!commitFocus?.secondaryIds?.has(nodeId) || !String(nodeId).startsWith("Hypothesis:")) {
+        return "";
+    }
+
+    const hint = commitFocus.nodeHints?.get(nodeId);
+    if (!hint?.parentTaskLabel) {
+        return `<span class="graph-node-hint">related in commit</span>`;
+    }
+
+    return `<span class="graph-node-hint">from task: ${escapeHtml(hint.parentTaskLabel)}</span>`;
+}
+
+function findCommitRelatedItem(nodeId) {
+    const items = Array.isArray(currentCommitFocus?.relatedItems) ? currentCommitFocus.relatedItems : [];
+    return items.find(item => item.nodeId === nodeId) ?? null;
+}
+
+function shouldShowCommitNodeActions(item, renderedGraph) {
+    if (!item || !renderedGraph?.nodes?.length) {
+        return false;
+    }
+
+    const parentTaskId = item.parentTaskId ?? null;
+    if (!parentTaskId) {
+        return Boolean(item.originCommitId);
+    }
+
+    const visibleNodeIds = new Set(renderedGraph.nodes.map(node => node.id));
+    if (!visibleNodeIds.has(parentTaskId)) {
+        return true;
+    }
+
+    const hasVisibleParentEdge = (renderedGraph.edges ?? []).some(edge =>
+        (edge.from === item.nodeId && edge.to === parentTaskId)
+        || (edge.to === item.nodeId && edge.from === parentTaskId));
+    return !hasVisibleParentEdge;
+}
+
+function clearGraphNodeActions() {
+    if (!graphNodeActions) {
+        return;
+    }
+
+    graphNodeActions.innerHTML = "";
+    graphNodeActions.hidden = true;
+}
+
+function navigateToRelatedOriginCommit(item) {
+    const originCommitId = item?.originCommitId;
+    if (!originCommitId) {
+        return;
+    }
+
+    void selectCommit(originCommitId, {
+        preferredNodeId: item.parentTaskId ? `Task:${String(item.parentTaskId).replace(/^Task:/, "")}` : null,
+        scrollSelectedNodeIntoView: true
+    });
+}
+
+function renderGraphNodeActions() {
+    if (!graphNodeActions) {
+        return;
+    }
+
+    const item = findCommitRelatedItem(selectedNodeId);
+    if (!item || !shouldShowCommitNodeActions(item, currentRenderedGraph)) {
+        clearGraphNodeActions();
+        return;
+    }
+
+    graphNodeActions.hidden = false;
+    graphNodeActions.innerHTML = `
+        <div class="graph-node-actions-card">
+            <span class="graph-node-actions-label">Related in commit</span>
+            <strong>${escapeHtml(item.title)}</strong>
+            <span class="graph-node-actions-meta">Parent task: ${escapeHtml(item.parentTaskLabel ?? "Unknown task")}</span>
+            <div class="graph-node-actions-row">
+                <button type="button" class="detail-pill" data-graph-action="focus-branch">Focus branch</button>
+                ${item.originCommitId
+                    ? `<button type="button" class="detail-pill" data-graph-action="origin-commit">Origin commit</button>`
+                    : ""}
+            </div>
+        </div>
+    `;
+
+    const focusButton = graphNodeActions.querySelector('[data-graph-action="focus-branch"]');
+    focusButton?.addEventListener("click", () => {
+        showNode(item.nodeId, { scrollIntoView: true });
+    });
+
+    const originButton = graphNodeActions.querySelector('[data-graph-action="origin-commit"]');
+    originButton?.addEventListener("click", () => {
+        navigateToRelatedOriginCommit(item);
+    });
 }
 
 function normalizeGraphEntityType(entityType) {
@@ -2564,7 +3410,37 @@ function ensureAllTaskStateFiltersChecked() {
     persistGraphFocusSelection();
 }
 
-function sortGraphNodes(nodes) {
+function sortGraphNodes(type, nodes) {
+    if (shouldPrioritizeRecentWorkingContextNodes(type)) {
+        nodes.sort((left, right) => {
+            const leftRecent = recentWorkingContextNewNodeIds.has(left.id) ? 0 : 1;
+            const rightRecent = recentWorkingContextNewNodeIds.has(right.id) ? 0 : 1;
+            if (leftRecent !== rightRecent) {
+                return leftRecent - rightRecent;
+            }
+
+            const createdAtDelta = compareNodeCreatedAtDescending(left, right);
+            if (createdAtDelta !== 0) {
+                return createdAtDelta;
+            }
+
+            return left.label.localeCompare(right.label, undefined, { sensitivity: "base" });
+        });
+        return;
+    }
+
+    if (shouldSortWorkingContextEvidenceByRecency(type)) {
+        nodes.sort((left, right) => {
+            const createdAtDelta = compareNodeCreatedAtDescending(left, right);
+            if (createdAtDelta !== 0) {
+                return createdAtDelta;
+            }
+
+            return left.label.localeCompare(right.label, undefined, { sensitivity: "base" });
+        });
+        return;
+    }
+
     if (!currentCommitFocus) {
         nodes.sort((left, right) => left.label.localeCompare(right.label, undefined, { sensitivity: "base" }));
         return;
@@ -2581,17 +3457,66 @@ function sortGraphNodes(nodes) {
     });
 }
 
+function shouldPrioritizeRecentWorkingContextNodes(type) {
+    if (selectedCommitId || currentCommitFocus) {
+        return false;
+    }
+
+    if (recentWorkingContextNewNodeIds.size === 0) {
+        return false;
+    }
+
+    return type === "Evidence";
+}
+
+function shouldSortWorkingContextEvidenceByRecency(type) {
+    if (selectedCommitId || currentCommitFocus) {
+        return false;
+    }
+
+    return type === "Evidence";
+}
+
+function compareNodeCreatedAtDescending(left, right) {
+    const leftTime = parseNodeCreatedAt(left);
+    const rightTime = parseNodeCreatedAt(right);
+    if (leftTime === rightTime) {
+        return 0;
+    }
+
+    if (leftTime === 0) {
+        return 1;
+    }
+
+    if (rightTime === 0) {
+        return -1;
+    }
+
+    return rightTime - leftTime;
+}
+
+function parseNodeCreatedAt(node) {
+    const value = node?.metadata?.createdAtUtc;
+    if (!value) {
+        return 0;
+    }
+
+    const parsed = new Date(value).getTime();
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function buildCommitFocusCaption() {
     if (!currentCommitFocusEnabled || !currentCommitFocus) {
         return "";
     }
 
-    const changedCount = currentCommitFocus.changedIds.size;
-    const totalCount = currentCommitFocus.nodeIds.size;
-    return `Commit focus: ${changedCount} path nodes, ${totalCount} visible in focus. `;
+    const primaryCount = currentCommitFocus.primaryIds?.size ?? 0;
+    const secondaryCount = currentCommitFocus.secondaryIds?.size ?? 0;
+    return `Commit focus: ${primaryCount} primary, ${secondaryCount} related. `;
 }
 
-function toggleGraphFocusMode(presetName) {
+async function toggleGraphFocusMode(presetName) {
+    const wasDemandLoadedAllGraph = shouldUseDemandLoadedAllGraph();
     if (transientGraphFocusSnapshot) {
         transientGraphFocusSnapshot = null;
     }
@@ -2620,11 +3545,18 @@ function toggleGraphFocusMode(presetName) {
 
     if (currentGraph) {
         selectedNodeId = null;
-        renderGraph(currentGraph, { preserveViewport: true });
-        nodeDetail.textContent = "Click a node.";
+        const isDemandLoadedAllGraph = shouldUseDemandLoadedAllGraph();
+        if (wasDemandLoadedAllGraph !== isDemandLoadedAllGraph) {
+            await selectCommit(selectedCommitId, { preserveViewport: true });
+        } else {
+            renderGraph(currentGraph, { preserveViewport: true });
+            nodeDetail.textContent = "Click a node.";
+        }
     } else {
         renderGraphFocusCaption();
     }
+
+    syncWorkingContextSignal();
 }
 
 function snapshotGraphFocus() {
@@ -2651,6 +3583,7 @@ function restoreGraphFocus(snapshot) {
 }
 
 function applyWorkingContextFiltersTransient() {
+    const wasDemandLoadedAllGraph = shouldUseDemandLoadedAllGraph();
     if (!transientGraphFocusSnapshot) {
         transientGraphFocusSnapshot = snapshotGraphFocus();
     }
@@ -2669,8 +3602,12 @@ function applyWorkingContextFiltersTransient() {
 
     if (currentGraph) {
         selectedNodeId = null;
-        renderGraph(currentGraph, { preserveViewport: true });
-        nodeDetail.textContent = "Click a node.";
+        if (wasDemandLoadedAllGraph !== shouldUseDemandLoadedAllGraph()) {
+            void selectCommit(selectedCommitId, { preserveViewport: true });
+        } else {
+            renderGraph(currentGraph, { preserveViewport: true });
+            nodeDetail.textContent = "Click a node.";
+        }
     } else {
         renderGraphFocusCaption();
     }
@@ -2756,14 +3693,29 @@ function renderGraphFocusCaption(filteredGraph) {
     const stateLabel = effectiveStates.length > 0
         ? `States: ${effectiveStates.join(", ")}.`
         : "States: none selected.";
+    const totalMatchingTasks = countOverviewTasksInEffectiveStates(effectiveStates);
+    const lineageLabel = shouldShowPrimaryLineageOnly()
+        ? "Scope: primary lineage only."
+        : "";
 
     if (!filteredGraph) {
-        graphFocusCaption.textContent = `${buildCommitFocusCaption()}${presetLabel} ${stateLabel}`.trim();
+        graphFocusCaption.textContent = `${buildCommitFocusCaption()}${lineageLabel} ${presetLabel} ${stateLabel}`.trim();
         return;
     }
 
     const visibleTasks = filteredGraph.nodes.filter(node => node.type === "Task").length;
-    graphFocusCaption.textContent = `${buildCommitFocusCaption()}${presetLabel} ${stateLabel} Visible tasks: ${visibleTasks}.`.trim();
+    let workingScopeLabel = "";
+    if (!selectedCommitId && !currentCommitFocus && (currentGraphFocusModes.has("working") || currentGraphFocusModes.has("thinking"))) {
+        if (shouldExpandAllActiveLines()) {
+            workingScopeLabel = `Scope: all working/thinking lines (${totalMatchingTasks} tasks).`;
+        } else if (totalMatchingTasks > 1) {
+            workingScopeLabel = `Working context is showing 1 focal line out of ${totalMatchingTasks} matching tasks.`;
+        } else if (totalMatchingTasks === 1) {
+            workingScopeLabel = "Working context is showing the single matching task line.";
+        }
+    }
+
+    graphFocusCaption.textContent = `${buildCommitFocusCaption()}${lineageLabel} ${presetLabel} ${stateLabel} Visible tasks: ${visibleTasks}. ${workingScopeLabel}`.trim();
 }
 
 function syncAutoRefresh() {
@@ -2788,6 +3740,195 @@ function syncAutoRefresh() {
             renderFreshnessStatus("Auto-refresh paused after failure");
         }
     }, autoRefreshIntervalMs);
+}
+
+function shouldPollWorkingContextSignal() {
+    if (!repoPathInput.value.trim()) {
+        return false;
+    }
+    return true;
+}
+
+function syncWorkingContextSignal() {
+    if (!shouldPollWorkingContextSignal()) {
+        stopWorkingContextSignal();
+        return;
+    }
+
+    stopWorkingContextSignal();
+    pollWorkingContextSignal();
+    workingContextSignalHandle = window.setInterval(async () => {
+        await pollWorkingContextSignal();
+    }, workingContextSignalIntervalMs);
+}
+
+async function reconcileWorkingContextAfterBackground() {
+    if (!shouldPollWorkingContextSignal()) {
+        return;
+    }
+
+    if (document.visibilityState && document.visibilityState !== "visible") {
+        pendingWorkingContextVisibilityRefresh = true;
+        return;
+    }
+
+    if (!pendingWorkingContextVisibilityRefresh && document.hasFocus && !document.hasFocus()) {
+        return;
+    }
+
+    pendingWorkingContextVisibilityRefresh = false;
+    await pollWorkingContextSignal();
+}
+
+function stopWorkingContextSignal() {
+    if (workingContextSignalHandle !== null) {
+        window.clearInterval(workingContextSignalHandle);
+        workingContextSignalHandle = null;
+    }
+}
+
+async function pollWorkingContextSignal() {
+    if (workingContextSignalRequestInFlight || !shouldPollWorkingContextSignal()) {
+        return;
+    }
+
+    workingContextSignalRequestInFlight = true;
+    try {
+        const params = new URLSearchParams();
+        if (repoPathInput.value.trim()) {
+            params.set("path", repoPathInput.value.trim());
+        }
+
+        const response = await fetch(`/api/working-context/signal?${params.toString()}`, { cache: "no-store" });
+        if (!response.ok) {
+            return;
+        }
+
+        const payload = await response.json();
+        if (!payload?.fingerprint) {
+            return;
+        }
+
+        if (workingContextSignalFingerprint === null) {
+            workingContextSignalFingerprint = payload.fingerprint;
+            return;
+        }
+
+        if (workingContextSignalFingerprint !== payload.fingerprint) {
+            workingContextSignalFingerprint = payload.fingerprint;
+            await refreshWorkingContextSignalState();
+        }
+    } catch {
+        // Ignore transient signal failures; manual/full refresh still exists.
+    } finally {
+        workingContextSignalRequestInFlight = false;
+    }
+}
+
+async function refreshWorkingContextSignalState() {
+    if (!repoPathInput.value.trim()) {
+        return;
+    }
+
+    const repositoryPath = repoPathInput.value.trim();
+    const params = new URLSearchParams({ path: repositoryPath });
+    if (branchSelect.value) {
+        params.set("branch", branchSelect.value);
+    }
+    params.set("historyLimit", String(historyPageSize));
+
+    const overviewResponse = await fetch(`/api/overview?${params.toString()}`, { cache: "no-store" });
+    if (!overviewResponse.ok) {
+        return;
+    }
+
+    const overview = await overviewResponse.json();
+    currentOverview = normalizeOverviewHistoryState(overview);
+    lastLoadedAt = new Date();
+    repoPathInput.value = overview.repositoryPath;
+    persistRepositoryPath(overview.repositoryPath);
+    persistBranchSelection(overview.selectedBranch);
+    if (topbarVersion) {
+        topbarVersion.textContent = overview.productVersion ? `v${overview.productVersion}` : "";
+    }
+
+    renderSummary(overview);
+    renderTasks(overview);
+    renderCommits(overview);
+    renderFreshnessStatus("Working context updated");
+
+    const hadWorkingContextBaseline = latestWorkingContextGraph !== null;
+    const previousNodeIds = new Set((latestWorkingContextGraph?.nodes ?? []).map(node => node.id));
+    const graphResponse = await fetch(`/api/graph?path=${encodeURIComponent(repositoryPath)}`, { cache: "no-store" });
+    if (!graphResponse.ok) {
+        return;
+    }
+
+    latestWorkingContextGraph = await graphResponse.json();
+    if (hadWorkingContextBaseline) {
+        markRecentWorkingContextNodes(latestWorkingContextGraph, previousNodeIds);
+    } else {
+        recentWorkingContextNewNodeIds = new Set();
+    }
+
+    if (selectedCommitId !== null) {
+        return;
+    }
+
+    currentGraph = latestWorkingContextGraph;
+    currentCommitFocus = null;
+    const shouldClearStaleSelection = hadWorkingContextBaseline && recentWorkingContextNewNodeIds.size > 0;
+    selectedNodeId = !shouldClearStaleSelection && selectedNodeId && currentGraph.nodes.some(node => node.id === selectedNodeId)
+        ? selectedNodeId
+        : null;
+    renderWorkingDetail();
+    graphCaption.textContent = "Working context";
+    renderGraph(currentGraph, { preserveViewport: true });
+    await loadOriginDetail();
+    await loadPlaybookDetail();
+
+    if (selectedNodeId) {
+        renderSelectedNodeDetail(selectedNodeId, { scrollIntoView: false });
+    } else {
+        nodeDetail.textContent = "Click a node.";
+    }
+}
+
+function markRecentWorkingContextNodes(graph, previousNodeIds) {
+    if (clearRecentWorkingContextNodesHandle !== null) {
+        window.clearTimeout(clearRecentWorkingContextNodesHandle);
+        clearRecentWorkingContextNodesHandle = null;
+    }
+
+    recentWorkingContextNewNodeIds = new Set(
+        (graph?.nodes ?? [])
+            .map(node => node.id)
+            .filter(nodeId => !previousNodeIds.has(nodeId))
+    );
+
+    if (recentWorkingContextNewNodeIds.size === 0) {
+        return;
+    }
+
+    clearRecentWorkingContextNodesHandle = window.setTimeout(() => {
+        recentWorkingContextNewNodeIds = new Set();
+        clearRecentWorkingContextNodesHandle = null;
+        if (!selectedCommitId && currentGraph) {
+            renderGraph(currentGraph, { preserveViewport: true });
+        }
+    }, 9000);
+}
+
+function cloneGraphPayload(graph) {
+    if (!graph) {
+        return null;
+    }
+
+    if (typeof structuredClone === "function") {
+        return structuredClone(graph);
+    }
+
+    return JSON.parse(JSON.stringify(graph));
 }
 
 function stopAutoRefresh() {
@@ -2901,7 +4042,7 @@ function renderCommitDetail(detail) {
         ["Conclusions", diff.conclusions],
         ["Conflicts", diff.conflicts]
     ];
-    const pathMeta = buildCognitivePathMeta(detail.cognitivePath);
+    const pathMeta = buildCognitivePathMeta(detail.cognitivePath, currentCommitFocus);
 
     commitDetail.innerHTML = `
         <div class="detail-header">
@@ -2946,6 +4087,7 @@ function renderCommitDetail(detail) {
             </div>
         </div>
         ${renderCognitivePathSection(pathMeta)}
+        ${renderRelatedCommitSection(currentCommitFocus)}
         ${sections.map(([label, items]) => renderDiffSection(label, items)).join("")}
     `;
 
@@ -2961,6 +4103,32 @@ function renderCommitDetail(detail) {
             button.onclick = () => selectCommit(parentId);
             parentContainer.appendChild(button);
         }
+    }
+
+    for (const button of commitDetail.querySelectorAll("[data-related-node-id]")) {
+        button.addEventListener("click", () => {
+            const nodeId = button.dataset.relatedNodeId;
+            if (!nodeId) {
+                return;
+            }
+
+            showNode(nodeId, { scrollIntoView: true });
+        });
+    }
+
+    for (const button of commitDetail.querySelectorAll("[data-origin-commit-id]")) {
+        button.addEventListener("click", () => {
+            const originCommitId = button.dataset.originCommitId;
+            const taskId = button.dataset.originTaskId;
+            if (!originCommitId) {
+                return;
+            }
+
+            void selectCommit(originCommitId, {
+                preferredNodeId: taskId ? `Task:${taskId}` : null,
+                scrollSelectedNodeIntoView: true
+            });
+        });
     }
 }
 
@@ -2982,7 +4150,7 @@ async function loadPlaybookDetail() {
     params.set("purpose", focus.purpose);
 
     const requestSequence = ++playbookRequestSequence;
-    const response = await fetch(`/api/playbook?${params.toString()}`);
+    const response = await fetch(`/api/playbook?${params.toString()}`, { cache: "no-store" });
     if (requestSequence !== playbookRequestSequence) {
         return;
     }
@@ -3018,7 +4186,7 @@ async function loadOriginDetail() {
     params.set("purpose", focus.purpose);
 
     const requestSequence = ++originRequestSequence;
-    const response = await fetch(`/api/origin?${params.toString()}`);
+    const response = await fetch(`/api/origin?${params.toString()}`, { cache: "no-store" });
     if (requestSequence !== originRequestSequence) {
         return;
     }
@@ -3225,6 +4393,185 @@ function renderPlaybookDetail(payload) {
     `;
 }
 
+function resolveInterpretationGroup(graph) {
+    if (!graph?.nodes?.length) {
+        return null;
+    }
+
+    const selectedNode = selectedNodeId
+        ? graph.nodes.find(node => node.id === selectedNodeId) ?? null
+        : null;
+
+    if (selectedNode?.type === "Hypothesis" && selectedNode.metadata?.lineageGroupId) {
+        return {
+            lineageGroupId: selectedNode.metadata.lineageGroupId,
+            selectedHypothesisId: selectedNode.id
+        };
+    }
+
+    const visibleHypotheses = (currentRenderedGraph?.nodes ?? graph.nodes)
+        .filter(node => node.type === "Hypothesis" && node.metadata?.lineageGroupId);
+    const visibleGroups = [...new Set(visibleHypotheses.map(node => node.metadata.lineageGroupId).filter(Boolean))];
+    if (visibleGroups.length === 1) {
+        return {
+            lineageGroupId: visibleGroups[0],
+            selectedHypothesisId: visibleHypotheses[0]?.id ?? null
+        };
+    }
+
+    return null;
+}
+
+function summarizeInterpretationRelationship(relationship) {
+    switch (relationship) {
+        case "competes-with":
+            return "Competes with";
+        case "merged-into":
+            return "Merged into";
+        case "supersedes":
+            return "Supersedes";
+        case "derived-from":
+            return "Derived from";
+        case "borrows-evidence-from":
+            return "Borrows evidence from";
+        default:
+            return normalizeGraphNodeState(String(relationship).replaceAll("-", " "));
+    }
+}
+
+function isInterpretationRelationEdge(edge) {
+    if (!edge?.from?.startsWith("Hypothesis:") || !edge?.to?.startsWith("Hypothesis:")) {
+        return false;
+    }
+
+    return [
+        "competes-with",
+        "merged-into",
+        "supersedes",
+        "derived-from",
+        "borrows-evidence-from"
+    ].includes(String(edge.relationship ?? ""));
+}
+
+function renderInterpretationDetail() {
+    if (!interpretationDetail) {
+        return;
+    }
+
+    const graph = currentGraph;
+    const group = resolveInterpretationGroup(graph);
+    if (!group) {
+        interpretationDetail.innerHTML = `<p class="detail-empty">Select a hypothesis with branch-like semantics, or load a graph where one lineage group is clearly in focus.</p>`;
+        return;
+    }
+
+    const nodeMap = new Map((graph?.nodes ?? []).map(node => [node.id, node]));
+    const hypotheses = (graph?.nodes ?? [])
+        .filter(node => node.type === "Hypothesis" && node.metadata?.lineageGroupId === group.lineageGroupId)
+        .sort((left, right) => {
+            const leftSelected = left.id === group.selectedHypothesisId ? 0 : 1;
+            const rightSelected = right.id === group.selectedHypothesisId ? 0 : 1;
+            if (leftSelected !== rightSelected) {
+                return leftSelected - rightSelected;
+            }
+
+            const leftPromoted = String(left.metadata?.branchState ?? "") === "Promoted" ? 0 : 1;
+            const rightPromoted = String(right.metadata?.branchState ?? "") === "Promoted" ? 0 : 1;
+            if (leftPromoted !== rightPromoted) {
+                return leftPromoted - rightPromoted;
+            }
+
+            return String(left.label ?? "").localeCompare(String(right.label ?? ""));
+        });
+
+    const hypothesisIds = new Set(hypotheses.map(node => node.id));
+    const relationshipEdges = (graph?.edges ?? []).filter(edge => hypothesisIds.has(edge.from) && hypothesisIds.has(edge.to));
+    const evidenceEdges = (graph?.edges ?? []).filter(edge =>
+        hypothesisIds.has(edge.from)
+        && edge.to.startsWith("Evidence:")
+        && edge.relationship === "supported-by");
+
+    const evidenceSupportCount = new Map();
+    for (const edge of evidenceEdges) {
+        evidenceSupportCount.set(edge.to, (evidenceSupportCount.get(edge.to) ?? 0) + 1);
+    }
+
+    const activeCount = hypotheses.filter(node => String(node.metadata?.branchState ?? "") === "Active").length;
+    const mergedCount = hypotheses.filter(node => String(node.metadata?.branchState ?? "") === "Merged").length;
+    const promotedCount = hypotheses.filter(node => String(node.metadata?.branchState ?? "") === "Promoted").length;
+
+    interpretationDetail.innerHTML = `
+        <div class="interpretation-stack">
+            <div class="interpretation-summary-card">
+                <div>
+                    <strong>Lineage group</strong>
+                    <div class="interpretation-summary-subtitle">${escapeHtml(group.lineageGroupId)}</div>
+                </div>
+                <div class="interpretation-summary-metrics">
+                    <span class="detail-pill static">${hypotheses.length} branches</span>
+                    <span class="detail-pill static">${activeCount} active</span>
+                    <span class="detail-pill static">${mergedCount} merged</span>
+                    <span class="detail-pill static">${promotedCount} promoted</span>
+                </div>
+            </div>
+            <div class="interpretation-card-list">
+                ${hypotheses.map(node => {
+                    const state = normalizeGraphNodeState(node.metadata?.branchState ?? "");
+                    const role = normalizeGraphNodeState(node.metadata?.branchRole ?? "");
+                    const stateSlug = String(node.metadata?.branchState ?? "").replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
+                    const roleSlug = String(node.metadata?.branchRole ?? "").replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
+                    const outgoingRelations = relationshipEdges.filter(edge => edge.from === node.id);
+                    const directEvidence = evidenceEdges.filter(edge => edge.from === node.id);
+                    const sharedEvidenceCount = directEvidence.filter(edge => (evidenceSupportCount.get(edge.to) ?? 0) > 1).length;
+                    const nativeEvidenceCount = directEvidence.length - sharedEvidenceCount;
+                    return `
+                        <article class="interpretation-card ${node.id === group.selectedHypothesisId ? "selected" : ""}">
+                            <div class="interpretation-card-header">
+                                <strong>${escapeHtml(node.label)}</strong>
+                                <button type="button" class="detail-pill" data-interpretation-node-id="${escapeHtml(node.id)}">Focus branch</button>
+                            </div>
+                            <div class="interpretation-pill-row">
+                                ${state ? `<span class="node-badge node-badge-hypothesis-branch node-badge-state-${escapeHtml(stateSlug)}">${escapeHtml(state)}</span>` : ""}
+                                ${role ? `<span class="node-badge node-badge-hypothesis-role node-badge-role-${escapeHtml(roleSlug)}">${escapeHtml(role)}</span>` : ""}
+                                <span class="node-badge node-badge-lineage">${escapeHtml(group.lineageGroupId)}</span>
+                                ${node.metadata?.score ? `<span class="node-score">score ${escapeHtml(node.metadata.score)}</span>` : ""}
+                            </div>
+                            <p class="interpretation-rationale">${escapeHtml(node.metadata?.rationale ?? "No rationale recorded.")}</p>
+                            <div class="interpretation-metrics">
+                                <span class="detail-pill static">${nativeEvidenceCount} direct evidence</span>
+                                <span class="detail-pill static">${sharedEvidenceCount} shared evidence</span>
+                                <span class="detail-pill static">${outgoingRelations.length} outgoing relations</span>
+                            </div>
+                            ${outgoingRelations.length > 0 ? `
+                                <div class="interpretation-relations">
+                                    <span class="detail-path-label">Relations</span>
+                                    <div class="interpretation-pill-row">
+                                        ${outgoingRelations.map(edge => {
+                                            const target = nodeMap.get(edge.to);
+                                            return `<span class="interpretation-relation-chip relation-${escapeHtml(edge.relationship)}">${escapeHtml(summarizeInterpretationRelationship(edge.relationship))}: ${escapeHtml(target?.label ?? edge.to)}</span>`;
+                                        }).join("")}
+                                    </div>
+                                </div>` : ""}
+                        </article>
+                    `;
+                }).join("")}
+            </div>
+        </div>
+    `;
+
+    for (const button of interpretationDetail.querySelectorAll("[data-interpretation-node-id]")) {
+        button.addEventListener("click", () => {
+            const nodeId = button.dataset.interpretationNodeId;
+            if (!nodeId) {
+                return;
+            }
+
+            void showNode(nodeId, { scrollIntoView: true });
+            applyDetailTab("interpretations");
+        });
+    }
+}
+
 function renderOriginDetail(payload) {
     const selected = Array.isArray(payload?.selected) ? payload.selected : [];
     const available = Array.isArray(payload?.available) ? payload.available : [];
@@ -3353,8 +4700,8 @@ function renderOriginDetail(payload) {
     }
 }
 
-function buildCognitivePathMeta(cognitivePath) {
-    const path = cognitivePath ?? {};
+function buildCognitivePathMeta(cognitivePath, commitFocus = null) {
+    const path = commitFocus?.primaryPath ?? cognitivePath ?? {};
     const goalTitles = Array.isArray(path.goalTitles) ? path.goalTitles.filter(Boolean) : [];
     const subGoalTitles = Array.isArray(path.subGoalTitles) ? path.subGoalTitles.filter(Boolean) : [];
     const taskTitles = Array.isArray(path.taskTitles) ? path.taskTitles.filter(Boolean) : [];
@@ -3438,6 +4785,33 @@ function renderCognitivePathSection(pathMeta) {
                     </div>
                 `).join("")}
             </div>
+        </section>`;
+}
+
+function renderRelatedCommitSection(commitFocus) {
+    const items = Array.isArray(commitFocus?.relatedItems) ? commitFocus.relatedItems : [];
+    if (items.length === 0) {
+        return "";
+    }
+
+    return `
+        <section class="detail-section">
+            <h4>Related in commit <span class="detail-count">${items.length}</span></h4>
+            <ul class="detail-list detail-related-list">
+                ${items.map(item => `
+                    <li class="detail-related-item">
+                        <strong>${escapeHtml(item.title)}</strong>
+                        <span>Parent task: ${escapeHtml(item.parentTaskLabel ?? "Unknown task")}</span>
+                        <span>State: ${escapeHtml(item.state ?? "Unknown")}</span>
+                        <div class="detail-action-row">
+                            <button type="button" class="detail-pill" data-related-node-id="${escapeHtml(item.nodeId)}">Focus branch</button>
+                            ${item.originCommitId
+                                ? `<button type="button" class="detail-pill" data-origin-commit-id="${escapeHtml(item.originCommitId)}" data-origin-task-id="${escapeHtml(String(item.parentTaskId ?? "").replace(/^Task:/, ""))}">Origin commit</button>`
+                                : ""}
+                        </div>
+                    </li>
+                `).join("")}
+            </ul>
         </section>`;
 }
 

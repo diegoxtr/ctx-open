@@ -5,6 +5,7 @@ using Ctx.Domain;
 using System.Globalization;
 using System.Text.Json;
 using System.Text;
+using System.Text.RegularExpressions;
 
 public sealed class CtxApplicationService : ICtxApplicationService
 {
@@ -608,6 +609,28 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 throw new InvalidOperationException($"Unsupported hypothesis state '{request.State}'.");
             }
 
+            HypothesisBranchState? parsedBranchState = hypothesis.BranchState;
+            if (!string.IsNullOrWhiteSpace(request.BranchState))
+            {
+                if (!Enum.TryParse<HypothesisBranchState>(request.BranchState, true, out var resolvedBranchState))
+                {
+                    throw new InvalidOperationException($"Unsupported hypothesis branch state '{request.BranchState}'.");
+                }
+
+                parsedBranchState = resolvedBranchState;
+            }
+
+            HypothesisBranchRole? parsedBranchRole = hypothesis.BranchRole;
+            if (!string.IsNullOrWhiteSpace(request.BranchRole))
+            {
+                if (!Enum.TryParse<HypothesisBranchRole>(request.BranchRole, true, out var resolvedBranchRole))
+                {
+                    throw new InvalidOperationException($"Unsupported hypothesis branch role '{request.BranchRole}'.");
+                }
+
+                parsedBranchRole = resolvedBranchRole;
+            }
+
             var updated = hypothesis with
             {
                 Statement = request.Statement ?? hypothesis.Statement,
@@ -617,6 +640,9 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 EvidenceStrength = request.EvidenceStrength ?? hypothesis.EvidenceStrength,
                 CostToValidate = request.CostToValidate ?? hypothesis.CostToValidate,
                 State = parsedState,
+                BranchState = parsedBranchState,
+                BranchRole = parsedBranchRole,
+                LineageGroupId = request.LineageGroupId ?? hypothesis.LineageGroupId,
                 Trace = hypothesis.Trace with
                 {
                     UpdatedBy = request.UpdatedBy,
@@ -633,6 +659,141 @@ public sealed class CtxApplicationService : ICtxApplicationService
 
             await _workingContextRepository.SaveWorkingAsync(repositoryPath, context, cancellationToken);
             return new CommandResult(true, $"Hypothesis updated: {updated.Statement}", updated);
+        });
+    }
+
+    public async System.Threading.Tasks.Task<CommandResult> RelateHypothesisAsync(string repositoryPath, RelateHypothesisRequest request, CancellationToken cancellationToken)
+    {
+        return await ExecuteWriteLockedAsync(repositoryPath, cancellationToken, async () =>
+        {
+            var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+            var source = ResolveHypothesis(context, request.HypothesisId);
+            var target = ResolveHypothesis(context, request.TargetHypothesisId);
+
+            if (!Enum.TryParse<HypothesisRelationType>(request.RelationType, true, out var relationType))
+            {
+                throw new InvalidOperationException($"Unsupported hypothesis relation type '{request.RelationType}'.");
+            }
+
+            var sourceRelations = AppendHypothesisRelation(source.Relations, new HypothesisRelation(relationType, target.Id, request.Note));
+            var targetRelations = target.Relations;
+
+            if (relationType == HypothesisRelationType.CompetesWith)
+            {
+                targetRelations = AppendHypothesisRelation(target.Relations, new HypothesisRelation(relationType, source.Id, request.Note));
+            }
+
+            var hypotheses = context.Hypotheses
+                .Select(item => item.Id == source.Id
+                    ? item with
+                    {
+                        Relations = sourceRelations,
+                        Trace = item.Trace with { UpdatedBy = request.UpdatedBy, UpdatedAtUtc = _clock.UtcNow }
+                    }
+                    : item.Id == target.Id
+                        ? item with
+                        {
+                            Relations = targetRelations,
+                            Trace = item.Trace with { UpdatedBy = request.UpdatedBy, UpdatedAtUtc = _clock.UtcNow }
+                        }
+                        : item)
+                .ToArray();
+
+            context = context with
+            {
+                Dirty = true,
+                Hypotheses = hypotheses,
+                Trace = context.Trace with { UpdatedAtUtc = _clock.UtcNow, UpdatedBy = request.UpdatedBy }
+            };
+
+            await _workingContextRepository.SaveWorkingAsync(repositoryPath, context, cancellationToken);
+            return new CommandResult(true, $"Hypothesis relation added: {source.Id.Value} {relationType} {target.Id.Value}", new
+            {
+                sourceHypothesisId = source.Id.Value,
+                targetHypothesisId = target.Id.Value,
+                relationType = relationType.ToString(),
+                note = request.Note
+            });
+        });
+    }
+
+    public async System.Threading.Tasks.Task<CommandResult> MergeHypothesisAsync(string repositoryPath, MergeHypothesisRequest request, CancellationToken cancellationToken)
+    {
+        return await ExecuteWriteLockedAsync(repositoryPath, cancellationToken, async () =>
+        {
+            var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+            var source = ResolveHypothesis(context, request.SourceHypothesisId);
+            var target = ResolveHypothesis(context, request.TargetHypothesisId);
+
+            var updatedSource = source with
+            {
+                BranchState = HypothesisBranchState.Merged,
+                MergedIntoHypothesisId = target.Id,
+                Relations = AppendHypothesisRelation(source.Relations, new HypothesisRelation(HypothesisRelationType.MergedInto, target.Id)),
+                Trace = source.Trace with { UpdatedBy = request.UpdatedBy, UpdatedAtUtc = _clock.UtcNow }
+            };
+
+            var updatedTarget = target with
+            {
+                BranchRole = target.BranchRole ?? HypothesisBranchRole.Integrative,
+                Trace = target.Trace with { UpdatedBy = request.UpdatedBy, UpdatedAtUtc = _clock.UtcNow }
+            };
+
+            context = context with
+            {
+                Dirty = true,
+                Hypotheses = context.Hypotheses
+                    .Select(item => item.Id == source.Id ? updatedSource : item.Id == target.Id ? updatedTarget : item)
+                    .ToArray(),
+                Trace = context.Trace with { UpdatedAtUtc = _clock.UtcNow, UpdatedBy = request.UpdatedBy }
+            };
+
+            await _workingContextRepository.SaveWorkingAsync(repositoryPath, context, cancellationToken);
+            return new CommandResult(true, $"Hypothesis merged: {source.Id.Value} -> {target.Id.Value}", new
+            {
+                sourceHypothesisId = source.Id.Value,
+                targetHypothesisId = target.Id.Value
+            });
+        });
+    }
+
+    public async System.Threading.Tasks.Task<CommandResult> SupersedeHypothesisAsync(string repositoryPath, SupersedeHypothesisRequest request, CancellationToken cancellationToken)
+    {
+        return await ExecuteWriteLockedAsync(repositoryPath, cancellationToken, async () =>
+        {
+            var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+            var oldHypothesis = ResolveHypothesis(context, request.OldHypothesisId);
+            var newHypothesis = ResolveHypothesis(context, request.NewHypothesisId);
+
+            var updatedOld = oldHypothesis with
+            {
+                BranchState = HypothesisBranchState.Deprecated,
+                Relations = AppendHypothesisRelation(oldHypothesis.Relations, new HypothesisRelation(HypothesisRelationType.Supersedes, newHypothesis.Id, "superseded-by")),
+                Trace = oldHypothesis.Trace with { UpdatedBy = request.UpdatedBy, UpdatedAtUtc = _clock.UtcNow }
+            };
+
+            var updatedNew = newHypothesis with
+            {
+                SupersedesHypothesisIds = AppendHypothesisId(newHypothesis.SupersedesHypothesisIds, oldHypothesis.Id),
+                BranchRole = newHypothesis.BranchRole ?? HypothesisBranchRole.Dominant,
+                Trace = newHypothesis.Trace with { UpdatedBy = request.UpdatedBy, UpdatedAtUtc = _clock.UtcNow }
+            };
+
+            context = context with
+            {
+                Dirty = true,
+                Hypotheses = context.Hypotheses
+                    .Select(item => item.Id == oldHypothesis.Id ? updatedOld : item.Id == newHypothesis.Id ? updatedNew : item)
+                    .ToArray(),
+                Trace = context.Trace with { UpdatedAtUtc = _clock.UtcNow, UpdatedBy = request.UpdatedBy }
+            };
+
+            await _workingContextRepository.SaveWorkingAsync(repositoryPath, context, cancellationToken);
+            return new CommandResult(true, $"Hypothesis superseded: {oldHypothesis.Id.Value} -> {newHypothesis.Id.Value}", new
+            {
+                oldHypothesisId = oldHypothesis.Id.Value,
+                newHypothesisId = newHypothesis.Id.Value
+            });
         });
     }
 
@@ -743,6 +904,50 @@ public sealed class CtxApplicationService : ICtxApplicationService
 
             await _workingContextRepository.SaveWorkingAsync(repositoryPath, context, cancellationToken);
             return new CommandResult(true, $"Evidence added: {evidence.Title}", evidence);
+        });
+    }
+
+    public async System.Threading.Tasks.Task<CommandResult> ShareEvidenceAsync(string repositoryPath, ShareEvidenceRequest request, CancellationToken cancellationToken)
+    {
+        return await ExecuteWriteLockedAsync(repositoryPath, cancellationToken, async () =>
+        {
+            var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+            var evidence = ResolveEvidence(context, request.EvidenceId);
+            var target = ResolveReference(context, request.TargetReference);
+
+            var updatedEvidence = evidence with
+            {
+                Supports = evidence.Supports
+                    .Append(target)
+                    .Distinct()
+                    .ToArray(),
+                Trace = evidence.Trace with
+                {
+                    UpdatedBy = request.UpdatedBy,
+                    UpdatedAtUtc = _clock.UtcNow
+                }
+            };
+
+            var hypotheses = context.Hypotheses
+                .Select(item => target.EntityType == nameof(Hypothesis) && target.EntityId == item.Id.Value
+                    ? item with
+                    {
+                        EvidenceIds = item.EvidenceIds.Append(evidence.Id).Distinct().ToArray(),
+                        Trace = item.Trace with { UpdatedBy = request.UpdatedBy, UpdatedAtUtc = _clock.UtcNow }
+                    }
+                    : item)
+                .ToArray();
+
+            context = context with
+            {
+                Dirty = true,
+                Hypotheses = hypotheses,
+                Evidence = context.Evidence.Select(item => item.Id == evidence.Id ? updatedEvidence : item).ToArray(),
+                Trace = context.Trace with { UpdatedAtUtc = _clock.UtcNow, UpdatedBy = request.UpdatedBy }
+            };
+
+            await _workingContextRepository.SaveWorkingAsync(repositoryPath, context, cancellationToken);
+            return new CommandResult(true, $"Evidence shared: {evidence.Id.Value} -> {target.EntityType}:{target.EntityId}", updatedEvidence);
         });
     }
 
@@ -1187,7 +1392,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
         });
     }
 
-    public async System.Threading.Tasks.Task<CommandResult> ExportGraphAsync(string repositoryPath, string format, string? commitId, CancellationToken cancellationToken)
+    public async System.Threading.Tasks.Task<CommandResult> ExportGraphAsync(string repositoryPath, string format, string? commitId, string? mode, string? focusNodeId, int? depth, CancellationToken cancellationToken)
     {
         if (!format.Equals("json", StringComparison.OrdinalIgnoreCase)
             && !format.Equals("mermaid", StringComparison.OrdinalIgnoreCase))
@@ -1197,7 +1402,8 @@ public sealed class CtxApplicationService : ICtxApplicationService
 
         var head = await _workingContextRepository.LoadHeadAsync(repositoryPath, cancellationToken);
         var context = await ResolveGraphContextAsync(repositoryPath, commitId, cancellationToken);
-        var graph = BuildGraphExport(context, head);
+        var fullGraph = BuildGraphExport(context, head);
+        var graph = ResolveGraphExportMode(fullGraph, mode, focusNodeId, depth);
 
         if (format.Equals("mermaid", StringComparison.OrdinalIgnoreCase))
         {
@@ -1312,6 +1518,123 @@ public sealed class CtxApplicationService : ICtxApplicationService
             : BuildThreadMarkdown(thread);
 
         return new(true, $"Thread reconstructed for {focusType.ToLowerInvariant()} '{focusId}'.", payload);
+    }
+
+    public async System.Threading.Tasks.Task<CommandResult> BootstrapMapAsync(string repositoryPath, BootstrapMapRequest request, CancellationToken cancellationToken)
+    {
+        var sourcePath = ResolveBootstrapSourcePath(repositoryPath, request.SourcePath);
+        var mode = ResolveBootstrapMode(request.Mode, File.Exists(sourcePath));
+        if (!File.Exists(sourcePath) && !Directory.Exists(sourcePath))
+        {
+            return new(false, $"Bootstrap source was not found: {sourcePath}");
+        }
+
+        var documents = await LoadBootstrapDocumentsAsync(sourcePath, request.MaxFiles, cancellationToken);
+        var result = BuildBootstrapMapSummary(sourcePath, mode, documents);
+        return new(true, $"Bootstrap map generated from '{sourcePath}'.", result);
+    }
+
+    public async System.Threading.Tasks.Task<CommandResult> BootstrapApplyAsync(string repositoryPath, BootstrapApplyRequest request, CancellationToken cancellationToken)
+    {
+        var sourcePath = ResolveBootstrapSourcePath(repositoryPath, request.SourcePath);
+        var mode = ResolveBootstrapMode(request.Mode, File.Exists(sourcePath));
+        if (!File.Exists(sourcePath) && !Directory.Exists(sourcePath))
+        {
+            return new(false, $"Bootstrap source was not found: {sourcePath}");
+        }
+
+        var documents = await LoadBootstrapDocumentsAsync(sourcePath, request.MaxFiles, cancellationToken);
+        var summary = BuildBootstrapMapSummary(sourcePath, mode, documents);
+        var selectedThread = SelectBootstrapThread(summary);
+
+        if (selectedThread is null)
+        {
+            return new(false, $"Bootstrap apply found no candidate thread in '{sourcePath}'.");
+        }
+
+        return await ExecuteWriteLockedAsync(repositoryPath, cancellationToken, async () =>
+        {
+            var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+            Goal? parentGoal = null;
+            if (!string.IsNullOrWhiteSpace(request.ParentGoalId))
+            {
+                parentGoal = ResolveGoal(context, request.ParentGoalId);
+            }
+
+            var goal = new Goal(
+                GoalId.New(),
+                parentGoal?.Id,
+                BuildBootstrapGoalTitle(selectedThread.Title),
+                BuildBootstrapGoalDescription(summary, selectedThread),
+                parentGoal?.Priority ?? 100,
+                LifecycleState.Active,
+                NewTrace(request.RequestedBy, "goal"),
+                Array.Empty<TaskId>());
+
+            var task = new Ctx.Domain.Task(
+                TaskId.New(),
+                goal.Id,
+                BuildBootstrapTaskTitle(selectedThread),
+                BuildBootstrapTaskDescription(summary, selectedThread),
+                TaskExecutionState.Ready,
+                NewTrace(request.RequestedBy, "task"),
+                Array.Empty<TaskId>(),
+                Array.Empty<HypothesisId>());
+
+            var hypotheses = BuildBootstrapAppliedHypotheses(selectedThread, task.Id, request.RequestedBy);
+            var evidence = BuildBootstrapAppliedEvidence(selectedThread, task.Id, hypotheses, request.RequestedBy);
+
+            var goals = context.Goals.Append(goal with { TaskIds = new[] { task.Id } }).ToArray();
+            var tasks = context.Tasks.Append(task with { HypothesisIds = hypotheses.Select(item => item.Id).ToArray() }).ToArray();
+            var updatedHypotheses = context.Hypotheses
+                .Concat(hypotheses.Select(item => item with
+                {
+                    EvidenceIds = evidence
+                        .Where(evidenceItem => evidenceItem.Supports.Any(support => support.EntityType == nameof(Hypothesis) && support.EntityId == item.Id.Value))
+                        .Select(evidenceItem => evidenceItem.Id)
+                        .ToArray()
+                }))
+                .ToArray();
+
+            context = context with
+            {
+                Dirty = true,
+                Goals = goals,
+                Tasks = tasks,
+                Hypotheses = updatedHypotheses,
+                Evidence = context.Evidence.Concat(evidence).ToArray(),
+                Trace = context.Trace with { UpdatedAtUtc = _clock.UtcNow, UpdatedBy = request.RequestedBy }
+            };
+
+            await _workingContextRepository.SaveWorkingAsync(repositoryPath, context, cancellationToken);
+            await TryCreateAutomaticTriggerAsync(
+                repositoryPath,
+                CognitiveTriggerKind.AgentPrompt,
+                $"Bootstrap provisional line: {goal.Title}",
+                goal.Description,
+                new[] { goal.Id },
+                new[] { task.Id },
+                request.RequestedBy,
+                cancellationToken);
+
+            var applySummary = new BootstrapApplySummary(
+                summary.SourcePath,
+                summary.Mode,
+                goal.Id.Value,
+                goal.Title,
+                task.Id.Value,
+                task.Title,
+                hypotheses.Select(item => item.Id.Value).ToArray(),
+                evidence.Select(item => item.Id.Value).ToArray(),
+                new[]
+                {
+                    "Bootstrap apply promoted only the strongest provisional thread.",
+                    "Everything written by bootstrap apply should be reviewed before any accepted decision or closing conclusion.",
+                    "Use ctx check, evidence review, and deliberate hypothesis updates to convert bootstrap inference into durable CTX state."
+                });
+
+            return new CommandResult(true, $"Bootstrap apply opened provisional line '{goal.Title}'.", applySummary);
+        });
     }
 
     public async System.Threading.Tasks.Task<CommandResult> DoctorAsync(string repositoryPath, CancellationToken cancellationToken)
@@ -1687,6 +2010,22 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 ?? throw new InvalidOperationException($"Task '{id}' was not found.")),
             _ => throw new InvalidOperationException($"Unsupported evidence reference type '{parts[0]}'.")
         };
+    }
+
+    private static IReadOnlyList<HypothesisRelation> AppendHypothesisRelation(IReadOnlyList<HypothesisRelation>? existing, HypothesisRelation relation)
+    {
+        var current = existing ?? Array.Empty<HypothesisRelation>();
+        return current.Any(item => item.RelationType == relation.RelationType && item.TargetHypothesisId == relation.TargetHypothesisId)
+            ? current
+            : current.Append(relation).ToArray();
+    }
+
+    private static IReadOnlyList<HypothesisId> AppendHypothesisId(IReadOnlyList<HypothesisId>? existing, HypothesisId hypothesisId)
+    {
+        var current = existing ?? Array.Empty<HypothesisId>();
+        return current.Contains(hypothesisId)
+            ? current
+            : current.Append(hypothesisId).ToArray();
     }
 
     private static string NormalizeArtifactType(string artifactType) => artifactType.Trim().ToLowerInvariant() switch
@@ -2290,11 +2629,13 @@ public sealed class CtxApplicationService : ICtxApplicationService
             "Project",
             project.Name,
             project.State.ToString(),
-            new Dictionary<string, string>
-            {
-                ["description"] = project.Description,
-                ["defaultBranch"] = project.DefaultBranch
-            }));
+            WithTraceMetadata(
+                new Dictionary<string, string>
+                {
+                    ["description"] = project.Description,
+                    ["defaultBranch"] = project.DefaultBranch
+                },
+                project.Trace)));
 
         foreach (var goal in context.Goals ?? Array.Empty<Goal>())
         {
@@ -2303,11 +2644,13 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 "Goal",
                 goal.Title,
                 goal.State.ToString(),
-                new Dictionary<string, string>
-                {
-                    ["priority"] = goal.Priority.ToString(),
-                    ["description"] = goal.Description
-                }));
+                WithTraceMetadata(
+                    new Dictionary<string, string>
+                    {
+                        ["priority"] = goal.Priority.ToString(),
+                        ["description"] = goal.Description
+                    },
+                    goal.Trace)));
 
             if (goal.ParentGoalId is not null)
             {
@@ -2319,17 +2662,19 @@ public sealed class CtxApplicationService : ICtxApplicationService
             }
         }
 
-        foreach (var task in context.Tasks ?? Array.Empty<Ctx.Domain.Task>())
+        foreach (var task in context.Tasks ?? Array.Empty<Domain.Task>())
         {
             nodes.Add(new CognitiveGraphNode(
                 NodeId("Task", task.Id.Value),
                 "Task",
                 task.Title,
                 task.State.ToString(),
-                new Dictionary<string, string>
-                {
-                    ["description"] = task.Description
-                }));
+                WithTraceMetadata(
+                    new Dictionary<string, string>
+                    {
+                        ["description"] = task.Description
+                    },
+                    task.Trace)));
 
             if (task.GoalId is not null)
             {
@@ -2349,20 +2694,35 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 "Hypothesis",
                 hypothesis.Statement,
                 hypothesis.State.ToString(),
-                new Dictionary<string, string>
-                {
-                    ["confidence"] = hypothesis.Confidence.ToString("0.##"),
-                    ["probability"] = hypothesis.Probability.ToString("0.##"),
-                    ["impact"] = hypothesis.Impact.ToString("0.##"),
-                    ["evidenceStrength"] = hypothesis.EvidenceStrength.ToString("0.##"),
-                    ["costToValidate"] = hypothesis.CostToValidate.ToString("0.##"),
-                    ["score"] = hypothesis.Score.ToString("0.####"),
-                    ["rationale"] = hypothesis.Rationale
-                }));
+                WithTraceMetadata(
+                    new Dictionary<string, string>
+                    {
+                        ["confidence"] = hypothesis.Confidence.ToString("0.##"),
+                        ["probability"] = hypothesis.Probability.ToString("0.##"),
+                        ["impact"] = hypothesis.Impact.ToString("0.##"),
+                        ["evidenceStrength"] = hypothesis.EvidenceStrength.ToString("0.##"),
+                        ["costToValidate"] = hypothesis.CostToValidate.ToString("0.##"),
+                        ["score"] = hypothesis.Score.ToString("0.####"),
+                        ["rationale"] = hypothesis.Rationale,
+                        ["branchState"] = hypothesis.BranchState?.ToString() ?? string.Empty,
+                        ["branchRole"] = hypothesis.BranchRole?.ToString() ?? string.Empty,
+                        ["lineageGroupId"] = hypothesis.LineageGroupId ?? string.Empty,
+                        ["mergedIntoHypothesisId"] = hypothesis.MergedIntoHypothesisId?.Value ?? string.Empty,
+                        ["relationCount"] = (hypothesis.Relations?.Count ?? 0).ToString(CultureInfo.InvariantCulture)
+                    },
+                    hypothesis.Trace)));
 
             foreach (var taskId in hypothesis.TaskIds)
             {
                 edges.Add(Edge(NodeId("Task", taskId.Value), NodeId("Hypothesis", hypothesis.Id.Value), "informs"));
+            }
+
+            foreach (var relation in hypothesis.Relations ?? Array.Empty<HypothesisRelation>())
+            {
+                edges.Add(Edge(
+                    NodeId("Hypothesis", hypothesis.Id.Value),
+                    NodeId("Hypothesis", relation.TargetHypothesisId.Value),
+                    ToKebabCase(relation.RelationType.ToString())));
             }
         }
 
@@ -2373,12 +2733,14 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 "Evidence",
                 evidence.Title,
                 evidence.State.ToString(),
-                new Dictionary<string, string>
-                {
-                    ["kind"] = evidence.Kind.ToString(),
-                    ["confidence"] = evidence.Confidence.ToString("0.##"),
-                    ["source"] = evidence.Source
-                }));
+                WithTraceMetadata(
+                    new Dictionary<string, string>
+                    {
+                        ["kind"] = evidence.Kind.ToString(),
+                        ["confidence"] = evidence.Confidence.ToString("0.##"),
+                        ["source"] = evidence.Source
+                    },
+                    evidence.Trace)));
 
             foreach (var support in evidence.Supports)
             {
@@ -2393,10 +2755,12 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 "Decision",
                 decision.Title,
                 decision.State.ToString(),
-                new Dictionary<string, string>
-                {
-                    ["rationale"] = decision.Rationale
-                }));
+                WithTraceMetadata(
+                    new Dictionary<string, string>
+                    {
+                        ["rationale"] = decision.Rationale
+                    },
+                    decision.Trace)));
 
             foreach (var hypothesisId in decision.HypothesisIds)
             {
@@ -2416,7 +2780,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 "Conclusion",
                 conclusion.Summary,
                 conclusion.State.ToString(),
-                new Dictionary<string, string>()));
+                WithTraceMetadata(new Dictionary<string, string>(), conclusion.Trace)));
 
             foreach (var decisionId in conclusion.DecisionIds)
             {
@@ -2446,12 +2810,14 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 "Run",
                 run.Summary,
                 run.State.ToString(),
-                new Dictionary<string, string>
-                {
-                    ["provider"] = run.Provider,
-                    ["model"] = run.Model,
-                    ["packetId"] = run.PacketId.Value
-                }));
+                WithTraceMetadata(
+                    new Dictionary<string, string>
+                    {
+                        ["provider"] = run.Provider,
+                        ["model"] = run.Model,
+                        ["packetId"] = run.PacketId.Value
+                    },
+                    run.Trace)));
 
             edges.Add(Edge(NodeId("ContextPacket", run.PacketId.Value), NodeId("Run", run.Id.Value), "executed-as"));
 
@@ -2486,6 +2852,138 @@ public sealed class CtxApplicationService : ICtxApplicationService
             ["generatedAtUtc"] = trace.UpdatedAtUtc?.ToString("O") ?? trace.CreatedAtUtc.ToString("O"),
             ["nodeCount"] = nodes.Count.ToString(),
             ["edgeCount"] = edges.Count.ToString()
+        };
+
+        return new CognitiveGraphExport(nodes, edges, metadata);
+    }
+
+    private static CognitiveGraphExport ResolveGraphExportMode(
+        CognitiveGraphExport fullGraph,
+        string? mode,
+        string? focusNodeId,
+        int? depth)
+    {
+        var normalizedMode = string.IsNullOrWhiteSpace(mode)
+            ? "full"
+            : mode.Trim().ToLowerInvariant();
+
+        return normalizedMode switch
+        {
+            "seed" => BuildStructuralSeedGraph(fullGraph),
+            "expand" => BuildExpandedGraphNeighborhood(fullGraph, focusNodeId, depth),
+            _ => fullGraph
+        };
+    }
+
+    private static CognitiveGraphExport BuildStructuralSeedGraph(CognitiveGraphExport fullGraph)
+    {
+        var allowedTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Project",
+            "Goal",
+            "Task"
+        };
+        var allowedRelationships = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "contains",
+            "subgoal",
+            "depends-on"
+        };
+        var nodes = fullGraph.Nodes
+            .Where(node => allowedTypes.Contains(node.Type))
+            .ToArray();
+        var nodeIds = nodes.Select(node => node.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var edges = fullGraph.Edges
+            .Where(edge =>
+                allowedRelationships.Contains(edge.Relationship)
+                && nodeIds.Contains(edge.From)
+                && nodeIds.Contains(edge.To))
+            .ToArray();
+        var metadata = new Dictionary<string, string>(fullGraph.Metadata, StringComparer.OrdinalIgnoreCase)
+        {
+            ["graphMode"] = "seed",
+            ["nodeCount"] = nodes.Length.ToString(),
+            ["edgeCount"] = edges.Length.ToString()
+        };
+
+        return new CognitiveGraphExport(nodes, edges, metadata);
+    }
+
+    private static CognitiveGraphExport BuildExpandedGraphNeighborhood(
+        CognitiveGraphExport fullGraph,
+        string? focusNodeId,
+        int? depth)
+    {
+        if (string.IsNullOrWhiteSpace(focusNodeId))
+        {
+            return BuildStructuralSeedGraph(fullGraph);
+        }
+
+        var normalizedDepth = Math.Clamp(depth ?? 2, 1, 3);
+        var adjacency = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var node in fullGraph.Nodes)
+        {
+            adjacency[node.Id] = new List<string>();
+        }
+
+        foreach (var edge in fullGraph.Edges)
+        {
+            if (!adjacency.TryGetValue(edge.From, out var fromNeighbors))
+            {
+                fromNeighbors = new List<string>();
+                adjacency[edge.From] = fromNeighbors;
+            }
+
+            if (!adjacency.TryGetValue(edge.To, out var toNeighbors))
+            {
+                toNeighbors = new List<string>();
+                adjacency[edge.To] = toNeighbors;
+            }
+
+            fromNeighbors.Add(edge.To);
+            toNeighbors.Add(edge.From);
+        }
+
+        var includedNodeIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var queue = new Queue<(string NodeId, int Level)>();
+        includedNodeIds.Add(focusNodeId);
+        queue.Enqueue((focusNodeId, 0));
+
+        while (queue.Count > 0)
+        {
+            var (nodeId, level) = queue.Dequeue();
+            if (level >= normalizedDepth)
+            {
+                continue;
+            }
+
+            if (!adjacency.TryGetValue(nodeId, out var neighbors))
+            {
+                continue;
+            }
+
+            foreach (var neighborId in neighbors)
+            {
+                if (includedNodeIds.Add(neighborId))
+                {
+                    queue.Enqueue((neighborId, level + 1));
+                }
+            }
+        }
+
+        var nodes = fullGraph.Nodes
+            .Where(node => includedNodeIds.Contains(node.Id))
+            .ToArray();
+        var edges = fullGraph.Edges
+            .Where(edge => includedNodeIds.Contains(edge.From) && includedNodeIds.Contains(edge.To))
+            .ToArray();
+        var metadata = new Dictionary<string, string>(fullGraph.Metadata, StringComparer.OrdinalIgnoreCase)
+        {
+            ["graphMode"] = "expand",
+            ["focusNodeId"] = focusNodeId,
+            ["expansionDepth"] = normalizedDepth.ToString(),
+            ["nodeCount"] = nodes.Length.ToString(),
+            ["edgeCount"] = edges.Length.ToString()
         };
 
         return new CognitiveGraphExport(nodes, edges, metadata);
@@ -2894,6 +3392,22 @@ public sealed class CtxApplicationService : ICtxApplicationService
 
     private static CognitiveGraphEdge Edge(string from, string to, string relationship)
         => new(from, to, relationship, new Dictionary<string, string>());
+
+    private static string ToKebabCase(string value)
+        => Regex.Replace(value, "(?<=[a-z0-9])([A-Z])", "-$1").ToLowerInvariant();
+
+    private static IReadOnlyDictionary<string, string> WithTraceMetadata(
+        IDictionary<string, string> metadata,
+        Traceability trace)
+    {
+        metadata["createdAtUtc"] = trace.CreatedAtUtc.ToString("O");
+        if (trace.UpdatedAtUtc is not null)
+        {
+            metadata["updatedAtUtc"] = trace.UpdatedAtUtc.Value.ToString("O");
+        }
+
+        return new Dictionary<string, string>(metadata);
+    }
 
     private async System.Threading.Tasks.Task<ContextThread> BuildTaskThreadAsync(
         string repositoryPath,
@@ -3486,6 +4000,672 @@ public sealed class CtxApplicationService : ICtxApplicationService
         return Math.Clamp(normalized, 0.00m, 1.00m);
     }
 
+    private static string ResolveBootstrapSourcePath(string repositoryPath, string sourcePath)
+    {
+        if (string.IsNullOrWhiteSpace(sourcePath))
+        {
+            throw new InvalidOperationException("Bootstrap source path is required.");
+        }
+
+        return Path.IsPathRooted(sourcePath)
+            ? sourcePath
+            : Path.GetFullPath(Path.Combine(repositoryPath, sourcePath));
+    }
+
+    private static string ResolveBootstrapMode(string mode, bool isSingleFile)
+    {
+        var normalized = string.IsNullOrWhiteSpace(mode) ? "auto" : mode.Trim().ToLowerInvariant();
+        return normalized switch
+        {
+            "article" => "article",
+            "project" => "project",
+            _ => isSingleFile ? "article" : "project"
+        };
+    }
+
+    private async Task<IReadOnlyList<BootstrapDocument>> LoadBootstrapDocumentsAsync(string sourcePath, int maxFiles, CancellationToken cancellationToken)
+    {
+        if (File.Exists(sourcePath))
+        {
+            return new[] { await BuildBootstrapDocumentAsync(sourcePath, cancellationToken) };
+        }
+
+        if (!Directory.Exists(sourcePath))
+        {
+            throw new InvalidOperationException($"Bootstrap source was not found: {sourcePath}");
+        }
+
+        var documents = new List<BootstrapDocument>();
+        foreach (var filePath in EnumerateBootstrapFiles(sourcePath, maxFiles))
+        {
+            documents.Add(await BuildBootstrapDocumentAsync(filePath, cancellationToken));
+        }
+
+        return documents;
+    }
+
+    private static BootstrapCandidateThread? SelectBootstrapThread(BootstrapMapSummary summary)
+        => summary.CandidateThreads
+            .OrderByDescending(item => item.CandidateHypotheses.Count)
+            .ThenByDescending(item => item.SupportingEvidence.Count)
+            .ThenByDescending(item => item.PossibleTasks.Count)
+            .ThenBy(item => item.Title.Length)
+            .FirstOrDefault();
+
+    private static string BuildBootstrapGoalTitle(string title)
+        => $"Bootstrap map: {title}".Trim();
+
+    private static string BuildBootstrapGoalDescription(BootstrapMapSummary summary, BootstrapCandidateThread thread)
+        => $"Provisional bootstrap line inferred from '{Path.GetFileName(summary.SourcePath)}'. Working problem: {thread.WorkingProblem}";
+
+    private static string BuildBootstrapTaskTitle(BootstrapCandidateThread thread)
+        => $"Review bootstrap thread: {thread.Title}";
+
+    private static string BuildBootstrapTaskDescription(BootstrapMapSummary summary, BootstrapCandidateThread thread)
+    {
+        var question = thread.OpenQuestions.FirstOrDefault();
+        var questionText = string.IsNullOrWhiteSpace(question)
+            ? "Review the inferred hypotheses and evidence before promoting any decision."
+            : $"Open question: {question}";
+        return $"Validate the provisional bootstrap interpretation inferred from '{Path.GetFileName(summary.SourcePath)}'. {questionText}";
+    }
+
+    private static Hypothesis[] BuildBootstrapAppliedHypotheses(BootstrapCandidateThread thread, TaskId taskId, string createdBy)
+    {
+        return thread.CandidateHypotheses
+            .Take(3)
+            .Select(item => new Hypothesis(
+                HypothesisId.New(),
+                item.Statement,
+                BuildBootstrapHypothesisRationale(item),
+                item.Confidence,
+                Math.Max(0.5m, item.Confidence),
+                Math.Max(0.4m, item.Confidence),
+                0.4m,
+                HypothesisState.Proposed,
+                NewBootstrapTrace(createdBy, "hypothesis"),
+                new[] { taskId },
+                Array.Empty<EvidenceId>()))
+            .ToArray();
+    }
+
+    private static string BuildBootstrapHypothesisRationale(BootstrapCandidateHypothesis hypothesis)
+        => string.IsNullOrWhiteSpace(hypothesis.Rationale)
+            ? "Bootstrap inference derived from source material and preserved as a provisional hypothesis pending review."
+            : $"Bootstrap inference: {hypothesis.Rationale}";
+
+    private static Evidence[] BuildBootstrapAppliedEvidence(
+        BootstrapCandidateThread thread,
+        TaskId taskId,
+        IReadOnlyList<Hypothesis> hypotheses,
+        string createdBy)
+    {
+        var results = new List<Evidence>();
+
+        for (var index = 0; index < hypotheses.Count; index++)
+        {
+            var sourceHypothesis = thread.CandidateHypotheses[index];
+            foreach (var excerpt in sourceHypothesis.Evidence.Take(2))
+            {
+                results.Add(new Evidence(
+                    EvidenceId.New(),
+                    $"Bootstrap evidence: {Path.GetFileName(excerpt.FilePath)}",
+                    ShortenExcerpt(excerpt.Excerpt, 220),
+                    excerpt.FilePath,
+                    EvidenceKind.Document,
+                    Math.Clamp(excerpt.Confidence / 100m, 0.35m, 0.95m),
+                    LifecycleState.Validated,
+                    NewBootstrapTrace(createdBy, "evidence"),
+                    new[] { new EntityReference(nameof(Hypothesis), hypotheses[index].Id.Value) }));
+            }
+        }
+
+        if (results.Count == 0)
+        {
+            foreach (var evidence in thread.SupportingEvidence.Take(3))
+            {
+                results.Add(new Evidence(
+                    EvidenceId.New(),
+                    evidence.Title,
+                    evidence.Summary,
+                    evidence.SourcePath,
+                    Enum.TryParse<EvidenceKind>(evidence.Kind, true, out var parsedKind) ? parsedKind : EvidenceKind.Document,
+                    Math.Clamp(evidence.Confidence / 100m, 0.35m, 0.95m),
+                    LifecycleState.Validated,
+                    NewBootstrapTrace(createdBy, "evidence"),
+                    new[] { new EntityReference("Task", taskId.Value) }));
+            }
+        }
+
+        return results.ToArray();
+    }
+
+    private static Traceability NewBootstrapTrace(string createdBy, string tag)
+        => new(
+            createdBy,
+            DateTimeOffset.UtcNow,
+            null,
+            null,
+            new[] { tag, "bootstrap", "provisional" },
+            Array.Empty<string>(),
+            ResolveModelName(),
+            ResolveModelVersion());
+
+    private static IReadOnlyList<string> EnumerateBootstrapFiles(string sourcePath, int maxFiles)
+    {
+        return Directory
+            .EnumerateFiles(sourcePath, "*", SearchOption.AllDirectories)
+            .Where(IsBootstrapTextFile)
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}.git{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase))
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}.ctx{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(ScoreBootstrapPath)
+            .ThenBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .Take(Math.Clamp(maxFiles, 1, 40))
+            .ToArray();
+    }
+
+    private static bool IsBootstrapTextFile(string path)
+    {
+        var extension = Path.GetExtension(path);
+        return extension.Equals(".md", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".txt", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".rst", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".adoc", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".cs", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".js", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".ts", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".tsx", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".jsx", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".py", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".json", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".yml", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".yaml", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".csproj", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".sln", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static int ScoreBootstrapPath(string path)
+    {
+        var normalized = path.Replace('\\', '/');
+        var fileName = Path.GetFileName(path);
+        var score = 0;
+
+        if (fileName.Equals("README.md", StringComparison.OrdinalIgnoreCase))
+        {
+            score += 100;
+        }
+
+        if (normalized.Contains("/docs/", StringComparison.OrdinalIgnoreCase))
+        {
+            score += 40;
+        }
+
+        if (normalized.Contains("/prompts/", StringComparison.OrdinalIgnoreCase))
+        {
+            score += 35;
+        }
+
+        if (fileName.Contains("SPEC", StringComparison.OrdinalIgnoreCase)
+            || fileName.Contains("GUIDE", StringComparison.OrdinalIgnoreCase)
+            || fileName.Contains("ARCHITECTURE", StringComparison.OrdinalIgnoreCase)
+            || fileName.Contains("README", StringComparison.OrdinalIgnoreCase))
+        {
+            score += 25;
+        }
+
+        if (fileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase))
+        {
+            score += 20;
+        }
+
+        return score;
+    }
+
+    private static async Task<BootstrapDocument> BuildBootstrapDocumentAsync(string filePath, CancellationToken cancellationToken)
+    {
+        using var stream = File.OpenRead(filePath);
+        using var reader = new StreamReader(stream);
+        var content = await reader.ReadToEndAsync(cancellationToken);
+        var truncated = content.Length > 16000 ? content[..16000] : content;
+        var normalized = truncated.Replace("\r\n", "\n");
+        var nonEmptyLines = normalized
+            .Split('\n')
+            .Select(line => line.Trim())
+            .Where(line => !string.IsNullOrWhiteSpace(line))
+            .ToArray();
+        var title = nonEmptyLines
+            .Select(line => line.TrimStart('#', '-', '*', '>', ' '))
+            .FirstOrDefault(line => !string.IsNullOrWhiteSpace(line))
+            ?? Path.GetFileNameWithoutExtension(filePath);
+        var summary = nonEmptyLines.FirstOrDefault(line => line.Length > 40 && !line.StartsWith("```", StringComparison.OrdinalIgnoreCase))
+            ?? title;
+
+        return new BootstrapDocument(filePath, title, summary, normalized, nonEmptyLines);
+    }
+
+    private static BootstrapMapSummary BuildBootstrapMapSummary(string sourcePath, string mode, IReadOnlyList<BootstrapDocument> documents)
+    {
+        var projectSummary = BuildBootstrapProjectSummary(sourcePath, mode, documents);
+        var threads = BuildBootstrapCandidateThreads(sourcePath, mode, documents);
+        var openQuestions = threads
+            .SelectMany(thread => thread.OpenQuestions)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(8)
+            .ToArray();
+
+        return new BootstrapMapSummary(
+            sourcePath,
+            mode,
+            projectSummary,
+            documents.Select(item => item.FilePath).ToArray(),
+            threads,
+            openQuestions,
+            new[]
+            {
+                "Treat this map as provisional inference, not final CTX truth.",
+                "Promote only the threads, hypotheses, and evidence that survive human or agent review.",
+                "Use the bootstrap output to open work lines, not to replace reasoning discipline."
+            });
+    }
+
+    private static string BuildBootstrapProjectSummary(string sourcePath, string mode, IReadOnlyList<BootstrapDocument> documents)
+    {
+        if (documents.Count == 0)
+        {
+            return $"No bootstrap-readable material was found under '{sourcePath}'.";
+        }
+
+        return mode == "article"
+            ? $"This bootstrap map treats '{Path.GetFileName(sourcePath)}' as a single reasoning artifact and extracts a provisional cognitive thread from its central claims and supporting material."
+            : $"This bootstrap map treats '{Path.GetFileName(sourcePath)}' as a project/workspace and reconstructs provisional cognitive threads from its most informative documents and code-adjacent text.";
+    }
+
+    private static IReadOnlyList<BootstrapCandidateThread> BuildBootstrapCandidateThreads(string sourcePath, string mode, IReadOnlyList<BootstrapDocument> documents)
+    {
+        if (documents.Count == 0)
+        {
+            return Array.Empty<BootstrapCandidateThread>();
+        }
+
+        var threads = new List<BootstrapCandidateThread>
+        {
+            BuildAggregateBootstrapThread(sourcePath, documents)
+        };
+
+        foreach (var document in documents.Take(mode == "article" ? 1 : 3))
+        {
+            var thread = BuildBootstrapThreadFromDocument(document);
+            if (!threads.Any(existing => existing.Title.Equals(thread.Title, StringComparison.OrdinalIgnoreCase)))
+            {
+                threads.Add(thread);
+            }
+        }
+
+        return threads;
+    }
+
+    private static BootstrapCandidateThread BuildAggregateBootstrapThread(string sourcePath, IReadOnlyList<BootstrapDocument> documents)
+    {
+        var combinedSummary = string.Join(" ", documents.Take(3).Select(item => item.Summary));
+        var hypotheses = documents
+            .SelectMany(BuildBootstrapHypothesisCandidates)
+            .GroupBy(item => item.Statement, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group
+                .OrderByDescending(item => item.Confidence)
+                .ThenByDescending(item => item.Evidence.Count)
+                .First() with
+                {
+                    Evidence = group
+                        .SelectMany(item => item.Evidence)
+                        .GroupBy(evidence => $"{evidence.FilePath}|{evidence.Excerpt}", StringComparer.OrdinalIgnoreCase)
+                        .Select(entry => entry.First())
+                        .Take(3)
+                        .ToArray()
+                })
+            .Take(4)
+            .ToArray();
+        var evidence = documents
+            .SelectMany(InferBootstrapEvidenceLines)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(6)
+            .Select((line, index) => new BootstrapSupportingEvidence(
+                $"Supporting signal {index + 1}",
+                ShortenExcerpt(line),
+                documents.FirstOrDefault(document => document.Content.Contains(line, StringComparison.OrdinalIgnoreCase))?.FilePath ?? sourcePath,
+                "BootstrapObservation",
+                64))
+            .ToArray();
+        var openQuestions = documents
+            .SelectMany(InferBootstrapOpenQuestions)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(6)
+            .ToArray();
+        var possibleTasks = BuildBootstrapPossibleTasks(hypotheses, openQuestions, documents.Select(item => item.Title).ToArray());
+
+        return new BootstrapCandidateThread(
+            "Bootstrap project map",
+            InferBootstrapWorkingProblem(combinedSummary, documents.SelectMany(item => item.Lines).ToArray()),
+            hypotheses,
+            evidence,
+            possibleTasks,
+            openQuestions,
+            documents.Select(item => item.FilePath).ToArray());
+    }
+
+    private static BootstrapCandidateThread BuildBootstrapThreadFromDocument(BootstrapDocument document)
+    {
+        var hypotheses = BuildBootstrapHypothesisCandidates(document)
+            .Take(4)
+            .ToArray();
+        var evidence = InferBootstrapEvidenceLines(document)
+            .Take(6)
+            .Select((line, index) => new BootstrapSupportingEvidence(
+                $"{document.Title} evidence {index + 1}",
+                ShortenExcerpt(line),
+                document.FilePath,
+                "BootstrapObservation",
+                62))
+            .ToArray();
+        var openQuestions = InferBootstrapOpenQuestions(document).Take(6).ToArray();
+        var possibleTasks = BuildBootstrapPossibleTasks(hypotheses, openQuestions, new[] { document.Title });
+
+        return new BootstrapCandidateThread(
+            document.Title,
+            InferBootstrapWorkingProblem(document.Summary, document.Lines),
+            hypotheses,
+            evidence,
+            possibleTasks,
+            openQuestions,
+            new[] { document.FilePath });
+    }
+
+    private static string InferBootstrapWorkingProblem(string summary, IReadOnlyList<string> lines)
+    {
+        var candidate = lines.FirstOrDefault(line =>
+            line.Contains("problem", StringComparison.OrdinalIgnoreCase)
+            || line.Contains("need", StringComparison.OrdinalIgnoreCase)
+            || line.Contains("goal", StringComparison.OrdinalIgnoreCase)
+            || line.Contains("why", StringComparison.OrdinalIgnoreCase)
+            || line.Contains("because", StringComparison.OrdinalIgnoreCase));
+
+        return !string.IsNullOrWhiteSpace(candidate)
+            ? ShortenExcerpt(candidate)
+            : ShortenExcerpt(summary);
+    }
+
+    private static IReadOnlyList<BootstrapCandidateHypothesis> BuildBootstrapHypothesisCandidates(BootstrapDocument document)
+    {
+        if (IsContradictionHeavyDocument(document))
+        {
+            return BuildContradictionHeavyHypotheses(document);
+        }
+
+        var results = new List<BootstrapCandidateHypothesis>();
+
+        foreach (var line in document.Lines)
+        {
+            if (line.Length < 30)
+            {
+                continue;
+            }
+
+            if (line.Contains("hypothesis", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("we believe", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("should", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("will", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("so that", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("in order to", StringComparison.OrdinalIgnoreCase))
+            {
+                var statement = ShortenExcerpt(line.TrimStart('-', '*', ' '));
+                results.Add(new BootstrapCandidateHypothesis(
+                    statement,
+                    "Inferred from document language that frames intent, tradeoffs, or expected effect.",
+                    0.66m,
+                    new[]
+                    {
+                        new BootstrapSourceExcerpt(document.FilePath, ShortenExcerpt(statement), 66)
+                    }));
+            }
+        }
+
+        if (results.Count == 0 && !document.Lines.Any(line => line.Contains("should", StringComparison.OrdinalIgnoreCase) || line.Contains("will", StringComparison.OrdinalIgnoreCase)))
+        {
+            results.Add(new BootstrapCandidateHypothesis(
+                ShortenExcerpt(document.Summary),
+                "Inferred from the strongest available summary line when no explicit bootstrap hypothesis markers are present.",
+                0.66m,
+                new[]
+                {
+                    new BootstrapSourceExcerpt(document.FilePath, ShortenExcerpt(document.Summary), 66)
+                }));
+        }
+
+        return results
+            .GroupBy(item => item.Statement, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
+            .ToArray();
+    }
+
+    private static IEnumerable<string> InferBootstrapEvidenceLines(BootstrapDocument document)
+    {
+        if (IsContradictionHeavyDocument(document))
+        {
+            foreach (var line in document.Lines)
+            {
+                if (line.Length < 24)
+                {
+                    continue;
+                }
+
+                if (line.Contains("sin embargo", StringComparison.OrdinalIgnoreCase)
+                    || line.Contains("no obstante", StringComparison.OrdinalIgnoreCase)
+                    || line.Contains("contradic", StringComparison.OrdinalIgnoreCase)
+                    || line.Contains("no son mutuamente excluyentes", StringComparison.OrdinalIgnoreCase)
+                    || line.Contains("múltiples hipótesis", StringComparison.OrdinalIgnoreCase)
+                    || line.Contains("múltiples hipÃ³tesis", StringComparison.OrdinalIgnoreCase)
+                    || line.Contains("interpretaciones posibles", StringComparison.OrdinalIgnoreCase)
+                    || line.Contains("dinámicas emergentes", StringComparison.OrdinalIgnoreCase)
+                    || line.Contains("dinÃ¡micas emergentes", StringComparison.OrdinalIgnoreCase)
+                    || line.Contains("persistencia", StringComparison.OrdinalIgnoreCase))
+                {
+                    yield return ShortenExcerpt(line.TrimStart('-', '*', ' '));
+                }
+            }
+
+            yield break;
+        }
+
+        foreach (var line in document.Lines)
+        {
+            if (line.Length < 24)
+            {
+                continue;
+            }
+
+            if (line.Contains("because", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("evidence", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("validated", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("observed", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("benchmark", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("result", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("supports", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("test", StringComparison.OrdinalIgnoreCase))
+            {
+                yield return ShortenExcerpt(line.TrimStart('-', '*', ' '));
+            }
+        }
+    }
+
+    private static IEnumerable<string> InferBootstrapOpenQuestions(BootstrapDocument document)
+    {
+        if (IsContradictionHeavyDocument(document))
+        {
+            if (document.Content.Contains("microbiota", StringComparison.OrdinalIgnoreCase))
+            {
+                yield return "Does the source support microbiota as a dominant driver, or only as a conditional contributor?";
+            }
+
+            if (document.Content.Contains("microclima", StringComparison.OrdinalIgnoreCase) || document.Content.Contains("microclimate", StringComparison.OrdinalIgnoreCase))
+            {
+                yield return "Do microclimate readings explain yield directly, or do they only matter in interaction with other variables?";
+            }
+
+            yield return "Should contradiction-heavy material preserve multiple live interpretations instead of collapsing them into one synthetic hypothesis?";
+            yield return "What hidden structural or historical variables could explain the persistent sector behavior described by the source?";
+            yield break;
+        }
+
+        foreach (var line in document.Lines)
+        {
+            if (line.Contains("todo", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("open question", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("future work", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("unknown", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("unclear", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("risk", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("remaining", StringComparison.OrdinalIgnoreCase))
+            {
+                yield return ShortenExcerpt(line.TrimStart('-', '*', ' '));
+            }
+        }
+    }
+
+    private static IReadOnlyList<BootstrapPossibleTask> BuildBootstrapPossibleTasks(
+        IReadOnlyList<BootstrapCandidateHypothesis> hypotheses,
+        IReadOnlyList<string> openQuestions,
+        IReadOnlyList<string> sourceTitles)
+    {
+        var tasks = new List<BootstrapPossibleTask>();
+
+        if (hypotheses.Count > 1)
+        {
+            tasks.Add(new BootstrapPossibleTask(
+                $"Review competing bootstrap hypotheses from {ShortenExcerpt(sourceTitles.FirstOrDefault() ?? "source material", 42)}",
+                "Inspect whether the bootstrap preserved multiple live interpretations instead of collapsing conflict into one synthetic claim.",
+                1));
+        }
+        else if (hypotheses.Count > 0)
+        {
+            tasks.Add(new BootstrapPossibleTask(
+                $"Validate bootstrap hypothesis: {ShortenExcerpt(hypotheses[0].Statement, 54)}",
+                "Review whether the inferred hypothesis really captures the intended working line before promoting it into CTX.",
+                1));
+        }
+
+        if (openQuestions.Count > 0)
+        {
+            tasks.Add(new BootstrapPossibleTask(
+                $"Resolve bootstrap open question: {ShortenExcerpt(openQuestions[0], 54)}",
+                "Clarify unresolved or risky material that the bootstrap marked as uncertain.",
+                2));
+        }
+
+        tasks.Add(new BootstrapPossibleTask(
+            $"Open provisional line from {ShortenExcerpt(sourceTitles.FirstOrDefault() ?? "source material", 48)}",
+            "Convert the strongest bootstrap thread into a deliberate CTX work line only after review.",
+            3));
+
+        return tasks;
+    }
+
+    private static bool IsContradictionHeavyDocument(BootstrapDocument document)
+    {
+        var content = document.Content;
+        return
+            (content.Contains("interpretaciones posibles", StringComparison.OrdinalIgnoreCase)
+             || content.Contains("múltiples hipótesis", StringComparison.OrdinalIgnoreCase)
+             || content.Contains("múltiples hipÃ³tesis", StringComparison.OrdinalIgnoreCase)
+             || content.Contains("no son mutuamente excluyentes", StringComparison.OrdinalIgnoreCase)
+             || content.Contains("entran en conflicto", StringComparison.OrdinalIgnoreCase)
+             || content.Contains("comportamiento contradictorio", StringComparison.OrdinalIgnoreCase))
+            && (content.Contains("microbiota", StringComparison.OrdinalIgnoreCase)
+                || content.Contains("microclima", StringComparison.OrdinalIgnoreCase)
+                || content.Contains("microclimate", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static IReadOnlyList<BootstrapCandidateHypothesis> BuildContradictionHeavyHypotheses(BootstrapDocument document)
+    {
+        var results = new List<BootstrapCandidateHypothesis>();
+
+        if (document.Content.Contains("microbiota", StringComparison.OrdinalIgnoreCase))
+        {
+            results.Add(new BootstrapCandidateHypothesis(
+                "Microbiota may explain part of the yield variability, but the source presents it as a conditional interpretation rather than a stable standalone driver.",
+                "The source explicitly entertains a microbiota-first reading and then weakens it with contradictory sectors and inverse cases.",
+                0.74m,
+                CollectBootstrapEvidence(document, new[]
+                {
+                    "microbiota",
+                    "bacterias promotoras",
+                    "bacterias promotoras del crecimiento vegetal",
+                    "menor diversidad microbiana",
+                    "alta concentración"
+                }, 74)));
+        }
+
+        if (document.Content.Contains("microclima", StringComparison.OrdinalIgnoreCase) || document.Content.Contains("microclimate", StringComparison.OrdinalIgnoreCase))
+        {
+            results.Add(new BootstrapCandidateHypothesis(
+                "Microclimate may explain part of the local yield differences, but the source does not support it as a consistently predictive standalone interpretation.",
+                "The source introduces microclimate as a serious alternative explanation and then shows several cases where apparently favorable conditions still fail to predict yield.",
+                0.74m,
+                CollectBootstrapEvidence(document, new[]
+                {
+                    "microclima",
+                    "temperatura y humedad",
+                    "temperatura",
+                    "humedad",
+                    "condiciones microclimáticas",
+                    "condiciones microclimÃ¡ticas"
+                }, 74)));
+        }
+
+        results.Add(new BootstrapCandidateHypothesis(
+            "The strongest integrative reading is a complex interaction model in which microbiota, microclimate, and hidden structural factors jointly shape yield through non-linear dynamics.",
+            "The source explicitly leaves multiple interpretations alive, reports persistent sector behavior, and states that available evidence may support contradictory readings depending on the data slice examined.",
+            0.8m,
+            CollectBootstrapEvidence(document, new[]
+            {
+                "dinámicas emergentes",
+                "dinÃ¡micas emergentes",
+                "persistencia",
+                "múltiples hipótesis coexisten",
+                "múltiples hipÃ³tesis coexisten",
+                "no son mutuamente excluyentes",
+                "variables no observadas",
+                "patrones persistentes"
+            }, 80)));
+
+        return results
+            .Where(item => item.Evidence.Count > 0)
+            .GroupBy(item => item.Statement, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
+            .ToArray();
+    }
+
+    private static IReadOnlyList<BootstrapSourceExcerpt> CollectBootstrapEvidence(BootstrapDocument document, IReadOnlyList<string> keywords, int confidence)
+    {
+        return document.Lines
+            .Where(line => line.Length > 24)
+            .Where(line => keywords.Any(keyword => line.Contains(keyword, StringComparison.OrdinalIgnoreCase)))
+            .Select(line => new BootstrapSourceExcerpt(document.FilePath, ShortenExcerpt(line, 220), confidence))
+            .GroupBy(item => item.Excerpt, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
+            .Take(3)
+            .ToArray();
+    }
+
+    private static string ShortenExcerpt(string text, int maxLength = 160)
+    {
+        var normalized = Regex.Replace(text ?? string.Empty, "\\s+", " ").Trim();
+        if (normalized.Length <= maxLength)
+        {
+            return normalized;
+        }
+
+        return $"{normalized[..Math.Max(0, maxLength - 1)].TrimEnd()}…";
+    }
+
     private async System.Threading.Tasks.Task<T> ExecuteWriteLockedAsync<T>(string repositoryPath, CancellationToken cancellationToken, Func<System.Threading.Tasks.Task<T>> action)
     {
         if (_repositoryWriteLock is null)
@@ -3496,4 +4676,11 @@ public sealed class CtxApplicationService : ICtxApplicationService
         await using var _ = await _repositoryWriteLock.AcquireAsync(repositoryPath, cancellationToken);
         return await action();
     }
+
+    private sealed record BootstrapDocument(
+        string FilePath,
+        string Title,
+        string Summary,
+        string Content,
+        IReadOnlyList<string> Lines);
 }

@@ -26,7 +26,7 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 app.MapGet("/favicon.ico", () => Results.NoContent());
 
-app.MapGet("/api/overview", async (string? path, string? branch, CancellationToken cancellationToken) =>
+app.MapGet("/api/overview", async (string? path, string? branch, int? historyLimit, string? historyCursor, CancellationToken cancellationToken) =>
 {
     var repositoryPath = ResolveRepositoryPath(path);
 
@@ -49,8 +49,9 @@ app.MapGet("/api/overview", async (string? path, string? branch, CancellationTok
         }
     }
 
-    var timelineCommits = allCommits.Values
+    var orderedTimelineCommits = allCommits.Values
         .OrderByDescending(commit => commit.CreatedAtUtc)
+        .ThenByDescending(commit => commit.Id.Value, StringComparer.OrdinalIgnoreCase)
         .ToArray();
 
     var branchHeadsByCommit = branches
@@ -60,6 +61,14 @@ app.MapGet("/api/overview", async (string? path, string? branch, CancellationTok
             group => group.Key,
             group => group.Select(item => item.Name).OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToArray(),
             StringComparer.OrdinalIgnoreCase);
+
+    var branchTimelineCounts = orderedTimelineCommits
+        .GroupBy(commit => commit.Branch, StringComparer.OrdinalIgnoreCase)
+        .ToDictionary(
+            group => group.Key,
+            group => group.Count(),
+            StringComparer.OrdinalIgnoreCase);
+    var timelinePage = BuildTimelinePage(orderedTimelineCommits, historyCursor, historyLimit);
 
     var summary = await runtime.ApplicationService.GraphSummaryAsync(repositoryPath, cancellationToken);
     var context = await workingRepository.LoadAsync(repositoryPath, cancellationToken);
@@ -105,7 +114,8 @@ app.MapGet("/api/overview", async (string? path, string? branch, CancellationTok
         {
             name = item.Name,
             commitId = item.CommitId?.Value,
-            updatedAtUtc = item.UpdatedAtUtc
+            updatedAtUtc = item.UpdatedAtUtc,
+            timelineCommitCount = branchTimelineCounts.TryGetValue(item.Name, out var timelineCommitCount) ? timelineCommitCount : 0
         }),
         commits = commits.Select(commit => new
         {
@@ -123,26 +133,117 @@ app.MapGet("/api/overview", async (string? path, string? branch, CancellationTok
             parentIds = commit.ParentIds.Select(parent => parent.Value),
             cognitivePath = BuildCognitivePath(commit)
         }),
-        timelineCommits = timelineCommits.Select(commit => new
+        timelineCommits = timelinePage.Items.Select(commit => ToViewerTimelineCommit(commit, branchHeadsByCommit)),
+        timelinePage = new
         {
-            id = commit.Id.Value,
-            branch = commit.Branch,
-            author = commit.Trace.CreatedBy,
-            modelName = commit.Trace.ModelName,
-            modelVersion = commit.Trace.ModelVersion,
-            message = commit.Message,
-            createdAtUtc = commit.CreatedAtUtc,
-            snapshotHash = commit.SnapshotHash,
-            summary = commit.Diff.Summary,
-            changedEntityCount = CountChangedEntities(commit.Diff),
-            changedEntitySummary = BuildChangeSummary(commit.Diff),
-            parentIds = commit.ParentIds.Select(parent => parent.Value),
-            headBranches = branchHeadsByCommit.TryGetValue(commit.Id.Value, out var headBranches) ? headBranches : Array.Empty<string>(),
-            cognitivePath = BuildCognitivePath(commit)
-        }),
+            totalCount = orderedTimelineCommits.Length,
+            loadedCount = timelinePage.Items.Count,
+            limit = timelinePage.Limit,
+            cursor = timelinePage.Cursor,
+            nextCursor = timelinePage.NextCursor,
+            hasMore = timelinePage.HasMore
+        },
         graphSummary = summary.Data,
         tasks = taskDtos,
         taskSummary
+    });
+});
+
+app.MapGet("/api/history", async (string? path, string? branch, int? limit, string? cursor, CancellationToken cancellationToken) =>
+{
+    var repositoryPath = ResolveRepositoryPath(path);
+
+    if (!await workingRepository.ExistsAsync(repositoryPath, cancellationToken))
+    {
+        return Results.NotFound(new { message = $"No .ctx repository found at '{repositoryPath}'." });
+    }
+
+    var branches = await branchRepository.ListAsync(repositoryPath, cancellationToken);
+    var selectedBranch = string.IsNullOrWhiteSpace(branch)
+        ? (await workingRepository.LoadHeadAsync(repositoryPath, cancellationToken)).Branch
+        : branch.Trim();
+    var allCommits = new Dictionary<string, ContextCommit>(StringComparer.OrdinalIgnoreCase);
+    foreach (var branchItem in branches)
+    {
+        var branchCommits = await commitRepository.GetHistoryAsync(repositoryPath, branchItem.Name, cancellationToken);
+        foreach (var commit in branchCommits)
+        {
+            allCommits.TryAdd(commit.Id.Value, commit);
+        }
+    }
+
+    var orderedTimelineCommits = allCommits.Values
+        .OrderByDescending(commit => commit.CreatedAtUtc)
+        .ThenByDescending(commit => commit.Id.Value, StringComparer.OrdinalIgnoreCase)
+        .ToArray();
+    var branchHeadsByCommit = branches
+        .Where(item => item.CommitId is not null)
+        .GroupBy(item => item.CommitId!.Value.Value, StringComparer.OrdinalIgnoreCase)
+        .ToDictionary(
+            group => group.Key,
+            group => group.Select(item => item.Name).OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToArray(),
+            StringComparer.OrdinalIgnoreCase);
+    var timelinePage = BuildTimelinePage(orderedTimelineCommits, cursor, limit);
+
+    return Results.Json(new
+    {
+        repositoryPath,
+        selectedBranch,
+        timelineCommits = timelinePage.Items.Select(commit => ToViewerTimelineCommit(commit, branchHeadsByCommit)),
+        timelinePage = new
+        {
+            totalCount = orderedTimelineCommits.Length,
+            loadedCount = timelinePage.Items.Count,
+            limit = timelinePage.Limit,
+            cursor = timelinePage.Cursor,
+            nextCursor = timelinePage.NextCursor,
+            hasMore = timelinePage.HasMore
+        }
+    });
+});
+
+app.MapGet("/api/working-context/signal", async (string? path, CancellationToken cancellationToken) =>
+{
+    var repositoryPath = ResolveRepositoryPath(path);
+
+    if (!await workingRepository.ExistsAsync(repositoryPath, cancellationToken))
+    {
+        return Results.NotFound(new { message = $"No .ctx repository found at '{repositoryPath}'." });
+    }
+
+    var head = await workingRepository.LoadHeadAsync(repositoryPath, cancellationToken);
+    var context = await workingRepository.LoadAsync(repositoryPath, cancellationToken);
+    var openTasks = context.Tasks
+        .Where(task => task.State is not TaskExecutionState.Done)
+        .OrderBy(task => task.Id.Value, StringComparer.OrdinalIgnoreCase)
+        .Select(task => $"{task.Id.Value}:{task.State}:{task.GoalId?.Value ?? string.Empty}:{task.Title}")
+        .ToArray();
+    var activeGoals = context.Goals
+        .OrderBy(goal => goal.Id.Value, StringComparer.OrdinalIgnoreCase)
+        .Select(goal => $"{goal.Id.Value}:{goal.Title}")
+        .ToArray();
+    var openEvidence = context.Evidence
+        .Where(item => item.Supports.Any(link => link.EntityType == "Task" && openTasks.Any(task => task.StartsWith($"{link.EntityId}:", StringComparison.OrdinalIgnoreCase))))
+        .OrderBy(item => item.Id.Value, StringComparer.OrdinalIgnoreCase)
+        .Select(item => $"{item.Id.Value}:{item.Title}")
+        .ToArray();
+    var fingerprintSource = string.Join("|", new[]
+    {
+        repositoryPath,
+        head.Branch,
+        head.CommitId?.Value ?? "working",
+        string.Join(";", openTasks),
+        string.Join(";", activeGoals),
+        string.Join(";", openEvidence)
+    });
+
+    return Results.Json(new
+    {
+        repositoryPath,
+        branch = head.Branch,
+        headCommitId = head.CommitId?.Value,
+        openTaskCount = openTasks.Length,
+        fingerprint = ComputeStableHash(fingerprintSource)
     });
 });
 
@@ -155,13 +256,20 @@ app.MapGet("/api/hypotheses/rank", async (string? path, CancellationToken cancel
         : Results.BadRequest(new { message = result.Message });
 });
 
-app.MapGet("/api/graph", async (string? path, string? commitId, CancellationToken cancellationToken) =>
+app.MapGet("/api/graph", async (string? path, string? commitId, string? mode, string? focusNodeId, int? depth, CancellationToken cancellationToken) =>
 {
     try
     {
         var repositoryPath = ResolveRepositoryPath(path);
         var resolvedCommitId = await ResolveCommitReferenceAsync(repositoryPath, commitId, commitRepository, branchRepository, cancellationToken);
-        var result = await runtime.ApplicationService.ExportGraphAsync(repositoryPath, "json", resolvedCommitId, cancellationToken);
+        var result = await runtime.ApplicationService.ExportGraphAsync(
+            repositoryPath,
+            "json",
+            resolvedCommitId,
+            mode,
+            focusNodeId,
+            depth,
+            cancellationToken);
         return result.Success
             ? Results.Json(result.Data)
             : Results.BadRequest(new { message = result.Message });
@@ -562,6 +670,12 @@ static string BuildChangeSummary(ContextDiff diff)
     return parts.Count == 0 ? "No entity changes" : string.Join(", ", parts);
 }
 
+static string ComputeStableHash(string input)
+{
+    var bytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(input));
+    return Convert.ToHexString(bytes);
+}
+
 static ViewerCognitivePath BuildCognitivePath(ContextCommit commit)
 {
     var snapshot = commit.Snapshot?.WorkingContext;
@@ -777,6 +891,118 @@ static void AddTaskAndGoal(
     AddGoalHierarchy(rootGoalIds, subGoalIds, goalsById, task.GoalId);
 }
 
+static ViewerTimelinePage BuildTimelinePage(IReadOnlyList<ContextCommit> orderedTimelineCommits, string? cursor, int? limit)
+{
+    var normalizedLimit = NormalizeTimelinePageLimit(limit);
+    var startIndex = ResolveTimelinePageStartIndex(orderedTimelineCommits, cursor);
+    var items = orderedTimelineCommits
+        .Skip(startIndex)
+        .Take(normalizedLimit)
+        .ToArray();
+    var nextIndex = startIndex + items.Length;
+    var hasMore = nextIndex < orderedTimelineCommits.Count;
+    var nextCursor = hasMore && items.Length > 0
+        ? EncodeTimelineCursor(items[^1])
+        : null;
+
+    return new ViewerTimelinePage(items, normalizedLimit, cursor, nextCursor, hasMore);
+}
+
+static int NormalizeTimelinePageLimit(int? limit)
+{
+    const int defaultLimit = 40;
+    const int maxLimit = 120;
+
+    if (!limit.HasValue || limit.Value <= 0)
+    {
+        return defaultLimit;
+    }
+
+    return Math.Min(limit.Value, maxLimit);
+}
+
+static int ResolveTimelinePageStartIndex(IReadOnlyList<ContextCommit> orderedTimelineCommits, string? cursor)
+{
+    if (!TryDecodeTimelineCursor(cursor, out var cursorTicks, out var cursorCommitId))
+    {
+        return 0;
+    }
+
+    for (var index = 0; index < orderedTimelineCommits.Count; index++)
+    {
+        var commit = orderedTimelineCommits[index];
+        if (commit.CreatedAtUtc.UtcTicks == cursorTicks
+            && string.Equals(commit.Id.Value, cursorCommitId, StringComparison.OrdinalIgnoreCase))
+        {
+            return index + 1;
+        }
+    }
+
+    for (var index = 0; index < orderedTimelineCommits.Count; index++)
+    {
+        var commit = orderedTimelineCommits[index];
+        var tickComparison = commit.CreatedAtUtc.UtcTicks.CompareTo(cursorTicks);
+        if (tickComparison < 0)
+        {
+            return index;
+        }
+
+        if (tickComparison == 0
+            && StringComparer.OrdinalIgnoreCase.Compare(commit.Id.Value, cursorCommitId) < 0)
+        {
+            return index;
+        }
+    }
+
+    return orderedTimelineCommits.Count;
+}
+
+static bool TryDecodeTimelineCursor(string? cursor, out long ticks, out string commitId)
+{
+    ticks = 0;
+    commitId = string.Empty;
+
+    if (string.IsNullOrWhiteSpace(cursor))
+    {
+        return false;
+    }
+
+    var parts = cursor.Split('|', 2, StringSplitOptions.TrimEntries);
+    if (parts.Length != 2 || !long.TryParse(parts[0], out ticks) || string.IsNullOrWhiteSpace(parts[1]))
+    {
+        ticks = 0;
+        commitId = string.Empty;
+        return false;
+    }
+
+    commitId = parts[1];
+    return true;
+}
+
+static string EncodeTimelineCursor(ContextCommit commit)
+    => $"{commit.CreatedAtUtc.UtcTicks}|{commit.Id.Value}";
+
+static object ToViewerTimelineCommit(
+    ContextCommit commit,
+    IReadOnlyDictionary<string, string[]> branchHeadsByCommit)
+    => new
+    {
+        id = commit.Id.Value,
+        branch = commit.Branch,
+        author = commit.Trace.CreatedBy,
+        modelName = commit.Trace.ModelName,
+        modelVersion = commit.Trace.ModelVersion,
+        message = commit.Message,
+        createdAtUtc = commit.CreatedAtUtc,
+        snapshotHash = commit.SnapshotHash,
+        summary = commit.Diff.Summary,
+        changedEntityCount = CountChangedEntities(commit.Diff),
+        changedEntitySummary = BuildChangeSummary(commit.Diff),
+        parentIds = commit.ParentIds.Select(parent => parent.Value),
+        headBranches = branchHeadsByCommit.TryGetValue(commit.Id.Value, out var headBranches) ? headBranches : Array.Empty<string>(),
+        cognitivePath = BuildCognitivePath(commit)
+    };
+
 internal record ViewerCognitivePath(
     IReadOnlyList<string> GoalIds,
     IReadOnlyList<string> SubGoalIds,
@@ -790,3 +1016,10 @@ internal record ViewerCognitivePath(
     IReadOnlyList<string> HypothesisTitles,
     IReadOnlyList<string> DecisionTitles,
     IReadOnlyList<string> ConclusionSummaries);
+
+internal record ViewerTimelinePage(
+    IReadOnlyList<ContextCommit> Items,
+    int Limit,
+    string? Cursor,
+    string? NextCursor,
+    bool HasMore);

@@ -32,14 +32,50 @@ public record AddCognitiveTriggerRequest(
 public record AddTaskRequest(string Title, string Description, string? GoalId, IReadOnlyList<string> DependsOnTaskIds, string CreatedBy, string? ParentTaskId = null);
 public record UpdateTaskRequest(string TaskId, string? Title, string? Description, string? State, string UpdatedBy);
 public record AddHypothesisRequest(string Statement, string Rationale, decimal Confidence, decimal Impact, decimal EvidenceStrength, decimal CostToValidate, string? TaskId, string CreatedBy);
-public record UpdateHypothesisRequest(string HypothesisId, string? Statement, string? Rationale, decimal? Confidence, decimal? Impact, decimal? EvidenceStrength, decimal? CostToValidate, string? State, string UpdatedBy);
+public record UpdateHypothesisRequest(string HypothesisId, string? Statement, string? Rationale, decimal? Confidence, decimal? Impact, decimal? EvidenceStrength, decimal? CostToValidate, string? State, string? BranchState, string? BranchRole, string? LineageGroupId, string UpdatedBy);
+public record RelateHypothesisRequest(string HypothesisId, string RelationType, string TargetHypothesisId, string? Note, string UpdatedBy);
+public record MergeHypothesisRequest(string SourceHypothesisId, string TargetHypothesisId, string UpdatedBy);
+public record SupersedeHypothesisRequest(string OldHypothesisId, string NewHypothesisId, string UpdatedBy);
 public record AddDecisionRequest(string Title, string Rationale, string State, IReadOnlyList<string> HypothesisIds, IReadOnlyList<string> EvidenceIds, string CreatedBy);
 public record AddEvidenceRequest(string Title, string Summary, string Source, string Kind, decimal Confidence, IReadOnlyList<string> Supports, string CreatedBy);
+public record ShareEvidenceRequest(string EvidenceId, string TargetReference, string UpdatedBy);
 public record AddConclusionRequest(string Summary, string State, IReadOnlyList<string> DecisionIds, IReadOnlyList<string> EvidenceIds, IReadOnlyList<string> GoalIds, IReadOnlyList<string> TaskIds, string CreatedBy);
 public record UpdateConclusionRequest(string ConclusionId, string? Summary, string? State, string UpdatedBy);
 public record RunRequest(string Provider, string Purpose, string Model, string? GoalId, string? TaskId, string RequestedBy);
 public record CommitRequest(string Message, string CreatedBy);
 public record GraphExportRequest(string Format);
+public record BootstrapMapRequest(string SourcePath, string Mode, int MaxFiles, string RequestedBy);
+public record BootstrapApplyRequest(string SourcePath, string Mode, int MaxFiles, string? ParentGoalId, string RequestedBy);
+public record BootstrapSourceExcerpt(string FilePath, string Excerpt, int Confidence);
+public record BootstrapCandidateHypothesis(string Statement, string Rationale, decimal Confidence, IReadOnlyList<BootstrapSourceExcerpt> Evidence);
+public record BootstrapSupportingEvidence(string Title, string Summary, string SourcePath, string Kind, int Confidence);
+public record BootstrapPossibleTask(string Title, string Rationale, int PriorityHint);
+public record BootstrapCandidateThread(
+    string Title,
+    string WorkingProblem,
+    IReadOnlyList<BootstrapCandidateHypothesis> CandidateHypotheses,
+    IReadOnlyList<BootstrapSupportingEvidence> SupportingEvidence,
+    IReadOnlyList<BootstrapPossibleTask> PossibleTasks,
+    IReadOnlyList<string> OpenQuestions,
+    IReadOnlyList<string> SourceFiles);
+public record BootstrapMapSummary(
+    string SourcePath,
+    string Mode,
+    string ProjectSummary,
+    IReadOnlyList<string> ReviewedFiles,
+    IReadOnlyList<BootstrapCandidateThread> CandidateThreads,
+    IReadOnlyList<string> OpenQuestions,
+    IReadOnlyList<string> Guidance);
+public record BootstrapApplySummary(
+    string SourcePath,
+    string Mode,
+    string GoalId,
+    string GoalTitle,
+    string TaskId,
+    string TaskTitle,
+    IReadOnlyList<string> HypothesisIds,
+    IReadOnlyList<string> EvidenceIds,
+    IReadOnlyList<string> Guidance);
 public record CloseoutPendingItem(string ChangeType, string EntityType, string EntityId, string Summary);
 public record StatusPendingSummary(
     bool HasPendingChanges,

@@ -64,9 +64,26 @@ static async Task<CommandResult> DispatchAsync(IReadOnlyList<string> args, ICtxA
         "preflight" => await service.PreflightAsync(repositoryPath, RequireOption(args, "--operation"), GetOption(args, "--goal"), GetOption(args, "--task"), cancellationToken),
         "graph" when Match(args, "graph", "summary") => await service.GraphSummaryAsync(repositoryPath, cancellationToken),
         "graph" when Match(args, "graph", "show") => await service.GraphShowAsync(repositoryPath, RequirePositional(args, 2, "node id"), cancellationToken),
-        "graph" when Match(args, "graph", "export") => await service.ExportGraphAsync(repositoryPath, GetOption(args, "--format") ?? "json", GetOption(args, "--commit"), cancellationToken),
+        "graph" when Match(args, "graph", "export") => await service.ExportGraphAsync(repositoryPath, GetOption(args, "--format") ?? "json", GetOption(args, "--commit"), null, null, null, cancellationToken),
         "graph" when Match(args, "graph", "lineage") => await DispatchGraphLineageAsync(args, service, repositoryPath, cancellationToken),
         "thread" when Match(args, "thread", "reconstruct") => await DispatchThreadReconstructAsync(args, service, repositoryPath, cancellationToken),
+        "bootstrap" when Match(args, "bootstrap", "map") => await service.BootstrapMapAsync(
+            repositoryPath,
+            new BootstrapMapRequest(
+                RequireOption(args, "--from"),
+                GetOption(args, "--mode") ?? "auto",
+                int.TryParse(GetOption(args, "--max-files"), out var maxFiles) ? maxFiles : 12,
+                Environment.UserName),
+            cancellationToken),
+        "bootstrap" when Match(args, "bootstrap", "apply") => await service.BootstrapApplyAsync(
+            repositoryPath,
+            new BootstrapApplyRequest(
+                RequireOption(args, "--from"),
+                GetOption(args, "--mode") ?? "auto",
+                int.TryParse(GetOption(args, "--max-files"), out var applyMaxFiles) ? applyMaxFiles : 12,
+                GetOption(args, "--parent-goal"),
+                Environment.UserName),
+            cancellationToken),
         "export" => await service.ExportAsync(repositoryPath, GetOption(args, "--output") ?? "ctx-export.json", cancellationToken),
         "import" => await service.ImportAsync(repositoryPath, RequireOption(args, "--input"), cancellationToken),
 
@@ -181,6 +198,32 @@ static async Task<CommandResult> DispatchAsync(IReadOnlyList<string> args, ICtxA
                 TryGetDecimalOption(args, "--evidence-strength"),
                 TryGetDecimalOption(args, "--cost-to-validate"),
                 GetOption(args, "--state"),
+                GetOption(args, "--branch-state"),
+                GetOption(args, "--branch-role"),
+                GetOption(args, "--lineage-group"),
+                Environment.UserName),
+            cancellationToken),
+        "hypo" when Match(args, "hypo", "relate") => await service.RelateHypothesisAsync(
+            repositoryPath,
+            new RelateHypothesisRequest(
+                RequirePositional(args, 2, "hypothesis id"),
+                RequireOption(args, "--relation"),
+                RequireOption(args, "--to"),
+                GetOption(args, "--note"),
+                Environment.UserName),
+            cancellationToken),
+        "hypo" when Match(args, "hypo", "merge") => await service.MergeHypothesisAsync(
+            repositoryPath,
+            new MergeHypothesisRequest(
+                RequirePositional(args, 2, "source hypothesis id"),
+                RequireOption(args, "--into"),
+                Environment.UserName),
+            cancellationToken),
+        "hypo" when Match(args, "hypo", "supersede") => await service.SupersedeHypothesisAsync(
+            repositoryPath,
+            new SupersedeHypothesisRequest(
+                RequirePositional(args, 2, "old hypothesis id"),
+                RequireOption(args, "--by"),
                 Environment.UserName),
             cancellationToken),
         "hypo" when Match(args, "hypo", "rank") => await service.RankHypothesesAsync(repositoryPath, cancellationToken),
@@ -209,6 +252,13 @@ static async Task<CommandResult> DispatchAsync(IReadOnlyList<string> args, ICtxA
                 GetOption(args, "--kind") ?? "Document",
                 ParseDecimalOption(args, 0.5m, "--confidence"),
                 GetMultiOption(args, "--supports"),
+                Environment.UserName),
+            cancellationToken),
+        "evidence" when Match(args, "evidence", "share") => await service.ShareEvidenceAsync(
+            repositoryPath,
+            new ShareEvidenceRequest(
+                RequirePositional(args, 2, "evidence id"),
+                RequireOption(args, "--to"),
                 Environment.UserName),
             cancellationToken),
         "evidence" when Match(args, "evidence", "list") => await service.ListArtifactsAsync(repositoryPath, "evidence", cancellationToken),
@@ -527,6 +577,8 @@ Commands:
   ctx graph lineage --decision <id>
   ctx graph lineage --task <id>
   ctx thread reconstruct --task <id> [--format json|markdown]
+  ctx bootstrap map --from <path> [--mode auto|article|project] [--max-files <n>]
+  ctx bootstrap apply --from <path> [--mode auto|article|project] [--max-files <n>] [--parent-goal <goalId>]
   ctx export [--output <path>]
     ctx import --input <path>
     ctx init --name <project> [--description <text>] [--branch <name>]
@@ -546,7 +598,10 @@ Commands:
   ctx task list
   ctx task show <taskId>
   ctx hypo add --statement <text> [--rationale <text>] [--confidence <0-1>|--probability <0-1>] [--impact <0-1>] [--evidence-strength <0-1>] [--cost-to-validate <0-1>] [--task <taskId>]
-  ctx hypo update <hypothesisId> [--statement <text>] [--rationale <text>] [--confidence <0-1>|--probability <0-1>] [--impact <0-1>] [--evidence-strength <0-1>] [--cost-to-validate <0-1>] [--state <Proposed|UnderEvaluation|Supported|Refuted|Archived>]
+  ctx hypo update <hypothesisId> [--statement <text>] [--rationale <text>] [--confidence <0-1>|--probability <0-1>] [--impact <0-1>] [--evidence-strength <0-1>] [--cost-to-validate <0-1>] [--state <Proposed|UnderEvaluation|Supported|Refuted|Archived>] [--branch-state <Active|Weakening|Merged|Deprecated|Promoted>] [--branch-role <Competing|Integrative|Dominant>] [--lineage-group <id>]
+  ctx hypo relate <hypothesisId> --relation <CompetesWith|MergedInto|Supersedes|DerivedFrom|BorrowsEvidenceFrom> --to <hypothesisId> [--note <text>]
+  ctx hypo merge <hypothesisId> --into <hypothesisId>
+  ctx hypo supersede <hypothesisId> --by <hypothesisId>
   ctx hypo rank
   ctx hypo list
   ctx hypo show <hypothesisId>
@@ -554,6 +609,7 @@ Commands:
   ctx decision list
   ctx decision show <decisionId>
   ctx evidence add --title <text> [--summary <text>] [--source <text>] [--kind <kind>] [--confidence <0-1>] [--supports <type:id,type:id>]
+  ctx evidence share <evidenceId> --to hypothesis:<id>
   ctx evidence list
   ctx evidence show <evidenceId>
   ctx conclusion add --summary <text> [--state <state>] [--decisions <id,id>] [--evidence <id,id>] [--goals <id,id>] [--tasks <id,id>]
@@ -579,6 +635,11 @@ Commands:
   ctx metrics show
 
 {{projectContext}}
+
+Branch-like hypothesis reminder:
+  Hypothesis branch semantics live inside hypothesis lineage first.
+  Use branch-state, branch-role, relations, merge, supersede, and evidence share to preserve competing interpretations.
+  Do not treat these as repository branches yet.
 """;
 }
 

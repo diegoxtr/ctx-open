@@ -495,6 +495,41 @@ body {
     margin: 0.25rem 0 0.75rem;
     color: #5d7195;
     font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.graph-node-actions {
+    margin: 0 0 0.75rem;
+}
+
+.graph-node-actions-card {
+    display: inline-grid;
+    gap: 0.28rem;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid #d7e2f2;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #fbfdff 0%, #f3f7fd 100%);
+    box-shadow: 0 6px 14px rgba(21, 40, 68, 0.07);
+}
+
+.graph-node-actions-label {
+    color: #5d7195;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.graph-node-actions-meta {
+    color: #597090;
+    font-size: 0.8rem;
+}
+
+.graph-node-actions-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.15rem;
 }
 
 .cards {
@@ -1143,6 +1178,45 @@ body {
     flex: 1 1 auto;
 }
 
+.history-load-more {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    padding: 0.7rem 0.85rem 0.85rem;
+    border-top: 1px solid #e4edf9;
+    background: #f6f9ff;
+}
+
+.history-load-more.compact {
+    margin-top: 0.45rem;
+    border: 1px solid #e4edf9;
+    border-radius: 12px;
+}
+
+.history-load-more-summary {
+    color: #5d7195;
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+.history-load-more-button {
+    border: 1px solid #bcd0ec;
+    border-radius: 999px;
+    background: white;
+    color: #214a88;
+    font: inherit;
+    font-size: 0.76rem;
+    font-weight: 700;
+    padding: 0.38rem 0.8rem;
+    cursor: pointer;
+}
+
+.history-load-more-button:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
+
 .history-row-compact {
     border: 1px solid #deebfb;
     border-radius: 12px;
@@ -1400,10 +1474,46 @@ body {
     opacity: 0.85;
 }
 
+.graph-edge.commit-primary {
+    stroke: #1d4ed8;
+    opacity: 0.9;
+}
+
+.graph-edge.commit-secondary {
+    stroke: #8ba3c7;
+    stroke-dasharray: 5 5;
+    opacity: 0.38;
+}
+
 .graph-edge.commit-path-changed {
     stroke: #0f766e;
     stroke-width: 3.5;
     opacity: 1;
+}
+
+.graph-edge-interpretation {
+    stroke-dasharray: 7 5;
+    opacity: 0.88;
+}
+
+.graph-edge-interpretation.graph-edge-competes-with {
+    stroke: #8b5cf6;
+}
+
+.graph-edge-interpretation.graph-edge-merged-into {
+    stroke: #2563eb;
+}
+
+.graph-edge-interpretation.graph-edge-supersedes {
+    stroke: #d97706;
+}
+
+.graph-edge-interpretation.graph-edge-derived-from {
+    stroke: #64748b;
+}
+
+.graph-edge-interpretation.graph-edge-borrows-evidence-from {
+    stroke: #0f766e;
 }
 
 .graph-column {
@@ -1435,6 +1545,31 @@ body {
     background: #fbfdff;
 }
 
+.graph-node.commit-primary {
+    border-color: #6ea0ef;
+    background: linear-gradient(180deg, #ffffff 0%, #f2f7ff 100%);
+}
+
+.graph-node.commit-parent-goal {
+    border-color: #c9d7eb;
+    background: #f6f8fc;
+    opacity: 0.66;
+    box-shadow: 0 4px 10px rgba(21, 40, 68, 0.05);
+}
+
+.graph-node.commit-subgoal-anchor {
+    border-color: #4b83e6;
+    background: linear-gradient(180deg, #ffffff 0%, #edf4ff 100%);
+    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.18);
+}
+
+.graph-node.commit-secondary {
+    border-color: #cbd6e7;
+    background: #f7f9fc;
+    opacity: 0.72;
+    box-shadow: 0 4px 10px rgba(21, 40, 68, 0.06);
+}
+
 .graph-node.commit-changed {
     border-color: #0f766e;
     box-shadow: 0 8px 18px rgba(15, 118, 110, 0.22);
@@ -1462,6 +1597,43 @@ body {
 
 .graph-node.path-dimmed {
     opacity: 0.35;
+}
+
+.graph-node.graph-node-new {
+    border-color: #63a98c !important;
+    background: linear-gradient(180deg, #ffffff 0%, #f5fcf8 100%);
+    outline: 2px solid rgba(111, 191, 156, 0.26);
+    outline-offset: 0;
+    box-shadow: 0 0 0 3px rgba(111, 191, 156, 0.14), 0 10px 22px rgba(92, 167, 133, 0.18) !important;
+}
+
+.graph-node-hint {
+    display: block;
+    margin-top: 0.35rem;
+    color: #5f7494;
+    font-size: 0.72rem;
+    line-height: 1.25;
+}
+
+.detail-related-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.detail-related-item {
+    display: grid;
+    gap: 0.3rem;
+    padding: 0.85rem;
+    border: 1px solid #d8e1ef;
+    border-radius: 12px;
+    background: #f9fbff;
+}
+
+.detail-action-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.2rem;
 }
 
 .graph-node small {
@@ -1511,6 +1683,65 @@ body {
 .node-badge-conclusion {
     background: #fff6e8;
     color: #8a5a11;
+}
+
+.node-badge-hypothesis-branch {
+    background: #eef8f1;
+    color: #21674a;
+}
+
+.node-badge-state-active {
+    background: #eef8f1;
+    color: #21674a;
+}
+
+.node-badge-state-merged {
+    background: #eef4ff;
+    color: #214a88;
+}
+
+.node-badge-state-deprecated {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+.node-badge-state-promoted {
+    background: #fff6e8;
+    color: #8a5a11;
+}
+
+.node-badge-state-weakening {
+    background: #fff4dd;
+    color: #9a6400;
+}
+
+.node-badge-hypothesis-role {
+    background: #f4f0ff;
+    color: #5b3bb5;
+}
+
+.node-badge-role-competing {
+    background: #f4f0ff;
+    color: #5b3bb5;
+}
+
+.node-badge-role-integrative {
+    background: #eef6ff;
+    color: #1f4c8a;
+}
+
+.node-badge-role-dominant {
+    background: #fff6e8;
+    color: #8a5a11;
+}
+
+.node-badge-lineage {
+    background: #f1f5f9;
+    color: #475569;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: top;
 }
 
 .detail-box {
@@ -1716,6 +1947,111 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 0;
+}
+
+.interpretation-stack {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.interpretation-summary-card {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 0.8rem;
+    padding: 0.85rem;
+    border: 1px solid #dbe7f8;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #fbfdff 0%, #f5f8ff 100%);
+}
+
+.interpretation-summary-subtitle {
+    color: #5d7195;
+    font-size: 0.82rem;
+    margin-top: 0.18rem;
+}
+
+.interpretation-summary-metrics,
+.interpretation-pill-row,
+.interpretation-metrics {
+    display: flex;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+}
+
+.interpretation-card-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.interpretation-card {
+    display: grid;
+    gap: 0.55rem;
+    padding: 0.9rem;
+    border: 1px solid #dbe7f8;
+    border-radius: 12px;
+    background: #f9fbff;
+}
+
+.interpretation-card.selected {
+    border-color: #98b7e6;
+    box-shadow: 0 0 0 2px rgba(33, 74, 136, 0.1);
+    background: #f5f9ff;
+}
+
+.interpretation-card-header {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 0.8rem;
+}
+
+.interpretation-rationale {
+    margin: 0;
+    color: #4e6486;
+    font-size: 0.83rem;
+    line-height: 1.45;
+}
+
+.interpretation-relations {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.interpretation-relation-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.18rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid #d4def0;
+    background: #fff;
+    color: #214a88;
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+.interpretation-relation-chip.relation-competes-with {
+    border-color: #d7c6ff;
+    background: #f7f2ff;
+    color: #5b3bb5;
+}
+
+.interpretation-relation-chip.relation-merged-into {
+    border-color: #c9daf5;
+    background: #f1f6ff;
+    color: #214a88;
+}
+
+.interpretation-relation-chip.relation-supersedes {
+    border-color: #f0d8a9;
+    background: #fff8ea;
+    color: #8a5a11;
+}
+
+.interpretation-relation-chip.relation-derived-from {
+    border-color: #d7dee8;
+    background: #f8fafc;
+    color: #475569;
 }
 
 .runbook-stack {

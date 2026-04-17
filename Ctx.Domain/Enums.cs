@@ -36,6 +36,31 @@ public enum HypothesisState
     Archived = 4
 }
 
+public enum HypothesisBranchState
+{
+    Active = 0,
+    Weakening = 1,
+    Merged = 2,
+    Deprecated = 3,
+    Promoted = 4
+}
+
+public enum HypothesisBranchRole
+{
+    Competing = 0,
+    Integrative = 1,
+    Dominant = 2
+}
+
+public enum HypothesisRelationType
+{
+    CompetesWith = 0,
+    MergedInto = 1,
+    Supersedes = 2,
+    DerivedFrom = 3,
+    BorrowsEvidenceFrom = 4
+}
+
 public enum EvidenceKind
 {
     Observation = 0,

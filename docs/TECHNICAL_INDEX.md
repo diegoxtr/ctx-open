@@ -22,6 +22,9 @@ Recommended order:
 5. [DOMAIN_MODEL.md](C:/sources/ctx-open/docs/DOMAIN_MODEL.md)
 6. [CTX_STRUCTURE.md](C:/sources/ctx-open/docs/CTX_STRUCTURE.md)
 7. [CLI_COMMANDS.md](C:/sources/ctx-open/docs/CLI_COMMANDS.md)
+8. [BOOTSTRAP_COGNITIVE_INDEXING.md](C:/sources/ctx-open/docs/BOOTSTRAP_COGNITIVE_INDEXING.md)
+9. [BOOTSTRAP_TEST_DEVELOPMENT.md](C:/sources/ctx-open/docs/BOOTSTRAP_TEST_DEVELOPMENT.md)
+10. [HYPOTHESIS_BRANCH_SEMANTICS.md](C:/sources/ctx-open/docs/HYPOTHESIS_BRANCH_SEMANTICS.md)
 
 ## Documents by category
 
@@ -33,7 +36,7 @@ Recommended order:
 - [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-open/docs/V1_FUNCTIONAL_SPEC.md)
   Defines modules, requirements, acceptance criteria, and V1 definition of done.
 
-- [RELEASE_1_0_5.md](./RELEASE_1_0_5.md)
+- [RELEASE_1_0_4.md](C:/sources/ctx-open/docs/RELEASE_1_0_4.md)
   Summarizes the current stable release baseline.
 
 ## Architecture and design
@@ -73,6 +76,15 @@ Recommended order:
 - [CLI_COMMANDS.md](C:/sources/ctx-open/docs/CLI_COMMANDS.md)
   Full reference of implemented CLI commands.
 
+- [BOOTSTRAP_COGNITIVE_INDEXING.md](C:/sources/ctx-open/docs/BOOTSTRAP_COGNITIVE_INDEXING.md)
+  Defines the idea-first bootstrap map/apply surfaces for reconstructing provisional cognitive threads from external material.
+
+- [BOOTSTRAP_TEST_DEVELOPMENT.md](C:/sources/ctx-open/docs/BOOTSTRAP_TEST_DEVELOPMENT.md)
+  Tracks how bootstrap indexing is being tested in practice, including regression cases, failure modes, and product conclusions.
+
+- [HYPOTHESIS_BRANCH_SEMANTICS.md](C:/sources/ctx-open/docs/HYPOTHESIS_BRANCH_SEMANTICS.md)
+  Proposed branch-like lifecycle, relations, and evidence behavior for competing hypotheses without coupling them yet to repository branches.
+
 - [COMMAND_ADOPTION_AND_COVERAGE.md](C:/sources/ctx-open/docs/COMMAND_ADOPTION_AND_COVERAGE.md)
   Which commands are used, which are cold, and the recommended adoption order.
 
@@ -92,6 +104,9 @@ Recommended order:
   Packaging model, portable archives, and distribution output policy.
 
 ## Operation prompts
+
+- [CTX_HELPER_PROMPT.md](C:/sources/ctx-open/prompts/CTX_HELPER_PROMPT.md)
+  Installed helper/bootstrap prompt that re-anchors agents and operators on the active repo, core docs, viewer, and private/public boundary before work starts.
 
 - [CTX_BASE_PROMPT.md](C:/sources/ctx-open/prompts/CTX_BASE_PROMPT.md)
   Base template for operating CTX with new tools (objective, scope, adaptation).
@@ -181,6 +196,8 @@ Currently documented:
 - formal thread reconstruction
 - cognitive triggers
 - local install and distribution
+- bootstrap regression development
+- hypothesis branch-like semantics
 
 ## Useful future docs
 
@@ -191,4 +208,6 @@ Potential additions:
 - provider integration guide
 - operational troubleshooting guide
 - post-V1 roadmap
+
+
 
