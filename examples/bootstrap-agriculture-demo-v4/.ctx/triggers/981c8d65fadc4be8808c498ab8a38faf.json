@@ -1,0 +1,25 @@
+{
+  "kind": 1,
+  "summary": "Open task line: Validate branch-like hypothesis semantics on the agriculture contradiction case",
+  "text": "Create and validate a v4 regression repo that uses the same contradiction-heavy agricultural article to test branch-state, relations, merge, and evidence sharing semantics inside hypotheses.",
+  "fingerprint": "d1fc2ee6cfdd37101a061c68dc6ff43e51ba423d8767c0fd9f15bf96ec1d958b",
+  "goalIds": [],
+  "taskIds": [],
+  "operationalRunbookIds": [],
+  "state": 1,
+  "id": {
+    "value": "981c8d65fadc4be8808c498ab8a38faf"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-17T19:26:23.741187+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "trigger"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

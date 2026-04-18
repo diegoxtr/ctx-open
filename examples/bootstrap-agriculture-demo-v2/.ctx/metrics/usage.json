@@ -1,0 +1,110 @@
+﻿{
+  "totalRuns": 0,
+  "totalTokens": 0,
+  "totalAcuCost": 0,
+  "repeatedIterations": 0,
+  "avoidedRedundancyCount": 0,
+  "totalExecutionTime": "00:00:00",
+  "totalCommandInvocations": 20,
+  "commandUsage": [
+    {
+      "command": "audit",
+      "totalInvocations": 4,
+      "successfulInvocations": 4,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:01.4771981",
+      "lastInvokedAtUtc": "2026-04-18T01:04:04.224864+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "bootstrap",
+      "totalInvocations": 2,
+      "successfulInvocations": 2,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:00.5023340",
+      "lastInvokedAtUtc": "2026-04-17T18:23:26.4511386+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "evidence add",
+      "totalInvocations": 4,
+      "successfulInvocations": 4,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:03.1516229",
+      "lastInvokedAtUtc": "2026-04-17T18:13:03.1868951+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "goal add",
+      "totalInvocations": 1,
+      "successfulInvocations": 1,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:00.3748061",
+      "lastInvokedAtUtc": "2026-04-17T18:12:03.4214799+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "goal list",
+      "totalInvocations": 1,
+      "successfulInvocations": 1,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:00.2284864",
+      "lastInvokedAtUtc": "2026-04-17T18:23:39.8233518+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "hypo add",
+      "totalInvocations": 2,
+      "successfulInvocations": 2,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:01.5320746",
+      "lastInvokedAtUtc": "2026-04-17T18:12:52.3329236+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "hypo list",
+      "totalInvocations": 1,
+      "successfulInvocations": 1,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:00.2880211",
+      "lastInvokedAtUtc": "2026-04-17T18:23:40.036193+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "init",
+      "totalInvocations": 1,
+      "successfulInvocations": 1,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:00.3202933",
+      "lastInvokedAtUtc": "2026-04-17T18:11:28.4443171+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "status",
+      "totalInvocations": 2,
+      "successfulInvocations": 2,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:00.7912972",
+      "lastInvokedAtUtc": "2026-04-17T18:23:26.6150787+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "task add",
+      "totalInvocations": 1,
+      "successfulInvocations": 1,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:00.4210322",
+      "lastInvokedAtUtc": "2026-04-17T18:12:16.3853248+00:00",
+      "lastOutcome": "success"
+    },
+    {
+      "command": "task update",
+      "totalInvocations": 1,
+      "successfulInvocations": 1,
+      "failedInvocations": 0,
+      "totalExecutionTime": "00:00:00.3393711",
+      "lastInvokedAtUtc": "2026-04-17T18:12:32.2933399+00:00",
+      "lastOutcome": "success"
+    }
+  ]
+}

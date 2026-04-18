@@ -1,0 +1,33 @@
+{
+  "kind": 1,
+  "summary": "Open task line: Plan v2 bootstrap isolation steps before implementation",
+  "text": "Define the exact repeatable steps for a second-pass contradiction test: map, apply, inspect whether hypotheses remain separate, then close with testing conclusions.",
+  "fingerprint": "44a645fabfbad2fcbb8756b9ae3e4a065a26ccbe5720fecaac35a83d45958548",
+  "goalIds": [
+    {
+      "value": "db256f9e68ab4354a86e53ca583186f9"
+    }
+  ],
+  "taskIds": [
+    {
+      "value": "8cfc6fc853904bd6bf16fdf6b4315088"
+    }
+  ],
+  "operationalRunbookIds": [],
+  "state": 1,
+  "id": {
+    "value": "b8e5886a13c94089a64c7031296ff0e5"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-17T18:12:16.3289398+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "trigger"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

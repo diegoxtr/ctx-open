@@ -1,0 +1,1 @@
+﻿Provider-specific cached data and credentials references.

@@ -1,0 +1,21 @@
+﻿{
+  "name": "Bootstrap Agriculture Demo V3",
+  "description": "Implementation validation repo for coexistence-first bootstrap on the agricultural contradiction text",
+  "defaultBranch": "main",
+  "state": 1,
+  "id": {
+    "value": "abb0ab9eed7f4d7d89a32277d1034db5"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-17T18:25:17.8458342+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "project"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "kind": 1,
+  "summary": "Open task line: Run v4 branch-semantics validation on the contradiction article",
+  "text": "Bootstrap the contradiction-heavy agricultural text and validate branch-state, relations, merge, supersede, and evidence-sharing behavior against the new hypothesis-branch model.",
+  "fingerprint": "5b74f5570b920253029b6db4166257bcf0ab1b90246f5f121ff0f45e7665a576",
+  "goalIds": [
+    {
+      "value": "8508aa108adf444fba9af1dcfd1f6d4e"
+    }
+  ],
+  "taskIds": [
+    {
+      "value": "f015ca16078a4174a53d6986e8064671"
+    }
+  ],
+  "operationalRunbookIds": [],
+  "state": 1,
+  "id": {
+    "value": "720c47f1477c4434b77c20c612d2785c"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-17T19:26:49.2922768+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "trigger"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

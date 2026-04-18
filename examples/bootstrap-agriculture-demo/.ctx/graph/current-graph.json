@@ -1,0 +1,1165 @@
+﻿{
+  "project": {
+    "name": "Bootstrap Agriculture Demo",
+    "description": "Bootstrap validation repo for an agricultural systems article",
+    "defaultBranch": "main",
+    "state": 1,
+    "id": {
+      "value": "b7dba27b3b374cf695302587553b438b"
+    },
+    "trace": {
+      "createdBy": "diegoxtr",
+      "createdAtUtc": "2026-04-17T17:22:07.0804915+00:00",
+      "updatedBy": null,
+      "updatedAtUtc": null,
+      "tags": [
+        "project"
+      ],
+      "relatedIds": [],
+      "modelName": null,
+      "modelVersion": null
+    }
+  },
+  "goals": [
+    {
+      "parentGoalId": null,
+      "title": "Bootstrap map: Bootstrap project map",
+      "description": "Provisional bootstrap line inferred from \u0027agricultural-systems-article.md\u0027. Working problem: En los sistemas agr\u00EDcolas del Noroeste Argentino, particularmente en cultivos extensivos como el ma\u00EDz, se ha asumido hist\u00F3ricamente que la variabilidad en los\u2026",
+      "priority": 100,
+      "state": 1,
+      "taskIds": [
+        {
+          "value": "4f523b3c2d674cc79e4bb2054724b117"
+        }
+      ],
+      "id": {
+        "value": "14fb77ac05db495abe2a12108beb8993"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:23:00.3811835+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "goal"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "parentGoalId": null,
+      "title": "Bootstrap map: Bootstrap project map",
+      "description": "Provisional bootstrap line inferred from \u0027agricultural-systems-contradictions.md\u0027. Working problem: En distintos sistemas agr\u00EDcolas del Noroeste Argentino, particularmente en cultivos extensivos como el ma\u00EDz, se ha observado una variabilidad en los rendimient\u2026",
+      "priority": 100,
+      "state": 1,
+      "taskIds": [
+        {
+          "value": "41b585a1190145f0bd9e802dfb3eefd6"
+        }
+      ],
+      "id": {
+        "value": "112643a6a73a4854b5906ef4fca5a476"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:39:17.4850941+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "goal"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "goalId": {
+        "value": "14fb77ac05db495abe2a12108beb8993"
+      },
+      "title": "Review bootstrap thread: Bootstrap project map",
+      "description": "Validate the provisional bootstrap interpretation inferred from \u0027agricultural-systems-article.md\u0027. Open question: El an\u00E1lisis microbiol\u00F3gico del suelo revel\u00F3 que las zonas de mayor productividad tend\u00EDan a presentar una mayor abundancia relativa de ciertos g\u00E9neros bacterian\u2026",
+      "state": 4,
+      "dependsOnTaskIds": [],
+      "hypothesisIds": [
+        {
+          "value": "3667a957a99943eba76c6901470e8a06"
+        },
+        {
+          "value": "bc9965c22a2544f5aebbf4fb39db45e2"
+        }
+      ],
+      "parentTaskId": null,
+      "id": {
+        "value": "4f523b3c2d674cc79e4bb2054724b117"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:23:00.382492+00:00",
+        "updatedBy": "diegoxtr",
+        "updatedAtUtc": "2026-04-17T17:29:11.3327783+00:00",
+        "tags": [
+          "task"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "goalId": {
+        "value": "112643a6a73a4854b5906ef4fca5a476"
+      },
+      "title": "Review competing yield-driver hypotheses from contradiction article",
+      "description": "Validate how bootstrap handles a contradiction-rich agricultural article where microbiota-first, microclimate-first, and emergent interaction interpretations coexist without a clean winner.",
+      "state": 4,
+      "dependsOnTaskIds": [],
+      "hypothesisIds": [
+        {
+          "value": "f47a29eca69f4e31a6f272f189bb9f75"
+        },
+        {
+          "value": "7fc2c999c46c4eafbe0da3e7fddd2af9"
+        },
+        {
+          "value": "1d8bda71427c4707be9446be9f9ad816"
+        },
+        {
+          "value": "5d8318e183d8456c80ac6ce0788f8c9c"
+        }
+      ],
+      "parentTaskId": null,
+      "id": {
+        "value": "41b585a1190145f0bd9e802dfb3eefd6"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:39:17.4858437+00:00",
+        "updatedBy": "diegoxtr",
+        "updatedAtUtc": "2026-04-17T17:45:30.2548536+00:00",
+        "tags": [
+          "task"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    }
+  ],
+  "hypotheses": [
+    {
+      "statement": "En los sistemas agr\u00EDcolas del Noroeste Argentino, particularmente en cultivos extensivos como el ma\u00EDz, se ha asumido hist\u00F3ricamente que la variabilidad en los\u2026",
+      "rationale": "Bootstrap inference: Derived from high-signal source material during bootstrap mapping.",
+      "confidence": 0.68,
+      "impact": 0.68,
+      "evidenceStrength": 0.68,
+      "costToValidate": 0.4,
+      "state": 4,
+      "taskIds": [
+        {
+          "value": "4f523b3c2d674cc79e4bb2054724b117"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "2e250b2e3dbb4d91a1c22109cba7307f"
+        }
+      ],
+      "probability": 0.68,
+      "score": 0.5720,
+      "id": {
+        "value": "3667a957a99943eba76c6901470e8a06"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:23:00.385134+00:00",
+        "updatedBy": "diegoxtr",
+        "updatedAtUtc": "2026-04-17T17:28:32.6659204+00:00",
+        "tags": [
+          "hypothesis",
+          "bootstrap",
+          "provisional"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "statement": "The article\u0027s central claim is that maize yield variability depends on interacting microbiota, microclimate, and other non-linear local factors beyond the traditional explanatory set.",
+      "rationale": "This synthesized statement captures the thought actually being pursued in the article better than the paragraph-level hypothesis produced by the first bootstrap pass.",
+      "confidence": 0.78,
+      "impact": 0.84,
+      "evidenceStrength": 0.69,
+      "costToValidate": 0.27,
+      "state": 2,
+      "taskIds": [
+        {
+          "value": "4f523b3c2d674cc79e4bb2054724b117"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "7f1fb4c1275444cd96d694c4e634cbf5"
+        },
+        {
+          "value": "f34467ec167141fe8e310b799bd1ba91"
+        }
+      ],
+      "probability": 0.78,
+      "score": 0.6780,
+      "id": {
+        "value": "bc9965c22a2544f5aebbf4fb39db45e2"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:28:32.1503598+00:00",
+        "updatedBy": "diegoxtr",
+        "updatedAtUtc": "2026-04-17T17:29:40.1629784+00:00",
+        "tags": [
+          "hypothesis"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "statement": "En distintos sistemas agr\u00EDcolas del Noroeste Argentino, particularmente en cultivos extensivos como el ma\u00EDz, se ha observado una variabilidad en los rendimient\u2026",
+      "rationale": "Bootstrap inference: Derived from high-signal source material during bootstrap mapping.",
+      "confidence": 0.68,
+      "impact": 0.68,
+      "evidenceStrength": 0.68,
+      "costToValidate": 0.4,
+      "state": 4,
+      "taskIds": [
+        {
+          "value": "41b585a1190145f0bd9e802dfb3eefd6"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "204b1419253942eba37ead57c42fc133"
+        }
+      ],
+      "probability": 0.68,
+      "score": 0.5720,
+      "id": {
+        "value": "f47a29eca69f4e31a6f272f189bb9f75"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:39:17.4876777+00:00",
+        "updatedBy": "diegoxtr",
+        "updatedAtUtc": "2026-04-17T17:42:47.5928617+00:00",
+        "tags": [
+          "hypothesis",
+          "bootstrap",
+          "provisional"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "statement": "Microbiota may influence yield variability, but the article does not support it as a dominant standalone driver; its effect appears conditional on hidden or interacting factors.",
+      "rationale": "The document explicitly weakens a simple microbiota-first reading by showing inverse and contradictory cases even where growth-promoting bacteria are present.",
+      "confidence": 0.72,
+      "impact": 0.8,
+      "evidenceStrength": 0.62,
+      "costToValidate": 0.33,
+      "state": 2,
+      "taskIds": [
+        {
+          "value": "41b585a1190145f0bd9e802dfb3eefd6"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "71be0fe0a5fe496a8d4f14f97b53b14d"
+        }
+      ],
+      "probability": 0.72,
+      "score": 0.6230,
+      "id": {
+        "value": "7fc2c999c46c4eafbe0da3e7fddd2af9"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:42:57.3296322+00:00",
+        "updatedBy": "diegoxtr",
+        "updatedAtUtc": "2026-04-17T17:44:37.599883+00:00",
+        "tags": [
+          "hypothesis"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "statement": "Microclimate may contribute to local yield differences, but the article shows that current sensor readings do not explain productivity consistently enough to treat microclimate as a direct standalone predictor.",
+      "rationale": "The text repeatedly shows favorable or unfavorable microclimate measurements failing to predict yield uniformly, which points to resolution limits or interaction effects rather than a clean environmental determinant.",
+      "confidence": 0.72,
+      "impact": 0.78,
+      "evidenceStrength": 0.61,
+      "costToValidate": 0.35,
+      "state": 2,
+      "taskIds": [
+        {
+          "value": "41b585a1190145f0bd9e802dfb3eefd6"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "5daea27ae6424d51877e297929630a08"
+        }
+      ],
+      "probability": 0.72,
+      "score": 0.6120,
+      "id": {
+        "value": "1d8bda71427c4707be9446be9f9ad816"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:43:06.1513043+00:00",
+        "updatedBy": "diegoxtr",
+        "updatedAtUtc": "2026-04-17T17:44:38.5615671+00:00",
+        "tags": [
+          "hypothesis"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "statement": "The contradiction-heavy article is better explained by a complex interaction model in which microbiota, microclimate, structural soil history, and plant adaptation jointly shape yield through non-linear and partially hidden dynamics.",
+      "rationale": "This matches the document\u0027s strongest integrative move: persistent local behavior exists, single-variable explanations fail, and multiple interpretations remain simultaneously viable.",
+      "confidence": 0.79,
+      "impact": 0.88,
+      "evidenceStrength": 0.7,
+      "costToValidate": 0.29,
+      "state": 2,
+      "taskIds": [
+        {
+          "value": "41b585a1190145f0bd9e802dfb3eefd6"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "8b5a618495f749b4b08ceaae4aad7784"
+        }
+      ],
+      "probability": 0.79,
+      "score": 0.6955,
+      "id": {
+        "value": "5d8318e183d8456c80ac6ce0788f8c9c"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:43:18.1042717+00:00",
+        "updatedBy": "diegoxtr",
+        "updatedAtUtc": "2026-04-17T17:44:38.0409529+00:00",
+        "tags": [
+          "hypothesis"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "title": "Treat agricultural article bootstrap as partially successful but not release-ready",
+      "rationale": "The indexing flow can open a reviewable provisional line from the article, but the current synthesis still overfits the opening paragraph, generates weak thread naming, and misses direct evidence linkage on the first promoted hypothesis.",
+      "state": 1,
+      "hypothesisIds": [
+        {
+          "value": "bc9965c22a2544f5aebbf4fb39db45e2"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "f34467ec167141fe8e310b799bd1ba91"
+        },
+        {
+          "value": "7f1fb4c1275444cd96d694c4e634cbf5"
+        },
+        {
+          "value": "11d1ba18efc54c49a7cfe299b598ae96"
+        },
+        {
+          "value": "2e250b2e3dbb4d91a1c22109cba7307f"
+        },
+        {
+          "value": "8bb08cc38e444085891f9ffed1574297"
+        },
+        {
+          "value": "df7f4b051fb043cc86d6f0bc50c821f6"
+        }
+      ],
+      "id": {
+        "value": "a44e20f593fb4393973dec9ad5008af7"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:29:10.9079041+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "decision"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Treat contradiction-heavy bootstrap outputs as multi-hypothesis review inputs",
+      "rationale": "This article shows that bootstrap can open a useful provisional line, but contradiction-rich sources must preserve competing interpretations instead of collapsing them into one literal hypothesis. Review should promote multiple coexisting hypotheses and archive the literal bootstrap sentence when needed.",
+      "state": 1,
+      "hypothesisIds": [
+        {
+          "value": "7fc2c999c46c4eafbe0da3e7fddd2af9"
+        },
+        {
+          "value": "1d8bda71427c4707be9446be9f9ad816"
+        },
+        {
+          "value": "5d8318e183d8456c80ac6ce0788f8c9c"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "1235db83b10640bcb666f0e4e5552cbc"
+        },
+        {
+          "value": "71be0fe0a5fe496a8d4f14f97b53b14d"
+        },
+        {
+          "value": "5daea27ae6424d51877e297929630a08"
+        },
+        {
+          "value": "8b5a618495f749b4b08ceaae4aad7784"
+        },
+        {
+          "value": "ba7bf93d227a422f8e9d631ca3cd53c8"
+        }
+      ],
+      "id": {
+        "value": "167a83b4b3a24543a50b6c9296bc6943"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:44:55.5504671+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "decision"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "title": "Supporting signal 1",
+      "summary": "A partir de estas premisas, se analizaron distintos sectores productivos bajo condiciones controladas en cuanto a fertilizaci\u00F3n, riego y gen\u00E9tica. A pesar de e\u2026",
+      "source": "C:\\sources\\ctx-private\\examples\\bootstrap-agriculture-demo\\agricultural-systems-article.md",
+      "kind": 2,
+      "confidence": 0.64,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "4f523b3c2d674cc79e4bb2054724b117"
+        }
+      ],
+      "id": {
+        "value": "771b8217bdf74cfcabca88ddd2a9be31"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:23:00.3990239+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence",
+          "bootstrap",
+          "provisional"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Supporting signal 2",
+      "summary": "En paralelo, la incorporaci\u00F3n de sensores distribuidos permiti\u00F3 detectar variaciones de temperatura y humedad en escalas de pocos metros. Estas diferencias, au\u2026",
+      "source": "C:\\sources\\ctx-private\\examples\\bootstrap-agriculture-demo\\agricultural-systems-article.md",
+      "kind": 2,
+      "confidence": 0.64,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "4f523b3c2d674cc79e4bb2054724b117"
+        }
+      ],
+      "id": {
+        "value": "8e4a887022364ae6971cf3fe7415ca2a"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:23:00.399556+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence",
+          "bootstrap",
+          "provisional"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Supporting signal 3",
+      "summary": "Un aspecto particularmente llamativo fue la observaci\u00F3n de ciertos patrones que no respond\u00EDan a modelos lineales. Al cruzar informaci\u00F3n de microbiota, microcli\u2026",
+      "source": "C:\\sources\\ctx-private\\examples\\bootstrap-agriculture-demo\\agricultural-systems-article.md",
+      "kind": 2,
+      "confidence": 0.64,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "4f523b3c2d674cc79e4bb2054724b117"
+        }
+      ],
+      "id": {
+        "value": "bdaea5f517bd4948a3e3ae2853a6f7af"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:23:00.3995716+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence",
+          "bootstrap",
+          "provisional"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Installed ctx binary does not expose bootstrap commands yet",
+      "summary": "Running ctx bootstrap map and ctx bootstrap apply from the published install returned Unknown command, so real testing had to use the source CLI instead of the installed binary.",
+      "source": "local installed ctx validation",
+      "kind": 0,
+      "confidence": 0.5,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "4f523b3c2d674cc79e4bb2054724b117"
+        }
+      ],
+      "id": {
+        "value": "8bb08cc38e444085891f9ffed1574297"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:24:39.6054675+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Agricultural article bootstrap output over-compresses the opening paragraph",
+      "summary": "The first promoted hypothesis is effectively a truncated copy of the article opening instead of a synthesized claim about microbiota, microclimate, and non-linear yield interactions.",
+      "source": "agricultural article bootstrap map/apply test",
+      "kind": 3,
+      "confidence": 0.5,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "4f523b3c2d674cc79e4bb2054724b117"
+        }
+      ],
+      "id": {
+        "value": "df7f4b051fb043cc86d6f0bc50c821f6"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:24:40.0147173+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Promoted bootstrap hypothesis mirrors the article opening instead of synthesizing the core claim",
+      "summary": "The promoted hypothesis is mostly a truncated restatement of the opening paragraph, which confirms the source anchor but also shows that the current extractor did not isolate the stronger claim about microbiota, microclimate, and non-linear interactions.",
+      "source": "bootstrap-agriculture-demo article review",
+      "kind": 0,
+      "confidence": 0.5,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "3667a957a99943eba76c6901470e8a06"
+        }
+      ],
+      "id": {
+        "value": "2e250b2e3dbb4d91a1c22109cba7307f"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:28:31.4745899+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Microbiota and microclimate signals appear but do not resolve the system linearly",
+      "summary": "The article reports both microbiota differences and meter-scale temperature/humidity variation, but neither signal explains yield linearly on its own; clusters emerge only when factors are crossed, which supports a non-linear interaction reading.",
+      "source": "agricultural-systems-article.md",
+      "kind": 0,
+      "confidence": 0.5,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "bc9965c22a2544f5aebbf4fb39db45e2"
+        }
+      ],
+      "id": {
+        "value": "7f1fb4c1275444cd96d694c4e634cbf5"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:28:52.5005762+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Current bootstrap test shows partial success but insufficient synthesis",
+      "summary": "The indexing flow did open a coherent provisional line, but it initially promoted an over-literal paragraph hypothesis, generic thread naming, and weak hypothesis-level evidence linkage. That combination shows the feature is useful but not yet strong enough for dense scientific text without refinement.",
+      "source": "REAL_TESTING.md",
+      "kind": 3,
+      "confidence": 0.5,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "4f523b3c2d674cc79e4bb2054724b117"
+        }
+      ],
+      "id": {
+        "value": "11d1ba18efc54c49a7cfe299b598ae96"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:28:52.8467563+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Controlled sectors still showed \u003E15% yield differences",
+      "summary": "Even with fertilization, irrigation, and genetics held constant, some sectors differed in yield by more than 15% and certain strips remained consistently different across campaigns, supporting the idea that additional persistent local factors are in play.",
+      "source": "agricultural-systems-article.md",
+      "kind": 0,
+      "confidence": 0.5,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "bc9965c22a2544f5aebbf4fb39db45e2"
+        }
+      ],
+      "id": {
+        "value": "f34467ec167141fe8e310b799bd1ba91"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:28:53.1910121+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Supporting signal 1",
+      "summary": "Sin embargo, esta hip\u00F3tesis comenz\u00F3 a debilitarse al observarse casos en los que una alta concentraci\u00F3n de estos microorganismos no se traduc\u00EDa en mejores resu\u2026",
+      "source": "C:\\sources\\ctx-private\\examples\\bootstrap-agriculture-demo\\agricultural-systems-contradictions.md",
+      "kind": 2,
+      "confidence": 0.64,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "41b585a1190145f0bd9e802dfb3eefd6"
+        }
+      ],
+      "id": {
+        "value": "9c709a6bfda840e38e04ad3526aff192"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:39:17.4953598+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence",
+          "bootstrap",
+          "provisional"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Supporting signal 2",
+      "summary": "Al analizar de manera conjunta los datos de microbiota y microclima, se esperaba encontrar una explicaci\u00F3n m\u00E1s robusta. Sin embargo, los resultados no mostraro\u2026",
+      "source": "C:\\sources\\ctx-private\\examples\\bootstrap-agriculture-demo\\agricultural-systems-contradictions.md",
+      "kind": 2,
+      "confidence": 0.64,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "41b585a1190145f0bd9e802dfb3eefd6"
+        }
+      ],
+      "id": {
+        "value": "8a44f01298934a7e93333c4761d593f3"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:39:17.4954589+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence",
+          "bootstrap",
+          "provisional"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Supporting signal 3",
+      "summary": "Sin embargo, estas interpretaciones no son mutuamente excluyentes, y en algunos casos parecen entrar en conflicto directo. Por ejemplo, si la microbiota fuera\u2026",
+      "source": "C:\\sources\\ctx-private\\examples\\bootstrap-agriculture-demo\\agricultural-systems-contradictions.md",
+      "kind": 2,
+      "confidence": 0.64,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "41b585a1190145f0bd9e802dfb3eefd6"
+        }
+      ],
+      "id": {
+        "value": "93b160a2a5344a24822e99277e4da02e"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:39:17.495474+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence",
+          "bootstrap",
+          "provisional"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Contradiction-rich article was collapsed into one literal bootstrap hypothesis",
+      "summary": "The source explicitly presents at least three competing interpretations and argues that none dominates cleanly, but the first bootstrap pass promoted only one paragraph-level hypothesis and no compact open questions.",
+      "source": "agricultural-systems-contradictions.md",
+      "kind": 3,
+      "confidence": 0.5,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "41b585a1190145f0bd9e802dfb3eefd6"
+        }
+      ],
+      "id": {
+        "value": "e5a6504c4dd64584a6e513d5dbcb7e3b"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:39:45.8861247+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "The document explicitly sustains multiple coexisting interpretations",
+      "summary": "The text states that at least three interpretations remain viable: microbiota-first, microclimate-first, and complex-interaction/systemic emergence. It also states that these interpretations are not mutually exclusive and may even conflict depending on the data slice examined.",
+      "source": "agricultural-systems-contradictions.md",
+      "kind": 0,
+      "confidence": 0.5,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "41b585a1190145f0bd9e802dfb3eefd6"
+        }
+      ],
+      "id": {
+        "value": "d578c60b2c964f88a448539113ce3411"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:39:46.2991627+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Literal bootstrap hypothesis preserves source anchor but not the cognitive conflict",
+      "summary": "The promoted bootstrap hypothesis is mostly the opening paragraph restated. It proves the extractor anchored on the source, but it does not preserve the article\u0027s real structure of competing interpretations and contradictory evidence.",
+      "source": "agricultural-systems-contradictions.md",
+      "kind": 0,
+      "confidence": 0.5,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "f47a29eca69f4e31a6f272f189bb9f75"
+        }
+      ],
+      "id": {
+        "value": "204b1419253942eba37ead57c42fc133"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:42:38.0758962+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Microbiota signal appears real but inconsistent",
+      "summary": "The article reports both growth-promoting bacteria in higher-yield sectors and counterexamples where high microbial concentration or lower diversity fails to predict yield in the expected direction. That supports a conditional microbiota reading rather than a standalone deterministic one.",
+      "source": "agricultural-systems-contradictions.md",
+      "kind": 0,
+      "confidence": 0.5,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "7fc2c999c46c4eafbe0da3e7fddd2af9"
+        }
+      ],
+      "id": {
+        "value": "71be0fe0a5fe496a8d4f14f97b53b14d"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:43:34.4015188+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Microclimate measurements remain suggestive but non-predictive",
+      "summary": "Distributed sensors captured meaningful local differences in temperature and humidity, yet zones with apparently favorable readings do not improve productivity uniformly and some less favorable zones still outperform. That supports microclimate as a contributor but not as a direct standalone predictor.",
+      "source": "agricultural-systems-contradictions.md",
+      "kind": 0,
+      "confidence": 0.5,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "1d8bda71427c4707be9446be9f9ad816"
+        }
+      ],
+      "id": {
+        "value": "5daea27ae6424d51877e297929630a08"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:43:43.5206626+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Persistent sectors and contradictory joint data point to hidden interaction structure",
+      "summary": "The text reports sector behavior persisting across campaigns, contradictory early vigor signals, and no clean combined explanation from microbiota plus microclimate. That pattern supports a non-linear interaction model with structural or hidden variables rather than any single dominant cause.",
+      "source": "agricultural-systems-contradictions.md",
+      "kind": 0,
+      "confidence": 0.5,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "5d8318e183d8456c80ac6ce0788f8c9c"
+        }
+      ],
+      "id": {
+        "value": "8b5a618495f749b4b08ceaae4aad7784"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:43:56.2472304+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Bootstrap failed to preserve the article\u0027s explicit three-way interpretation set",
+      "summary": "The source explicitly names microbiota-first, microclimate-first, and complex-interaction interpretations, then states that none wins cleanly. The first bootstrap pass did not preserve that triad as separate reviewable hypotheses.",
+      "source": "agricultural-systems-contradictions.md",
+      "kind": 3,
+      "confidence": 0.5,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "41b585a1190145f0bd9e802dfb3eefd6"
+        }
+      ],
+      "id": {
+        "value": "1235db83b10640bcb666f0e4e5552cbc"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:44:14.3729741+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Generic bootstrap naming weakens reviewability of contradiction-heavy sources",
+      "summary": "The second apply created another generic Bootstrap project map line instead of naming the real problem under review. That makes contradiction cases harder to inspect because the cognitive thread is not titled after the competing yield-driver question.",
+      "source": "bootstrap-agriculture-demo review",
+      "kind": 0,
+      "confidence": 0.5,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "41b585a1190145f0bd9e802dfb3eefd6"
+        }
+      ],
+      "id": {
+        "value": "ba7bf93d227a422f8e9d631ca3cd53c8"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:44:24.6500298+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    }
+  ],
+  "conclusions": [
+    {
+      "summary": "Testing the agricultural article shows that bootstrap indexing already preserves a provisional cognitive line and can be reviewed inside CTX, but it still needs stronger hypothesis synthesis, better thread naming, direct hypothesis evidence linkage, and installed-CLI parity before it should be treated as a robust indexing surface for dense scientific text.",
+      "state": 1,
+      "decisionIds": [],
+      "evidenceIds": [
+        {
+          "value": "f34467ec167141fe8e310b799bd1ba91"
+        },
+        {
+          "value": "7f1fb4c1275444cd96d694c4e634cbf5"
+        },
+        {
+          "value": "11d1ba18efc54c49a7cfe299b598ae96"
+        },
+        {
+          "value": "2e250b2e3dbb4d91a1c22109cba7307f"
+        },
+        {
+          "value": "8bb08cc38e444085891f9ffed1574297"
+        },
+        {
+          "value": "df7f4b051fb043cc86d6f0bc50c821f6"
+        }
+      ],
+      "goalIds": [
+        {
+          "value": "14fb77ac05db495abe2a12108beb8993"
+        }
+      ],
+      "taskIds": [
+        {
+          "value": "4f523b3c2d674cc79e4bb2054724b117"
+        }
+      ],
+      "id": {
+        "value": "4cc83d9b03614d94bc4b66caaf727e30"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:29:11.9807867+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "conclusion"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "summary": "The contradiction article confirms that bootstrap indexing is useful for opening a provisional cognitive line, but it is not yet contradiction-aware enough to preserve multiple competing interpretations by default. This example should remain a regression case for multi-hypothesis preservation, better thread naming, and stronger synthesis from ambiguous scientific text.",
+      "state": 1,
+      "decisionIds": [
+        {
+          "value": "167a83b4b3a24543a50b6c9296bc6943"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "e5a6504c4dd64584a6e513d5dbcb7e3b"
+        },
+        {
+          "value": "1235db83b10640bcb666f0e4e5552cbc"
+        },
+        {
+          "value": "ba7bf93d227a422f8e9d631ca3cd53c8"
+        }
+      ],
+      "goalIds": [
+        {
+          "value": "112643a6a73a4854b5906ef4fca5a476"
+        }
+      ],
+      "taskIds": [
+        {
+          "value": "41b585a1190145f0bd9e802dfb3eefd6"
+        }
+      ],
+      "id": {
+        "value": "495f4ea97d20495185a57e168d0bd531"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T17:45:06.4636039+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "conclusion"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    }
+  ],
+  "runs": []
+}

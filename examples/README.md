@@ -30,8 +30,8 @@ If you want to validate bootstrap indexing quality, open:
 
 Public packaging note:
 
-- the bootstrap agriculture folders in `ctx-open` ship source texts, plans, and testing notes
-- the full private `.ctx` workspaces used during development remain in `ctx-private`
+- the bootstrap agriculture folders in `ctx-open` now ship their `.ctx` workspaces alongside the source texts, plans, and testing notes
+- the public examples are meant to be opened directly in the viewer and audited as reproducible cognitive repositories
 
 ## Important Note
 
