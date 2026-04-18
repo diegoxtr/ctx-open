@@ -1,0 +1,33 @@
+{
+  "kind": 1,
+  "summary": "Bootstrap provisional line: Bootstrap map: Bootstrap project map",
+  "text": "Provisional bootstrap line inferred from \u0027agricultural-systems-contradictions.md\u0027. Working problem: En distintos sistemas agr\u00EDcolas del Noroeste Argentino, particularmente en cultivos extensivos como el ma\u00EDz, se ha observado una variabilidad en los rendimient\u2026",
+  "fingerprint": "93a74277e1b8672e897d729ef929c2631a088bb4d199b41cc98d8e0842b648b3",
+  "goalIds": [
+    {
+      "value": "112643a6a73a4854b5906ef4fca5a476"
+    }
+  ],
+  "taskIds": [
+    {
+      "value": "41b585a1190145f0bd9e802dfb3eefd6"
+    }
+  ],
+  "operationalRunbookIds": [],
+  "state": 1,
+  "id": {
+    "value": "8ae0dadff8404702998f6fc55d31b352"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-17T17:39:17.6064081+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "trigger"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

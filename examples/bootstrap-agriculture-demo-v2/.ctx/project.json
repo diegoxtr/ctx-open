@@ -1,0 +1,21 @@
+﻿{
+  "name": "Bootstrap Agriculture Demo V2",
+  "description": "Hypothesis-isolation bootstrap validation for contradiction-heavy agricultural text",
+  "defaultBranch": "main",
+  "state": 1,
+  "id": {
+    "value": "fbfed5a4bc1f414fa0caf378d306a0d4"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-17T18:11:28.1232378+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "project"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

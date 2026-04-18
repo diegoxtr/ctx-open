@@ -1,0 +1,1120 @@
+{
+  "branch": "main",
+  "message": "Validate branch-like hypothesis semantics in agriculture v4",
+  "parentIds": [],
+  "createdAtUtc": "2026-04-17T19:45:43.276119+00:00",
+  "snapshotHash": "a3c12d16c61f532b82a123f87674e3d1591c0de56a21f6947fa809e2f09a54ba",
+  "diff": {
+    "fromCommitId": null,
+    "toCommitId": {
+      "value": "0523dbc948104308bb25e230bc79c5e7"
+    },
+    "decisions": [
+      {
+        "changeType": "Added",
+        "entityType": "Decision",
+        "entityId": "4d27f85db3cc45258d8b0c7715ef9a2e",
+        "summary": "Treat v4 agriculture branch semantics as validated at model and CLI level [Accepted]"
+      }
+    ],
+    "hypotheses": [
+      {
+        "changeType": "Added",
+        "entityType": "Hypothesis",
+        "entityId": "56519b9772164151aa51ff8adcd17127",
+        "summary": "Microbiota may explain part of the yield variability, but the source presents it as a conditional interpretation rather than a stable standalone driver. [Archived]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Hypothesis",
+        "entityId": "1723ca1a8a384863a79082484bd8afee",
+        "summary": "Microclimate may explain part of the local yield differences, but the source does not support it as a consistently predictive standalone interpretation. [Archived]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Hypothesis",
+        "entityId": "820713e2c36b4affa745a01715f673fa",
+        "summary": "The strongest integrative reading is a complex interaction model in which microbiota, microclimate, and hidden structural factors jointly shape yield through non-linear dynamics. [Archived]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Hypothesis",
+        "entityId": "63890d65ca674bfba45b8c04ffdc5c08",
+        "summary": "Persistent sector behavior and hidden structural constraints should now be treated as the dominant interpretation over the earlier integrative branch. [Supported]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Hypothesis",
+        "entityId": "20a7d62eb0ea4e309827bf88820b3a47",
+        "summary": "Branch-like hypothesis semantics can model competition, merge, supersede, and evidence sharing coherently on the agriculture contradiction case. [Supported]"
+      }
+    ],
+    "evidence": [
+      {
+        "changeType": "Added",
+        "entityType": "Evidence",
+        "entityId": "6c46f746ac9b47ad990b9c24f2c6d56f",
+        "summary": "Bootstrap evidence: agricultural-systems-contradictions.md [Document]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Evidence",
+        "entityId": "c4f6b9d23d8541e599b2ffcbbe8fb3b6",
+        "summary": "Bootstrap evidence: agricultural-systems-contradictions.md [Document]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Evidence",
+        "entityId": "29445686d3be4e84a259b03e12088258",
+        "summary": "Bootstrap evidence: agricultural-systems-contradictions.md [Document]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Evidence",
+        "entityId": "2d4b71ec3f364750a8258a417170d268",
+        "summary": "Bootstrap evidence: agricultural-systems-contradictions.md [Document]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Evidence",
+        "entityId": "3b824523654f480e8c14502df928735c",
+        "summary": "Bootstrap evidence: agricultural-systems-contradictions.md [Document]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Evidence",
+        "entityId": "2e8dbec9ddeb4336ad64118d2649bfbd",
+        "summary": "Bootstrap evidence: agricultural-systems-contradictions.md [Document]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Evidence",
+        "entityId": "19086d06ebc84f82a8c3b246f91c7a17",
+        "summary": "V4 review evidence: persistence favors structural constraints [Document]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Evidence",
+        "entityId": "c383fb0b49e345a19cf69d53cbfd5a03",
+        "summary": "V4 branch semantics validation completed [Document]"
+      }
+    ],
+    "tasks": [
+      {
+        "changeType": "Added",
+        "entityType": "Task",
+        "entityId": "f015ca16078a4174a53d6986e8064671",
+        "summary": "Run v4 branch-semantics validation on the contradiction article [Done]"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "Task",
+        "entityId": "d5c559decfbf4050981bebab4130518a",
+        "summary": "Review bootstrap thread: Bootstrap project map [Done]"
+      }
+    ],
+    "conclusions": [
+      {
+        "changeType": "Added",
+        "entityType": "Conclusion",
+        "entityId": "73f19fce42564a5193c16b3110b8d3c1",
+        "summary": "The v4 agriculture regression repo validates the first branch-like hypothesis layer: competing interpretations can coexist, merge, supersede, and share evidence coherently inside one lineage group. [Accepted]"
+      }
+    ],
+    "runbooks": [],
+    "triggers": [
+      {
+        "changeType": "Added",
+        "entityType": "CognitiveTrigger",
+        "entityId": "7839eeab4cd2402987c91696c31e5894",
+        "summary": "AgentPrompt:Open goal line: Validate branch-like hypothesis semantics on the agriculture contradiction case"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "CognitiveTrigger",
+        "entityId": "981c8d65fadc4be8808c498ab8a38faf",
+        "summary": "AgentPrompt:Open task line: Validate branch-like hypothesis semantics on the agriculture contradiction case"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "CognitiveTrigger",
+        "entityId": "720c47f1477c4434b77c20c612d2785c",
+        "summary": "AgentPrompt:Open task line: Run v4 branch-semantics validation on the contradiction article"
+      },
+      {
+        "changeType": "Added",
+        "entityType": "CognitiveTrigger",
+        "entityId": "921fc9c5b9d54ac49e30e24f47e9b53d",
+        "summary": "AgentPrompt:Bootstrap provisional line: Bootstrap map: Bootstrap project map"
+      }
+    ],
+    "conflicts": [],
+    "summary": "decisions:1 hypotheses:5 evidence:8 tasks:2 conclusions:1 runbooks:0 triggers:4"
+  },
+  "snapshot": {
+    "workingContext": {
+      "repositoryVersion": "1.0",
+      "currentBranch": "main",
+      "headCommitId": {
+        "value": "0523dbc948104308bb25e230bc79c5e7"
+      },
+      "dirty": false,
+      "project": {
+        "name": "Bootstrap Agriculture Demo V4",
+        "description": "Branch-like hypothesis semantics validation repo for the agricultural contradiction text",
+        "defaultBranch": "main",
+        "state": 1,
+        "id": {
+          "value": "0f5b44e228da46c6b2bf46babe9bddc1"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-17T19:25:50.0791539+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "project"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      "goals": [
+        {
+          "parentGoalId": null,
+          "title": "Validate branch-like hypothesis semantics on the agriculture contradiction case",
+          "description": "Use the same contradiction-heavy agricultural text as a regression case for the new branch-like hypothesis layer.",
+          "priority": 1,
+          "state": 1,
+          "taskIds": [
+            {
+              "value": "f015ca16078a4174a53d6986e8064671"
+            }
+          ],
+          "id": {
+            "value": "8508aa108adf444fba9af1dcfd1f6d4e"
+          },
+          "trace": {
+            "createdBy": "diegoxtr",
+            "createdAtUtc": "2026-04-17T19:26:23.1524869+00:00",
+            "updatedBy": null,
+            "updatedAtUtc": null,
+            "tags": [
+              "goal"
+            ],
+            "relatedIds": [],
+            "modelName": null,
+            "modelVersion": null
+          }
+        },
+        {
+          "parentGoalId": {
+            "value": "8508aa108adf444fba9af1dcfd1f6d4e"
+          },
+          "title": "Bootstrap map: Bootstrap project map",
+          "description": "Provisional bootstrap line inferred from \u0027agricultural-systems-contradictions.md\u0027. Working problem: En distintos sistemas agr\u00EDcolas del Noroeste Argentino, particularmente en cultivos extensivos como el ma\u00EDz, se ha observado una variabilidad en los rendimient\u2026",
+          "priority": 1,
+          "state": 1,
+          "taskIds": [
+            {
+              "value": "d5c559decfbf4050981bebab4130518a"
+            }
+          ],
+          "id": {
+            "value": "34b5bcc4a37440d18cfe927b326c19e1"
+          },
+          "trace": {
+            "createdBy": "diegoxtr",
+            "createdAtUtc": "2026-04-17T19:28:29.9075163+00:00",
+            "updatedBy": null,
+            "updatedAtUtc": null,
+            "tags": [
+              "goal"
+            ],
+            "relatedIds": [],
+            "modelName": null,
+            "modelVersion": null
+          }
+        }
+      ],
+      "tasks": [
+        {
+          "goalId": {
+            "value": "8508aa108adf444fba9af1dcfd1f6d4e"
+          },
+          "title": "Run v4 branch-semantics validation on the contradiction article",
+          "description": "Bootstrap the contradiction-heavy agricultural text and validate branch-state, relations, merge, supersede, and evidence-sharing behavior against the new hypothesis-branch model.",
+          "state": 4,
+          "dependsOnTaskIds": [],
+          "hypothesisIds": [
+            {
+              "value": "20a7d62eb0ea4e309827bf88820b3a47"
+            }
+          ],
+          "parentTaskId": null,
+          "id": {
+            "value": "f015ca16078a4174a53d6986e8064671"
+          },
+          "trace": {
+            "createdBy": "diegoxtr",
+            "createdAtUtc": "2026-04-17T19:26:49.1843136+00:00",
+            "updatedBy": "diegoxtr",
+            "updatedAtUtc": "2026-04-17T19:35:16.728999+00:00",
+            "tags": [
+              "task"
+            ],
+            "relatedIds": [],
+            "modelName": null,
+            "modelVersion": null
+          }
+        },
+        {
+          "goalId": {
+            "value": "34b5bcc4a37440d18cfe927b326c19e1"
+          },
+          "title": "Review bootstrap thread: Bootstrap project map",
+          "description": "Validate the provisional bootstrap interpretation inferred from \u0027agricultural-systems-contradictions.md\u0027. Open question: Does the source support microbiota as a dominant driver, or only as a conditional contributor?",
+          "state": 4,
+          "dependsOnTaskIds": [],
+          "hypothesisIds": [
+            {
+              "value": "56519b9772164151aa51ff8adcd17127"
+            },
+            {
+              "value": "1723ca1a8a384863a79082484bd8afee"
+            },
+            {
+              "value": "820713e2c36b4affa745a01715f673fa"
+            },
+            {
+              "value": "63890d65ca674bfba45b8c04ffdc5c08"
+            }
+          ],
+          "parentTaskId": null,
+          "id": {
+            "value": "d5c559decfbf4050981bebab4130518a"
+          },
+          "trace": {
+            "createdBy": "diegoxtr",
+            "createdAtUtc": "2026-04-17T19:28:29.9083514+00:00",
+            "updatedBy": "diegoxtr",
+            "updatedAtUtc": "2026-04-17T19:35:15.7985758+00:00",
+            "tags": [
+              "task"
+            ],
+            "relatedIds": [],
+            "modelName": null,
+            "modelVersion": null
+          }
+        }
+      ],
+      "hypotheses": [
+        {
+          "statement": "Microbiota may explain part of the yield variability, but the source presents it as a conditional interpretation rather than a stable standalone driver.",
+          "rationale": "Bootstrap inference: The source explicitly entertains a microbiota-first reading and then weakens it with contradictory sectors and inverse cases.",
+          "confidence": 0.74,
+          "impact": 0.74,
+          "evidenceStrength": 0.74,
+          "costToValidate": 0.4,
+          "state": 4,
+          "taskIds": [
+            {
+              "value": "d5c559decfbf4050981bebab4130518a"
+            }
+          ],
+          "evidenceIds": [
+            {
+              "value": "6c46f746ac9b47ad990b9c24f2c6d56f"
+            },
+            {
+              "value": "c4f6b9d23d8541e599b2ffcbbe8fb3b6"
+            }
+          ],
+          "branchState": 2,
+          "branchRole": 0,
+          "lineageGroupId": "agriculture-conflict-v4",
+          "parentHypothesisIds": null,
+          "mergedIntoHypothesisId": {
+            "value": "820713e2c36b4affa745a01715f673fa"
+          },
+          "supersedesHypothesisIds": null,
+          "relations": [
+            {
+              "relationType": 0,
+              "targetHypothesisId": {
+                "value": "1723ca1a8a384863a79082484bd8afee"
+              },
+              "note": "same contradiction set"
+            },
+            {
+              "relationType": 1,
+              "targetHypothesisId": {
+                "value": "820713e2c36b4affa745a01715f673fa"
+              },
+              "note": null
+            }
+          ],
+          "probability": 0.74,
+          "score": 0.6260,
+          "id": {
+            "value": "56519b9772164151aa51ff8adcd17127"
+          },
+          "trace": {
+            "createdBy": "diegoxtr",
+            "createdAtUtc": "2026-04-17T19:28:29.9102498+00:00",
+            "updatedBy": "diegoxtr",
+            "updatedAtUtc": "2026-04-17T19:36:19.9497503+00:00",
+            "tags": [
+              "hypothesis",
+              "bootstrap",
+              "provisional"
+            ],
+            "relatedIds": [],
+            "modelName": null,
+            "modelVersion": null
+          }
+        },
+        {
+          "statement": "Microclimate may explain part of the local yield differences, but the source does not support it as a consistently predictive standalone interpretation.",
+          "rationale": "Bootstrap inference: The source introduces microclimate as a serious alternative explanation and then shows several cases where apparently favorable conditions still fail to predict yield.",
+          "confidence": 0.74,
+          "impact": 0.74,
+          "evidenceStrength": 0.74,
+          "costToValidate": 0.4,
+          "state": 4,
+          "taskIds": [
+            {
+              "value": "d5c559decfbf4050981bebab4130518a"
+            }
+          ],
+          "evidenceIds": [
+            {
+              "value": "29445686d3be4e84a259b03e12088258"
+            },
+            {
+              "value": "2d4b71ec3f364750a8258a417170d268"
+            }
+          ],
+          "branchState": 2,
+          "branchRole": 0,
+          "lineageGroupId": "agriculture-conflict-v4",
+          "parentHypothesisIds": null,
+          "mergedIntoHypothesisId": {
+            "value": "820713e2c36b4affa745a01715f673fa"
+          },
+          "supersedesHypothesisIds": null,
+          "relations": [
+            {
+              "relationType": 0,
+              "targetHypothesisId": {
+                "value": "56519b9772164151aa51ff8adcd17127"
+              },
+              "note": "same contradiction set"
+            },
+            {
+              "relationType": 1,
+              "targetHypothesisId": {
+                "value": "820713e2c36b4affa745a01715f673fa"
+              },
+              "note": null
+            }
+          ],
+          "probability": 0.74,
+          "score": 0.6260,
+          "id": {
+            "value": "1723ca1a8a384863a79082484bd8afee"
+          },
+          "trace": {
+            "createdBy": "diegoxtr",
+            "createdAtUtc": "2026-04-17T19:28:29.9106822+00:00",
+            "updatedBy": "diegoxtr",
+            "updatedAtUtc": "2026-04-17T19:36:20.4489087+00:00",
+            "tags": [
+              "hypothesis",
+              "bootstrap",
+              "provisional"
+            ],
+            "relatedIds": [],
+            "modelName": null,
+            "modelVersion": null
+          }
+        },
+        {
+          "statement": "The strongest integrative reading is a complex interaction model in which microbiota, microclimate, and hidden structural factors jointly shape yield through non-linear dynamics.",
+          "rationale": "Bootstrap inference: The source explicitly leaves multiple interpretations alive, reports persistent sector behavior, and states that available evidence may support contradictory readings depending on the data slice examined.",
+          "confidence": 0.8,
+          "impact": 0.8,
+          "evidenceStrength": 0.8,
+          "costToValidate": 0.4,
+          "state": 4,
+          "taskIds": [
+            {
+              "value": "d5c559decfbf4050981bebab4130518a"
+            }
+          ],
+          "evidenceIds": [
+            {
+              "value": "3b824523654f480e8c14502df928735c"
+            },
+            {
+              "value": "2e8dbec9ddeb4336ad64118d2649bfbd"
+            },
+            {
+              "value": "6c46f746ac9b47ad990b9c24f2c6d56f"
+            },
+            {
+              "value": "29445686d3be4e84a259b03e12088258"
+            }
+          ],
+          "branchState": 3,
+          "branchRole": 1,
+          "lineageGroupId": "agriculture-conflict-v4",
+          "parentHypothesisIds": null,
+          "mergedIntoHypothesisId": null,
+          "supersedesHypothesisIds": null,
+          "relations": [
+            {
+              "relationType": 2,
+              "targetHypothesisId": {
+                "value": "63890d65ca674bfba45b8c04ffdc5c08"
+              },
+              "note": "superseded-by"
+            }
+          ],
+          "probability": 0.8,
+          "score": 0.680,
+          "id": {
+            "value": "820713e2c36b4affa745a01715f673fa"
+          },
+          "trace": {
+            "createdBy": "diegoxtr",
+            "createdAtUtc": "2026-04-17T19:28:29.9106944+00:00",
+            "updatedBy": "diegoxtr",
+            "updatedAtUtc": "2026-04-17T19:36:20.9026649+00:00",
+            "tags": [
+              "hypothesis",
+              "bootstrap",
+              "provisional"
+            ],
+            "relatedIds": [],
+            "modelName": null,
+            "modelVersion": null
+          }
+        },
+        {
+          "statement": "Persistent sector behavior and hidden structural constraints should now be treated as the dominant interpretation over the earlier integrative branch.",
+          "rationale": "V4 review inference: the text\u0027s persistence pattern and explicit hidden-variable language justify promoting a structural-constraints reading beyond the earlier integrative summary.",
+          "confidence": 0.77,
+          "impact": 0.78,
+          "evidenceStrength": 0.72,
+          "costToValidate": 0.45,
+          "state": 2,
+          "taskIds": [
+            {
+              "value": "d5c559decfbf4050981bebab4130518a"
+            }
+          ],
+          "evidenceIds": [
+            {
+              "value": "19086d06ebc84f82a8c3b246f91c7a17"
+            },
+            {
+              "value": "2e8dbec9ddeb4336ad64118d2649bfbd"
+            },
+            {
+              "value": "c383fb0b49e345a19cf69d53cbfd5a03"
+            }
+          ],
+          "branchState": 4,
+          "branchRole": 2,
+          "lineageGroupId": "agriculture-conflict-v4",
+          "parentHypothesisIds": null,
+          "mergedIntoHypothesisId": null,
+          "supersedesHypothesisIds": [
+            {
+              "value": "820713e2c36b4affa745a01715f673fa"
+            }
+          ],
+          "relations": [
+            {
+              "relationType": 3,
+              "targetHypothesisId": {
+                "value": "820713e2c36b4affa745a01715f673fa"
+              },
+              "note": "v4 review branch"
+            }
+          ],
+          "probability": 0.77,
+          "score": 0.6415,
+          "id": {
+            "value": "63890d65ca674bfba45b8c04ffdc5c08"
+          },
+          "trace": {
+            "createdBy": "diegoxtr",
+            "createdAtUtc": "2026-04-17T19:31:47.0855238+00:00",
+            "updatedBy": "diegoxtr",
+            "updatedAtUtc": "2026-04-17T19:36:21.2875444+00:00",
+            "tags": [
+              "hypothesis"
+            ],
+            "relatedIds": [],
+            "modelName": null,
+            "modelVersion": null
+          }
+        },
+        {
+          "statement": "Branch-like hypothesis semantics can model competition, merge, supersede, and evidence sharing coherently on the agriculture contradiction case.",
+          "rationale": "V4 validation summary: the dedicated regression repo demonstrated the full branch-like lifecycle without needing repository branches.",
+          "confidence": 0.88,
+          "impact": 0.82,
+          "evidenceStrength": 0.84,
+          "costToValidate": 0.2,
+          "state": 2,
+          "taskIds": [
+            {
+              "value": "f015ca16078a4174a53d6986e8064671"
+            }
+          ],
+          "evidenceIds": [
+            {
+              "value": "c383fb0b49e345a19cf69d53cbfd5a03"
+            }
+          ],
+          "branchState": 4,
+          "branchRole": 2,
+          "lineageGroupId": "agriculture-conflict-v4",
+          "parentHypothesisIds": null,
+          "mergedIntoHypothesisId": null,
+          "supersedesHypothesisIds": null,
+          "relations": null,
+          "probability": 0.88,
+          "score": 0.7430,
+          "id": {
+            "value": "20a7d62eb0ea4e309827bf88820b3a47"
+          },
+          "trace": {
+            "createdBy": "diegoxtr",
+            "createdAtUtc": "2026-04-17T19:36:21.7280545+00:00",
+            "updatedBy": "diegoxtr",
+            "updatedAtUtc": "2026-04-17T19:36:22.6718405+00:00",
+            "tags": [
+              "hypothesis"
+            ],
+            "relatedIds": [],
+            "modelName": null,
+            "modelVersion": null
+          }
+        }
+      ],
+      "decisions": [
+        {
+          "title": "Treat v4 agriculture branch semantics as validated at model and CLI level",
+          "rationale": "The v4 repo preserved competing hypotheses, tracked merge and supersede transitions, and kept shared evidence explicit without using repository branches.",
+          "state": 1,
+          "hypothesisIds": [
+            {
+              "value": "56519b9772164151aa51ff8adcd17127"
+            },
+            {
+              "value": "1723ca1a8a384863a79082484bd8afee"
+            },
+            {
+              "value": "820713e2c36b4affa745a01715f673fa"
+            },
+            {
+              "value": "63890d65ca674bfba45b8c04ffdc5c08"
+            }
+          ],
+          "evidenceIds": [
+            {
+              "value": "c383fb0b49e345a19cf69d53cbfd5a03"
+            }
+          ],
+          "id": {
+            "value": "4d27f85db3cc45258d8b0c7715ef9a2e"
+          },
+          "trace": {
+            "createdBy": "diegoxtr",
+            "createdAtUtc": "2026-04-17T19:35:14.2573858+00:00",
+            "updatedBy": null,
+            "updatedAtUtc": null,
+            "tags": [
+              "decision"
+            ],
+            "relatedIds": [],
+            "modelName": null,
+            "modelVersion": null
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "title": "Bootstrap evidence: agricultural-systems-contradictions.md",
+          "summary": "En una serie de lotes con condiciones aparentemente homog\u00E9neas, se detectaron diferencias de rendimiento superiores al 20% entre sectores separados por menos de 15 metros. En principio, este fen\u00F3meno fue atribuido a var\u2026",
+          "source": "C:\\sources\\ctx-private\\examples\\bootstrap-agriculture-demo-v4\\agricultural-systems-contradictions.md",
+          "kind": 2,
+          "confidence": 0.74,
+          "state": 2,
+          "supports": [
+            {
+              "entityType": "Hypothesis",
+              "entityId": "56519b9772164151aa51ff8adcd17127"
+            },
+            {
+              "entityType": "Hypothesis",
+              "entityId": "820713e2c36b4affa745a01715f673fa"
+            }
+          ],
+          "id": {
+            "value": "6c46f746ac9b47ad990b9c24f2c6d56f"
+          },
+          "trace": {
+            "createdBy": "diegoxtr",
+            "createdAtUtc": "2026-04-17T19:28:29.9132729+00:00",
+            "updatedBy": "diegoxtr",
+            "updatedAtUtc": "2026-04-17T19:31:19.3981592+00:00",
+            "tags": [
+              "evidence",
+              "bootstrap",
+              "provisional"
+            ],
+            "relatedIds": [],
+            "modelName": null,
+            "modelVersion": null
+          }
+        },
+        {
+          "title": "Bootstrap evidence: agricultural-systems-contradictions.md",
+          "summary": "Sin embargo, esta hip\u00F3tesis comenz\u00F3 a debilitarse al observarse casos en los que una alta concentraci\u00F3n de estos microorganismos no se traduc\u00EDa en mejores resultados productivos. En algunos sectores, incluso, se registr\u2026",
+          "source": "C:\\sources\\ctx-private\\examples\\bootstrap-agriculture-demo-v4\\agricultural-systems-contradictions.md",
+          "kind": 2,
+          "confidence": 0.74,
+          "state": 2,
+          "supports": [
+            {
+              "entityType": "Hypothesis",
+              "entityId": "56519b9772164151aa51ff8adcd17127"
+            }
+          ],
+          "id": {
+            "value": "c4f6b9d23d8541e599b2ffcbbe8fb3b6"
+          },
+          "trace": {
+            "createdBy": "diegoxtr",
+            "createdAtUtc": "2026-04-17T19:28:29.913791+00:00",
+            "updatedBy": null,
+            "updatedAtUtc": null,
+            "tags": [
+              "evidence",
+              "bootstrap",
+              "provisional"
+            ],
+            "relatedIds": [],
+            "modelName": null,
+            "modelVersion": null
+          }
+        },
+        {
+          "title": "Bootstrap evidence: agricultural-systems-contradictions.md",
+          "summary": "Paralelamente, se introdujo un sistema de sensores distribuidos para medir temperatura y humedad a escala microambiental. Los datos obtenidos evidenciaron diferencias significativas dentro de un mismo lote, con variacio\u2026",
+          "source": "C:\\sources\\ctx-private\\examples\\bootstrap-agriculture-demo-v4\\agricultural-systems-contradictions.md",
+          "kind": 2,
+          "confidence": 0.74,
+          "state": 2,
+          "supports": [
+            {
+              "entityType": "Hypothesis",
+              "entityId": "1723ca1a8a384863a79082484bd8afee"
+            },
+            {
+              "entityType": "Hypothesis",
+              "entityId": "820713e2c36b4affa745a01715f673fa"
+            }
+          ],
+          "id": {
+            "value": "29445686d3be4e84a259b03e12088258"
+          },
+          "trace": {
+            "createdBy": "diegoxtr",
+            "createdAtUtc": "2026-04-17T19:28:29.9138463+00:00",
+            "updatedBy": "diegoxtr",
+            "updatedAtUtc": "2026-04-17T19:31:20.2083163+00:00",
+            "tags": [
+              "evidence",
+              "bootstrap",
+              "provisional"
+            ],
+            "relatedIds": [],
+            "modelName": null,
+            "modelVersion": null
+          }
+        },
+        {
+          "title": "Bootstrap evidence: agricultural-systems-contradictions.md",
+          "summary": "No obstante, esta interpretaci\u00F3n tampoco logr\u00F3 sostenerse de forma consistente. En varias mediciones, zonas con condiciones microclim\u00E1ticas aparentemente favorables no mostraron mejoras en la productividad, mientras que\u2026",
+          "source": "C:\\sources\\ctx-private\\examples\\bootstrap-agriculture-demo-v4\\agricultural-systems-contradictions.md",
+          "kind": 2,
+          "confidence": 0.74,
+          "state": 2,
+          "supports": [
+            {
+              "entityType": "Hypothesis",
+              "entityId": "1723ca1a8a384863a79082484bd8afee"
+            }
+          ],
+          "id": {
+            "value": "2d4b71ec3f364750a8258a417170d268"
+          },
+          "trace": {
+            "createdBy": "diegoxtr",
+            "createdAtUtc": "2026-04-17T19:28:29.913869+00:00",
+            "updatedBy": null,
+            "updatedAtUtc": null,
+            "tags": [
+              "evidence",
+              "bootstrap",
+              "provisional"
+            ],
+            "relatedIds": [],
+            "modelName": null,
+            "modelVersion": null
+          }
+        },
+        {
+          "title": "Bootstrap evidence: agricultural-systems-contradictions.md",
+          "summary": "Al analizar de manera conjunta los datos de microbiota y microclima, se esperaba encontrar una explicaci\u00F3n m\u00E1s robusta. Sin embargo, los resultados no mostraron una integraci\u00F3n clara. Algunos sectores con alta actividad\u2026",
+          "source": "C:\\sources\\ctx-private\\examples\\bootstrap-agriculture-demo-v4\\agricultural-systems-contradictions.md",
+          "kind": 2,
+          "confidence": 0.8,
+          "state": 2,
+          "supports": [
+            {
+              "entityType": "Hypothesis",
+              "entityId": "820713e2c36b4affa745a01715f673fa"
+            }
+          ],
+          "id": {
+            "value": "3b824523654f480e8c14502df928735c"
+          },
+          "trace": {
+            "createdBy": "diegoxtr",
+            "createdAtUtc": "2026-04-17T19:28:29.9138916+00:00",
+            "updatedBy": null,
+            "updatedAtUtc": null,
+            "tags": [
+              "evidence",
+              "bootstrap",
+              "provisional"
+            ],
+            "relatedIds": [],
+            "modelName": null,
+            "modelVersion": null
+          }
+        },
+        {
+          "title": "Bootstrap evidence: agricultural-systems-contradictions.md",
+          "summary": "A lo largo de m\u00FAltiples campa\u00F1as, se observ\u00F3 que ciertos sectores del lote tend\u00EDan a mantener su comportamiento relativo, independientemente de las condiciones generales del a\u00F1o. Este patr\u00F3n de persistencia podr\u00EDa inter\u2026",
+          "source": "C:\\sources\\ctx-private\\examples\\bootstrap-agriculture-demo-v4\\agricultural-systems-contradictions.md",
+          "kind": 2,
+          "confidence": 0.8,
+          "state": 2,
+          "supports": [
+            {
+              "entityType": "Hypothesis",
+              "entityId": "820713e2c36b4affa745a01715f673fa"
+            },
+            {
+              "entityType": "Hypothesis",
+              "entityId": "63890d65ca674bfba45b8c04ffdc5c08"
+            }
+          ],
+          "id": {
+            "value": "2e8dbec9ddeb4336ad64118d2649bfbd"
+          },
+          "trace": {
+            "createdBy": "diegoxtr",
+            "createdAtUtc": "2026-04-17T19:28:29.9139143+00:00",
+            "updatedBy": "diegoxtr",
+            "updatedAtUtc": "2026-04-17T19:31:49.1410599+00:00",
+            "tags": [
+              "evidence",
+              "bootstrap",
+              "provisional"
+            ],
+            "relatedIds": [],
+            "modelName": null,
+            "modelVersion": null
+          }
+        },
+        {
+          "title": "V4 review evidence: persistence favors structural constraints",
+          "summary": "The article reports repeated sector persistence across campaigns, which supports treating hidden structural conditions as a stronger interpretation than the earlier integrative branch alone.",
+          "source": "C:\\sources\\ctx-private\\examples\\bootstrap-agriculture-demo-v4\\agricultural-systems-contradictions.md",
+          "kind": 2,
+          "confidence": 0.77,
+          "state": 2,
+          "supports": [
+            {
+              "entityType": "Hypothesis",
+              "entityId": "63890d65ca674bfba45b8c04ffdc5c08"
+            }
+          ],
+          "id": {
+            "value": "19086d06ebc84f82a8c3b246f91c7a17"
+          },
+          "trace": {
+            "createdBy": "diegoxtr",
+            "createdAtUtc": "2026-04-17T19:31:48.5740048+00:00",
+            "updatedBy": null,
+            "updatedAtUtc": null,
+            "tags": [
+              "evidence"
+            ],
+            "relatedIds": [],
+            "modelName": null,
+            "modelVersion": null
+          }
+        },
+        {
+          "title": "V4 branch semantics validation completed",
+          "summary": "The dedicated v4 repo confirmed explicit competing relations, merge history, supersede behavior, and evidence sharing on the agriculture contradiction case.",
+          "source": "C:\\sources\\ctx-private\\examples\\bootstrap-agriculture-demo-v4\\REAL_TESTING.md",
+          "kind": 2,
+          "confidence": 0.88,
+          "state": 2,
+          "supports": [
+            {
+              "entityType": "Task",
+              "entityId": "d5c559decfbf4050981bebab4130518a"
+            },
+            {
+              "entityType": "Hypothesis",
+              "entityId": "63890d65ca674bfba45b8c04ffdc5c08"
+            },
+            {
+              "entityType": "Hypothesis",
+              "entityId": "20a7d62eb0ea4e309827bf88820b3a47"
+            }
+          ],
+          "id": {
+            "value": "c383fb0b49e345a19cf69d53cbfd5a03"
+          },
+          "trace": {
+            "createdBy": "diegoxtr",
+            "createdAtUtc": "2026-04-17T19:35:13.4765611+00:00",
+            "updatedBy": "diegoxtr",
+            "updatedAtUtc": "2026-04-17T19:36:22.6672668+00:00",
+            "tags": [
+              "evidence"
+            ],
+            "relatedIds": [],
+            "modelName": null,
+            "modelVersion": null
+          }
+        }
+      ],
+      "conclusions": [
+        {
+          "summary": "The v4 agriculture regression repo validates the first branch-like hypothesis layer: competing interpretations can coexist, merge, supersede, and share evidence coherently inside one lineage group.",
+          "state": 1,
+          "decisionIds": [
+            {
+              "value": "4d27f85db3cc45258d8b0c7715ef9a2e"
+            }
+          ],
+          "evidenceIds": [
+            {
+              "value": "c383fb0b49e345a19cf69d53cbfd5a03"
+            }
+          ],
+          "goalIds": [
+            {
+              "value": "8508aa108adf444fba9af1dcfd1f6d4e"
+            },
+            {
+              "value": "34b5bcc4a37440d18cfe927b326c19e1"
+            }
+          ],
+          "taskIds": [
+            {
+              "value": "f015ca16078a4174a53d6986e8064671"
+            },
+            {
+              "value": "d5c559decfbf4050981bebab4130518a"
+            }
+          ],
+          "id": {
+            "value": "73f19fce42564a5193c16b3110b8d3c1"
+          },
+          "trace": {
+            "createdBy": "diegoxtr",
+            "createdAtUtc": "2026-04-17T19:35:15.0937221+00:00",
+            "updatedBy": null,
+            "updatedAtUtc": null,
+            "tags": [
+              "conclusion"
+            ],
+            "relatedIds": [],
+            "modelName": null,
+            "modelVersion": null
+          }
+        }
+      ],
+      "runs": [],
+      "id": {
+        "value": "b5820ed4f12f4112ac8f042d4d09666a"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T19:25:50.0791539+00:00",
+        "updatedBy": "diegoxtr",
+        "updatedAtUtc": "2026-04-17T19:45:43.1741089+00:00",
+        "tags": [
+          "project"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    "runbooks": [],
+    "triggers": [
+      {
+        "kind": 1,
+        "summary": "Open goal line: Validate branch-like hypothesis semantics on the agriculture contradiction case",
+        "text": "Use the same contradiction-heavy agricultural text as a regression case for the new branch-like hypothesis layer.",
+        "fingerprint": "e5351c8eb8e02c21cc27765277a1bcc85d34d462225833e86296e32f35e11ce6",
+        "goalIds": [
+          {
+            "value": "8508aa108adf444fba9af1dcfd1f6d4e"
+          }
+        ],
+        "taskIds": [],
+        "operationalRunbookIds": [],
+        "state": 1,
+        "id": {
+          "value": "7839eeab4cd2402987c91696c31e5894"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-17T19:26:23.2098723+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "trigger"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "kind": 1,
+        "summary": "Open task line: Validate branch-like hypothesis semantics on the agriculture contradiction case",
+        "text": "Create and validate a v4 regression repo that uses the same contradiction-heavy agricultural article to test branch-state, relations, merge, and evidence sharing semantics inside hypotheses.",
+        "fingerprint": "d1fc2ee6cfdd37101a061c68dc6ff43e51ba423d8767c0fd9f15bf96ec1d958b",
+        "goalIds": [],
+        "taskIds": [],
+        "operationalRunbookIds": [],
+        "state": 1,
+        "id": {
+          "value": "981c8d65fadc4be8808c498ab8a38faf"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-17T19:26:23.741187+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "trigger"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "kind": 1,
+        "summary": "Open task line: Run v4 branch-semantics validation on the contradiction article",
+        "text": "Bootstrap the contradiction-heavy agricultural text and validate branch-state, relations, merge, supersede, and evidence-sharing behavior against the new hypothesis-branch model.",
+        "fingerprint": "5b74f5570b920253029b6db4166257bcf0ab1b90246f5f121ff0f45e7665a576",
+        "goalIds": [
+          {
+            "value": "8508aa108adf444fba9af1dcfd1f6d4e"
+          }
+        ],
+        "taskIds": [
+          {
+            "value": "f015ca16078a4174a53d6986e8064671"
+          }
+        ],
+        "operationalRunbookIds": [],
+        "state": 1,
+        "id": {
+          "value": "720c47f1477c4434b77c20c612d2785c"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-17T19:26:49.2922768+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "trigger"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      },
+      {
+        "kind": 1,
+        "summary": "Bootstrap provisional line: Bootstrap map: Bootstrap project map",
+        "text": "Provisional bootstrap line inferred from \u0027agricultural-systems-contradictions.md\u0027. Working problem: En distintos sistemas agr\u00EDcolas del Noroeste Argentino, particularmente en cultivos extensivos como el ma\u00EDz, se ha observado una variabilidad en los rendimient\u2026",
+        "fingerprint": "93a74277e1b8672e897d729ef929c2631a088bb4d199b41cc98d8e0842b648b3",
+        "goalIds": [
+          {
+            "value": "34b5bcc4a37440d18cfe927b326c19e1"
+          }
+        ],
+        "taskIds": [
+          {
+            "value": "d5c559decfbf4050981bebab4130518a"
+          }
+        ],
+        "operationalRunbookIds": [],
+        "state": 1,
+        "id": {
+          "value": "921fc9c5b9d54ac49e30e24f47e9b53d"
+        },
+        "trace": {
+          "createdBy": "diegoxtr",
+          "createdAtUtc": "2026-04-17T19:28:30.1510704+00:00",
+          "updatedBy": null,
+          "updatedAtUtc": null,
+          "tags": [
+            "trigger"
+          ],
+          "relatedIds": [],
+          "modelName": null,
+          "modelVersion": null
+        }
+      }
+    ]
+  },
+  "id": {
+    "value": "0523dbc948104308bb25e230bc79c5e7"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-17T19:45:43.2758452+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "commit"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

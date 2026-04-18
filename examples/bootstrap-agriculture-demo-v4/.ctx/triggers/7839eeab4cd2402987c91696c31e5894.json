@@ -1,0 +1,29 @@
+{
+  "kind": 1,
+  "summary": "Open goal line: Validate branch-like hypothesis semantics on the agriculture contradiction case",
+  "text": "Use the same contradiction-heavy agricultural text as a regression case for the new branch-like hypothesis layer.",
+  "fingerprint": "e5351c8eb8e02c21cc27765277a1bcc85d34d462225833e86296e32f35e11ce6",
+  "goalIds": [
+    {
+      "value": "8508aa108adf444fba9af1dcfd1f6d4e"
+    }
+  ],
+  "taskIds": [],
+  "operationalRunbookIds": [],
+  "state": 1,
+  "id": {
+    "value": "7839eeab4cd2402987c91696c31e5894"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-17T19:26:23.2098723+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "trigger"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

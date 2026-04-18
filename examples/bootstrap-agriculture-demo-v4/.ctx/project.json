@@ -1,0 +1,21 @@
+﻿{
+  "name": "Bootstrap Agriculture Demo V4",
+  "description": "Branch-like hypothesis semantics validation repo for the agricultural contradiction text",
+  "defaultBranch": "main",
+  "state": 1,
+  "id": {
+    "value": "0f5b44e228da46c6b2bf46babe9bddc1"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-17T19:25:50.0791539+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "project"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

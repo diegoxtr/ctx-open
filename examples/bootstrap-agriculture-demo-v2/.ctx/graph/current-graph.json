@@ -1,0 +1,459 @@
+﻿{
+  "project": {
+    "name": "Bootstrap Agriculture Demo V2",
+    "description": "Hypothesis-isolation bootstrap validation for contradiction-heavy agricultural text",
+    "defaultBranch": "main",
+    "state": 1,
+    "id": {
+      "value": "fbfed5a4bc1f414fa0caf378d306a0d4"
+    },
+    "trace": {
+      "createdBy": "diegoxtr",
+      "createdAtUtc": "2026-04-17T18:11:28.1232378+00:00",
+      "updatedBy": null,
+      "updatedAtUtc": null,
+      "tags": [
+        "project"
+      ],
+      "relatedIds": [],
+      "modelName": null,
+      "modelVersion": null
+    }
+  },
+  "goals": [
+    {
+      "parentGoalId": null,
+      "title": "Validate bootstrap v2 hypothesis isolation on the agriculture contradiction case",
+      "description": "Run the same agriculture contradiction example again, but preserve competing interpretations as separate provisional hypotheses instead of collapsing them into one synthesis.",
+      "priority": 1,
+      "state": 1,
+      "taskIds": [
+        {
+          "value": "8cfc6fc853904bd6bf16fdf6b4315088"
+        }
+      ],
+      "id": {
+        "value": "db256f9e68ab4354a86e53ca583186f9"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:12:03.3026203+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "goal"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "parentGoalId": null,
+      "title": "Bootstrap map: Bootstrap project map",
+      "description": "Provisional bootstrap line inferred from \u0027agricultural-systems-contradictions.md\u0027. Working problem: En distintos sistemas agr\u00EDcolas del Noroeste Argentino, particularmente en cultivos extensivos como el ma\u00EDz, se ha observado una variabilidad en los rendimient\u2026",
+      "priority": 100,
+      "state": 1,
+      "taskIds": [
+        {
+          "value": "fed25b2b821b4eca9e13f0d948e8e64b"
+        }
+      ],
+      "id": {
+        "value": "5e66304918064f41a0f747f8408338b3"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:23:26.3153008+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "goal"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "goalId": {
+        "value": "db256f9e68ab4354a86e53ca583186f9"
+      },
+      "title": "Plan v2 bootstrap isolation steps before implementation",
+      "description": "Define the exact repeatable steps for a second-pass contradiction test: map, apply, inspect whether hypotheses remain separate, then close with testing conclusions.",
+      "state": 2,
+      "dependsOnTaskIds": [],
+      "hypothesisIds": [
+        {
+          "value": "3ad4b2edda34408cbee649266dc4ee7c"
+        }
+      ],
+      "parentTaskId": null,
+      "id": {
+        "value": "8cfc6fc853904bd6bf16fdf6b4315088"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:12:16.2441542+00:00",
+        "updatedBy": "diegoxtr",
+        "updatedAtUtc": "2026-04-17T18:12:32.2183544+00:00",
+        "tags": [
+          "task"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "goalId": {
+        "value": "5e66304918064f41a0f747f8408338b3"
+      },
+      "title": "Review bootstrap thread: Bootstrap project map",
+      "description": "Validate the provisional bootstrap interpretation inferred from \u0027agricultural-systems-contradictions.md\u0027. Review the inferred hypotheses and evidence before promoting any decision.",
+      "state": 1,
+      "dependsOnTaskIds": [],
+      "hypothesisIds": [
+        {
+          "value": "6ec5d49e280947f4a0b47a38feecd970"
+        }
+      ],
+      "parentTaskId": null,
+      "id": {
+        "value": "fed25b2b821b4eca9e13f0d948e8e64b"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:23:26.3158626+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "task"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    }
+  ],
+  "hypotheses": [
+    {
+      "statement": "The agriculture contradiction case can be re-run as a v2 experiment where bootstrap preserves multiple live interpretations if the provisional model isolates candidate hypotheses before synthesis.",
+      "rationale": "The first demo already proved that CTX review can sustain multiple hypotheses after manual correction. The v2 test should determine whether that coexistence can be present from the start of the bootstrap flow.",
+      "confidence": 0.8,
+      "impact": 0.89,
+      "evidenceStrength": 0.71,
+      "costToValidate": 0.34,
+      "state": 0,
+      "taskIds": [],
+      "evidenceIds": [
+        {
+          "value": "7f70c2ddf9bb4009984a0070121fb6e7"
+        }
+      ],
+      "probability": 0.8,
+      "score": 0.6995,
+      "id": {
+        "value": "e934df4cffc943e5976d5e62558cdb0e"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:12:16.7305896+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "hypothesis"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "statement": "The v2 planning task should treat microbiota-first, microclimate-first, and complex-interaction interpretations as separate provisional hypotheses from the beginning of the experiment.",
+      "rationale": "This makes the test measurable: if the line collapses back into one global synthesis, v2 failed its main design target.",
+      "confidence": 0.81,
+      "impact": 0.87,
+      "evidenceStrength": 0.72,
+      "costToValidate": 0.28,
+      "state": 0,
+      "taskIds": [
+        {
+          "value": "8cfc6fc853904bd6bf16fdf6b4315088"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "177a908402264bcca475b2926afeb340"
+        }
+      ],
+      "probability": 0.81,
+      "score": 0.7040,
+      "id": {
+        "value": "3ad4b2edda34408cbee649266dc4ee7c"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:12:52.1790248+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "hypothesis"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "statement": "En distintos sistemas agr\u00EDcolas del Noroeste Argentino, particularmente en cultivos extensivos como el ma\u00EDz, se ha observado una variabilidad en los rendimient\u2026",
+      "rationale": "Bootstrap inference: Derived from high-signal source material during bootstrap mapping.",
+      "confidence": 0.68,
+      "impact": 0.68,
+      "evidenceStrength": 0.68,
+      "costToValidate": 0.4,
+      "state": 0,
+      "taskIds": [
+        {
+          "value": "fed25b2b821b4eca9e13f0d948e8e64b"
+        }
+      ],
+      "evidenceIds": [],
+      "probability": 0.68,
+      "score": 0.5720,
+      "id": {
+        "value": "6ec5d49e280947f4a0b47a38feecd970"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:23:26.3170784+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "hypothesis",
+          "bootstrap",
+          "provisional"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    }
+  ],
+  "decisions": [],
+  "evidence": [
+    {
+      "title": "V1 contradiction demo motivates an isolation-first v2",
+      "summary": "The first contradiction demo showed that CTX review can hold multiple interpretations after manual repair, so the next experiment should start by preserving them as separate provisional hypotheses rather than synthesizing them immediately.",
+      "source": "../bootstrap-agriculture-demo/REAL_TESTING.md",
+      "kind": 3,
+      "confidence": 0.5,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "8cfc6fc853904bd6bf16fdf6b4315088"
+        }
+      ],
+      "id": {
+        "value": "30b928fa882f48ee8b6ed546d32c225c"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:12:32.6118506+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "V2 isolation hypothesis is grounded in the closed contradiction regression case",
+      "summary": "The closed v1 contradiction demo already proved that multiple competing interpretations can coexist after manual CTX review. That directly supports the v2 hypothesis that the next bootstrap pass should preserve them earlier instead of synthesizing them away.",
+      "source": "../bootstrap-agriculture-demo/REAL_TESTING.md",
+      "kind": 0,
+      "confidence": 0.5,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "e934df4cffc943e5976d5e62558cdb0e"
+        }
+      ],
+      "id": {
+        "value": "7f70c2ddf9bb4009984a0070121fb6e7"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:12:51.7123174+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "V2 success requires parallel provisional hypotheses",
+      "summary": "The experiment is only meaningful if the same agriculture contradiction text is evaluated as at least three parallel interpretations from the start: microbiota-first, microclimate-first, and complex interaction. That gives the planning task a concrete pass/fail target.",
+      "source": "V2_PLAN.md",
+      "kind": 0,
+      "confidence": 0.5,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "8cfc6fc853904bd6bf16fdf6b4315088"
+        }
+      ],
+      "id": {
+        "value": "2778a3d2e0674119a9166b0833cff819"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:12:52.8277976+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "V2 plan explicitly defines three parallel interpretations as the pass condition",
+      "summary": "The v2 plan names microbiota-first, microclimate-first, and complex-interaction interpretations as separate provisional hypotheses that must remain alive after apply. That directly supports the task-linked v2 isolation hypothesis.",
+      "source": "V2_PLAN.md",
+      "kind": 0,
+      "confidence": 0.5,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "3ad4b2edda34408cbee649266dc4ee7c"
+        }
+      ],
+      "id": {
+        "value": "177a908402264bcca475b2926afeb340"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:13:03.0037173+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Supporting signal 1",
+      "summary": "Sin embargo, esta hip\u00F3tesis comenz\u00F3 a debilitarse al observarse casos en los que una alta concentraci\u00F3n de estos microorganismos no se traduc\u00EDa en mejores resu\u2026",
+      "source": "C:\\sources\\ctx-private\\examples\\bootstrap-agriculture-demo-v2\\agricultural-systems-contradictions.md",
+      "kind": 2,
+      "confidence": 0.64,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "fed25b2b821b4eca9e13f0d948e8e64b"
+        }
+      ],
+      "id": {
+        "value": "5a1c29b392d642f3ada6eb5b523fbb0c"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:23:26.3225064+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence",
+          "bootstrap",
+          "provisional"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Supporting signal 2",
+      "summary": "Al analizar de manera conjunta los datos de microbiota y microclima, se esperaba encontrar una explicaci\u00F3n m\u00E1s robusta. Sin embargo, los resultados no mostraro\u2026",
+      "source": "C:\\sources\\ctx-private\\examples\\bootstrap-agriculture-demo-v2\\agricultural-systems-contradictions.md",
+      "kind": 2,
+      "confidence": 0.64,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "fed25b2b821b4eca9e13f0d948e8e64b"
+        }
+      ],
+      "id": {
+        "value": "bf2a514ee61140c7926e48a9db7d6d7a"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:23:26.3226889+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence",
+          "bootstrap",
+          "provisional"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Supporting signal 3",
+      "summary": "Sin embargo, estas interpretaciones no son mutuamente excluyentes, y en algunos casos parecen entrar en conflicto directo. Por ejemplo, si la microbiota fuera\u2026",
+      "source": "C:\\sources\\ctx-private\\examples\\bootstrap-agriculture-demo-v2\\agricultural-systems-contradictions.md",
+      "kind": 2,
+      "confidence": 0.64,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "fed25b2b821b4eca9e13f0d948e8e64b"
+        }
+      ],
+      "id": {
+        "value": "959416a5fc7a4e52ac43d81d02344b89"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:23:26.3227+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence",
+          "bootstrap",
+          "provisional"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    }
+  ],
+  "conclusions": [],
+  "runs": []
+}

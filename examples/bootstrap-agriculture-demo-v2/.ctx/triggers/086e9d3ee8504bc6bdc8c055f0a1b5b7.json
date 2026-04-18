@@ -1,0 +1,29 @@
+{
+  "kind": 1,
+  "summary": "Open goal line: Validate bootstrap v2 hypothesis isolation on the agriculture contradiction case",
+  "text": "Run the same agriculture contradiction example again, but preserve competing interpretations as separate provisional hypotheses instead of collapsing them into one synthesis.",
+  "fingerprint": "cb9dc0a58f07d8ea8db5a9c2be64a8e1910b48e478c0c3d0fc1180641e3cb2bc",
+  "goalIds": [
+    {
+      "value": "db256f9e68ab4354a86e53ca583186f9"
+    }
+  ],
+  "taskIds": [],
+  "operationalRunbookIds": [],
+  "state": 1,
+  "id": {
+    "value": "086e9d3ee8504bc6bdc8c055f0a1b5b7"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-17T18:12:03.3550828+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "trigger"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

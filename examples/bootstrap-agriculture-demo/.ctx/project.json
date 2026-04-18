@@ -1,0 +1,21 @@
+﻿{
+  "name": "Bootstrap Agriculture Demo",
+  "description": "Bootstrap validation repo for an agricultural systems article",
+  "defaultBranch": "main",
+  "state": 1,
+  "id": {
+    "value": "b7dba27b3b374cf695302587553b438b"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-17T17:22:07.0804915+00:00",
+    "updatedBy": null,
+    "updatedAtUtc": null,
+    "tags": [
+      "project"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}

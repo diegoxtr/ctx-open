@@ -1,0 +1,595 @@
+﻿{
+  "repositoryVersion": "1.0",
+  "currentBranch": "main",
+  "headCommitId": {
+    "value": "47bf632e4eb94f9faeb240280544abd1"
+  },
+  "dirty": true,
+  "project": {
+    "name": "Bootstrap Agriculture Demo V3",
+    "description": "Implementation validation repo for coexistence-first bootstrap on the agricultural contradiction text",
+    "defaultBranch": "main",
+    "state": 1,
+    "id": {
+      "value": "abb0ab9eed7f4d7d89a32277d1034db5"
+    },
+    "trace": {
+      "createdBy": "diegoxtr",
+      "createdAtUtc": "2026-04-17T18:25:17.8458342+00:00",
+      "updatedBy": null,
+      "updatedAtUtc": null,
+      "tags": [
+        "project"
+      ],
+      "relatedIds": [],
+      "modelName": null,
+      "modelVersion": null
+    }
+  },
+  "goals": [
+    {
+      "parentGoalId": null,
+      "title": "Bootstrap map: Bootstrap project map",
+      "description": "Provisional bootstrap line inferred from \u0027agricultural-systems-contradictions.md\u0027. Working problem: En distintos sistemas agr\u00EDcolas del Noroeste Argentino, particularmente en cultivos extensivos como el ma\u00EDz, se ha observado una variabilidad en los rendimient\u2026",
+      "priority": 100,
+      "state": 1,
+      "taskIds": [
+        {
+          "value": "0e914c4b3c26446e9ac19b9d4d533da1"
+        }
+      ],
+      "id": {
+        "value": "c7974547379f427f8bd2b2fd4e2a2feb"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:29:11.9685403+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "goal"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "goalId": {
+        "value": "c7974547379f427f8bd2b2fd4e2a2feb"
+      },
+      "title": "Review bootstrap thread: Bootstrap project map",
+      "description": "Validate the provisional bootstrap interpretation inferred from \u0027agricultural-systems-contradictions.md\u0027. Open question: Does the source support microbiota as a dominant driver, or only as a conditional contributor?",
+      "state": 4,
+      "dependsOnTaskIds": [],
+      "hypothesisIds": [
+        {
+          "value": "e5b827ae6e224c27be58686bf7de0fc6"
+        },
+        {
+          "value": "5bfa99ba03df4060bc6a23a42f40ed21"
+        },
+        {
+          "value": "d7b1506f9772450db42d12d686d7aa0e"
+        }
+      ],
+      "parentTaskId": null,
+      "id": {
+        "value": "0e914c4b3c26446e9ac19b9d4d533da1"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:29:11.9693087+00:00",
+        "updatedBy": "diegoxtr",
+        "updatedAtUtc": "2026-04-17T18:33:20.8304385+00:00",
+        "tags": [
+          "task"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    }
+  ],
+  "hypotheses": [
+    {
+      "statement": "Microbiota may explain part of the yield variability, but the source presents it as a conditional interpretation rather than a stable standalone driver.",
+      "rationale": "Bootstrap inference: The source explicitly entertains a microbiota-first reading and then weakens it with contradictory sectors and inverse cases.",
+      "confidence": 0.74,
+      "impact": 0.74,
+      "evidenceStrength": 0.74,
+      "costToValidate": 0.4,
+      "state": 2,
+      "taskIds": [
+        {
+          "value": "0e914c4b3c26446e9ac19b9d4d533da1"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "289949d137d3473f9548e75c0d066d6f"
+        },
+        {
+          "value": "2859e46769064178a4561c487af1579b"
+        }
+      ],
+      "branchState": 2,
+      "branchRole": 0,
+      "lineageGroupId": "agriculture-conflict",
+      "parentHypothesisIds": null,
+      "mergedIntoHypothesisId": {
+        "value": "d7b1506f9772450db42d12d686d7aa0e"
+      },
+      "supersedesHypothesisIds": null,
+      "relations": [
+        {
+          "relationType": 0,
+          "targetHypothesisId": {
+            "value": "5bfa99ba03df4060bc6a23a42f40ed21"
+          },
+          "note": "same contradiction set"
+        },
+        {
+          "relationType": 1,
+          "targetHypothesisId": {
+            "value": "d7b1506f9772450db42d12d686d7aa0e"
+          },
+          "note": null
+        }
+      ],
+      "probability": 0.74,
+      "score": 0.6260,
+      "id": {
+        "value": "e5b827ae6e224c27be58686bf7de0fc6"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:29:11.970637+00:00",
+        "updatedBy": "diegoxtr",
+        "updatedAtUtc": "2026-04-17T19:13:55.8115797+00:00",
+        "tags": [
+          "hypothesis",
+          "bootstrap",
+          "provisional"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "statement": "Microclimate may explain part of the local yield differences, but the source does not support it as a consistently predictive standalone interpretation.",
+      "rationale": "Bootstrap inference: The source introduces microclimate as a serious alternative explanation and then shows several cases where apparently favorable conditions still fail to predict yield.",
+      "confidence": 0.74,
+      "impact": 0.74,
+      "evidenceStrength": 0.74,
+      "costToValidate": 0.4,
+      "state": 2,
+      "taskIds": [
+        {
+          "value": "0e914c4b3c26446e9ac19b9d4d533da1"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "307ba97e7581425d82067e0e18b0f205"
+        },
+        {
+          "value": "67c716e43a714e9da31d6a9eb6c5fee8"
+        }
+      ],
+      "branchState": 0,
+      "branchRole": 0,
+      "lineageGroupId": "agriculture-conflict",
+      "parentHypothesisIds": null,
+      "mergedIntoHypothesisId": null,
+      "supersedesHypothesisIds": null,
+      "relations": [
+        {
+          "relationType": 0,
+          "targetHypothesisId": {
+            "value": "e5b827ae6e224c27be58686bf7de0fc6"
+          },
+          "note": "same contradiction set"
+        }
+      ],
+      "probability": 0.74,
+      "score": 0.6260,
+      "id": {
+        "value": "5bfa99ba03df4060bc6a23a42f40ed21"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:29:11.970911+00:00",
+        "updatedBy": "diegoxtr",
+        "updatedAtUtc": "2026-04-17T19:13:55.475194+00:00",
+        "tags": [
+          "hypothesis",
+          "bootstrap",
+          "provisional"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "statement": "The strongest integrative reading is a complex interaction model in which microbiota, microclimate, and hidden structural factors jointly shape yield through non-linear dynamics.",
+      "rationale": "Bootstrap inference: The source explicitly leaves multiple interpretations alive, reports persistent sector behavior, and states that available evidence may support contradictory readings depending on the data slice examined.",
+      "confidence": 0.8,
+      "impact": 0.8,
+      "evidenceStrength": 0.8,
+      "costToValidate": 0.4,
+      "state": 2,
+      "taskIds": [
+        {
+          "value": "0e914c4b3c26446e9ac19b9d4d533da1"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "decbd80634b84239a3a5f8cb44354d96"
+        },
+        {
+          "value": "70102c22d9bf4ab8a04b1707955aaa94"
+        },
+        {
+          "value": "307ba97e7581425d82067e0e18b0f205"
+        }
+      ],
+      "branchState": 0,
+      "branchRole": 1,
+      "lineageGroupId": "agriculture-conflict",
+      "parentHypothesisIds": null,
+      "mergedIntoHypothesisId": null,
+      "supersedesHypothesisIds": null,
+      "relations": null,
+      "probability": 0.8,
+      "score": 0.680,
+      "id": {
+        "value": "d7b1506f9772450db42d12d686d7aa0e"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:29:11.9709198+00:00",
+        "updatedBy": "diegoxtr",
+        "updatedAtUtc": "2026-04-17T19:14:29.1556364+00:00",
+        "tags": [
+          "hypothesis",
+          "bootstrap",
+          "provisional"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "title": "Use coexistence-first hypothesis isolation for contradiction-heavy bootstrap sources",
+      "rationale": "The v3 implementation changed the actual behavior on the agriculture contradiction article: map and apply now preserve competing interpretations as parallel provisional hypotheses instead of collapsing them into one sentence. That makes contradiction reviewable inside CTX without forcing premature coherence.",
+      "state": 1,
+      "hypothesisIds": [
+        {
+          "value": "e5b827ae6e224c27be58686bf7de0fc6"
+        },
+        {
+          "value": "5bfa99ba03df4060bc6a23a42f40ed21"
+        },
+        {
+          "value": "d7b1506f9772450db42d12d686d7aa0e"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "3bc575b3e52c4646a6ad41fdbcd3c842"
+        },
+        {
+          "value": "289949d137d3473f9548e75c0d066d6f"
+        },
+        {
+          "value": "307ba97e7581425d82067e0e18b0f205"
+        },
+        {
+          "value": "decbd80634b84239a3a5f8cb44354d96"
+        }
+      ],
+      "id": {
+        "value": "6d5d9569e1e74f22af40708c052d3b14"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:32:54.1709956+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "decision"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "title": "Bootstrap evidence: agricultural-systems-contradictions.md",
+      "summary": "En una serie de lotes con condiciones aparentemente homog\u00E9neas, se detectaron diferencias de rendimiento superiores al 20% entre sectores separados por menos de 15 metros. En principio, este fen\u00F3meno fue atribuido a var\u2026",
+      "source": "C:\\sources\\ctx-private\\examples\\bootstrap-agriculture-demo-v3\\agricultural-systems-contradictions.md",
+      "kind": 2,
+      "confidence": 0.74,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "e5b827ae6e224c27be58686bf7de0fc6"
+        }
+      ],
+      "id": {
+        "value": "289949d137d3473f9548e75c0d066d6f"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:29:11.9725546+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence",
+          "bootstrap",
+          "provisional"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Bootstrap evidence: agricultural-systems-contradictions.md",
+      "summary": "Sin embargo, esta hip\u00F3tesis comenz\u00F3 a debilitarse al observarse casos en los que una alta concentraci\u00F3n de estos microorganismos no se traduc\u00EDa en mejores resultados productivos. En algunos sectores, incluso, se registr\u2026",
+      "source": "C:\\sources\\ctx-private\\examples\\bootstrap-agriculture-demo-v3\\agricultural-systems-contradictions.md",
+      "kind": 2,
+      "confidence": 0.74,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "e5b827ae6e224c27be58686bf7de0fc6"
+        }
+      ],
+      "id": {
+        "value": "2859e46769064178a4561c487af1579b"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:29:11.9729423+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence",
+          "bootstrap",
+          "provisional"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Bootstrap evidence: agricultural-systems-contradictions.md",
+      "summary": "Paralelamente, se introdujo un sistema de sensores distribuidos para medir temperatura y humedad a escala microambiental. Los datos obtenidos evidenciaron diferencias significativas dentro de un mismo lote, con variacio\u2026",
+      "source": "C:\\sources\\ctx-private\\examples\\bootstrap-agriculture-demo-v3\\agricultural-systems-contradictions.md",
+      "kind": 2,
+      "confidence": 0.74,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "5bfa99ba03df4060bc6a23a42f40ed21"
+        },
+        {
+          "entityType": "Hypothesis",
+          "entityId": "d7b1506f9772450db42d12d686d7aa0e"
+        }
+      ],
+      "id": {
+        "value": "307ba97e7581425d82067e0e18b0f205"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:29:11.9729843+00:00",
+        "updatedBy": "diegoxtr",
+        "updatedAtUtc": "2026-04-17T19:14:29.1478892+00:00",
+        "tags": [
+          "evidence",
+          "bootstrap",
+          "provisional"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Bootstrap evidence: agricultural-systems-contradictions.md",
+      "summary": "No obstante, esta interpretaci\u00F3n tampoco logr\u00F3 sostenerse de forma consistente. En varias mediciones, zonas con condiciones microclim\u00E1ticas aparentemente favorables no mostraron mejoras en la productividad, mientras que\u2026",
+      "source": "C:\\sources\\ctx-private\\examples\\bootstrap-agriculture-demo-v3\\agricultural-systems-contradictions.md",
+      "kind": 2,
+      "confidence": 0.74,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "5bfa99ba03df4060bc6a23a42f40ed21"
+        }
+      ],
+      "id": {
+        "value": "67c716e43a714e9da31d6a9eb6c5fee8"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:29:11.9730001+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence",
+          "bootstrap",
+          "provisional"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Bootstrap evidence: agricultural-systems-contradictions.md",
+      "summary": "Al analizar de manera conjunta los datos de microbiota y microclima, se esperaba encontrar una explicaci\u00F3n m\u00E1s robusta. Sin embargo, los resultados no mostraron una integraci\u00F3n clara. Algunos sectores con alta actividad\u2026",
+      "source": "C:\\sources\\ctx-private\\examples\\bootstrap-agriculture-demo-v3\\agricultural-systems-contradictions.md",
+      "kind": 2,
+      "confidence": 0.8,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "d7b1506f9772450db42d12d686d7aa0e"
+        }
+      ],
+      "id": {
+        "value": "decbd80634b84239a3a5f8cb44354d96"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:29:11.9730179+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence",
+          "bootstrap",
+          "provisional"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "Bootstrap evidence: agricultural-systems-contradictions.md",
+      "summary": "A lo largo de m\u00FAltiples campa\u00F1as, se observ\u00F3 que ciertos sectores del lote tend\u00EDan a mantener su comportamiento relativo, independientemente de las condiciones generales del a\u00F1o. Este patr\u00F3n de persistencia podr\u00EDa inter\u2026",
+      "source": "C:\\sources\\ctx-private\\examples\\bootstrap-agriculture-demo-v3\\agricultural-systems-contradictions.md",
+      "kind": 2,
+      "confidence": 0.8,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Hypothesis",
+          "entityId": "d7b1506f9772450db42d12d686d7aa0e"
+        }
+      ],
+      "id": {
+        "value": "70102c22d9bf4ab8a04b1707955aaa94"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:29:11.973037+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence",
+          "bootstrap",
+          "provisional"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    },
+    {
+      "title": "V3 implementation preserves contradiction through map and apply",
+      "summary": "The implemented coexistence-first bootstrap now keeps microbiota-first, microclimate-first, and complex-interaction interpretations alive on the same article, and apply promotes all three instead of collapsing them into one literal line.",
+      "source": "REAL_TESTING.md",
+      "kind": 3,
+      "confidence": 0.5,
+      "state": 2,
+      "supports": [
+        {
+          "entityType": "Task",
+          "entityId": "0e914c4b3c26446e9ac19b9d4d533da1"
+        }
+      ],
+      "id": {
+        "value": "3bc575b3e52c4646a6ad41fdbcd3c842"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:32:43.5990296+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "evidence"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    }
+  ],
+  "conclusions": [
+    {
+      "summary": "The v3 agriculture contradiction validation shows that bootstrap no longer collapses contradiction by default on this case. The same source now yields three parallel provisional hypotheses with direct evidence and useful open questions, so contradiction can be reviewed inside CTX before any later synthesis decision.",
+      "state": 1,
+      "decisionIds": [
+        {
+          "value": "6d5d9569e1e74f22af40708c052d3b14"
+        }
+      ],
+      "evidenceIds": [
+        {
+          "value": "3bc575b3e52c4646a6ad41fdbcd3c842"
+        }
+      ],
+      "goalIds": [
+        {
+          "value": "c7974547379f427f8bd2b2fd4e2a2feb"
+        }
+      ],
+      "taskIds": [
+        {
+          "value": "0e914c4b3c26446e9ac19b9d4d533da1"
+        }
+      ],
+      "id": {
+        "value": "0aa2fff877fc4783871282fa5499f456"
+      },
+      "trace": {
+        "createdBy": "diegoxtr",
+        "createdAtUtc": "2026-04-17T18:33:05.520805+00:00",
+        "updatedBy": null,
+        "updatedAtUtc": null,
+        "tags": [
+          "conclusion"
+        ],
+        "relatedIds": [],
+        "modelName": null,
+        "modelVersion": null
+      }
+    }
+  ],
+  "runs": [],
+  "id": {
+    "value": "085cc2f48d4043ab8a1e652d68b97bdf"
+  },
+  "trace": {
+    "createdBy": "diegoxtr",
+    "createdAtUtc": "2026-04-17T18:25:17.8458342+00:00",
+    "updatedBy": "diegoxtr",
+    "updatedAtUtc": "2026-04-17T19:14:29.1567033+00:00",
+    "tags": [
+      "project"
+    ],
+    "relatedIds": [],
+    "modelName": null,
+    "modelVersion": null
+  }
+}
