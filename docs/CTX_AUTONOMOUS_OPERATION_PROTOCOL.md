@@ -20,11 +20,67 @@ The model must advance based on:
 - conclusions
 - cognitive commits
 
+Semantic rule:
+
+- `Working context` is where active reasoning lives
+- `ctx commit` is where durable cognitive state is preserved
+- do not force a cognitive commit for every thought or every local task closure
+
 Operational reality:
 
 - many models do not naturally use CTX correctly on first contact
 - the operator may need to repeat the instruction to use CTX
 - that repetition is expected when the model drifts back into chat-led planning
+
+## Entry split: existing repo vs new project
+
+The model must distinguish these two cases immediately.
+
+## State-driven operator rule
+
+Do not operate CTX from a raw command dump.
+Operate from the current state and the next command implied by that state.
+
+- No CTX repository:
+  - next command -> `ctx init --name "<project>"`
+- Existing CTX repository with open work:
+  - next command -> `ctx next`
+- Existing CTX repository with pending cognitive changes:
+  - next command -> `ctx closeout`
+- Existing CTX repository at a durable boundary:
+  - next command -> `ctx commit -m "<durable result>"`
+- Existing CTX repository with no open work:
+  - next command -> `ctx next`
+
+### Existing CTX repository
+
+If `.ctx/` already exists in the project root, the first move is not `ctx init`.
+
+Use:
+
+```powershell
+ctx
+ctx status
+ctx audit
+ctx next
+```
+
+Then continue from the current CTX state.
+
+### New cognitive project
+
+If `.ctx/` does not exist, initialize first:
+
+```powershell
+ctx init --name "<project>"
+```
+
+After initialization:
+
+- if the repository or source material already exists, prefer bootstrap
+- if the work is greenfield, create the first goal, task, and hypothesis explicitly
+
+Only after that should the model move into the normal `ctx next` loop.
 
 ## Guiding principle
 
@@ -99,6 +155,8 @@ ctx audit
 ctx next
 ```
 
+For a new project, initialize first and only then enter this inspection cycle.
+
 If extra focus is needed:
 
 ```powershell
@@ -133,6 +191,13 @@ That means:
 - only then open or execute the next
 
 Do not spread work across multiple open tasks unless CTX explicitly records a dependency or real block.
+
+Important correction:
+
+- task closure is not automatically equal to `ctx commit`
+- a task may close inside a larger still-open cognitive block
+- a commit should happen when the resulting state is durable enough to snapshot, not only because the administrative task state changed
+- if a cognitive delta exists, it must remain visible either in `Working context` or in `Commit history`
 
 Additional strict rule:
 
@@ -270,6 +335,13 @@ Rule:
 
 - do not go too long without a cognitive commit
 - each substantial block of work must end with a cognitive commit
+
+Commit boundary rule:
+
+- commit durable cognitive state transitions
+- do not commit every micro-thought
+- do not treat every small task closure as an automatic commit boundary
+- use `Working context` to hold active reasoning until the line stabilizes
 
 ## 9. Code commit
 

@@ -14,6 +14,100 @@ That same property also gives CTX unusually high value when generating structure
 Since the cognitive versioner stabilized in day-to-day development, we have not lost context again in practice. That result is still striking, and it is one of the strongest signals that this approach points toward what comes next.
 CTX is not only for coding workflows. It is also for cognitive planning, research, investigation, architecture, product thinking, operational continuity, and any long-running line of reasoning that should remain reconstructable over time.
 
+## Commit Semantics
+
+CTX commit history should not be treated as a raw thought stream.
+
+The correct model is:
+
+- `Working context` holds cognition in motion
+- `ctx commit` snapshots a durable cognitive state transition
+- task closure can suggest a commit boundary, but does not define it by itself
+
+That means:
+
+- not every thought deserves a commit
+- not every closed task deserves its own commit
+- unresolved exploration can stay in `Working context` until the line stabilizes
+- commit history should read like durable state changes, not like a chat transcript of reasoning
+
+## Agent Start Model
+
+Do not teach a new agent CTX as a raw list of commands.
+Teach it as a small state machine.
+
+The minimum model is:
+
+- `Working context` = cognition in motion
+- `Commit history` = durable cognitive snapshots
+- if something is not visible in `Working context`, it must already be visible in `Commit history`
+- `ctx closeout` decides whether the current block crossed a durable boundary
+- `ctx commit` records that boundary
+
+## Existing Repo vs New Project
+
+The first action depends on whether CTX already exists in the repository.
+
+### Existing CTX repository
+
+Use this when the project root already contains `.ctx/`.
+
+```powershell
+ctx
+ctx status
+ctx audit
+ctx next
+```
+
+Then continue from the recommended line, record evidence and decisions while working, and use `ctx closeout` before `ctx commit`.
+
+### New cognitive project
+
+Use this when the project does not have `.ctx/` yet.
+
+```powershell
+ctx init --name "<project>"
+```
+
+After initialization, choose one of these:
+
+- if the repository or document set already exists, use bootstrap:
+
+```powershell
+ctx bootstrap map --from <path>
+ctx bootstrap apply --from <path>
+```
+
+- if the work is greenfield, create the first cognitive line explicitly:
+
+```powershell
+ctx goal add --title "<goal>"
+ctx task add --title "<task>" --goal <goalId>
+ctx hypo add --statement "<hypothesis>" --task <taskId>
+```
+
+Then:
+
+```powershell
+ctx next
+```
+
+## Minimum Operator Loop
+
+For most agents, the correct loop is:
+
+```powershell
+ctx
+ctx next
+```
+
+Do the work.
+
+```powershell
+ctx closeout
+ctx commit -m "<durable result>"
+```
+
 ## Why It Matters
 
 Without durable working memory, agents keep re-investigating the past.
@@ -209,6 +303,28 @@ In practice, the operator often has to restate the rule more than once:
 If you are an autonomous agent, treat CTX as the primary operating surface before free-form reasoning. Read the repository, recover the active cognitive line, inspect the runbooks and origins, and only then execute.
 
 If an agent starts improvising from chat instead of CTX, repeat the instruction and redirect it back to `ctx status`, `ctx audit`, `ctx log`, `ctx graph summary`, and `ctx next`.
+
+Treat CTX as a small operating state machine, not as a giant command list:
+
+- No CTX repository:
+  next command -> `ctx init --name "<project>"`
+- Existing CTX repository with open work:
+  next command -> `ctx next`
+- Existing CTX repository with pending cognitive changes:
+  next command -> `ctx closeout`
+- Existing CTX repository at a durable boundary:
+  next command -> `ctx commit -m "<durable result>"`
+- Existing CTX repository with no open work:
+  next command -> `ctx next`
+
+The minimum loop stays:
+
+```powershell
+ctx
+ctx next
+ctx closeout
+ctx commit -m "<durable result>"
+```
 
 Exceptions should stay narrow:
 

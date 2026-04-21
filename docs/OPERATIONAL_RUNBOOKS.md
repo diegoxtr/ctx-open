@@ -277,10 +277,38 @@ This keeps runbooks separate from `working-context.json` while still making them
 
 ## First runbooks CTX should likely ship
 
+- `CTX planning first`
+- `State-driven CTX startup`
 - `Local publish`
 - `Git closeout`
 - `Recover index.lock`
 - `Viewer local validation`
+- `PowerShell command chaining constraints`
+
+## State-driven startup example
+
+One runbook should teach startup in the same way as the bare `ctx` helper.
+
+- trigger: `startup`, `helper`, `onboarding`
+- when:
+  use when an operator or agent needs to know the next CTX command without reading the full command surface
+- do:
+  - run `ctx`
+  - read `Current State`
+  - execute the printed `Next Command`
+  - if the repo is new, initialize it first
+  - if the repo already exists, stay in the loop:
+    `ctx next -> work -> ctx closeout -> ctx commit -m "..."`
+- verify:
+  - helper, README, CLI docs, and operator protocol all describe the same state-driven loop
+  - the agent can distinguish:
+    - no CTX repo
+    - open work
+    - pending cognitive delta
+    - durable boundary
+    - no open work
+
+This keeps onboarding compact and removes the need to memorize a large command list before the first useful action.
 
 ## Implementation stance
 
