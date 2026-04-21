@@ -34,9 +34,85 @@ ctx <command>
 
 ## General Commands
 
+## First-Use Startup Flows
+
+Do not start from a full command dump.
+Start by deciding which repository state you are in.
+
+## Operator State Machine
+
+CTX should be operated as a small state machine, not as an unordered command list.
+
+| Current state | Meaning | Next command |
+|---|---|---|
+| No CTX repository | `.ctx/` does not exist yet | `ctx init --name "<project>"` |
+| Existing repo with open work | There are active task lines to continue | `ctx next` |
+| Existing repo with pending cognitive changes | `Working context` is dirty and not yet snapshotteado | `ctx closeout` |
+| Existing repo at a durable boundary | Closeout is clear and the block should become durable history | `ctx commit -m "<durable result>"` |
+| Existing repo with no open work | No tasks are active; inspect remaining gaps or confirm closure | `ctx next` |
+
+### Existing CTX repository
+
+Use this when `.ctx/` already exists in the project root.
+
+```powershell
+ctx
+ctx status
+ctx audit
+ctx next
+```
+
+Then continue from the recommended work line.
+
+### New cognitive project
+
+Use this when `.ctx/` does not exist yet.
+
+```powershell
+ctx init --name "<project>"
+```
+
+Then choose one of these:
+
+- existing material already exists:
+
+```powershell
+ctx bootstrap map --from <path>
+ctx bootstrap apply --from <path>
+ctx next
+```
+
+- greenfield work:
+
+```powershell
+ctx goal add --title "<goal>"
+ctx task add --title "<task>" --goal <goalId>
+ctx hypo add --statement "<hypothesis>" --task <taskId>
+ctx next
+```
+
+## Minimum Operator Loop
+
+For most agents, the correct operating loop is:
+
+```powershell
+ctx
+ctx next
+```
+
+Work inside `Working context`, then:
+
+```powershell
+ctx closeout
+ctx commit -m "<durable result>"
+```
+
+`ctx commit` is not a raw thought log.
+It records a durable cognitive state transition.
+
 ### `ctx`
 
-Without arguments, shows basic help.
+Without arguments, shows helper-first operator guidance and points to the canonical command reference.
 
 ```powershell
 dotnet run --project .\Ctx.Cli --
@@ -61,6 +137,20 @@ Options:
 
 ```powershell
 dotnet run --project .\Ctx.Cli -- init --name "CTX Demo" --description "Sample repo" --branch main
+```
+
+### `ctx goal update`
+
+Updates goal metadata or lifecycle state.
+
+Options:
+- `--title <text>`
+- `--description <text>`
+- `--priority <n>`
+- `--state <Draft|Active|Validated|Completed|Superseded|Archived>`
+
+```powershell
+dotnet run --project .\Ctx.Cli -- goal update <goalId> --state Completed
 ```
 
 ### `ctx status`
@@ -206,6 +296,11 @@ Typical usage:
 - run after recording evidence or conclusions
 - run before `ctx commit`
 - run before the Git commit when you are unsure whether CTX is fully closed
+
+Semantic note:
+- `ctx closeout` helps decide whether the current line crossed a durable snapshot boundary
+- it does not mean every closed task must become its own commit
+- use it to decide whether the current cognitive state is stable enough to preserve
 
 ```powershell
 dotnet run --project .\Ctx.Cli -- closeout
@@ -679,6 +774,21 @@ Options:
 dotnet run --project .\Ctx.Cli -- decision add --title "Adopt structured commits" --rationale "Reduces drift" --state Accepted --hypotheses <hypothesisId> --evidence <evidenceId>
 ```
 
+### `ctx decision update <decisionId>`
+
+Updates an existing decision.
+
+Options:
+- `--title <text>`
+- `--rationale <text>`
+- `--state Proposed|Accepted|Superseded`
+- `--hypothesis <id,id>` or `--hypotheses <id,id>`
+- `--evidence <id,id>`
+
+```powershell
+dotnet run --project .\Ctx.Cli -- decision update <decisionId> --state Accepted --evidence <evidenceId>
+```
+
 ### `ctx decision list`
 
 Lists decisions.
@@ -797,6 +907,23 @@ dotnet run --project .\Ctx.Cli -- run show <runId>
 ### `ctx commit`
 
 Creates a cognitive commit of the current state.
+
+Semantic rule:
+
+- `Working context` holds active reasoning
+- `ctx commit` records a durable cognitive state transition
+- task closure can suggest a commit boundary, but does not define it by itself
+
+Use `ctx commit` when the current line crossed a meaningful durability boundary, for example:
+- a decision was accepted
+- a conclusion became stable
+- a branch of reasoning was consolidated enough to preserve
+- a work block reached a state worth reconstructing later without replaying the whole thought process
+
+Do not treat `ctx commit` as:
+- a dump of every thought
+- a mandatory action after every tiny task closure
+- a replacement for `Working context`
 
 Options:
 - `-m <message>`

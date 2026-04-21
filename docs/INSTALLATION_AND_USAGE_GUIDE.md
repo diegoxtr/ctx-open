@@ -135,7 +135,49 @@ dotnet run --project .\Ctx.Cli -- status
 
 If there is no cognitive repository in the current folder, run `init` first.
 
-## 8. Create a cognitive repository
+## 8. First decision after opening a repository
+
+Before doing anything else, decide whether the repository is:
+
+- an existing CTX repository that already contains `.ctx/`
+- or a new project that still needs cognitive initialization
+
+### Existing CTX repository
+
+```powershell
+ctx
+ctx status
+ctx audit
+ctx next
+```
+
+State-driven rule:
+
+- if `ctx` says the repo has pending cognitive changes:
+  - run `ctx closeout`
+- if `ctx` says the repo has open work:
+  - run `ctx next`
+- if `ctx` says the repo is at a durable boundary:
+  - run `ctx commit -m "<durable result>"`
+
+### New project
+
+```powershell
+ctx init --name "<project>"
+```
+
+Then either:
+
+- bootstrap from existing material:
+
+```powershell
+ctx bootstrap map --from <path>
+ctx bootstrap apply --from <path>
+```
+
+- or create the first goal/task/hypothesis manually.
+
+## 9. Create a cognitive repository
 
 Move to a workspace folder and run:
 
@@ -155,7 +197,7 @@ Verify:
 dotnet run --project C:\sources\ctx-open\Ctx.Cli -- status
 ```
 
-## 9. First recommended flow
+## 10. First recommended flow
 
 ### Step 1 - Create a goal
 
@@ -205,7 +247,7 @@ dotnet run --project C:\sources\ctx-open\Ctx.Cli -- run --provider openai --purp
 dotnet run --project C:\sources\ctx-open\Ctx.Cli -- commit -m "first end-to-end flow"
 ```
 
-## 10. Useful commands
+## 11. Useful commands
 
 ### State and navigation
 
@@ -243,7 +285,7 @@ dotnet run --project .\Ctx.Cli -- checkout feature-x
 dotnet run --project .\Ctx.Cli -- merge main
 ```
 
-## 11. Generated local structure
+## 12. Generated local structure
 
 When initializing a repo, CTX creates:
 

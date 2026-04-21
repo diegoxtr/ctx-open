@@ -557,90 +557,174 @@ static string BuildHelpText(string repositoryPath)
 {
     var projectRoot = ResolveProjectRoot(repositoryPath, AppContext.BaseDirectory);
     var projectContext = BuildProjectContextText(projectRoot);
+    var cliCommandsDoc = Path.Combine(projectRoot, "docs", "CLI_COMMANDS.md");
+    var helpState = BuildHelpState(repositoryPath, projectRoot);
+    var branchLine = !string.IsNullOrWhiteSpace(helpState.Branch) ? $"  Branch: {helpState.Branch}" : string.Empty;
+    var dirtyLine = helpState.Dirty.HasValue ? $"  Dirty: {helpState.Dirty.Value}" : string.Empty;
+    var openTasksLine = helpState.OpenTaskCount.HasValue ? $"  Open tasks: {helpState.OpenTaskCount.Value}" : string.Empty;
+    var followupLine = !string.IsNullOrWhiteSpace(helpState.FollowupCommand)
+        ? $"  Follow-up: {helpState.FollowupCommand}"
+        : string.Empty;
 
     return $$"""
 CTX - Cognitive Version Control System
 
-Commands:
-  ctx version
-  ctx doctor
-  ctx audit
-  ctx check [--task <taskId>]
-  ctx closeout
-  ctx preflight --operation <git-closeout|publish-local|viewer-validation|recover-index-lock> [--goal <goalId>] [--task <taskId>]
-  ctx graph summary
-  ctx graph show <nodeId>
-  ctx graph export [--format json|mermaid] [--commit <commitId>]
-  ctx graph lineage --goal <id>
-  ctx graph lineage --conclusion <id>
-  ctx graph lineage --hypothesis <id>
-  ctx graph lineage --decision <id>
-  ctx graph lineage --task <id>
-  ctx thread reconstruct --task <id> [--format json|markdown]
-  ctx bootstrap map --from <path> [--mode auto|article|project] [--max-files <n>]
-  ctx bootstrap apply --from <path> [--mode auto|article|project] [--max-files <n>] [--parent-goal <goalId>]
-  ctx export [--output <path>]
-    ctx import --input <path>
-    ctx init --name <project> [--description <text>] [--branch <name>]
-  ctx status
-  ctx line open --goal <goalId> --title <text> [--description <text>] [--priority <n>] [--task-title <text>] [--task-description <text>]
-  ctx runbook add --title <text> [--kind <Procedure|Troubleshooting|Policy|Guardrail>] --when <text> [--trigger <a,b>] [--do <a,b>] [--verify <a,b>] [--reference <a,b>] [--precondition <a,b>] [--signal <a,b>] [--escalate <a,b>] [--goal <id,id>] [--task <id,id>]
-  ctx runbook list
-  ctx runbook show <runbookId>
-  ctx trigger add --summary <text> [--kind <UserPrompt|AgentPrompt|Continuation|RunbookTrigger|IssueTrigger>] [--text <text>] [--goal <id,id>] [--task <id,id>] [--runbook <id,id>]
-  ctx trigger list
-  ctx trigger show <triggerId>
-  ctx goal add --title <text> [--description <text>] [--priority <n>] [--parent <goalId>]
-  ctx goal list
-  ctx goal show <goalId>
-  ctx task add --title <text> [--description <text>] [--goal <goalId>] [--depends-on <taskId,taskId>]
-  ctx task update <taskId> [--title <text>] [--description <text>] [--state <Draft|Ready|InProgress|Blocked|Done>]
-  ctx task list
-  ctx task show <taskId>
-  ctx hypo add --statement <text> [--rationale <text>] [--confidence <0-1>|--probability <0-1>] [--impact <0-1>] [--evidence-strength <0-1>] [--cost-to-validate <0-1>] [--task <taskId>]
-  ctx hypo update <hypothesisId> [--statement <text>] [--rationale <text>] [--confidence <0-1>|--probability <0-1>] [--impact <0-1>] [--evidence-strength <0-1>] [--cost-to-validate <0-1>] [--state <Proposed|UnderEvaluation|Supported|Refuted|Archived>] [--branch-state <Active|Weakening|Merged|Deprecated|Promoted>] [--branch-role <Competing|Integrative|Dominant>] [--lineage-group <id>]
-  ctx hypo relate <hypothesisId> --relation <CompetesWith|MergedInto|Supersedes|DerivedFrom|BorrowsEvidenceFrom> --to <hypothesisId> [--note <text>]
-  ctx hypo merge <hypothesisId> --into <hypothesisId>
-  ctx hypo supersede <hypothesisId> --by <hypothesisId>
-  ctx hypo rank
-  ctx hypo list
-  ctx hypo show <hypothesisId>
-  ctx decision add --title <text> [--rationale <text>] [--state <state>] [--hypotheses <id,id>] [--evidence <id,id>]
-  ctx decision list
-  ctx decision show <decisionId>
-  ctx evidence add --title <text> [--summary <text>] [--source <text>] [--kind <kind>] [--confidence <0-1>] [--supports <type:id,type:id>]
-  ctx evidence share <evidenceId> --to hypothesis:<id>
-  ctx evidence list
-  ctx evidence show <evidenceId>
-  ctx conclusion add --summary <text> [--state <state>] [--decisions <id,id>] [--evidence <id,id>] [--goals <id,id>] [--tasks <id,id>]
-  ctx conclusion update <conclusionId> [--summary <text>] [--state <Draft|Accepted|Superseded>]
-  ctx conclusion list
-  ctx conclusion show <conclusionId>
-  ctx run [--provider openai|anthropic] [--model <model>] [--purpose <text>] [--goal <goalId>] [--task <taskId>]
-  ctx run list
-  ctx run show <runId>
-  ctx commit -m <message>
-  ctx log
-  ctx diff [fromCommitId] [toCommitId]
-  ctx next
-  ctx usage summary
-  ctx usage coverage
-  ctx branch <name>
-  ctx checkout <name>
-  ctx merge <sourceBranch>
-  ctx context [--purpose <text>] [--goal <goalId>] [--task <taskId>]
-  ctx packet list
-  ctx packet show <packetId>
-  ctx provider list
-  ctx metrics show
+Current State:
+  {{helpState.Label}}
+  Meaning: {{helpState.Meaning}}
+{{branchLine}}
+{{dirtyLine}}
+{{openTasksLine}}
+
+Next Command:
+  {{helpState.NextCommand}}
+{{followupLine}}
+
+State Machine:
+  - No CTX repository:
+      ctx init --name "<project>"
+  - Existing repo + open work:
+      ctx next
+  - Existing repo + pending cognitive delta:
+      ctx closeout
+  - Existing repo + durable block ready:
+      ctx commit -m "<message>"
+  - Existing repo + no open work:
+      ctx next
 
 {{projectContext}}
+
+Core Commands:
+  ctx status            inspect current cognitive state
+  ctx audit             consistency check before continuing
+  ctx next              CTX-prioritized next step
+  ctx closeout          review what still separates working state from HEAD
+  ctx commit -m "..."   durable cognitive snapshot
+  ctx helper            show this operator guide again
+
+Common Surfaces:
+  ctx context           summarized context for a goal or task
+  ctx bootstrap map|apply ...
+  ctx graph summary|show|export|lineage ...
+  ctx thread reconstruct ...
+  ctx preflight --operation <...>
+
+Full Command Reference:
+  {{cliCommandsDoc}}
 
 Branch-like hypothesis reminder:
   Hypothesis branch semantics live inside hypothesis lineage first.
   Use branch-state, branch-role, relations, merge, supersede, and evidence share to preserve competing interpretations.
   Do not treat these as repository branches yet.
 """;
+}
+
+static (string Label, string Meaning, string NextCommand, string? FollowupCommand, string? Branch, bool? Dirty, int? OpenTaskCount) BuildHelpState(string repositoryPath, string projectRoot)
+{
+    var ctxFolder = Path.Combine(repositoryPath, Ctx.Domain.DomainConstants.RepositoryFolderName);
+    if (!Directory.Exists(ctxFolder))
+    {
+        var projectName = new DirectoryInfo(projectRoot).Name;
+        return (
+            "No CTX repository detected",
+            "This folder does not have a .ctx workspace yet. Start by initializing the cognitive repository before creating goals, tasks, or hypotheses.",
+            $"ctx init --name \"{projectName}\"",
+            "If source material already exists, continue with: ctx bootstrap map --from <path>",
+            null,
+            null,
+            null);
+    }
+
+    var workingPath = Path.Combine(ctxFolder, "working", "working-context.json");
+    if (!File.Exists(workingPath))
+    {
+        return (
+            "CTX repository detected but working state is missing",
+            "The repository has .ctx but the working context file is missing or incomplete. Inspect repository health before continuing.",
+            "ctx doctor",
+            "Then run: ctx audit",
+            null,
+            null,
+            null);
+    }
+
+    try
+    {
+        using var document = JsonDocument.Parse(File.ReadAllText(workingPath));
+        var root = document.RootElement;
+        var branch = root.TryGetProperty("currentBranch", out var branchProperty) ? branchProperty.GetString() : null;
+        var dirty = root.TryGetProperty("dirty", out var dirtyProperty) && dirtyProperty.ValueKind is JsonValueKind.True or JsonValueKind.False
+            ? dirtyProperty.GetBoolean()
+            : false;
+
+        var openTaskCount = 0;
+        if (root.TryGetProperty("tasks", out var tasksProperty) && tasksProperty.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var task in tasksProperty.EnumerateArray())
+            {
+                if (!task.TryGetProperty("state", out var stateProperty))
+                {
+                    continue;
+                }
+
+                var isDone = stateProperty.ValueKind switch
+                {
+                    JsonValueKind.Number => stateProperty.TryGetInt32(out var stateNumber) && stateNumber == 4,
+                    JsonValueKind.String => string.Equals(stateProperty.GetString(), "Done", StringComparison.OrdinalIgnoreCase),
+                    _ => false
+                };
+
+                if (!isDone)
+                {
+                    openTaskCount += 1;
+                }
+            }
+        }
+
+        if (dirty)
+        {
+            return (
+                "Existing CTX repository with pending cognitive changes",
+                "Working context contains unsnapshotted cognitive delta. Review the pending block before deciding whether it is ready for a durable commit.",
+                "ctx closeout",
+                "Then inspect: ctx status",
+                branch,
+                dirty,
+                openTaskCount);
+        }
+
+        if (openTaskCount > 0)
+        {
+            return (
+                "Existing CTX repository with open work",
+                "There are active tasks or draft/ready/in-progress lines in this workspace. Continue from CTX instead of guessing from chat.",
+                "ctx next",
+                "Then inspect: ctx check --task <taskId>",
+                branch,
+                dirty,
+                openTaskCount);
+        }
+
+        return (
+            "Existing CTX repository with no open work",
+            "No open tasks are currently active. Ask CTX for the strongest remaining gap or confirm that the workspace is fully closed.",
+            "ctx next",
+            "Then inspect: ctx audit",
+            branch,
+            dirty,
+            openTaskCount);
+    }
+    catch
+    {
+        return (
+            "CTX repository detected but state could not be read",
+            "The helper could not parse the current working context. Inspect repository health before continuing.",
+            "ctx doctor",
+            "Then run: ctx audit",
+            null,
+            null,
+            null);
+    }
 }
 
 static string BuildProjectContextText(string projectRoot)
@@ -659,9 +743,11 @@ Read These First:
   {{autonomousProtocol}}
 
 Operating Reminder:
-  Analyze those files and use them for everything in this project.
+  Use those files as the operating baseline for this project.
   Align the existing Playbook/runbook guidance before drifting into ad-hoc operation.
   If CTX already knows what's next, continue from CTX instead of waiting for chat.
+  Treat `Working context` as cognition in motion and `ctx commit` as a durable cognitive snapshot, not as a log of every thought.
+  If a cognitive delta exists, it must be visible either in `Working context` or in `Commit history`.
 """;
 
     var viewerGuide = Path.Combine(projectRoot, "docs", "CTX_VIEWER_GUIDE.md");
