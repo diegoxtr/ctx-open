@@ -4,6 +4,22 @@ All notable changes to CTX will be documented in this file.
 
 ## [1.0.7] - 2026-04-17
 
+## [1.0.8] - 2026-04-21
+
+### Changed
+
+- The public `ctx` bare entrypoint now behaves as a state-driven startup helper instead of a flat command dump.
+- Public onboarding documentation now distinguishes between an existing CTX repository and a new cognitive project.
+
+### Added
+
+- A public state-machine-oriented operator loop across the helper prompt, README, CLI command guide, installation guide, and autonomous operation protocol.
+- A public `State-driven CTX startup` runbook example documenting the next-command loop for agents.
+
+### Notes
+
+- This patch release freezes the first public line where CTX startup guidance is consistently state-driven across CLI, docs, and helper surfaces.
+
 ### Fixed
 
 - The published public binary now reports the correct product version instead of retaining the stale `1.0.4` constant in `ctx version` and other version surfaces.
