@@ -79,6 +79,13 @@ Linux/macOS:
 bash ./install.sh
 ```
 
+Clone-first rule:
+
+- users may clone the public repository and run the bootstrap from that checkout
+- the bootstrap still resolves the latest published portable release asset by default
+- it does not treat a local clone as a request to build from source
+- source mode is only for developers or explicit unreleased validation
+
 The bootstrap will:
 
 - detect `install`, `update`, or `repair`
