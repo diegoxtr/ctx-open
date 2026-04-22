@@ -28,10 +28,11 @@ Usar CTX como repositorio cognitivo oficial para la evolucion del propio product
 ### 1. Abrir ciclo
 
 ```powershell
-ctx status
-ctx graph summary
-ctx log
+ctx
+ctx next
 ```
+
+Usar `ctx status`, `ctx audit`, `ctx graph summary` o `ctx log` solo cuando haga falta inspeccion mas profunda antes de actuar.
 
 ### 2. Crear objetivo de iteracion
 
@@ -81,12 +82,13 @@ ctx commit -m "<resultado del bloque>"
 
 Si el operador o modelo recibe solo `continua`, debe:
 
-1. releer `ctx status`, `ctx graph summary` y `ctx log`
-2. elegir el goal activo dominante
-3. seleccionar la task mas bloqueante o de mayor valor
-4. producir evidencia real
-5. registrar conclusion
-6. cerrar commit cognitivo
+1. releer `ctx`
+2. si hace falta, profundizar con `ctx status`, `ctx audit`, `ctx graph summary` o `ctx log`
+3. elegir el goal activo dominante
+4. seleccionar la task mas bloqueante o de mayor valor
+5. producir evidencia real
+6. registrar conclusion
+7. cerrar commit cognitivo
 
 No debe esperar direccion manual si el repositorio CTX ya deja claro que sigue.
 
@@ -117,7 +119,7 @@ No debe esperar direccion manual si el repositorio CTX ya deja claro que sigue.
 
 Usar un repositorio CTX especifico para el desarrollo del producto:
 
-- `C:\ctx\workspace\ctx-self-host`
+- `C:\sources\ctx-open`
 
 ## Resultado esperado
 

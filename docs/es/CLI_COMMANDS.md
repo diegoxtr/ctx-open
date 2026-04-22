@@ -32,11 +32,85 @@ ctx <comando>
 - Las listas multiples usan valores separados por coma.
 - La mayoria de los cambios mutantes impactan `.ctx/working`, `.ctx/staging`, `.ctx/graph` y eventualmente un commit cognitivo posterior.
 
+## Flujos de Arranque Inicial
+
+No empezar desde un dump completo de comandos.
+Primero decidir en que estado del repositorio estas.
+
+## Maquina de estados del operador
+
+CTX debe operarse como una pequena maquina de estados, no como una lista desordenada de comandos.
+
+| Estado actual | Significado | Siguiente comando |
+|---|---|---|
+| Sin repositorio CTX | `.ctx/` todavia no existe | `ctx init --name "<project>"` |
+| Repo existente con trabajo abierto | Hay lineas activas para continuar | `ctx next` |
+| Repo existente con cambios cognitivos pendientes | `Working context` esta dirty y todavia no fue snapshotteado | `ctx closeout` |
+| Repo existente en un boundary durable | El closeout ya esta claro y el bloque debe pasar a historia durable | `ctx commit -m "<durable result>"` |
+| Repo existente sin trabajo abierto | No hay tasks activas; revisar gaps restantes o confirmar cierre | `ctx next` |
+
+### Repositorio CTX existente
+
+Usar esto cuando `.ctx/` ya existe en la raiz del proyecto.
+
+```powershell
+ctx
+ctx next
+```
+
+Luego seguir el siguiente comando implicado por el estado actual. Usar `ctx status` y `ctx audit` solo cuando haga falta inspeccion mas profunda antes de actuar.
+
+### Proyecto cognitivo nuevo
+
+Usar esto cuando `.ctx/` todavia no existe.
+
+```powershell
+ctx init --name "<project>"
+```
+
+Luego elegir uno de estos caminos:
+
+- ya existe material fuente:
+
+```powershell
+ctx bootstrap map --from <path>
+ctx bootstrap apply --from <path>
+ctx next
+```
+
+- trabajo greenfield:
+
+```powershell
+ctx goal add --title "<goal>"
+ctx task add --title "<task>" --goal <goalId>
+ctx hypo add --statement "<hypothesis>" --task <taskId>
+ctx next
+```
+
+## Loop minimo del operador
+
+Para la mayoria de los agentes, el loop correcto es:
+
+```powershell
+ctx
+ctx next
+```
+
+Trabajar dentro de `Working context`, y luego:
+
+```powershell
+ctx closeout
+ctx commit -m "<durable result>"
+```
+
+`ctx commit` no es un log crudo de pensamientos.
+Registra una transicion de estado cognitivo durable.
+
 ## Comandos Generales
 
 ### `ctx`
 
-Sin argumentos, muestra ayuda basica.
+Sin argumentos, muestra ayuda operatoria helper-first.
 
 ```powershell
 dotnet run --project .\Ctx.Cli --
@@ -946,8 +1020,7 @@ dotnet run --project .\Ctx.Cli -- import --input .\tmp\ctx-export.json
 Flujo corto de trabajo cognitivo:
 
 ```powershell
-dotnet run --project .\Ctx.Cli -- status
-dotnet run --project .\Ctx.Cli -- audit
+dotnet run --project .\Ctx.Cli --
 dotnet run --project .\Ctx.Cli -- next
 dotnet run --project .\Ctx.Cli -- closeout
 dotnet run --project .\Ctx.Cli -- goal add --title "Validar flujo"

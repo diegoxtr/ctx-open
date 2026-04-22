@@ -13,6 +13,21 @@ Public demo entrypoints:
 - Codespaces quickstart: `https://codespaces.new/diegoxtr/ctx-open?quickstart=1`
 When a temporary public viewer session is alive, publish that URL on the landing page or demo notes. If no temporary session is published, use the landing page or the Codespaces quickstart link.
 
+## What the public screenshots should communicate
+
+The public screenshots should not be generic UI wallpaper. They should make three things obvious at a glance:
+
+- CTX Viewer can keep the active working line visible without flattening it into a backlog list.
+- CTX Viewer can inspect a durable commit as a structured reasoning thread, not just as a log row.
+- CTX Viewer can expose interpretation surfaces, evidence, and commit context side by side in the same session.
+
+The current canonical screenshots are:
+
+- `assets/screenshots/ctx-viewer-working-context.jpg`
+- `assets/screenshots/ctx-viewer-commit-thread.jpg`
+
+When these screenshots are refreshed, prefer captures that show the current public viewer surface instead of legacy layouts.
+
 Demo repositories you can copy and paste:
 
 - Codespaces default: `/workspaces/ctx-open/examples/ctx/agent-session-continuity`

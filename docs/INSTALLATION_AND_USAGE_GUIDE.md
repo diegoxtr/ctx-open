@@ -17,9 +17,16 @@ Intended for:
 Before starting, verify:
 
 - Windows with a terminal available
-- .NET SDK 8 installed
 - access to the repository source code
 - read/write permissions in the working folder
+
+For the normal published install flow, `.NET SDK 8` is **not required**.
+
+You only need the SDK if you intentionally want to:
+
+- build CTX from source
+- run the repository projects directly with `dotnet`
+- test unreleased work from `main`
 
 Optional:
 
@@ -75,10 +82,15 @@ bash ./install.sh
 The bootstrap will:
 
 - detect `install`, `update`, or `repair`
-- choose the appropriate source or portable flow
+- choose the published portable flow by default
 - copy helper/docs assets into the install root
 - expose `ctx` globally when possible
 - use published GitHub Releases as the install/update source of truth
+
+Normal user rule:
+
+- `install.ps1` / `install.sh` should install from prebuilt release assets
+- source mode is for developers and unreleased validation, not for ordinary users
 
 Windows PATH scope options:
 
@@ -110,6 +122,8 @@ Release policy note:
 - public update detection should happen only after a tagged GitHub Release is published
 
 ## 6. Restore, build, test
+
+This section is only for developers or validators working from source.
 
 From the repo root run:
 
@@ -146,9 +160,6 @@ Before doing anything else, decide whether the repository is:
 
 ```powershell
 ctx
-ctx status
-ctx audit
-ctx next
 ```
 
 State-driven rule:
@@ -159,6 +170,10 @@ State-driven rule:
   - run `ctx next`
 - if `ctx` says the repo is at a durable boundary:
   - run `ctx commit -m "<durable result>"`
+- if `ctx` says the repo has no open work:
+  - run `ctx next` and inspect remaining gaps or closure state
+
+Use `ctx status` and `ctx audit` only when you need deeper inspection before acting.
 
 ### New project
 
@@ -314,7 +329,7 @@ An installed CTX root also carries:
 - `docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md`
 - `ctx-install.json`
 
-## 12. Usage recommendations
+## 13. Usage recommendations
 
 - keep each test case in a separate folder
 - use clear cognitive commit messages
@@ -323,7 +338,7 @@ An installed CTX root also carries:
 - review `metrics show` at the end of each scenario
 - if cognitive conflicts appear, do not ignore them; review merge output before continuing
 
-## 12. Common issues
+## 14. Common issues
 
 ### Build fails
 
@@ -354,7 +369,7 @@ Interpretation:
 - the system detected divergence in the same cognitive artifact
 - review artifacts before accepting the merge
 
-## 13. Correct usage criteria
+## 15. Correct usage criteria
 
 A user operated CTX correctly if they:
 
@@ -364,7 +379,7 @@ A user operated CTX correctly if they:
 - created at least one cognitive commit
 - inspected results from the CLI
 
-## 14. Next recommended reading
+## 16. Next recommended reading
 
 Continue with:
 

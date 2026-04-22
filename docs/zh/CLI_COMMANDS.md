@@ -1,9 +1,9 @@
-# CTX CLI å‘½ä»¤
+# CTX CLI 命令
 如果语言模型及其代理丢失了上下文，这就是你需要的工具。
 
-æœ¬æ–‡æ¡£æè¿° `C:\sources\ctx-open` ä¸­å½“å‰ CTX CLI çš„å‘½ä»¤è¡¨é¢ã€‚
+本文档描述 `C:\sources\ctx-open` 中当前公开的 CTX CLI 表面。
 
-CTX è¿”å›žç»“æž„åŒ– JSON è¾“å‡ºï¼ŒåŸºæœ¬æ ¼å¼ä¸ºï¼š
+CTX 返回结构化 JSON，基本格式如下：
 
 ```json
 {
@@ -13,30 +13,101 @@ CTX è¿”å›žç»“æž„åŒ– JSON è¾“å‡ºï¼ŒåŸºæœ¬æ�
 }
 ```
 
-## çº¦å®š
+## 约定
 
-- ä»Žè®¤çŸ¥ä»“åº“ç›®å½•è¿è¡Œå‘½ä»¤ã€‚
-- æœ¬åœ°å¼€å‘å¸¸ç”¨æ ¼å¼ï¼š
+- 在认知仓库根目录运行命令。
+- 本地源码开发通常使用：
 
 ```powershell
 dotnet run --project .\Ctx.Cli -- <command>
 ```
 
-- å·²å‘å¸ƒæœ¬åœ°å®‰è£…ï¼š
+- 已安装版本通常使用：
 
 ```powershell
 ctx <command>
 ```
 
-- `<goalId>`, `<taskId>`, `<hypothesisId>`, `<commitId>` ç­‰æ¥è‡ªå…ˆå‰å‘½ä»¤è¾“å‡ºã€‚
-- å¤šå€¼åˆ—è¡¨ä½¿ç”¨é€—å·åˆ†éš”ã€‚
-- å˜æ›´é€šå¸¸å½±å“ `.ctx/working`ã€`.ctx/staging`ã€`.ctx/graph`ï¼Œå¹¶åœ¨åŽç»­è®¤çŸ¥æäº¤ä¸­è½ç›˜ã€‚
+- `<goalId>`、`<taskId>`、`<hypothesisId>`、`<commitId>` 等 ID 来自之前命令的输出。
+- 多数变更会先写入 `.ctx/working`、`.ctx/staging`、`.ctx/graph`，然后在后续认知提交中进入 durable history。
 
-## é€šç”¨å‘½ä»¤
+## 首次启动流程
+
+不要从命令大全开始。
+先判断你当前处于哪种仓库状态。
+
+## 操作状态机
+
+CTX 应作为一个小型状态机来操作，而不是无序命令清单。
+
+| 当前状态 | 含义 | 下一条命令 |
+|---|---|---|
+| 尚未初始化 CTX 仓库 | 当前目录还没有 `.ctx/` | `ctx init --name "<project>"` |
+| 已有 CTX 仓库且存在开放工作 | 仍有活动任务线 | `ctx next` |
+| 已有 CTX 仓库且存在待收尾的认知变更 | `Working context` 仍然 dirty | `ctx closeout` |
+| 已到 durable boundary | 当前块足够稳定，应进入 history | `ctx commit -m "<durable result>"` |
+| 已有 CTX 仓库但没有开放工作 | 没有活跃 tasks，需要看 gap 或确认 closure | `ctx next` |
+
+### 已存在的 CTX 仓库
+
+当项目根目录已经有 `.ctx/` 时，先运行：
+
+```powershell
+ctx
+```
+
+然后按当前状态建议的下一条命令继续。只有在需要更深检查时，才使用 `ctx status`、`ctx audit`、`ctx graph summary` 或 `ctx log`。
+
+### 新认知项目
+
+当 `.ctx/` 尚不存在时，先初始化：
+
+```powershell
+ctx init --name "<project>"
+```
+
+之后分两种情况：
+
+- 已有现成资料：
+
+```powershell
+ctx bootstrap map --from <path>
+ctx bootstrap apply --from <path>
+ctx next
+```
+
+- 纯新项目 / greenfield：
+
+```powershell
+ctx goal add --title "<goal>"
+ctx task add --title "<task>" --goal <goalId>
+ctx hypo add --statement "<hypothesis>" --task <taskId>
+ctx next
+```
+
+## 最小操作循环
+
+对大多数代理而言，正确的循环是：
+
+```powershell
+ctx
+ctx next
+```
+
+在 `Working context` 中工作，然后：
+
+```powershell
+ctx closeout
+ctx commit -m "<durable result>"
+```
+
+`ctx commit` 不是“想法日志”，而是 durable cognitive state transition。
+
+## 核心入口命令
 
 ### `ctx`
 
-æ— å‚æ•°æ—¶æ˜¾ç¤ºåŸºç¡€å¸®åŠ©ã€‚
+无参数时显示 helper-first 操作指引，并指向规范命令参考。
 
 ```powershell
 dotnet run --project .\Ctx.Cli --
@@ -44,7 +115,7 @@ dotnet run --project .\Ctx.Cli --
 
 ### `ctx version`
 
-æ˜¾ç¤ºäº§å“ç‰ˆæœ¬ä¸Žä»“åº“æ ¼å¼ç‰ˆæœ¬ã€‚
+显示产品版本与仓库格式版本。
 
 ```powershell
 dotnet run --project .\Ctx.Cli -- version
@@ -52,9 +123,10 @@ dotnet run --project .\Ctx.Cli -- version
 
 ### `ctx init`
 
-åœ¨å½“å‰ç›®å½•åˆå§‹åŒ–è®¤çŸ¥ä»“åº“ã€‚
+在当前目录初始化认知仓库。
 
-é€‰é¡¹ï¼š
+常用参数：
+
 - `--name <project>`
 - `--description <text>`
 - `--branch <name>`
@@ -63,110 +135,78 @@ dotnet run --project .\Ctx.Cli -- version
 dotnet run --project .\Ctx.Cli -- init --name "CTX Demo" --description "Sample repo" --branch main
 ```
 
+### `ctx goal update`
+
+更新 goal 的元数据或生命周期状态。
+
+常用参数：
+
+- `--title <text>`
+- `--description <text>`
+- `--priority <n>`
+- `--state <Draft|Active|Validated|Completed|Superseded|Archived>`
+
+```powershell
+dotnet run --project .\Ctx.Cli -- goal update <goalId> --state Completed
+```
+
 ### `ctx status`
 
-æ˜¾ç¤ºå½“å‰ä»“åº“çŠ¶æ€ï¼š
+显示当前仓库状态。
 
-- å½“å‰ branch
+包括：
+
+- 当前 branch
 - `HEAD`
-- `dirty` çŠ¶æ€
-- goals/tasks/hypotheses/decisions/evidence/conclusions/runs è®¡æ•°
+- `dirty`
+- goals、tasks、hypotheses、decisions、evidence、conclusions、runs 的数量
+- dirty 时的紧凑 pending 预览
 
 ```powershell
 dotnet run --project .\Ctx.Cli -- status
 ```
 
-### `ctx doctor`
-
-è¿è¡ŒçŽ¯å¢ƒè¯Šæ–­ï¼š
-
-- äº§å“ç‰ˆæœ¬
-- `.ctx/` æ˜¯å¦å­˜åœ¨
-- `HEAD`
-- working context
-- metrics
-- provider é…ç½®
-- çŽ¯å¢ƒå‡­è¯
-
-```powershell
-dotnet run --project .\Ctx.Cli -- doctor
-```
-
 ### `ctx audit`
 
-è®¤çŸ¥ä¸€è‡´æ€§å®¡è®¡ã€‚ä¼šæ£€æŸ¥ï¼š
+运行认知一致性审计。
 
-- æ—  hypothesis çš„ task
-- `Done` ä½†æ—  Accepted conclusion çš„ task
-- æ—  evidence çš„ hypothesis
-- ä»…å…³è”å·²å…³é—­ task çš„å¼€æ”¾ hypothesis
-- `Accepted` ä½†æ—  `rationale`/`evidence` çš„ decision
-- å…³è” `Done` task çš„ `Draft` conclusion
-
-```powershell
-dotnet run --project .\Ctx.Cli -- audit
-```
+建议把它当作深度检查表面，而不是默认启动入口。
 
 ### `ctx next`
 
-æ ¹æ®å½“å‰çŠ¶æ€æŽ¨èä¸‹ä¸€æ­¥ï¼š
+根据当前仓库状态推荐下一块工作。
 
-- `Task`
-- `Gap`
+这是默认操作循环中的主入口之一。
 
-```powershell
-dotnet run --project .\Ctx.Cli -- next
-```
+### `ctx closeout`
 
-## è®¤çŸ¥å›¾è°±
+解释当前 `working` 与 `HEAD` 之间还差什么。
 
-### `ctx graph summary`
+用于：
 
-```powershell
-dotnet run --project .\Ctx.Cli -- graph summary
-```
+- 提交前检查
+- 判断是否已经跨过 durable boundary
+- 决定是否应执行 `ctx commit`
 
-### `ctx graph show <nodeId>`
+### `ctx commit`
 
-```powershell
-dotnet run --project .\Ctx.Cli -- graph show <hypothesisId>
-dotnet run --project .\Ctx.Cli -- graph show Hypothesis:<hypothesisId>
-```
+创建认知提交。
 
-### `ctx graph export`
+语义规则：
 
-```powershell
-dotnet run --project .\Ctx.Cli -- graph export --format json
-dotnet run --project .\Ctx.Cli -- graph export --format mermaid
-dotnet run --project .\Ctx.Cli -- graph export --format json --commit <commitId>
-```
+- `Working context` 保存活动推理
+- `ctx commit` 保存 durable cognitive state transition
+- 关闭 task 可以提示 commit，但不会自动强制 commit
 
-### `ctx graph lineage`
+## 其余命令
 
-```powershell
-dotnet run --project .\Ctx.Cli -- graph lineage --goal <goalId>
-dotnet run --project .\Ctx.Cli -- graph lineage --task <taskId>
-dotnet run --project .\Ctx.Cli -- graph lineage --hypothesis <hypothesisId> --format mermaid
-dotnet run --project .\Ctx.Cli -- graph lineage --decision <decisionId> --output .\tmp\decision-lineage.json
-```
+完整命令参考以英文版为准；本页优先保证：
 
-## çº¿ç¨‹é‡æž„
+- 启动模型清晰
+- 状态机清晰
+- 新仓库与已有仓库分流清晰
+- `ctx`、`ctx next`、`ctx closeout`、`ctx commit` 的最小循环清晰
 
-### `ctx thread reconstruct --task <id>`
+如果你需要完整选项、示例或较冷命令，请优先参考英文版：
 
-```powershell
-dotnet run --project .\Ctx.Cli -- thread reconstruct --task <taskId>
-dotnet run --project .\Ctx.Cli -- thread reconstruct --task <taskId> --format markdown
-```
-
-## Goals / Tasks / Hypotheses / Evidence / Decisions / Conclusions
-
-è¯·å‚è€ƒè‹±æ–‡ç‰ˆ [CLI_COMMANDS.md](C:/sources/ctx-open/docs/CLI_COMMANDS.md) çš„å®Œæ•´ç¤ºä¾‹ä¸Žé€‰é¡¹ã€‚
-
-## å¯ç§»æ¤æ€§
-
-```powershell
-dotnet run --project .\Ctx.Cli -- export --output .\tmp\ctx-export.json
-dotnet run --project .\Ctx.Cli -- import --input .\tmp\ctx-export.json
-```
-
+- [CLI_COMMANDS.md](C:/sources/ctx-open/docs/CLI_COMMANDS.md)

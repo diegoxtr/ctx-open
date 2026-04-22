@@ -20,6 +20,54 @@ El modelo debe avanzar en base a:
 - conclusions
 - commits cognitivos
 
+## Separacion de entrada: repo existente vs proyecto nuevo
+
+El modelo debe distinguir estos dos casos inmediatamente.
+
+## Regla state-driven del operador
+
+No operar CTX desde un dump crudo de comandos.
+Operar desde el estado actual y el siguiente comando implicado por ese estado.
+
+- Sin repositorio CTX:
+  - siguiente comando -> `ctx init --name "<project>"`
+- Repositorio CTX existente con trabajo abierto:
+  - siguiente comando -> `ctx next`
+- Repositorio CTX existente con cambios cognitivos pendientes:
+  - siguiente comando -> `ctx closeout`
+- Repositorio CTX existente en un boundary durable:
+  - siguiente comando -> `ctx commit -m "<durable result>"`
+- Repositorio CTX existente sin trabajo abierto:
+  - siguiente comando -> `ctx next`
+
+### Repositorio CTX existente
+
+Si `.ctx/` ya existe en la raiz del proyecto, el primer movimiento no es `ctx init`.
+
+Usar:
+
+```powershell
+ctx
+ctx next
+```
+
+Luego seguir el siguiente comando implicado por el estado actual. Usar `ctx status`, `ctx audit`, `ctx graph summary` o `ctx log` solo cuando realmente haga falta inspeccion mas profunda antes de actuar.
+
+### Proyecto cognitivo nuevo
+
+Si `.ctx/` todavia no existe, inicializar primero:
+
+```powershell
+ctx init --name "<project>"
+```
+
+Despues:
+
+- si el repositorio o el material fuente ya existen, preferir bootstrap
+- si el trabajo es greenfield, crear primero goal, task e hypothesis
+
+Solo despues de eso entrar al loop normal de `ctx next`.
+
 ## Principio rector
 
 El siguiente paso de trabajo no debe salir del chat.
@@ -78,11 +126,15 @@ Reglas explicitas:
 Siempre empezar con:
 
 ```powershell
-ctx status
-ctx graph summary
-ctx log
-ctx audit
+ctx
 ctx next
+```
+
+Si eso no alcanza para decidir con seguridad, profundizar con:
+
+```powershell
+ctx status
+ctx audit
 ```
 
 Si hace falta foco extra:
@@ -298,16 +350,17 @@ git push origin main
 
 Si el usuario dice `continua` o incluso si no agrega ninguna nueva instruccion pero CTX ya permite seguir, el modelo debe usar este algoritmo:
 
-1. inspeccionar `ctx status`, `ctx log`, `ctx graph summary`, `ctx audit`
-2. identificar el goal mas activo o mas estrategico
-3. elegir una task abierta o implicita que:
+1. inspeccionar `ctx`
+2. si hace falta, profundizar con `ctx status`, `ctx audit`, `ctx log` o `ctx graph summary`
+3. identificar el goal mas activo o mas estrategico
+4. elegir una task abierta o implicita que:
    - aumente valor del producto
    - reduzca friccion
    - valide una hipotesis importante
-4. comprobar si esa task ya esta representada en CTX
-5. si no lo esta, crearla
-6. ejecutar el menor bloque que produzca evidencia real
-7. cerrar con evidence, conclusion y commit cognitivo
+5. comprobar si esa task ya esta representada en CTX
+6. si no lo esta, crearla
+7. ejecutar el menor bloque que produzca evidencia real
+8. cerrar con evidence, conclusion y commit cognitivo
 
 ## Cuando NO preguntar al usuario
 

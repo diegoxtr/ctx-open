@@ -1,20 +1,20 @@
 # CTX - Release 1.0.6
 
-Release date: 2026-04-17
+发布日期：2026-04-17
 
-Version:
+版本：
 
 - `1.0.6`
 
-Summary:
+摘要：
 
-- Stable patch release for CTX 1.0.
-- Freezes the first public-safe line where bootstrap indexing, branch-like hypothesis semantics, and interpretation-aware viewer surfaces ship together.
+- CTX 1.0 的稳定补丁版本。
+- 冻结第一条 public-safe 基线：bootstrap indexing、branch-like hypothesis semantics 与 interpretation-aware viewer surfaces 一起发布。
 
-Highlights:
+亮点：
 
-- CTX now exposes `ctx bootstrap map` and `ctx bootstrap apply` publicly so agents can build provisional cognitive threads from articles and projects before promoting them into durable CTX work.
-- The public domain model and CLI now support branch-like hypothesis semantics, including branch state, branch role, lineage grouping, inter-hypothesis relations, merge/supersede flows, and evidence sharing.
-- The public viewer now includes an `Interpretations` detail tab and an optional `Show interpretation relations` overlay so competing hypotheses can stay visible without degrading the default trace graph.
-- The public repo now carries sanitized agriculture bootstrap example packs for `v1`, `v2`, `v3`, and `v4`, including plans and real-testing notes, while keeping private `.ctx` workspaces out of the published surface.
-- Public helper and technical docs are aligned with the private/public repo boundary so release operators and agents stay anchored on the intended public-safe workflow.
+- CTX 现在公开提供 `ctx bootstrap map` 和 `ctx bootstrap apply`，使代理能够先从文章和项目中建立 provisional cognitive threads，再将其提升为 durable CTX work。
+- 公共领域模型和 CLI 现在支持 branch-like hypothesis semantics，包括 branch state、branch role、lineage grouping、inter-hypothesis relations、merge/supersede flows，以及 evidence sharing。
+- 公共 viewer 现在包含 `Interpretations` 详情标签，以及可选的 `Show interpretation relations` overlay，使 competing hypotheses 在不破坏默认 trace graph 的情况下保持可见。
+- 公共仓库现在携带经过清洗的 agriculture bootstrap example packs（`v1`、`v2`、`v3`、`v4`），包括 plans 和 real-testing notes，同时将 private `.ctx` workspaces 保持在已发布 surface 之外。
+- 公共 helper 与技术文档现已与 private/public repo boundary 对齐，使 release operators 与 agents 始终锚定在预期的 public-safe workflow 上。

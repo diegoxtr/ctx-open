@@ -26,9 +26,14 @@ Esta regla debe tratarse como una instruccion activa del agente, no como documen
 1. Antes de empezar una unidad de trabajo, inspecciona el estado:
 
 ```powershell
+ctx
+ctx next
+```
+
+Si eso no alcanza para decidir con seguridad, profundiza con:
+
+```powershell
 ctx status
-ctx graph summary
-ctx log
 ctx audit
 ```
 
@@ -94,16 +99,17 @@ Regla de Git:
 ## Flujo recomendado
 
 1. revisar estado
-2. elegir el siguiente paso en base al goal, task e hypothesis activas
+2. correr `ctx`
+3. ejecutar el siguiente comando implicado por el estado actual
 2.1. si `ctx audit` detecta deuda de consistencia que distorsiona el roadmap, corregir primero esa deuda
-3. abrir objetivo y tarea si faltan
-4. formular hipotesis si falta justificacion
-5. ejecutar trabajo
-6. registrar evidencia
-7. tomar decision
-8. cerrar conclusion
-9. commitear cognitivamente
-10. commitear codigo
+4. abrir objetivo y tarea si faltan
+5. formular hipotesis si falta justificacion
+6. ejecutar trabajo
+7. registrar evidencia
+8. tomar decision
+9. cerrar conclusion
+10. commitear cognitivamente
+11. commitear codigo
 
 ## Regla de foco
 

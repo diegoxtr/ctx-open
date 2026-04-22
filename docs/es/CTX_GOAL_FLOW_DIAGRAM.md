@@ -12,11 +12,15 @@ Objetivo: `Hacer visible un gap del viewer y cerrarlo con evidencia`.
 ### Etapa 0: iniciar y revisar contexto
 
 ```powershell
-ctx status
-ctx graph summary
-ctx log
-ctx audit
+ctx
 ctx next
+```
+
+Si eso no alcanza para decidir con seguridad, profundizar con:
+
+```powershell
+ctx status
+ctx audit
 ```
 
 Que produce en `.ctx`:

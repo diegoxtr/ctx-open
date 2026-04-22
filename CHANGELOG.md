@@ -2,6 +2,22 @@
 
 All notable changes to CTX will be documented in this file.
 
+## [1.0.9] - 2026-04-22
+
+### Changed
+
+- The public install bootstrap now prefers published portable release assets by default instead of falling back to source builds.
+- The installation guide and README now state clearly that normal users should not need the .NET 8 SDK for the standard published install flow.
+- Public onboarding, live-demo copy, screenshots, examples notes, and Chinese documentation were aligned to the current state-driven operator model.
+
+### Fixed
+
+- The Linux/macOS `install.sh` and Windows `install.ps1` auto mode no longer steer ordinary users into an unintended source-build path.
+
+### Notes
+
+- This hotfix exists to restore the intended public installation experience: download a published binary bundle, expose `ctx`, and start using CTX without compiling the project from source.
+
 ## [1.0.7] - 2026-04-17
 
 ## [1.0.8] - 2026-04-21

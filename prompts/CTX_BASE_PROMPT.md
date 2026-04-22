@@ -24,17 +24,15 @@ Fill in the bracketed fields before use.
 
 The agent must work from CTX as the primary source:
 
-1. `ctx status`
-2. `ctx graph summary`
-3. `ctx log`
-4. `ctx audit`
-5. `ctx next`
+1. `ctx`
+2. execute the next command implied by the current state
+3. use `ctx status`, `ctx audit`, `ctx graph summary`, or `ctx log` only when deeper inspection is needed
 
 If `ctx next` returns no candidates, record the gap as a task before proceeding.
 
 Do not edit `.ctx` manually unless there is a real operational block.
 
-## Cognitive Versioner ↔ Agent Link
+## Cognitive Versioner -> Agent Link
 
 The agent must bind its work to CTX as the system of record:
 

@@ -27,7 +27,10 @@ This rule must be treated as an active instruction to the agent, not passive doc
 
 Bootstrap rule:
 
-- if the agent starts planning from chat, stop and re-anchor on `ctx status`, `ctx audit`, `ctx log`, `ctx graph summary`, and `ctx next`
+- if the agent starts planning from chat, stop and re-anchor on `ctx`
+- read the printed `Current State`
+- execute the printed `Next Command`
+- use `ctx status`, `ctx audit`, `ctx graph summary`, or `ctx log` only when deeper inspection is actually needed
 - repeating this reminder is correct behavior, not redundancy
 - chat is for user intent, clarification, and reporting
 - CTX is for planning, state, evidence, decisions, and next-step selection
@@ -37,9 +40,14 @@ Bootstrap rule:
 1. Before starting a unit of work, inspect state:
 
 ```powershell
+ctx
+ctx next
+```
+
+If that is not enough to choose safely, deepen inspection with:
+
+```powershell
 ctx status
-ctx graph summary
-ctx log
 ctx audit
 ```
 

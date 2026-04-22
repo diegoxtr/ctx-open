@@ -60,12 +60,9 @@ Use:
 
 ```powershell
 ctx
-ctx status
-ctx audit
-ctx next
 ```
 
-Then continue from the current CTX state.
+Then follow the next command implied by the current CTX state. Use `ctx status`, `ctx audit`, `ctx graph summary`, or `ctx log` only when deeper inspection is actually needed before acting.
 
 ### New cognitive project
 
@@ -148,14 +145,18 @@ Explicit rules:
 Always start with:
 
 ```powershell
-ctx status
-ctx graph summary
-ctx log
-ctx audit
+ctx
 ctx next
 ```
 
 For a new project, initialize first and only then enter this inspection cycle.
+
+If the helper output is not enough to choose safely, deepen inspection with:
+
+```powershell
+ctx status
+ctx audit
+```
 
 If extra focus is needed:
 
@@ -380,20 +381,21 @@ git commit -m "..."
 git push origin main
 ```
 
-## How to choose whatâ€™s next without user help
+## How to choose what's next without user help
 
 If the user says `continue`, or even if the user adds no new instruction but CTX already allows continuation, use this algorithm:
 
-1. inspect `ctx status`, `ctx log`, `ctx graph summary`, `ctx audit`
-2. identify the most active or strategic goal
-3. choose an open or implied task that:
+1. inspect `ctx`
+2. if needed, deepen with `ctx status`, `ctx audit`, `ctx log`, or `ctx graph summary`
+3. identify the most active or strategic goal
+4. choose an open or implied task that:
    - increases product value
    - reduces friction
    - validates an important hypothesis
-4. verify that the task is already represented in CTX
-5. if not, create it
-6. execute the smallest block that produces real evidence
-7. close with evidence, conclusion, and cognitive commit
+5. verify that the task is already represented in CTX
+6. if not, create it
+7. execute the smallest block that produces real evidence
+8. close with evidence, conclusion, and cognitive commit
 
 ## When NOT to ask the user
 
@@ -458,7 +460,7 @@ If there are multiple options, prioritize:
 2. what validates a strong hypothesis
 3. what improves product usability
 4. what reduces repeated friction
-5. what improves CTXâ€™s ability to work on itself
+5. what improves CTX's ability to work on itself
 
 ## Final meta
 

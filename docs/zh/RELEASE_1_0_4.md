@@ -1,18 +1,18 @@
 # CTX - Release 1.0.4
 
-Release date: 2026-04-15
+发布日期：2026-04-15
 
-Version:
+版本：
 
 - `1.0.4`
 
-Summary:
+摘要：
 
-- CTX 1.0 çš„ç¨³å®šè¡¥ä¸ç‰ˆæœ¬ã€‚
-- å†»ç»“å½“å‰å…¬å¼€åŸºçº¿ï¼šåŒ…å« live demo åŠ å›ºã€�å…¬å¼€/ç§æœ‰ viewer è§†å›¾å¯¹é½ï¼Œä»¥åŠ commit focus ä¸»è¦èŠ‚ç‚¹çš„è‡ªåŠ¨é€‰æ‹©ã€‚
+- CTX 1.0 的稳定补丁版本。
+- 在 live-demo 加固、public/private viewer parity 同步，以及 commit-focus lineage 自动选择收敛为一个统一发布之后，冻结当前 public-safe baseline。
 
-Highlights:
+亮点：
 
-- viewer çŽ°åœ¨ä¼šè‡ªåŠ¨é€‰æ‹© commit focus çš„ä¸»è¦èŠ‚ç‚¹ï¼Œè®©åŽ†å² commit è§†å›¾é€šè¿‡ lineage é«˜äº®ç«‹å³å¯è§£é‡Šã€‚
-- åŽ†å² graph export å¯¹çŸ­ commitIdã€�legacy snapshot çš„å®¹é”™æ›´å¼ºï¼Œå¹¶åœ¨å‡ºé”™æ—¶è¿”å›žå—æŽ§ JSONï¼Œè€Œä¸æ˜¯åŽŸå§‹ `500`ã€‚
-- GitHub Codespaces live demo æµç¨‹çŽ°åœ¨å…·å¤‡æ›´å®Œæ•´çš„æ–‡æ¡£å’ŒåŠ å›ºï¼ŒåŒ…æ‹¬æ˜¾å¼å…¥å£ã€�å¯å¤åˆ¶çš„ demo ä»“åº“è·¯å¾„ã€�SDK recovery ä»¥åŠæ›´æ¸…æ™°çš„å…¬å¼€/ç§æœ‰å¯¹é½ã€‚
+- viewer 现在会自动选择主要的 commit-focus 节点，因此历史提交视图会立即通过 lineage highlight 解释自身。
+- 历史图导出现在对缩写 commit ID、更安全的 legacy snapshot 处理，以及受控 JSON 失败更稳健，而不是直接抛出原始 server error。
+- GitHub Codespaces 的 live-demo 流程现在已被记录并加固，包含明确入口、可复制粘贴的 demo 仓库路径、SDK bootstrap 恢复，以及更清晰的 public/private 对齐说明。

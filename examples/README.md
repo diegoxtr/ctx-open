@@ -28,10 +28,22 @@ If you want to validate bootstrap indexing quality, open:
 - `bootstrap-agriculture-demo-v3`
 - `bootstrap-agriculture-demo-v4`
 
+Bootstrap example paths:
+
+- Codespaces `v1`: `/workspaces/ctx-open/examples/bootstrap-agriculture-demo`
+- Codespaces `v2`: `/workspaces/ctx-open/examples/bootstrap-agriculture-demo-v2`
+- Codespaces `v3`: `/workspaces/ctx-open/examples/bootstrap-agriculture-demo-v3`
+- Codespaces `v4`: `/workspaces/ctx-open/examples/bootstrap-agriculture-demo-v4`
+- Local clone `v1`: `C:\sources\ctx-open\examples\bootstrap-agriculture-demo`
+- Local clone `v2`: `C:\sources\ctx-open\examples\bootstrap-agriculture-demo-v2`
+- Local clone `v3`: `C:\sources\ctx-open\examples\bootstrap-agriculture-demo-v3`
+- Local clone `v4`: `C:\sources\ctx-open\examples\bootstrap-agriculture-demo-v4`
+
 Public packaging note:
 
 - the bootstrap agriculture folders in `ctx-open` now ship their `.ctx` workspaces alongside the source texts, plans, and testing notes
 - the public examples are meant to be opened directly in the viewer and audited as reproducible cognitive repositories
+- if you want to replay the validation flow, duplicate the folder first and run the experiment on that copy instead of mutating the published public baseline
 
 ## Important Note
 
