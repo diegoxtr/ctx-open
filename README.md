@@ -54,12 +54,9 @@ Use this when the project root already contains `.ctx/`.
 
 ```powershell
 ctx
-ctx status
-ctx audit
-ctx next
 ```
 
-Then continue from the recommended line, record evidence and decisions while working, and use `ctx closeout` before `ctx commit`.
+Then follow the next command implied by the current state. Use `ctx status` and `ctx audit` only when you need deeper inspection before acting. Record evidence and decisions while working, and use `ctx closeout` before `ctx commit`.
 
 ### New cognitive project
 
@@ -107,6 +104,19 @@ Do the work.
 ctx closeout
 ctx commit -m "<durable result>"
 ```
+
+## Public Get Started
+
+There is now a public `Get Started` article for first-time readers and operators:
+
+- `https://ctxstandardcognitiveversion.blogspot.com/2026/04/get-started-with-ctx.html`
+
+Use it as the narrative entrypoint when someone needs a quick explanation of:
+
+- what CTX is
+- how `Working context` differs from `Commit history`
+- how to begin in an existing CTX repo
+- how to start a new cognitive project
 
 ## Why It Matters
 
@@ -172,7 +182,7 @@ The strongest demos are not graph demos. They are continuity demos.
 - Tiene un valor inusualmente alto para generar inputs estructurados de entrenamiento porque el camino de razonamiento queda preservado en lugar de ser reconstruido a posteriori.
 - Esto no es solo otra herramienta de IA. Es parte de la capa de infraestructura que necesitara la proxima generacion de workflows con agentes.
 
-Current version: `1.0.8`
+Current version: `1.0.9`
 
 ## Install
 
@@ -194,8 +204,9 @@ What the bootstrap does:
 
 - detects whether CTX is absent, outdated, or already current
 - chooses `install`, `update`, or `repair`
-- resolves the latest published version and matching asset from GitHub Releases
-- installs from a portable bundle or from source, depending on the selected mode
+- resolves the latest published version and matching portable asset from GitHub Releases
+- installs from the published prebuilt bundle by default
+- uses source mode only when explicitly requested
 - copies the helper prompt plus the canonical CTX docs into the install root
 - exposes `ctx` globally when possible
 
@@ -220,6 +231,11 @@ Linux/macOS shell exposure:
 - no links: `LINK_SCOPE=none`
 
 The installed helper is dynamic: it resolves the install root or repository root and points agents to the copied `CTX_VIEWER_GUIDE`, `CTX_AGENT_PROMPT`, and `CTX_AUTONOMOUS_OPERATION_PROTOCOL` before they start operating.
+
+Normal user rule:
+
+- you should not need the .NET 8 SDK for the standard published install flow
+- the SDK is only required if you intentionally choose `source` mode or build CTX from source yourself
 
 Release/install rule:
 
@@ -286,9 +302,23 @@ Working context and graph exploration in CTX Viewer:
 
 ![CTX Viewer working context](assets/screenshots/ctx-viewer-working-context.jpg)
 
+Small note: CTX Viewer keeps the working surface readable while exposing the actual cognitive state, repository cards, and the active graph in one place.
+What this shows:
+
+- multi-repository tabs in a single viewer session
+- the active working surface instead of a flat backlog dump
+- the graph and details panels aligned around the same live context
+
 Commit-focused trace graph for a resolved reasoning thread:
 
 ![CTX Viewer commit thread](assets/screenshots/ctx-viewer-commit-thread.jpg)
+
+Small note: CTX Viewer also makes durable reasoning legible after snapshot, so a commit can still be inspected as a structured cognitive thread instead of a flat log entry.
+What this shows:
+
+- durable commit history preserved as structured reasoning
+- interpretation surfaces for competing hypotheses and branch-like logic
+- evidence, decisions, and conclusions staying visible after snapshot
 
 ## For Models And Agents
 
@@ -302,7 +332,7 @@ In practice, the operator often has to restate the rule more than once:
 
 If you are an autonomous agent, treat CTX as the primary operating surface before free-form reasoning. Read the repository, recover the active cognitive line, inspect the runbooks and origins, and only then execute.
 
-If an agent starts improvising from chat instead of CTX, repeat the instruction and redirect it back to `ctx status`, `ctx audit`, `ctx log`, `ctx graph summary`, and `ctx next`.
+If an agent starts improvising from chat instead of CTX, repeat the instruction and redirect it back to `ctx`, then to the next command implied by the current state.
 
 Treat CTX as a small operating state machine, not as a giant command list:
 
@@ -364,6 +394,9 @@ Structural rule:
 - `Ctx.Cli`: command-line interface for repository operations
 
 ## Commands
+
+The canonical command reference lives in `docs/CLI_COMMANDS.md`.
+Treat the list below as a compact surface overview, not as the primary onboarding path.
 
 ```powershell
 ctx init --name CTX

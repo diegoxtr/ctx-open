@@ -32,8 +32,6 @@ ctx <command>
 - Multiple lists use comma-separated values.
 - Most mutating changes affect `.ctx/working`, `.ctx/staging`, `.ctx/graph`, and eventually a later cognitive commit.
 
-## General Commands
-
 ## First-Use Startup Flows
 
 Do not start from a full command dump.
@@ -47,7 +45,7 @@ CTX should be operated as a small state machine, not as an unordered command lis
 |---|---|---|
 | No CTX repository | `.ctx/` does not exist yet | `ctx init --name "<project>"` |
 | Existing repo with open work | There are active task lines to continue | `ctx next` |
-| Existing repo with pending cognitive changes | `Working context` is dirty and not yet snapshotteado | `ctx closeout` |
+| Existing repo with pending cognitive changes | `Working context` is dirty and not yet snapshotted | `ctx closeout` |
 | Existing repo at a durable boundary | Closeout is clear and the block should become durable history | `ctx commit -m "<durable result>"` |
 | Existing repo with no open work | No tasks are active; inspect remaining gaps or confirm closure | `ctx next` |
 
@@ -57,12 +55,9 @@ Use this when `.ctx/` already exists in the project root.
 
 ```powershell
 ctx
-ctx status
-ctx audit
-ctx next
 ```
 
-Then continue from the recommended work line.
+Then follow the next command implied by the current state. Use `ctx status` and `ctx audit` only when you need deeper inspection before acting.
 
 ### New cognitive project
 
@@ -1149,8 +1144,7 @@ dotnet run --project .\Ctx.Cli -- import --input .\tmp\ctx-export.json
 Short cognitive workflow:
 
 ```powershell
-dotnet run --project .\Ctx.Cli -- status
-dotnet run --project .\Ctx.Cli -- audit
+dotnet run --project .\Ctx.Cli --
 dotnet run --project .\Ctx.Cli -- next
 dotnet run --project .\Ctx.Cli -- closeout
 dotnet run --project .\Ctx.Cli -- goal add --title "Validate flow"

@@ -26,5 +26,12 @@ Artifacts for this version:
 - [REAL_TESTING.md](C:/sources/ctx-open/examples/bootstrap-agriculture-demo-v4/REAL_TESTING.md)
 
 In `ctx-open`, this folder is published as a regression-and-testing pack.
-If you want to replay the case, initialize it locally as its own CTX repository so the branch-semantics layer can be measured independently from `v1`, `v2`, and `v3`.
+
+Open it directly here:
+
+- Codespaces: `/workspaces/ctx-open/examples/bootstrap-agriculture-demo-v4`
+- Local clone: `C:\sources\ctx-open\examples\bootstrap-agriculture-demo-v4`
+
+This public example already ships with its `.ctx` workspace.
+If you want to replay the case, duplicate the folder first so the branch-semantics layer can be measured independently from `v1`, `v2`, and `v3`.
 

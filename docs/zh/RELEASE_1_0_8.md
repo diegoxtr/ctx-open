@@ -1,18 +1,18 @@
 # CTX - Release 1.0.8
 
-Release date: 2026-04-21
+发布日期：2026-04-21
 
-Version:
+版本：
 
 - `1.0.8`
 
-Summary:
+摘要：
 
-- Stable patch release for CTX 1.0.
-- Aligns the public startup experience around a state-driven operator model instead of a flat command dump.
+- CTX 1.0 的稳定补丁版本。
+- 将公共启动体验从平铺命令清单对齐为 state-driven operator model。
 
-Highlights:
+亮点：
 
-- Bare `ctx` now shows `Current State`, `Meaning`, `Next Command`, and a compact state machine for the public repo entrypoint.
-- Public docs now split startup clearly between an existing CTX repository and a new cognitive project.
-- The public operator loop is now consistent across helper prompt, README, CLI docs, installation guidance, and the autonomous operation protocol.
+- 裸 `ctx` 现在会在公共 repo 入口显示 `Current State`、`Meaning`、`Next Command`，以及一个紧凑的 state machine。
+- 公共文档现在将启动路径清晰分为两类：现有 CTX 仓库 与 新认知项目。
+- 公共 operator loop 现在在 helper prompt、README、CLI docs、安装指南和 autonomous operation protocol 中保持一致。

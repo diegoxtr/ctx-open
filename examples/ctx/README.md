@@ -90,19 +90,19 @@ Key files:
 Run these inside any example folder:
 
 ```powershell
-ctx status
-ctx log
+ctx
+ctx next
 ctx audit
-ctx graph summary
 ```
+
+Use `ctx status`, `ctx log`, and `ctx graph summary` only when you need deeper inspection of the current example state.
 
 If you are running directly from the source tree instead of the local install, the equivalent CLI surface is:
 
 ```powershell
-dotnet C:\sources\ctx-open\Ctx.Cli\bin\Debug\net8.0\Ctx.Cli.dll status
-dotnet C:\sources\ctx-open\Ctx.Cli\bin\Debug\net8.0\Ctx.Cli.dll log
+dotnet C:\sources\ctx-open\Ctx.Cli\bin\Debug\net8.0\Ctx.Cli.dll
+dotnet C:\sources\ctx-open\Ctx.Cli\bin\Debug\net8.0\Ctx.Cli.dll next
 dotnet C:\sources\ctx-open\Ctx.Cli\bin\Debug\net8.0\Ctx.Cli.dll audit
-dotnet C:\sources\ctx-open\Ctx.Cli\bin\Debug\net8.0\Ctx.Cli.dll graph summary
 ```
 
 Viewer:

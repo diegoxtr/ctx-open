@@ -1,15 +1,19 @@
-# CTX æŠ€æœ¯ç´¢å¼•
-å¦‚æžœè¯­è¨€æ¨¡åž‹åŠå…¶ä»£ç†ä¸¢å¤±äº†ä¸Šä¸‹æ–‡ï¼Œè¿™å°±æ˜¯ä½ éœ€è¦çš„å·¥å…·ã€‚
+# CTX 技术索引
+如果语言模型及其代理丢失了上下文，这就是你需要的工具。
 
-æœ¬æ–‡æ¡£æ±‡æ€»ä»“åº“ä¸­çš„æŠ€æœ¯ä¸Žè¿è¡Œæ–‡æ¡£ï¼Œä½œä¸ºå…¥å£ï¼š
+本文档汇总仓库中的技术与操作文档。
 
-- å¼€å‘
-- æž¶æž„
-- è¿è¡Œ
-- æµ‹è¯•
-- æŠ€æœ¯ onboarding
+它是以下用途的入口：
 
-## å¿«é€Ÿé˜…è¯»é¡ºåº
+- 开发
+- 架构
+- 运维
+- 测试
+- 技术 onboarding
+
+## 快速阅读顺序
+
+推荐顺序：
 
 1. [README.md](C:/sources/ctx-open/README.md)
 2. [V1_PLAN.md](C:/sources/ctx-open/docs/V1_PLAN.md)
@@ -18,58 +22,189 @@
 5. [DOMAIN_MODEL.md](C:/sources/ctx-open/docs/DOMAIN_MODEL.md)
 6. [CTX_STRUCTURE.md](C:/sources/ctx-open/docs/CTX_STRUCTURE.md)
 7. [CLI_COMMANDS.md](C:/sources/ctx-open/docs/CLI_COMMANDS.md)
+8. [BOOTSTRAP_COGNITIVE_INDEXING.md](C:/sources/ctx-open/docs/BOOTSTRAP_COGNITIVE_INDEXING.md)
+9. [BOOTSTRAP_TEST_DEVELOPMENT.md](C:/sources/ctx-open/docs/BOOTSTRAP_TEST_DEVELOPMENT.md)
+10. [HYPOTHESIS_BRANCH_SEMANTICS.md](C:/sources/ctx-open/docs/HYPOTHESIS_BRANCH_SEMANTICS.md)
 
-## åˆ†ç±»ç´¢å¼•
+## 按类别划分的文档
 
-### äº§å“ä¸ŽèŒƒå›´
+### 产品与范围
 
 - [V1_PLAN.md](C:/sources/ctx-open/docs/V1_PLAN.md)
-- [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-open/docs/V1_FUNCTIONAL_SPEC.md)
-- [RELEASE_1_0_8.md](../RELEASE_1_0_8.md)
+  总结目标、范围、阶段、backlog 与 V1 路径。
 
-### æž¶æž„ä¸Žè®¾è®¡
+- [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-open/docs/V1_FUNCTIONAL_SPEC.md)
+  定义模块、需求、验收标准与 V1 done 标准。
+
+- [RELEASE_1_0_8.md](C:/sources/ctx-open/docs/RELEASE_1_0_8.md)
+  总结当前稳定 release baseline。
+
+### 架构与设计
 
 - [TECHNICAL_ARCHITECTURE.md](C:/sources/ctx-open/docs/TECHNICAL_ARCHITECTURE.md)
-- [DOMAIN_MODEL.md](C:/sources/ctx-open/docs/DOMAIN_MODEL.md)
-- [CTX_STRUCTURE.md](C:/sources/ctx-open/docs/CTX_STRUCTURE.md)
-- [CTX_SPECIFICATION_V1.md](C:/sources/ctx-open/docs/zh/CTX_SPECIFICATION_V1.md)
-- [COGNITIVE_GRAPH_AND_LINEAGE.md](C:/sources/ctx-open/docs/COGNITIVE_GRAPH_AND_LINEAGE.md)
-- [COGNITIVE_THREAD_RECONSTRUCTION.md](C:/sources/ctx-open/docs/COGNITIVE_THREAD_RECONSTRUCTION.md)
-- [COGNITIVE_TRIGGERS.md](C:/sources/ctx-open/docs/COGNITIVE_TRIGGERS.md)
-- [OPERATIONAL_RUNBOOKS.md](C:/sources/ctx-open/docs/OPERATIONAL_RUNBOOKS.md)
-- [WORK_MODEL_AND_PRIORITIZATION.md](C:/sources/ctx-open/docs/WORK_MODEL_AND_PRIORITIZATION.md)
-- [CTX_GOAL_FLOW_DIAGRAM.md](C:/sources/ctx-open/docs/CTX_GOAL_FLOW_DIAGRAM.md)
+  分层、职责、依赖与端到端流程。
 
-### è¿è¡Œä¸Žä½¿ç”¨
+- [DOMAIN_MODEL.md](C:/sources/ctx-open/docs/DOMAIN_MODEL.md)
+  实体、强 ID、状态、关系与领域规则。
+
+- [CTX_STRUCTURE.md](C:/sources/ctx-open/docs/CTX_STRUCTURE.md)
+  `.ctx/` 的结构、基础文件、目录与不变量。
+
+- [CTX_SPECIFICATION_V1.md](C:/sources/ctx-open/docs/CTX_SPECIFICATION_V1.md)
+  最小 CTX v1 规格：上下文如何存储、版本化与结构化。
+
+- [COGNITIVE_GRAPH_AND_LINEAGE.md](C:/sources/ctx-open/docs/COGNITIVE_GRAPH_AND_LINEAGE.md)
+  定义知识的关系投影及其可视化路线图。
+
+- [COGNITIVE_THREAD_RECONSTRUCTION.md](C:/sources/ctx-open/docs/COGNITIVE_THREAD_RECONSTRUCTION.md)
+  从结构化工件、commits 与 branches 重建认知线程的规范模型。
+
+- [COGNITIVE_TRIGGERS.md](C:/sources/ctx-open/docs/COGNITIVE_TRIGGERS.md)
+  认知线的持久 origin 模型、紧凑 trigger summary 与 packet 集成。
+
+- [WORK_MODEL_AND_PRIORITIZATION.md](C:/sources/ctx-open/docs/WORK_MODEL_AND_PRIORITIZATION.md)
+  issue / gap / task / subtask / duplicate / blocker 的规范分类与 proximity-based prioritization。
+
+- [OPERATIONAL_RUNBOOKS.md](C:/sources/ctx-open/docs/OPERATIONAL_RUNBOOKS.md)
+  重复性操作知识、packet 注入与 overflow 处理的紧凑设计。
+
+- [CTX_GOAL_FLOW_DIAGRAM.md](C:/sources/ctx-open/docs/CTX_GOAL_FLOW_DIAGRAM.md)
+  用 CTX 命令解决一个 goal 并构建 `.ctx` 图谱的示例流程。
+
+### 运维与使用
 
 - [CLI_COMMANDS.md](C:/sources/ctx-open/docs/CLI_COMMANDS.md)
-- [COMMAND_ADOPTION_AND_COVERAGE.md](C:/sources/ctx-open/docs/COMMAND_ADOPTION_AND_COVERAGE.md)
-- [INSTALLATION_AND_USAGE_GUIDE.md](C:/sources/ctx-open/docs/INSTALLATION_AND_USAGE_GUIDE.md)
-- [LOCAL_CTX_INSTALLATION.md](C:/sources/ctx-open/docs/LOCAL_CTX_INSTALLATION.md)
-- [INSTALLER_AND_DISTRIBUTION.md](C:/sources/ctx-open/docs/INSTALLER_AND_DISTRIBUTION.md)
-- [PILOT_TESTING_GUIDE.md](C:/sources/ctx-open/docs/PILOT_TESTING_GUIDE.md)
-- [CTX_VIEWER_GUIDE.md](C:/sources/ctx-open/docs/CTX_VIEWER_GUIDE.md)
-- [CTX_AUTONOMOUS_OPERATION_PROTOCOL.md](C:/sources/ctx-open/docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md)
+  已实现 CLI 命令的完整参考。
 
-### æ“ä½œæç¤ºè¯
+- [BOOTSTRAP_COGNITIVE_INDEXING.md](C:/sources/ctx-open/docs/BOOTSTRAP_COGNITIVE_INDEXING.md)
+  定义从外部材料重建 provisional cognitive threads 的 idea-first bootstrap map/apply 表面。
+
+- [BOOTSTRAP_TEST_DEVELOPMENT.md](C:/sources/ctx-open/docs/BOOTSTRAP_TEST_DEVELOPMENT.md)
+  记录 bootstrap indexing 在实践中如何被测试，包括 regression case、failure mode 与 product conclusion。
+
+- [HYPOTHESIS_BRANCH_SEMANTICS.md](C:/sources/ctx-open/docs/HYPOTHESIS_BRANCH_SEMANTICS.md)
+  定义 competing hypotheses 的 branch-like lifecycle、relations 与 evidence 行为，而不直接耦合到 repo branches。
+
+- [COMMAND_ADOPTION_AND_COVERAGE.md](C:/sources/ctx-open/docs/COMMAND_ADOPTION_AND_COVERAGE.md)
+  哪些命令常用、哪些较冷，以及推荐采用顺序。
+
+- [INSTALLATION_AND_USAGE_GUIDE.md](C:/sources/ctx-open/docs/INSTALLATION_AND_USAGE_GUIDE.md)
+  安装、运行与首次使用的操作 onboarding。
+
+- [PILOT_TESTING_GUIDE.md](C:/sources/ctx-open/docs/PILOT_TESTING_GUIDE.md)
+  受控 pilot 的执行指南。
+
+- [CTX_VIEWER_GUIDE.md](C:/sources/ctx-open/docs/CTX_VIEWER_GUIDE.md)
+  如何理解 viewer、它的 timeline、branches 与 panels。
+
+- [LOCAL_CTX_INSTALLATION.md](C:/sources/ctx-open/docs/LOCAL_CTX_INSTALLATION.md)
+  `C:\ctx`、`ctx` 与 `ctx-viewer` 的规范本地发布 / 安装流程。
+
+- [INSTALLER_AND_DISTRIBUTION.md](C:/sources/ctx-open/docs/INSTALLER_AND_DISTRIBUTION.md)
+  packaging model、portable archives 与 distribution output policy。
+
+### 操作 prompts
+
+- [CTX_HELPER_PROMPT.md](C:/sources/ctx-open/prompts/CTX_HELPER_PROMPT.md)
+  helper/bootstrap prompt，会在开始工作前把代理与操作员重新锚定到 active repo、核心 docs、viewer 与 public boundary。
 
 - [CTX_BASE_PROMPT.md](C:/sources/ctx-open/prompts/CTX_BASE_PROMPT.md)
-- [CTX_AGENT_PROMPT.md](C:/sources/ctx-open/prompts/CTX_AGENT_PROMPT.md)
-- [CTX_AUTONOMOUS_OPERATOR_PROMPT.md](C:/sources/ctx-open/prompts/CTX_AUTONOMOUS_OPERATOR_PROMPT.md)
+  用新工具操作 CTX 的基础模板。
 
-### æ ¹ç›®å½•
+- [CTX_AGENT_PROMPT.md](C:/sources/ctx-open/prompts/CTX_AGENT_PROMPT.md)
+  面向代理的 prompt，包含 continuity、evidence 与 cognitive closeout 规则。
+
+- [CTX_AUTONOMOUS_OPERATOR_PROMPT.md](C:/sources/ctx-open/prompts/CTX_AUTONOMOUS_OPERATOR_PROMPT.md)
+  面向 autonomous operator 的 prompt，包含严格的 inspection / execution / closeout 顺序。
+
+### 仓库根目录
 
 - [README.md](C:/sources/ctx-open/README.md)
-- [CHANGELOG.md](C:/sources/ctx-open/CHANGELOG.md)
-- [LICENSE](C:/sources/ctx-open/LICENSE)
-- [COPYRIGHT.md](C:/sources/ctx-open/COPYRIGHT.md)
-- [TRADEMARK.md](C:/sources/ctx-open/TRADEMARK.md)
-- [CONTRIBUTOR_ASSIGNMENT.md](C:/sources/ctx-open/CONTRIBUTOR_ASSIGNMENT.md)
-- [NOTICE](C:/sources/ctx-open/NOTICE)
+  项目入口。
 
-### éªŒè¯è„šæœ¬
+- [CHANGELOG.md](C:/sources/ctx-open/CHANGELOG.md)
+  产品变更历史摘要。
+
+- [LICENSE](C:/sources/ctx-open/LICENSE)
+  source-available license。
+
+- [COPYRIGHT.md](C:/sources/ctx-open/COPYRIGHT.md)
+  版权声明。
+
+- [TRADEMARK.md](C:/sources/ctx-open/TRADEMARK.md)
+  商标使用规则。
+
+- [CONTRIBUTOR_ASSIGNMENT.md](C:/sources/ctx-open/CONTRIBUTOR_ASSIGNMENT.md)
+  贡献分配条款。
+
+- [NOTICE](C:/sources/ctx-open/NOTICE)
+  补充仓库声明。
+
+### 验证脚本
 
 - [run-smoke-test.ps1](C:/sources/ctx-open/scripts/run-smoke-test.ps1)
+  可复现的功能验证流程。
+
 - [run-merge-conflict-demo.ps1](C:/sources/ctx-open/scripts/run-merge-conflict-demo.ps1)
+  可复现的 branch / merge / conflict 演示。
+
 - [publish-local.ps1](C:/sources/ctx-open/scripts/publish-local.ps1)
+  发布本地安装到 `C:\ctx`，同时保留版本化工作区。
+
 - [build-distribution.ps1](C:/sources/ctx-open/scripts/build-distribution.ps1)
+  根据 `distribution/targets.json` 构建跨平台 portable CTX bundles。
+
+## 按角色推荐阅读
+
+### Developer
+
+1. [README.md](C:/sources/ctx-open/README.md)
+2. [TECHNICAL_ARCHITECTURE.md](C:/sources/ctx-open/docs/TECHNICAL_ARCHITECTURE.md)
+3. [DOMAIN_MODEL.md](C:/sources/ctx-open/docs/DOMAIN_MODEL.md)
+4. [CTX_STRUCTURE.md](C:/sources/ctx-open/docs/CTX_STRUCTURE.md)
+5. [CLI_COMMANDS.md](C:/sources/ctx-open/docs/CLI_COMMANDS.md)
+
+### Technical tester
+
+1. [README.md](C:/sources/ctx-open/README.md)
+2. [INSTALLATION_AND_USAGE_GUIDE.md](C:/sources/ctx-open/docs/INSTALLATION_AND_USAGE_GUIDE.md)
+3. [CLI_COMMANDS.md](C:/sources/ctx-open/docs/CLI_COMMANDS.md)
+4. [PILOT_TESTING_GUIDE.md](C:/sources/ctx-open/docs/PILOT_TESTING_GUIDE.md)
+
+### Business / V1 scope
+
+1. [V1_PLAN.md](C:/sources/ctx-open/docs/V1_PLAN.md)
+2. [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-open/docs/V1_FUNCTIONAL_SPEC.md)
+3. [RELEASE_1_0_0.md](C:/sources/ctx-open/docs/RELEASE_1_0_0.md)
+
+## 文档覆盖状态
+
+当前已覆盖：
+
+- 产品目标
+- V1 范围
+- 领域模型
+- 技术架构
+- 持久化结构
+- CLI 命令
+- 安装
+- viewer
+- pilot
+- 稳定 release
+- 知识产权与贡献
+- 认知图谱
+- 正式线程重建
+- cognitive triggers
+- 本地安装与 distribution
+- bootstrap regression development
+- hypothesis branch-like semantics
+
+## 未来可能补充的文档
+
+可考虑新增：
+
+- technical decision ADRs
+- 手工认知冲突解决指南
+- provider 集成指南
+- 运维故障排查指南
+- post-V1 roadmap

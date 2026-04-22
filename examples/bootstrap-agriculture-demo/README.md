@@ -15,5 +15,12 @@ Current source texts:
 The testing notes live in [REAL_TESTING.md](C:/sources/ctx-open/examples/bootstrap-agriculture-demo/REAL_TESTING.md).
 
 In `ctx-open`, this folder is published as a source-and-testing pack.
-If you want to replay the case, initialize it locally as its own CTX repository before running `bootstrap map` or `bootstrap apply`.
+
+Open it directly here:
+
+- Codespaces: `/workspaces/ctx-open/examples/bootstrap-agriculture-demo`
+- Local clone: `C:\sources\ctx-open\examples\bootstrap-agriculture-demo`
+
+This public example already ships with its `.ctx` workspace.
+If you want to replay the case, duplicate the folder first and run `bootstrap map` / `bootstrap apply` on that copy instead of mutating the published baseline.
 

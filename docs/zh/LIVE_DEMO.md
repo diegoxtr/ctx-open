@@ -1,52 +1,68 @@
-# GitHub Live Demo
+# GitHub 在线演示
 
-CTX can provide a GitHub-native live demo by combining:
+CTX 可以通过以下组合提供一个 GitHub 原生的在线演示：
 
-- GitHub Codespaces for the runnable viewer
-- a tracked `.ctx` example in the repository as the default dataset
-- GitHub Pages as a static landing page that points to the live viewer URL and release downloads
+- 使用 GitHub Codespaces 运行可执行的 viewer
+- 使用仓库中受版本管理的 `.ctx` 示例作为默认数据集
+- 使用 GitHub Pages 作为静态落地页，指向 live viewer URL 和 release 下载
 
-Public demo entrypoints:
+公共演示入口：
 
-- Landing: `https://diegoxtr.github.io/ctx-open/`
-- Demo notes: `https://diegoxtr.github.io/ctx-open/notes.html`
-- Codespaces quickstart: `https://codespaces.new/diegoxtr/ctx-open?quickstart=1`
-When a temporary public viewer session is alive, publish that URL on the landing page or demo notes. If no temporary session is published, use the landing page or the Codespaces quickstart link.
+- 落地页：`https://diegoxtr.github.io/ctx-open/`
+- 演示说明：`https://diegoxtr.github.io/ctx-open/notes.html`
+- Codespaces 快速入口：`https://codespaces.new/diegoxtr/ctx-open?quickstart=1`
 
-Demo repositories you can copy and paste:
+如果存在临时公开的 viewer session，就把该 URL 发布到落地页或演示说明中。如果没有临时公开 session，就使用落地页或 Codespaces quickstart 链接。
 
-- Codespaces default: `/workspaces/ctx-open/examples/ctx/agent-session-continuity`
-- Codespaces alternate: `/workspaces/ctx-open/examples/ctx/catalog-cache-branch-merge`
-- Codespaces alternate: `/workspaces/ctx-open/examples/ctx/critical-checkout-regression`
+## 公共截图应该传达什么
 
-What each demo should show:
+公共截图不应该只是 UI 壁纸。它们必须一眼说明三件事：
 
-- `agent-session-continuity`: `Working` should show one ready handoff audit task, `Origin` should show the trigger that kept the handoff line open, and `Playbook` should show `Session continuity demo validation`.
-- `catalog-cache-branch-merge`: `Working` should show one ready cache review checklist, `Origin` should show the trigger that kept the review line open, and `Playbook` should show `Cache strategy demo validation`.
-- `critical-checkout-regression`: `Working` should show one ready post-fix monitoring task, `Origin` should show the trigger that kept monitoring visible, and `Playbook` should show `Checkout regression demo validation`.
+- CTX Viewer 可以保持当前工作线可见，而不会把它压平成一份待办列表。
+- CTX Viewer 可以把 durable commit 检查为结构化推理线程，而不只是日志中的一行。
+- CTX Viewer 可以在同一会话中并排展示 interpretations、evidence 和 commit context。
 
-## Why This Split Exists
+当前规范截图是：
 
-GitHub Pages is static hosting. It cannot run the CTX Viewer backend or inspect a `.ctx` repository by itself.
+- `assets/screenshots/ctx-viewer-working-context.jpg`
+- `assets/screenshots/ctx-viewer-commit-thread.jpg`
 
-The live part therefore needs a runnable environment. For a GitHub-only delivery model, the best first surface is Codespaces:
+刷新这些截图时，应优先选择当前公开 viewer surface，而不是旧布局或已经过时的界面。
 
-- the repository already lives in GitHub
-- the viewer can run inside the codespace
-- port `5271` can be forwarded publicly
-- the default repository path can point to a tracked example
+可直接复制粘贴使用的 demo 仓库：
 
-## Canonical Demo Repository
+- Codespaces 默认：`/workspaces/ctx-open/examples/ctx/agent-session-continuity`
+- Codespaces 备选：`/workspaces/ctx-open/examples/ctx/catalog-cache-branch-merge`
+- Codespaces 备选：`/workspaces/ctx-open/examples/ctx/critical-checkout-regression`
 
-The default live demo repository is:
+各 demo 预期展示：
+
+- `agent-session-continuity`：`Working` 应显示 ready handoff audit task，`Origin` 应显示保持 handoff line 开放的 trigger，`Playbook` 应显示 `Session continuity demo validation`
+- `catalog-cache-branch-merge`：`Working` 应显示 ready cache review checklist，`Origin` 应显示保持 review line 开放的 trigger，`Playbook` 应显示 `Cache strategy demo validation`
+- `critical-checkout-regression`：`Working` 应显示 ready post-fix monitoring task，`Origin` 应显示保持 monitoring 可见的 trigger，`Playbook` 应显示 `Checkout regression demo validation`
+
+## 为什么要这样拆分
+
+GitHub Pages 是静态托管。它不能直接运行 CTX Viewer backend，也不能自己检查一个 `.ctx` 仓库。
+
+因此，live 部分必须依赖一个可运行环境。对于完全基于 GitHub 的交付模型，最合适的第一层 surface 就是 Codespaces：
+
+- 仓库已经存在于 GitHub
+- viewer 可以直接在 codespace 内运行
+- `5271` 端口可以公开转发
+- 默认仓库路径可以指向一个受跟踪的示例
+
+## 规范 demo 仓库
+
+默认 live demo 仓库是：
 
 - `examples/ctx/agent-session-continuity`
 
-It fits the product thesis best because it demonstrates continuity across sessions instead of a one-shot screenshot.
+它最符合产品 thesis，因为它展示的是跨 session continuity，而不是一次性的静态截图。
 
-## Codespaces Flow
+## Codespaces 流程
 
-The repository now includes:
+仓库现在包含：
 
 - `.devcontainer/devcontainer.json`
 - `scripts/ensure-dotnet-sdk.sh`
@@ -54,25 +70,25 @@ The repository now includes:
 - `docs/live-demo/index.html`
 - `.github/workflows/live-demo-pages.yml`
 
-When the codespace starts:
+当 codespace 启动时：
 
-1. `scripts/ensure-dotnet-sdk.sh` installs the SDK pinned in `global.json` when the base image does not already provide it.
-2. `dotnet restore Ctx.sln` runs once when the environment is created.
-3. `scripts/start-codespaces-demo.sh` starts the viewer on `0.0.0.0:5271`.
-4. The script sets `CTX_VIEWER_DEFAULT_REPOSITORY_PATH` to `examples/ctx/agent-session-continuity`.
-5. Codespaces forwards port `5271` publicly.
+1. `scripts/ensure-dotnet-sdk.sh` 会在基础镜像尚未提供 SDK 时安装 `global.json` 固定的版本
+2. `dotnet restore Ctx.sln` 会在环境创建时执行一次
+3. `scripts/start-codespaces-demo.sh` 会在 `0.0.0.0:5271` 上启动 viewer
+4. 脚本会把 `CTX_VIEWER_DEFAULT_REPOSITORY_PATH` 设为 `examples/ctx/agent-session-continuity`
+5. Codespaces 会把 `5271` 端口公开转发
 
-The live demo no longer depends on an SSH server feature inside the container. The priority is to keep Codespaces creation reliable for browser-first usage instead of adding extra provisioning risk.
+live demo 不再依赖 container 内的 SSH server 功能。优先目标是保持 Codespaces 创建对 browser-first 使用尽可能稳定，而不是引入额外 provisioning 风险。
 
-## Manual Launch Inside A Codespace
+## 在 codespace 内手动启动
 
-If the demo needs to be restarted:
+如果需要重启 demo：
 
 ```bash
 bash scripts/start-codespaces-demo.sh
 ```
 
-If a resumed or partially initialized codespace still does not start the viewer, run the full recovery block:
+如果恢复后的 codespace 或部分初始化的 codespace 仍未启动 viewer，请运行完整恢复块：
 
 ```bash
 git pull --ff-only origin main
@@ -84,47 +100,44 @@ bash scripts/start-codespaces-demo.sh
 curl -I http://127.0.0.1:5271
 ```
 
-The script writes logs to:
+脚本会将日志写入：
 
 - `/tmp/ctx-viewer-codespaces.log`
 
-If the viewer does not open, verify the local process inside the codespace first:
+如果 viewer 没有打开，先在 codespace 内验证本地进程：
 
 ```bash
 curl -I http://127.0.0.1:5271
 cat /tmp/ctx-viewer-codespaces.log
 ```
 
-## Public Landing
+## 公共落地页
 
-GitHub Pages should remain static.
+GitHub Pages 应保持静态。
 
-Its job is:
+它的职责是：
 
-- explain the thesis briefly
-- link to the live demo URL
-- link to release downloads
-- show one or two screenshots
+- 简要解释 thesis
+- 链接 live demo URL
+- 链接 release 下载
+- 显示一到两张截图
 
-Pages should not try to host the viewer directly.
+Pages 不应试图直接托管 viewer。
 
-The repository now includes a static landing page at:
+仓库现在包含：
 
-- `docs/live-demo/index.html`
+- 静态落地页：`docs/live-demo/index.html`
+- 部署工作流：`.github/workflows/live-demo-pages.yml`
 
-and a deployment workflow at:
-
-- `.github/workflows/live-demo-pages.yml`
-
-The static artifact is built from:
+静态产物构建自：
 
 - `docs/live-demo/*`
 - `assets/screenshots/*`
 
-## Delivery Model
+## 交付模型
 
-- `GitHub Pages` = static landing
+- `GitHub Pages` = 静态落地页
 - `GitHub Codespaces` = live viewer
-- tracked `.ctx` example = demo data
+- 受跟踪的 `.ctx` 示例 = demo 数据
 
-This keeps the first public demo GitHub-native without introducing another hosting provider yet.
+这样可以在不引入额外托管商的前提下，让第一版公共 demo 保持 GitHub-native。

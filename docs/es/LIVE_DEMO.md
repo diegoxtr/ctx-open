@@ -11,7 +11,22 @@ Puntos de entrada publicos del demo:
 - Landing: `https://diegoxtr.github.io/ctx-open/`
 - Notas del demo: `https://diegoxtr.github.io/ctx-open/notes.html`
 - Quickstart de Codespaces: `https://codespaces.new/diegoxtr/ctx-open?quickstart=1`
-- Cuando haya una sesion publica temporal del viewer, publica esa URL en la landing o en las notas del demo. Si no hay una sesion temporal publicada, usa la landing o el quickstart de Codespaces.
+Cuando haya una sesion publica temporal del viewer, publica esa URL en la landing o en las notas del demo. Si no hay una sesion temporal publicada, usa la landing o el quickstart de Codespaces.
+
+## Que deben comunicar las capturas publicas
+
+Las capturas publicas no deberian ser wallpaper de UI. Tienen que dejar claras tres cosas de un vistazo:
+
+- CTX Viewer puede mantener visible la linea activa de trabajo sin aplanarla en una lista de backlog.
+- CTX Viewer puede inspeccionar un commit durable como un thread de razonamiento estructurado, no solo como una fila de log.
+- CTX Viewer puede exponer interpretaciones, evidencia y contexto de commit lado a lado dentro de la misma sesion.
+
+Las capturas canonicas actuales son:
+
+- `assets/screenshots/ctx-viewer-working-context.jpg`
+- `assets/screenshots/ctx-viewer-commit-thread.jpg`
+
+Cuando se refresquen estas capturas, hay que preferir superficies actuales del viewer y evitar layouts viejos o ya superados.
 
 Repositorios demo para copiar y pegar:
 

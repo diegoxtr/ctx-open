@@ -85,11 +85,7 @@ if [[ "$ACTION" == "auto" ]]; then
 fi
 
 if [[ "$MODE" == "auto" ]]; then
-  if [[ -n "$BUNDLE_PATH" ]]; then
-    MODE="portable"
-  else
-    MODE="source"
-  fi
+  MODE="portable"
 fi
 
 if [[ "$MODE" == "portable" && -z "$BUNDLE_PATH" ]]; then

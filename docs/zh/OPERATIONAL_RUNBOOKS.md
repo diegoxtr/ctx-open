@@ -1,29 +1,29 @@
 # OperationalRunbook 设计
-如果语言模型和它的代理会丢失上下文，这就是你需要的工具。
+如果语言模型及其代理丢失了上下文，这就是你需要的工具。
 
 ## 目标
 
-定义一个紧凑的一等实体，用来保存可重复使用的操作知识，并且能够进入 CTX packet，而不会显著增加上下文成本。
+定义一个紧凑的一等实体，用来保存可重复使用的操作知识，并且能进入 CTX packet，而不会显著增加上下文成本。
 
-`OperationalRunbook` 用来捕获：
+`OperationalRunbook` 用于捕获：
 
 - 可重复的操作流程
 - 反复出现的故障排查
 - 操作策略
-- 在执行漂移之前应生效的 guardrail
+- 在执行漂移之前就应生效的 guardrail
 
 它不是 task、文档或脚本的替代品。
-它是一层紧凑的操作性引导，用来在代理开始即兴发挥之前把它拉回规范路径。
+它是一层紧凑的操作引导，用来在代理开始即兴发挥之前，把它拉回规范路径。
 
 ## 为什么 CTX 需要它
 
-目前 CTX 已经保存了：
+目前 CTX 已经存储了：
 
 - `working` 中的活跃认知工作
-- 通过 goals、tasks、hypotheses、evidence、decisions 和 conclusions 存储的持久推理状态
+- 通过 goals、tasks、hypotheses、evidence、decisions、conclusions 存储的持久推理状态
 - packet 模型之外的 prompts、scripts 和 docs
 
-仍然缺失的是一层结构化的、可复用的操作知识，例如：
+仍然缺失的是一层结构化、可复用的操作知识，例如：
 
 - 如何本地发布
 - 什么情况下允许 Git closeout
@@ -38,9 +38,9 @@
 
 相反，CTX 通过 `RepositorySnapshot` 对它进行版本化：
 
-- `working-context.json` 继续聚焦于活跃的认知执行状态
+- `working-context.json` 继续聚焦活跃的认知执行状态
 - `.ctx/runbooks/` 在磁盘上保存稳定的操作性记忆
-- `ContextCommit.Snapshot` 现在同时捕获：
+- `ContextCommit.Snapshot` 同时捕获：
   - `WorkingContext`
   - `Runbooks`
 
@@ -66,8 +66,11 @@
 - `Kind`
 - `Triggers`
 - `WhenToUse`
+- `Preconditions`
 - `Do`
 - `Verify`
+- `FailureSignals`
+- `EscalationBoundary`
 - `References`
 - `GoalIds`
 - `TaskIds`
@@ -78,7 +81,7 @@
 
 面向操作员的短名称。
 
-示例：
+例如：
 
 - `Local publish`
 - `Git closeout`
@@ -97,7 +100,7 @@
 
 紧凑的激活字符串。
 
-示例：
+例如：
 
 - `publish-local`
 - `git-commit`
@@ -105,13 +108,13 @@
 - `index.lock`
 - `viewer`
 
-第一版不需要复杂的匹配 DSL。
+第一版不需要复杂匹配 DSL。
 
 ### `WhenToUse`
 
 一句简短的话说明激活条件。
 
-示例：
+例如：
 
 - `Use when publishing the local CLI or viewer build.`
 
@@ -119,21 +122,50 @@
 
 简短的有序动作列表。
 
-硬性建议：
+建议：
 
 - 最好控制在 `3-5` 条
 - 每条都尽量简短
-- 使用规范命令或路径，而不是长 prose
+- 用规范命令或路径，而不是长 prose
+
+### `Preconditions`
+
+执行 runbook 前应该已经成立的条件。
+
+建议：
+
+- 最好 `2-4` 条
+- 保持二元、可检查
+- 用来阻止执行前的漂移
 
 ### `Verify`
 
 简短的检查列表，用来确认 runbook 是否被正确执行。
 
+### `FailureSignals`
+
+用于激活 troubleshooting 或 guardrail 的具体症状。
+
+例如：
+
+- `.git/index.lock`
+- `Failed to copy Ctx.Viewer.exe`
+- `127.0.0.1:5271 does not respond`
+
+### `EscalationBoundary`
+
+用于描述什么情况下 runbook 应该停止并把控制权还给操作员，而不是继续强制恢复。
+
+例如：
+
+- `Do not delete the lock if git.exe is still running`
+- `Do not keep retrying publish while the installed binary is still in use`
+
 ### `References`
 
 规范的支持路径或命令。
 
-示例：
+例如：
 
 - `docs/LOCAL_CTX_INSTALLATION.md`
 - `scripts/publish-local.ps1`
@@ -161,7 +193,7 @@
 
 - `Task` 的替代品
 - `Evidence` 的替代品
-- 长篇的流程文档
+- 长篇流程文档
 - 单次执行发生了什么的历史记录
 
 规则：
@@ -183,7 +215,7 @@ packet 不应该包含所有匹配的 runbook。
 
 - 降低 token 成本
 - 降低指令相互干扰
-- 提高操作员焦点
+- 提高操作员聚焦
 
 ## 选择顺序
 
@@ -193,7 +225,7 @@ packet 不应该包含所有匹配的 runbook。
 2. `GoalId` 匹配
 3. 对 packet purpose 的精确 trigger 匹配
 4. 存在操作风险时，`Guardrail` 优先于 `Procedure`
-5. `Troubleshooting` 只有在存在相关失败信号时才进入
+5. `Troubleshooting` 只在存在相关 failure signal 时才进入
 6. 最后用稳定的手动优先级或确定性的标题排序打破平局
 
 ## 溢出处理
@@ -228,9 +260,9 @@ Additional runbooks available: Recover index.lock
 
 例如：
 
-- `Recover index.lock` 只有在 lock 存在，或者观察到相关 Git 失败时才应进入
+- `Recover index.lock` 只有在 lock 存在，或观察到相关 Git 失败时才应进入
 
-这能让 troubleshooting 在真正需要之前保持休眠。
+这样能让 troubleshooting 在真正需要之前保持休眠。
 
 ## 持久化方向
 
@@ -242,10 +274,38 @@ Additional runbooks available: Recover index.lock
 
 ## CTX 应优先内建的首批 runbook
 
+- `CTX planning first`
+- `State-driven CTX startup`
 - `Local publish`
 - `Git closeout`
 - `Recover index.lock`
 - `Viewer local validation`
+- `PowerShell command chaining constraints`
+
+## State-driven startup 示例
+
+至少应有一个 runbook 用与 bare `ctx` helper 一致的方式教授启动流程。
+
+- trigger：`startup`、`helper`、`onboarding`
+- when：
+  当操作员或代理需要在不阅读整套命令表面的情况下知道下一条 CTX 命令时使用
+- do：
+  - 运行 `ctx`
+  - 阅读 `Current State`
+  - 执行打印出来的 `Next Command`
+  - 如果 repo 是新的，先初始化
+  - 如果 repo 已存在，则留在循环中：
+    `ctx next -> work -> ctx closeout -> ctx commit -m "..."`
+- verify：
+  - helper、README、CLI docs 与 operator protocol 都描述同一套 state-driven loop
+  - 代理能够区分：
+    - 没有 CTX repo
+    - 存在开放工作
+    - 存在 pending cognitive delta
+    - 已到 durable boundary
+    - 没有开放工作
+
+这样可以让 onboarding 保持紧凑，也不必在第一次有用动作之前先记住一大堆命令。
 
 ## 实现立场
 
@@ -257,4 +317,4 @@ Additional runbooks available: Recover index.lock
 - 硬性溢出限制
 - 通过规范引用避免重复长 prose
 
-只有当真实使用证明这个紧凑模型不够时，才应继续增加复杂度。
+只有当真实使用证明这个紧凑模型不够时，才应该继续增加复杂度。

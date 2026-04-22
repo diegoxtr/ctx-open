@@ -77,12 +77,56 @@ Resultado esperado:
 La CLI puede ejecutarse directamente con:
 
 ```powershell
-dotnet run --project .\Ctx.Cli -- status
+dotnet run --project .\Ctx.Cli --
 ```
 
 Si todavia no existe un repositorio cognitivo en la carpeta actual, el comando que debe correrse primero es `init`.
 
-## 7. Crear un repositorio cognitivo
+## 7. Primera decision: repo CTX existente vs proyecto nuevo
+
+Antes de hacer cualquier otra cosa, definir si el repositorio:
+
+- ya es un repositorio CTX existente con `.ctx/`
+- o si todavia es un proyecto nuevo que necesita inicializacion cognitiva
+
+### Repositorio CTX existente
+
+```powershell
+ctx
+ctx next
+```
+
+Regla state-driven:
+
+- si `ctx` dice que hay cambios cognitivos pendientes:
+  - correr `ctx closeout`
+- si `ctx` dice que hay trabajo abierto:
+  - correr `ctx next`
+- si `ctx` dice que el repo esta en un boundary durable:
+  - correr `ctx commit -m "<durable result>"`
+- si `ctx` dice que no hay trabajo abierto:
+  - correr `ctx next` y revisar gaps o estado de cierre
+
+Usar `ctx status` y `ctx audit` solo cuando haga falta inspeccion mas profunda antes de actuar.
+
+### Proyecto nuevo
+
+```powershell
+ctx init --name "<project>"
+```
+
+Despues:
+
+- si ya existe material fuente, usar bootstrap:
+
+```powershell
+ctx bootstrap map --from <path>
+ctx bootstrap apply --from <path>
+```
+
+- si el trabajo es greenfield, crear goal, task e hypothesis manualmente.
+
+## 8. Crear un repositorio cognitivo
 
 Ubicate en una carpeta de trabajo donde quieras iniciar CTX y ejecutar:
 
@@ -102,7 +146,7 @@ Verificar:
 dotnet run --project C:\sources\ctx-open\Ctx.Cli -- status
 ```
 
-## 8. Primer flujo de uso recomendado
+## 9. Primer flujo de uso recomendado
 
 ## Paso 1 - Crear un objetivo
 
@@ -152,7 +196,7 @@ dotnet run --project C:\sources\ctx-open\Ctx.Cli -- run --provider openai --purp
 dotnet run --project C:\sources\ctx-open\Ctx.Cli -- commit -m "primer flujo completo de uso"
 ```
 
-## 9. Comandos utiles
+## 10. Comandos utiles
 
 ## Estado y navegacion
 
@@ -190,7 +234,7 @@ dotnet run --project .\Ctx.Cli -- checkout feature-x
 dotnet run --project .\Ctx.Cli -- merge main
 ```
 
-## 10. Estructura local generada
+## 11. Estructura local generada
 
 Al inicializar un repositorio, CTX crea:
 
@@ -210,7 +254,7 @@ Al inicializar un repositorio, CTX crea:
 - `.ctx/providers/`
 - `.ctx/logs/`
 
-## 11. Recomendaciones de uso
+## 12. Recomendaciones de uso
 
 - trabajar cada caso de prueba en una carpeta separada;
 - hacer commits cognitivos con mensajes claros;
@@ -219,7 +263,7 @@ Al inicializar un repositorio, CTX crea:
 - revisar `metrics show` al final de cada escenario;
 - si aparecen conflictos cognitivos, no ignorarlos: revisar el merge antes de continuar.
 
-## 12. Problemas comunes
+## 13. Problemas comunes
 
 ## Problema: no compila
 
@@ -250,7 +294,7 @@ Interpretacion:
 - el sistema detecto divergencia sobre el mismo artefacto cognitivo;
 - revisar los artefactos antes de consolidar el resultado.
 
-## 13. Criterio de uso correcto
+## 14. Criterio de uso correcto
 
 Se considera que el usuario pudo operar CTX correctamente si:
 
@@ -260,7 +304,7 @@ Se considera que el usuario pudo operar CTX correctamente si:
 - pudo crear al menos un commit cognitivo;
 - pudo inspeccionar resultados desde la CLI.
 
-## 14. Siguiente lectura recomendada
+## 15. Siguiente lectura recomendada
 
 Para continuar:
 

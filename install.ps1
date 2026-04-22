@@ -139,12 +139,7 @@ if ($effectiveAction -eq "auto") {
 
 $effectiveMode = $Mode
 if ($effectiveMode -eq "auto") {
-    if (-not [string]::IsNullOrWhiteSpace($BundlePath)) {
-        $effectiveMode = "portable"
-    }
-    else {
-        $effectiveMode = "source"
-    }
+    $effectiveMode = "portable"
 }
 
 if ($effectiveMode -eq "portable" -and [string]::IsNullOrWhiteSpace($BundlePath)) {

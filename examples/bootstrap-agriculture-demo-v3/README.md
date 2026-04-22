@@ -26,5 +26,12 @@ Artifacts for this version:
 - [V3_PLAN.md](C:/sources/ctx-open/examples/bootstrap-agriculture-demo-v3/V3_PLAN.md)
 
 In `ctx-open`, this folder is published as an implementation-validation pack.
-If you want to replay the case, initialize it locally as its own CTX repository so the implementation result can be measured independently from `v1` and `v2`.
+
+Open it directly here:
+
+- Codespaces: `/workspaces/ctx-open/examples/bootstrap-agriculture-demo-v3`
+- Local clone: `C:\sources\ctx-open\examples\bootstrap-agriculture-demo-v3`
+
+This public example already ships with its `.ctx` workspace.
+If you want to replay the case, duplicate the folder first so the implementation result can be measured independently from `v1` and `v2`.
 
