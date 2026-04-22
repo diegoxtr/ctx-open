@@ -23,6 +23,12 @@ Single-entry bootstrap with install/update/repair detection:
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
 
+Important:
+
+- even if you run `install.ps1` from a cloned public repository checkout, the default path is still the published portable bundle
+- running the bootstrap from a clone does not imply `source` mode
+- use `-Mode source` only when you intentionally want to compile CTX from that checkout
+
 Recommended default:
 
 - use `install.ps1` for user-facing local installation

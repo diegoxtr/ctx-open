@@ -115,6 +115,13 @@ Those entrypoints should:
   Windows: `User` or `Machine` PATH
   Linux/macOS: symlink in `~/.local/bin` or `/usr/local/bin`
 
+User expectation rule:
+
+- a user may clone the public repository and run `install.ps1` or `install.sh` from that checkout
+- that action must still resolve to the published portable release asset by default
+- a local clone must not be interpreted as a request to compile from source
+- source mode must remain opt-in and explicit
+
 ## Branch And Release Strategy
 
 Installer-driven distribution should follow a strict published-artifact strategy:

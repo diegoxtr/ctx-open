@@ -200,6 +200,13 @@ Linux/macOS:
 bash ./install.sh
 ```
 
+Clone-first rule:
+
+- users may clone the public repository and run that exact install command from the repo root
+- the bootstrap still installs from the latest published portable release asset by default
+- it does **not** build from source unless `source` mode is requested explicitly
+- this is the intended user flow for published installation, update, and repair
+
 What the bootstrap does:
 
 - detects whether CTX is absent, outdated, or already current

@@ -257,6 +257,25 @@ Additional runbooks available: Recover index.lock
 
 This preserves discoverability without paying the full context cost.
 
+## Example: Public install bootstrap
+
+Compact example:
+
+```text
+Operational Runbook
+- Public install bootstrap
+  When: a user clones the public repository and runs install.ps1 or install.sh
+  Preconditions: network access exists; the target platform has a published portable asset
+  Do: run the single-entry install script from the repo root; let the bootstrap resolve the latest published release asset; use source mode only if explicitly requested
+  Verify: ctx installs without requiring a local source build; install metadata reports the published version
+  Escalate: stop if the platform has no published asset or the release metadata is missing the matching bundle
+```
+
+Design rule:
+
+- clone-first installation must still resolve to published portable assets by default
+- a local repository checkout is not, by itself, a request to compile CTX from source
+
 ## Failure-driven activation
 
 Some runbooks should never enter the packet by default.

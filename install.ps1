@@ -160,6 +160,10 @@ $statusLine = switch ($effectiveAction) {
 }
 
 Write-Host $statusLine
+if ($effectiveMode -eq "portable") {
+    Write-Host "Default bootstrap behavior: install from the published GitHub Release bundle, even when run from a cloned repository."
+    Write-Host "Use -Mode source only if you intentionally want to build CTX from this checkout."
+}
 Write-Host "Mode: $effectiveMode"
 Write-Host "Install root: $InstallRoot"
 Write-Host "Release tag: $($releaseMetadata.tag_name)"

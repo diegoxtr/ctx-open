@@ -137,6 +137,11 @@ case "$ACTION" in
   repair) echo "Repairing CTX $RELEASE_VERSION..." ;;
 esac
 
+if [[ "$MODE" == "portable" ]]; then
+  echo "Default bootstrap behavior: install from the published GitHub Release bundle, even when run from a cloned repository."
+  echo "Use MODE=source only if you intentionally want to build CTX from this checkout."
+fi
+
 echo "Mode: $MODE"
 echo "Install root: $INSTALL_ROOT"
 echo "Release tag: $(python - <<'PY' "$RELEASE_JSON"
