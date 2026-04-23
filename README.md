@@ -262,8 +262,17 @@ Public entrypoints:
 
 - Landing: `https://diegoxtr.github.io/ctx-open/`
 - Demo notes: `https://diegoxtr.github.io/ctx-open/notes.html`
+- UNJu talk deck: `https://diegoxtr.github.io/ctx-open/talk-unju.html`
 - Codespaces quickstart: `https://codespaces.new/diegoxtr/ctx-open?quickstart=1`
 When a temporary public viewer session is alive, publish that URL on the landing page or demo notes. Otherwise use the landing page or the Codespaces quickstart.
+
+The public talk deck explains:
+
+- why CTX became necessary
+- what cognitive continuity means in practice
+- what happens when context is flattened or compacted
+- what CTX resolves in real engineering work
+- how to start from zero in VS Code with Git and an installed agent
 
 Demo repositories you can copy and paste:
 
