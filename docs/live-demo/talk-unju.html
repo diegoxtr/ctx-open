@@ -1,0 +1,1666 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CTX en UNJu</title>
+  <style>
+    :root {
+      --bg: #f3efe7;
+      --paper: #fffdf8;
+      --ink: #1a2433;
+      --muted: #546071;
+      --accent: #0f4c81;
+      --accent-soft: #dceaf6;
+      --line: #d9d1c3;
+      --gold: #b1872d;
+      --slide-width: 1280;
+      --slide-height: 720;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, #fff7dc 0%, transparent 28%),
+        linear-gradient(160deg, #f3efe7 0%, #ece5d8 100%);
+      color: var(--ink);
+      overflow: hidden;
+    }
+
+    .deck {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 24px;
+      border-bottom: 1px solid rgba(15, 76, 129, 0.12);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .brand {
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .brand small {
+      display: block;
+      margin-top: 6px;
+      letter-spacing: normal;
+      text-transform: none;
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .language-switch {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .lang-btn {
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .lang-btn.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .stage {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      padding: 24px;
+    }
+
+    .slide {
+      display: none;
+      position: absolute;
+      width: calc(var(--slide-width) * 1px);
+      height: calc(var(--slide-height) * 1px);
+      background: rgba(255, 253, 248, 0.95);
+      border: 1px solid rgba(15, 76, 129, 0.12);
+      box-shadow: 0 24px 80px rgba(26, 36, 51, 0.12);
+      border-radius: 28px;
+      overflow: hidden;
+      transform-origin: top left;
+    }
+
+    .slide.active {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+    }
+
+    .slide.cover-slide.active {
+      display: block;
+    }
+
+    .aside {
+      background:
+        linear-gradient(180deg, rgba(15, 76, 129, 0.96), rgba(10, 36, 61, 0.98)),
+        linear-gradient(135deg, rgba(255,255,255,0.06), transparent);
+      color: white;
+      padding: 28px 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .aside h1,
+    .aside h2 {
+      margin: 0;
+      line-height: 1.05;
+    }
+
+    .kicker {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      opacity: 0.78;
+      margin-bottom: 18px;
+    }
+
+    .aside .big {
+      font-size: 40px;
+      font-weight: 800;
+    }
+
+    .aside .small-note {
+      font-size: 15px;
+      line-height: 1.38;
+      color: rgba(255,255,255,0.82);
+      padding-bottom: 10px;
+    }
+
+    .content {
+      padding: 28px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .content h2 {
+      margin: 0;
+      font-size: 34px;
+      line-height: 1.1;
+    }
+
+    .content h3 {
+      margin: 0;
+      font-size: 20px;
+      color: var(--accent);
+    }
+
+    .lead {
+      font-size: 18px;
+      line-height: 1.36;
+      color: var(--ink);
+      max-width: 900px;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px 16px;
+      box-shadow: 0 8px 26px rgba(26, 36, 51, 0.05);
+    }
+
+    .reveal-hidden {
+      opacity: 0;
+      transform: translateY(18px);
+      pointer-events: none;
+    }
+
+    .reveal-visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+
+    .card strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--accent);
+      font-size: 16px;
+    }
+
+    ul, ol {
+      margin: 0;
+      padding-left: 20px;
+      line-height: 1.45;
+      font-size: 16px;
+    }
+
+    .steps li,
+    .compact li {
+      margin-bottom: 6px;
+    }
+
+    .compact {
+      font-size: 16px;
+    }
+
+    .code {
+      background: #0d1826;
+      color: #f3f7fb;
+      padding: 14px 16px;
+      border-radius: 16px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 16px;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+
+    .code-inline {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 10px;
+      background: #0d1826;
+      color: #f3f7fb !important;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+      line-height: 1.2;
+      text-decoration: none;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 8px 18px rgba(13, 24, 38, 0.16), 0 0 0 1px rgba(15, 76, 129, 0.12);
+    }
+
+    .code-inline:hover,
+    .code-inline:focus {
+      color: #ffffff !important;
+      background: #15304a;
+      text-decoration: none;
+    }
+
+    .quote {
+      border-left: 4px solid var(--gold);
+      padding-left: 18px;
+      font-size: 28px;
+      line-height: 1.35;
+      color: var(--ink);
+      max-width: 860px;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 8px;
+      margin-top: auto;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .cover-content {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 56px 64px 42px;
+      background:
+        radial-gradient(circle at top right, rgba(15, 76, 129, 0.10), transparent 24%),
+        radial-gradient(circle at bottom left, rgba(177, 135, 45, 0.10), transparent 28%),
+        linear-gradient(135deg, rgba(255,253,248,0.99), rgba(247,241,231,0.98));
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cover-content::after {
+      content: "";
+      position: absolute;
+      left: 64px;
+      right: 64px;
+      top: 146px;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(15, 76, 129, 0.24), rgba(15, 76, 129, 0.04));
+      pointer-events: none;
+    }
+
+    .cover-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 24px;
+    }
+
+    .cover-kicker {
+      font-size: 13px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .cover-byline {
+      margin-top: 10px;
+      font-size: 16px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .cover-main {
+      max-width: 1040px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      position: relative;
+      z-index: 1;
+      align-items: center;
+      text-align: center;
+    }
+
+    .cover-title {
+      margin: 0;
+      font-size: 74px;
+      line-height: 0.92;
+      letter-spacing: -0.04em;
+      color: var(--ink);
+      max-width: 1040px;
+      text-wrap: balance;
+      text-align: center;
+    }
+
+    .cover-title-break {
+      display: block;
+    }
+
+    .cover-subtitle {
+      margin: 0;
+      max-width: 760px;
+      font-size: 23px;
+      line-height: 1.4;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .cover-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cover-note {
+      font-size: 15px;
+      line-height: 1.4;
+      color: var(--muted);
+      max-width: 620px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .cover-mark {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .cover-mark::before {
+      content: "";
+      width: 44px;
+      height: 3px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), rgba(177, 135, 45, 0.9));
+    }
+
+    .pager {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      border: 1px solid rgba(15, 76, 129, 0.16);
+      background: white;
+      color: var(--accent);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: var(--accent-soft);
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      background: white;
+      color: var(--muted);
+    }
+
+    [data-lang-block] {
+      display: none;
+    }
+
+    body[data-lang="es"] [data-lang-block="es"],
+    body[data-lang="en"] [data-lang-block="en"],
+    body[data-lang="zh"] [data-lang-block="zh"] {
+      display: block;
+    }
+
+    body[data-lang="es"] .lang-inline-en,
+    body[data-lang="es"] .lang-inline-zh,
+    body[data-lang="en"] .lang-inline-es,
+    body[data-lang="en"] .lang-inline-zh,
+    body[data-lang="zh"] .lang-inline-es,
+    body[data-lang="zh"] .lang-inline-en {
+      display: none;
+    }
+
+    @media (max-width: 980px) {
+      .slide.active {
+        grid-template-columns: 1fr;
+      }
+
+      .aside {
+        gap: 20px;
+      }
+
+      .aside .big {
+        font-size: 34px;
+      }
+
+      .cover-content {
+        padding: 34px 30px 28px;
+      }
+
+      .cover-content::after {
+        left: 30px;
+        right: 30px;
+        top: 124px;
+      }
+
+      .cover-title {
+        font-size: 50px;
+      }
+
+      .cover-subtitle {
+        font-size: 19px;
+      }
+
+      .cover-bottom,
+      .cover-top {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .content {
+        padding: 28px 24px;
+      }
+
+      .content h2 {
+        font-size: 30px;
+      }
+
+      .lead,
+      ul,
+      ol,
+      .code,
+      .quote {
+        font-size: 18px;
+      }
+
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body data-lang="es">
+  <div class="deck">
+    <div class="topbar">
+      <div class="brand">
+        CTX / UNJu / Facultad de Ingeniería
+        <small>by Diego Mariano Verrastro</small>
+      </div>
+      <div class="language-switch">
+        <button type="button" class="lang-btn active" data-set-lang="es">ESP</button>
+        <button type="button" class="lang-btn" data-set-lang="en">ENG</button>
+        <button type="button" class="lang-btn" data-set-lang="zh">中文</button>
+      </div>
+    </div>
+    <div class="stage">
+      <section class="slide cover-slide active" data-title="CTX is the standard Cognitive Version Control System for AI">
+        <div class="cover-content">
+          <div class="cover-top">
+            <div>
+              <div class="cover-kicker">CTX / UNJu / Facultad de Ingeniería</div>
+              <div class="cover-byline">by Diego Mariano Verrastro</div>
+            </div>
+            <div class="cover-mark">
+              <span data-lang-block="es">charla de apertura</span>
+              <span data-lang-block="en">opening talk</span>
+              <span data-lang-block="zh">开场讲座</span>
+            </div>
+          </div>
+          <div class="cover-main">
+            <h1 class="cover-title" data-lang-block="es"><span class="cover-title-break">CTX</span>is the standard Cognitive Version Control System for AI.</h1>
+            <h1 class="cover-title" data-lang-block="en"><span class="cover-title-break">CTX</span>is the standard Cognitive Version Control System for AI.</h1>
+            <h1 class="cover-title" data-lang-block="zh"><span class="cover-title-break">CTX</span>is the standard Cognitive Version Control System for AI.</h1>
+            <p class="cover-subtitle" data-lang-block="es">Herramienta útil para poder interactuar con agentes de IA, con continuidad, memoria de trabajo, contexto y reglas aplicables a determinadas situaciones repetitivas. La IA necesita una infraestructura cognitiva durable y versionable.</p>
+            <p class="cover-subtitle" data-lang-block="en">A useful tool for interacting with AI agents through continuity, working memory, context, and rules applicable to specific contexts. AI needs durable, versionable cognitive infrastructure.</p>
+            <p class="cover-subtitle" data-lang-block="zh">一个用于与 AI 代理协同工作的实用工具，提供连续性、工作记忆、上下文，以及适用于特定重复场景的规则。AI 需要一种持久且可版本化的认知基础设施。</p>
+          </div>
+          <div class="cover-bottom">
+            <div class="cover-note">
+              <span data-lang-block="es">Repositorio oficial</span>
+              <span data-lang-block="en">Official repository</span>
+              <span data-lang-block="zh">官方仓库</span>
+            </div>
+            <a class="code-inline" href="https://github.com/diegoxtr/ctx-open" target="_blank" rel="noreferrer">github.com/diegoxtr/ctx-open</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Por qué CTX fue necesario">
+        <aside class="aside">
+          <div data-lang-block="es">
+            <div class="kicker">Slide 1</div>
+            <h1 class="big">Por qué CTX fue necesario</h1>
+          </div>
+          <div data-lang-block="en">
+            <div class="kicker">Slide 1</div>
+            <h1 class="big">Why CTX became necessary</h1>
+          </div>
+          <div data-lang-block="zh">
+            <div class="kicker">Slide 1</div>
+            <h1 class="big">为什么需要 CTX</h1>
+          </div>
+          <div class="small-note" data-lang-block="es">
+            El punto de entrada no es un comando. Es el problema real de trabajar con agentes sin continuidad cognitiva durable.
+          </div>
+          <div class="small-note" data-lang-block="en">
+            The entry point is not a command. It is the real problem of working with agents that do not preserve durable continuity.
+          </div>
+          <div class="small-note" data-lang-block="zh">
+            入口点不是某个命令，而是在缺少持久认知连续性的情况下与代理协作的真实问题。
+          </div>
+        </aside>
+        <div class="content">
+          <h2 data-lang-block="es">Los agentes producían resultados, pero sin preservar la continuidad cognitiva.</h2>
+          <h2 data-lang-block="en">Agents were producing results, but without preserving cognitive continuity.</h2>
+          <h2 data-lang-block="zh">代理能够产出结果，但无法保留认知连续性。</h2>
+          <p class="lead" data-lang-block="es">Los agentes producían resultados, pero sin preservar la continuidad cognitiva. Cuando el contexto se aplanaba o compactaba, perdíamos datos cognitivos y, sobre todo, perdíamos el momento en el que el conocimiento se estaba estructurando.</p>
+          <p class="lead" data-lang-block="en">Agents were producing results, but they were not preserving cognitive continuity. When context flattened or compacted, we lost cognitive data and, above all, we lost the moment when knowledge was being structured.</p>
+          <p class="lead" data-lang-block="zh">代理能够产出结果，但无法保留认知连续性。当上下文被压平或压缩时，我们失去了认知数据，尤其失去了知识正在形成的那个时刻。</p>
+          <div class="grid-2" style="gap:12px;">
+            <div class="card" data-lang-block="es">
+              <strong>Lo que sí teníamos</strong>
+              <ul class="compact">
+                <li>chat</li>
+                <li>prompts</li>
+                <li>archivos</li>
+                <li>logs</li>
+              </ul>
+            </div>
+            <div class="card" data-lang-block="en">
+              <strong>What we already had</strong>
+              <ul class="compact">
+                <li>chat</li>
+                <li>prompts</li>
+                <li>files</li>
+                <li>logs</li>
+              </ul>
+            </div>
+            <div class="card" data-lang-block="es">
+              <strong>Lo que nos faltaba</strong>
+              <ul class="compact">
+                <li>continuidad entre sesiones</li>
+                <li>decisiones trazables</li>
+                <li>evidencia estructurada</li>
+                <li>estado cognitivo durable</li>
+              </ul>
+            </div>
+            <div class="card" data-lang-block="en">
+              <strong>What was missing</strong>
+              <ul class="compact">
+                <li>continuity across sessions</li>
+                <li>traceable decisions</li>
+                <li>structured evidence</li>
+                <li>durable cognitive state</li>
+              </ul>
+            </div>
+          </div>
+          <div class="card" data-lang-block="es" style="padding:12px 14px;">
+              <strong>Qué significa "datos cognitivos"</strong>
+            <p class="muted">No es texto suelto ni memoria conversacional: es la estructura del trabajo en curso y su cierre, preservada como estado operativo durable.</p>
+          </div>
+          <div class="card" data-lang-block="en" style="padding:12px 14px;">
+            <strong>What "cognitive data" means</strong>
+            <p class="muted">It is not loose text or conversational memory: it is the structure of in-progress work and its closure, preserved as durable operational state.</p>
+          </div>
+          <div class="card" data-lang-block="es" style="padding:12px 14px;">
+            <strong>Desventaja operativa</strong>
+              <p class="muted">Cuando el contexto se aplana o compacta, el costo no es solo perder claridad. También aparece re-procesamiento: volver a leer, volver a inferir y volver a estructurar trabajo ya hecho. Usar CTX hace que tengamos que costear la interacción cognitiva, pero vale la pena.</p>
+          </div>
+          <div class="card" data-lang-block="en" style="padding:12px 14px;">
+            <strong>Operational disadvantage</strong>
+            <p class="muted">When context flattens or compacts, the cost is not only loss of clarity. It also creates re-processing: re-reading, re-inferring, and re-structuring work that was already done. Using CTX means paying for cognitive interaction, but it is worth it.</p>
+          </div>
+          <div class="footer">
+            <div class="lang-inline-es">CTX para trabajo durable con agentes</div>
+            <div class="lang-inline-en">CTX for durable agent work</div>
+            <div class="pager">1 / 10</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Cuál es el problema de ingeniería">
+        <aside class="aside">
+          <div data-lang-block="es">
+            <div class="kicker">Slide 2</div>
+            <h1 class="big">¿Cuál es el problema de ingeniería?</h1>
+          </div>
+          <div data-lang-block="en">
+            <div class="kicker">Slide 2</div>
+            <h1 class="big">What is the engineering problem?</h1>
+          </div>
+          <div data-lang-block="zh">
+            <div class="kicker">Slide 2</div>
+            <h1 class="big">工程问题是什么？</h1>
+          </div>
+          <div class="small-note" data-lang-block="es">
+            El problema no era solo que el modelo olvidara cosas. Era que el trabajo perdía estructura operativa.
+          </div>
+          <div class="small-note" data-lang-block="en">
+            The problem was not only that the model forgot things. The work itself was losing operational structure.
+          </div>
+          <div class="small-note" data-lang-block="zh">
+            问题不只是模型会遗忘，而是工作本身失去了操作结构。
+          </div>
+        </aside>
+        <div class="content">
+          <h2 data-lang-block="es">La inteligencia es insuficiente si la continuidad cognitiva se interrumpe, se resume, se corta o se re-escribe.</h2>
+          <h2 data-lang-block="en">Intelligence is insufficient if cognitive continuity is interrupted, summarized, cut, or rewritten.</h2>
+          <h2 data-lang-block="zh">如果认知连续性被中断、被压缩、被切断或被重写，智能本身就是不够的。</h2>
+          <p class="lead" data-lang-block="es">El problema real no es el uso concreto de agentes de IA. El problema era la imposibilidad de sostener trabajo intelectual a lo largo del tiempo, con los cambios parciales de contexto de los agentes de prompts, etc.</p>
+          <p class="lead" data-lang-block="en">The real problem is not the concrete use of AI agents. The problem was the impossibility of sustaining intellectual work over time under the partial context changes of prompt-driven agents and similar systems.</p>
+          <p class="lead" data-lang-block="zh">真正的问题不在于具体使用 AI 代理，而在于：在提示词代理等系统不断发生局部上下文变化的情况下，我们无法长期维持知识性工作。</p>
+          <div class="grid-2">
+            <div class="card" data-lang-block="es">
+              <strong>Sintomas</strong>
+              <ul class="compact">
+                <li>sobre-procesamiento para volver a entender el problema</li>
+                <li>decisiones ya tomadas que reaparecían como dudas</li>
+                <li>un segundo agente no sabía por qué algo quedó así</li>
+                <li>re-procesamiento para recuperar trabajo ya estructurado</li>
+              </ul>
+            </div>
+            <div class="card" data-lang-block="en">
+              <strong>Symptoms</strong>
+              <ul class="compact">
+                <li>extra processing just to understand the problem again</li>
+                <li>accepted decisions returning as open doubts</li>
+                <li>a second agent could not explain why the result looked like that</li>
+                <li>re-processing to recover work that had already been structured</li>
+              </ul>
+            </div>
+            <div class="card" data-lang-block="es">
+              <strong>Consecuencia</strong>
+              <ul class="compact">
+                <li>pérdida de tiempo</li>
+                <li>pérdida del crecimiento de una idea o investigación</li>
+                <li>trabajo no reproducible</li>
+                <li>baja confianza operativa</li>
+              </ul>
+            </div>
+            <div class="card" data-lang-block="en">
+              <strong>Consequence</strong>
+              <ul class="compact">
+                <li>time loss</li>
+                <li>inconsistency</li>
+                <li>poor reproducibility</li>
+                <li>low operational confidence</li>
+              </ul>
+            </div>
+          </div>
+          <div class="quote" data-lang-block="es">El problema real no es el uso concreto de agentes de IA. El problema era la imposibilidad de sostener trabajo intelectual a lo largo del tiempo, con los cambios parciales de contexto de los agentes de prompts, etc.</div>
+          <div class="quote" data-lang-block="en">The real problem is not the concrete use of AI agents. The problem was the impossibility of sustaining intellectual work over time under the partial context changes of prompt-driven agents and similar systems.</div>
+          <div class="quote" data-lang-block="zh">真正的问题不在于具体使用 AI 代理，而在于：在局部上下文不断变化的情况下，无法长期维持知识性工作。</div>
+          <div class="footer">
+            <div class="lang-inline-es">Continuidad, trazabilidad y recuperabilidad</div>
+            <div class="lang-inline-en">Continuity, traceability, and recoverability</div>
+            <div class="lang-inline-zh">连续性、可追踪性与可恢复性</div>
+            <div class="pager">2 / 11</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Qué pasa cuando el contexto se compacta">
+        <aside class="aside">
+          <div data-lang-block="es">
+            <div class="kicker">Slide 3</div>
+            <h1 class="big">¿Qué pasa cuando el contexto se compacta?</h1>
+          </div>
+          <div data-lang-block="en">
+            <div class="kicker">Slide 3</div>
+            <h1 class="big">What happens when context is compacted?</h1>
+          </div>
+          <div data-lang-block="zh">
+            <div class="kicker">Slide 3</div>
+            <h1 class="big">当上下文被压缩时会发生什么？</h1>
+          </div>
+          <div class="small-note" data-lang-block="es">
+            Un buen prompt puede iniciar bien el trabajo. No alcanza, por sí solo, para preservar continuidad larga.
+          </div>
+          <div class="small-note" data-lang-block="en">
+            A good prompt can start the work well. By itself, it is not enough to preserve long continuity.
+          </div>
+          <div class="small-note" data-lang-block="zh">
+            一个好的提示词可以很好地启动工作，但它本身不足以维持长期连续性。
+          </div>
+        </aside>
+        <div class="content">
+          <h2 data-lang-block="es">Un buen prompt no evita la pérdida de contexto.</h2>
+          <h2 data-lang-block="en">A good prompt does not prevent context loss.</h2>
+          <h2 data-lang-block="zh">一个好的提示词并不能避免上下文丢失。</h2>
+          <p class="lead" data-lang-block="es">Un buen prompt le da al agente rol, objetivo, restricciones y forma de salida. Pero cuando el contexto se aplana o compacta, lo que queda es un resumen operativo comprimido, no el proceso cognitivo completo.</p>
+          <p class="lead" data-lang-block="en">A good prompt gives the agent a role, objective, constraints, and output shape. But when context is flattened or compacted, what remains is a compressed operational summary, not the full cognitive process.</p>
+          <p class="lead" data-lang-block="zh">一个好的提示词会给代理角色、目标、约束和输出形式。但当上下文被压平或压缩时，留下的只是被压缩的操作性摘要，而不是完整的认知过程。</p>
+          <div class="grid-2" style="gap:12px;">
+            <div class="card" data-lang-block="es" style="padding:12px 14px;">
+              <strong>Lo que define un buen prompt</strong>
+              <ul class="compact">
+                <li>rol claro</li>
+                <li>objetivo concreto</li>
+                <li>restricciones explícitas</li>
+                <li>criterio de salida esperado</li>
+              </ul>
+            </div>
+            <div class="card" data-lang-block="en" style="padding:12px 14px;">
+              <strong>What defines a good prompt</strong>
+              <ul class="compact">
+                <li>clear role</li>
+                <li>concrete objective</li>
+                <li>explicit constraints</li>
+                <li>expected output criteria</li>
+              </ul>
+            </div>
+            <div class="card" data-lang-block="es" style="padding:12px 14px;">
+              <strong>Lo que queda cuando el contexto se aplana o compacta</strong>
+              <ul class="compact">
+                <li>un resumen</li>
+                <li>una dirección general</li>
+                <li>algunos resultados parciales</li>
+                <li>la ilusion de continuidad</li>
+              </ul>
+            </div>
+            <div class="card" data-lang-block="en" style="padding:12px 14px;">
+              <strong>What remains after flattening or compaction</strong>
+              <ul class="compact">
+                <li>a summary</li>
+                <li>a general direction</li>
+                <li>some partial results</li>
+                <li>the illusion of continuity</li>
+              </ul>
+            </div>
+            <div class="card" data-lang-block="es" style="padding:12px 14px;">
+              <strong>Lo que se pierde entre contexto y contexto</strong>
+              <ul class="compact">
+                <li>el orden real de descubrimiento</li>
+                <li>alternativas descartadas</li>
+                <li>relación entre evidencia y decisión</li>
+                <li>el momento en que el conocimiento se estaba estructurando</li>
+              </ul>
+            </div>
+            <div class="card" data-lang-block="en" style="padding:12px 14px;">
+              <strong>What is lost between contexts</strong>
+              <ul class="compact">
+                <li>the real order of discovery</li>
+                <li>discarded alternatives</li>
+                <li>the link between evidence and decision</li>
+                <li>the moment when knowledge was being structured</li>
+              </ul>
+            </div>
+            <div class="card" data-lang-block="zh" style="padding:12px 14px;">
+              <strong>一个好提示词的构成</strong>
+              <ul class="compact">
+                <li>清晰角色</li>
+                <li>明确目标</li>
+                <li>显式约束</li>
+                <li>预期输出标准</li>
+              </ul>
+            </div>
+            <div class="card" data-lang-block="zh" style="padding:12px 14px;">
+              <strong>上下文被压平或压缩后剩下什么</strong>
+              <ul class="compact">
+                <li>一个摘要</li>
+                <li>一个大致方向</li>
+                <li>一些局部结果</li>
+                <li>连续性的错觉</li>
+              </ul>
+            </div>
+            <div class="card" data-lang-block="zh" style="padding:12px 14px;">
+              <strong>在一个上下文与下一个上下文之间失去的东西</strong>
+              <ul class="compact">
+                <li>真实的发现顺序</li>
+                <li>被舍弃的备选路径</li>
+                <li>证据与决策之间的联系</li>
+                <li>知识正在形成的那个时刻</li>
+              </ul>
+            </div>
+          </div>
+          <div class="quote" data-lang-block="es">Un buen prompt puede iniciar bien el trabajo. No conserva, por sí solo, la continuidad completa entre sesiones.</div>
+          <div class="quote" data-lang-block="en">A good prompt can start the work well. By itself, it does not preserve full continuity across sessions.</div>
+          <div class="quote" data-lang-block="zh">一个好的提示词可以很好地启动工作，但它本身无法保留跨会话的完整连续性。</div>
+          <div class="footer">
+            <div class="lang-inline-es">Resumen no es continuidad</div>
+            <div class="lang-inline-en">Summary is not continuity</div>
+            <div class="lang-inline-zh">摘要不等于连续性</div>
+            <div class="pager">3 / 11</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Por qué chat y logs no alcanzaban">
+        <aside class="aside">
+          <div data-lang-block="es">
+            <div class="kicker">Slide 4</div>
+            <h1 class="big">Por qué chat y logs no alcanzaban</h1>
+          </div>
+          <div data-lang-block="en">
+            <div class="kicker">Slide 4</div>
+            <h1 class="big">Why chat and logs were not enough</h1>
+          </div>
+          <div class="small-note" data-lang-block="es">
+            Cada superficie existente preservaba una parte del problema, pero no el estado cognitivo de trabajo.
+          </div>
+          <div class="small-note" data-lang-block="en">
+            Each existing surface preserved part of the problem, but not the cognitive work state itself.
+          </div>
+        </aside>
+        <div class="content">
+          <h2 data-lang-block="es">Nos faltaba una capa nueva.</h2>
+          <h2 data-lang-block="en">We were missing a new layer.</h2>
+          <div class="grid-2">
+            <div class="card" data-lang-block="es">
+              <strong>Chat</strong>
+              <p class="muted">Preserva mensajes, no una estructura operativa durable.</p>
+            </div>
+            <div class="card" data-lang-block="en">
+              <strong>Chat</strong>
+              <p class="muted">It preserves messages, not durable operational structure.</p>
+            </div>
+            <div class="card" data-lang-block="es">
+              <strong>Prompts</strong>
+              <p class="muted">Influyen comportamiento, pero no guardan razonamiento ni cierre.</p>
+            </div>
+            <div class="card" data-lang-block="en">
+              <strong>Prompts</strong>
+              <p class="muted">They shape behavior, but they do not persist reasoning or closure.</p>
+            </div>
+            <div class="card" data-lang-block="es">
+              <strong>Logs</strong>
+              <p class="muted">Preservan ejecución, no intención cognitiva ni justificación.</p>
+            </div>
+            <div class="card" data-lang-block="en">
+              <strong>Logs</strong>
+              <p class="muted">They preserve execution, not cognitive intent or justification.</p>
+            </div>
+            <div class="card" data-lang-block="es">
+              <strong>Codigo</strong>
+              <p class="muted">Muestra el resultado, no explica por sí solo el por qué ni el camino.</p>
+            </div>
+            <div class="card" data-lang-block="en">
+              <strong>Code</strong>
+              <p class="muted">It shows the result, but it does not explain the path or the why by itself.</p>
+            </div>
+          </div>
+          <div class="quote" data-lang-block="es">Lo que hacía falta no era más memoria conversacional. Hacía falta memoria de trabajo estructurada.</div>
+          <div class="quote" data-lang-block="en">What we needed was not more conversational memory. We needed structured working memory.</div>
+          <div class="footer">
+            <div class="lang-inline-es">CTX aparece como capa faltante</div>
+            <div class="lang-inline-en">CTX appears as the missing layer</div>
+            <div class="pager">4 / 11</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Qué nos llevó hasta CTX">
+        <aside class="aside">
+          <div data-lang-block="es">
+            <div class="kicker">Slide 5</div>
+            <h1 class="big">Qué nos llevó hasta CTX</h1>
+          </div>
+          <div data-lang-block="en">
+            <div class="kicker">Slide 5</div>
+            <h1 class="big">What led us to CTX</h1>
+          </div>
+          <div class="small-note" data-lang-block="es">
+            CTX no nace como teoria primero. Nace como respuesta a una presion de trabajo real.
+          </div>
+          <div class="small-note" data-lang-block="en">
+            CTX did not begin as theory first. It emerged as a response to real operational pressure.
+          </div>
+        </aside>
+        <div class="content">
+          <h2 data-lang-block="es">Camino de ingeniería</h2>
+          <h2 data-lang-block="en">Engineering path</h2>
+          <ol class="steps" data-lang-block="es">
+            <li>usamos agentes sobre trabajo real</li>
+            <li>aparecio valor tecnico inmediato</li>
+            <li>la continuidad entre sesiones se rompia</li>
+            <li>el razonamiento se disolvia en chat y acciones sueltas</li>
+            <li>la re-construccion del pasado empezo a costar demasiado</li>
+            <li>necesitamos persistir trabajo cognitivo como estado</li>
+            <li>asi emerge CTX</li>
+          </ol>
+          <ol class="steps" data-lang-block="en">
+            <li>we used agents on real work</li>
+            <li>they produced immediate technical value</li>
+            <li>continuity kept breaking between sessions</li>
+            <li>reasoning dissolved into chat and scattered actions</li>
+            <li>reconstructing the past became too expensive</li>
+            <li>we needed to persist cognitive work as state</li>
+            <li>that is where CTX emerged</li>
+          </ol>
+          <div class="quote" data-lang-block="es">CTX no es un adorno para IA. Es infraestructura que surgió porque el problema era recurrente.</div>
+          <div class="quote" data-lang-block="en">CTX is not decoration around AI. It is infrastructure that appeared because the problem was already hurting.</div>
+          <div class="footer">
+            <div class="lang-inline-es">De la friccion operativa a la herramienta</div>
+            <div class="lang-inline-en">From operational friction to the tool</div>
+            <div class="pager">5 / 11</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Arquitectura operativa de CTX">
+        <aside class="aside">
+          <div data-lang-block="es">
+            <div class="kicker">Slide 6</div>
+            <h1 class="big">Arquitectura operativa de CTX</h1>
+          </div>
+          <div data-lang-block="en">
+            <div class="kicker">Slide 6</div>
+            <h1 class="big">CTX operational architecture</h1>
+          </div>
+          <div class="small-note" data-lang-block="es">
+            Un sistema de control de versiones cognitivas para trabajo con agentes.
+          </div>
+          <div class="small-note" data-lang-block="en">
+            A cognitive version control system for agent-based work.
+          </div>
+        </aside>
+        <div class="content">
+          <h2 data-lang-block="es">CTX guarda el estado cognitivo del trabajo.</h2>
+          <h2 data-lang-block="en">CTX stores the cognitive state of the work.</h2>
+          <div class="grid-2">
+            <div class="card" data-lang-block="es">
+              <strong>Entidad mínima</strong>
+              <ul class="compact">
+                <li>goals</li>
+                <li>tasks</li>
+                <li>hypotheses</li>
+                <li>evidence</li>
+              </ul>
+            </div>
+            <div class="card" data-lang-block="en">
+              <strong>Minimal structure</strong>
+              <ul class="compact">
+                <li>goals</li>
+                <li>tasks</li>
+                <li>hypotheses</li>
+                <li>evidence</li>
+              </ul>
+            </div>
+            <div class="card" data-lang-block="es">
+              <strong>Cierre y memoria durable</strong>
+              <ul class="compact">
+                <li>decisions</li>
+                <li>conclusions</li>
+                <li>cognitive commits</li>
+                <li>runbooks</li>
+              </ul>
+            </div>
+            <div class="card" data-lang-block="en">
+              <strong>Closure and durable memory</strong>
+              <ul class="compact">
+                <li>decisions</li>
+                <li>conclusions</li>
+                <li>cognitive commits</li>
+                <li>runbooks</li>
+              </ul>
+            </div>
+          </div>
+          <div class="quote" data-lang-block="es">La idea central es simple: si un agente pierde contexto, el trabajo no deberia perderse con el.</div>
+          <div class="quote" data-lang-block="en">The core idea is simple: if an agent loses context, the work should not disappear with it.</div>
+          <div class="footer">
+            <div class="lang-inline-es">CTX como sistema de memoria de trabajo durable</div>
+            <div class="lang-inline-en">CTX as a durable working-memory system</div>
+            <div class="pager">6 / 11</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Working context vs Commit history">
+        <aside class="aside">
+          <div data-lang-block="es">
+            <div class="kicker">Slide 7</div>
+            <h1 class="big">Working context vs Commit history</h1>
+          </div>
+          <div data-lang-block="en">
+            <div class="kicker">Slide 7</div>
+            <h1 class="big">Working context vs Commit history</h1>
+          </div>
+          <div class="small-note" data-lang-block="es">
+            CTX separa cognicion en movimiento de snapshots durables.
+          </div>
+          <div class="small-note" data-lang-block="en">
+            CTX separates cognition in motion from durable snapshots.
+          </div>
+        </aside>
+        <div class="content">
+          <h2 data-lang-block="es">Dos superficies, dos funciones</h2>
+          <h2 data-lang-block="en">Two surfaces, two functions</h2>
+          <div class="grid-2">
+            <div class="card" data-lang-block="es">
+              <strong>Working context</strong>
+              <ul class="compact">
+                <li>razonamiento activo</li>
+                <li>cambios pendientes</li>
+                <li>linea actual de trabajo</li>
+                <li>cognicion en movimiento</li>
+              </ul>
+            </div>
+            <div class="card" data-lang-block="en">
+              <strong>Working context</strong>
+              <ul class="compact">
+                <li>active reasoning</li>
+                <li>pending changes</li>
+                <li>current work line</li>
+                <li>cognition in motion</li>
+              </ul>
+            </div>
+            <div class="card" data-lang-block="es">
+              <strong>Commit history</strong>
+              <ul class="compact">
+                <li>transiciones durables</li>
+                <li>hitos cognitivos</li>
+                <li>estado preservado</li>
+                <li>continuidad reconstruible</li>
+              </ul>
+            </div>
+            <div class="card" data-lang-block="en">
+              <strong>Commit history</strong>
+              <ul class="compact">
+                <li>durable transitions</li>
+                <li>cognitive milestones</li>
+                <li>preserved state</li>
+                <li>reconstructable continuity</li>
+              </ul>
+            </div>
+          </div>
+          <div class="quote" data-lang-block="es">Si algo ya no esta en Working context, deberia estar en Commit history. No deberia existir un estado invisible.</div>
+          <div class="quote" data-lang-block="en">If something is no longer in Working context, it should already be in Commit history. There should be no invisible state.</div>
+          <div class="footer">
+            <div class="lang-inline-es">Modelo mental mínimo para operar CTX</div>
+            <div class="lang-inline-en">Minimal mental model for operating CTX</div>
+            <div class="pager">7 / 11</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Demo desde cero">
+        <aside class="aside">
+          <div data-lang-block="es">
+            <div class="kicker">Slide 8</div>
+            <h1 class="big">Demo desde cero</h1>
+          </div>
+          <div data-lang-block="en">
+            <div class="kicker">Slide 8</div>
+            <h1 class="big">Demo from zero</h1>
+          </div>
+          <div data-lang-block="zh">
+            <div class="kicker">Slide 8</div>
+            <h1 class="big">从零开始的演示</h1>
+          </div>
+          <div class="small-note" data-lang-block="es">
+            La demo debe mostrar que CTX no depende de magia previa. Se puede reconstruir el flujo desde un inicio limpio.
+          </div>
+          <div class="small-note" data-lang-block="en">
+            The demo should prove that CTX does not depend on hidden setup. The workflow can be rebuilt from a clean start.
+          </div>
+          <div class="small-note" data-lang-block="zh">
+            这个演示应该证明 CTX 不依赖隐藏设置，整个流程可以从干净状态重新建立。
+          </div>
+        </aside>
+        <div class="content">
+          <h2 data-lang-block="es">Secuencia mínima en VS Code</h2>
+          <h2 data-lang-block="en">Minimal sequence in VS Code</h2>
+          <h2 data-lang-block="zh">VS Code 中的最小操作序列</h2>
+          <div class="card" data-lang-block="es" style="padding:12px 14px;">
+            <strong>Precondiciones</strong>
+            <ul class="compact">
+              <li>tener una IDE, como Visual Studio Code, con un agente instalado</li>
+              <li>tener Git instalado</li>
+            </ul>
+          </div>
+          <div class="card" data-lang-block="en" style="padding:12px 14px;">
+            <strong>Preconditions</strong>
+            <ul class="compact">
+              <li>have an IDE such as Visual Studio Code with an installed agent</li>
+              <li>have Git installed</li>
+            </ul>
+          </div>
+          <div class="card" data-lang-block="zh" style="padding:12px 14px;">
+            <strong>前置条件</strong>
+            <ul class="compact">
+              <li>准备一个 IDE，例如已安装代理的 Visual Studio Code</li>
+              <li>安装好 Git</li>
+            </ul>
+          </div>
+          <div class="code">git clone ...
+cd &lt;repo&gt;
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+ctx init --name "UNJu Demo"
+ctx
+ctx next
+ctx goal add --title "..."
+ctx task add --title "..." --goal &lt;goalId&gt;
+ctx hypo add --statement "..." --task &lt;taskId&gt;
+ctx evidence add ...
+ctx closeout
+ctx commit -m "primer bloque durable"</div>
+          <p class="lead" data-lang-block="es">El problema real no es el uso concreto de agentes de IA. El problema era la imposibilidad de sostener trabajo intelectual a lo largo del tiempo, con los cambios parciales de contexto de los agentes de prompts, etc.</p>
+          <p class="lead" data-lang-block="en">The real problem is not the concrete use of AI agents. The problem was the impossibility of sustaining intellectual work over time under the partial context changes of prompt-driven agents and similar systems.</p>
+          <p class="lead" data-lang-block="zh">真正的问题不在于具体使用 AI 代理，而在于：在局部上下文不断变化的情况下，我们无法长期维持知识性工作。</p>
+          <div class="footer">
+            <div class="lang-inline-es">Instalación, inicialización y primera línea cognitiva</div>
+            <div class="lang-inline-en">Install, initialize, and open the first cognitive line</div>
+            <div class="lang-inline-zh">安装、初始化并打开第一条认知工作线</div>
+            <div class="pager">8 / 11</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Qué problemas resuelve">
+        <aside class="aside">
+          <div data-lang-block="es">
+            <div class="kicker">Slide 9</div>
+            <h1 class="big">Qué problemas resuelve</h1>
+          </div>
+          <div data-lang-block="en">
+            <div class="kicker">Slide 9</div>
+            <h1 class="big">What problems it solves</h1>
+          </div>
+          <div data-lang-block="zh">
+            <div class="kicker">Slide 9</div>
+            <h1 class="big">它解决了什么问题</h1>
+          </div>
+          <div class="small-note" data-lang-block="es">
+            Lo importante no es la novedad visual del grafo. Es la reducción de fricción cognitiva en trabajo real.
+          </div>
+          <div class="small-note" data-lang-block="en">
+            The important part is not the visual novelty of the graph. It is the reduction of cognitive friction in real work.
+          </div>
+          <div class="small-note" data-lang-block="zh">
+            关键不在于图形界面的新鲜感，而在于真实工作中认知摩擦的降低。
+          </div>
+        </aside>
+        <div class="content">
+          <h2 data-lang-block="es">Qué resuelve</h2>
+          <h2 data-lang-block="en">What it resolves</h2>
+          <h2 data-lang-block="zh">它解决什么</h2>
+          <div class="grid-2">
+            <div class="card" data-lang-block="es">
+              <strong>Continuidad</strong>
+              <p class="muted">Reduce la re-investigación cuando cambia la sesión o cambia el agente.</p>
+            </div>
+            <div class="card" data-lang-block="en">
+              <strong>Continuity</strong>
+              <p class="muted">Less re-investigation when the session changes or the agent changes.</p>
+            </div>
+            <div class="card" data-lang-block="es">
+              <strong>Trazabilidad</strong>
+              <p class="muted">Las decisiones quedan unidas a evidencia y contexto.</p>
+            </div>
+            <div class="card" data-lang-block="en">
+              <strong>Traceability</strong>
+              <p class="muted">Decisions stay connected to evidence and context.</p>
+            </div>
+            <div class="card" data-lang-block="es">
+              <strong>Explicabilidad</strong>
+              <p class="muted">Permite explicar por qué algo quedó así sin adivinar el pasado.</p>
+            </div>
+            <div class="card" data-lang-block="en">
+              <strong>Explainability</strong>
+              <p class="muted">You can explain why something ended up that way without guessing the past.</p>
+            </div>
+            <div class="card" data-lang-block="es">
+              <strong>Recuperabilidad</strong>
+              <p class="muted">El trabajo se puede retomar sin reconstrucción completa.</p>
+            </div>
+            <div class="card" data-lang-block="en">
+              <strong>Recoverability</strong>
+              <p class="muted">Work can be resumed without full reconstruction.</p>
+            </div>
+            <div class="card" data-lang-block="zh">
+              <strong>连续性</strong>
+              <p class="muted">当会话或代理发生变化时，减少重新调查的成本。</p>
+            </div>
+            <div class="card" data-lang-block="zh">
+              <strong>可追踪性</strong>
+              <p class="muted">让决策与证据、上下文以及发生时刻保持关联。</p>
+            </div>
+            <div class="card" data-lang-block="zh">
+              <strong>可解释性</strong>
+              <p class="muted">可以解释为什么事情变成这样，而不必猜测过去。</p>
+            </div>
+            <div class="card" data-lang-block="zh">
+              <strong>可恢复性</strong>
+              <p class="muted">工作可以被重新接续，而不需要完整重建推理过程。</p>
+            </div>
+          </div>
+          <div class="footer">
+            <div class="lang-inline-es">Ingeniería, no solo interfaz</div>
+            <div class="lang-inline-en">Engineering, not just interface</div>
+            <div class="lang-inline-zh">这是工程，不只是界面</div>
+            <div class="pager">9 / 11</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Herramienta innovadora">
+        <aside class="aside">
+          <div data-lang-block="es">
+            <div class="kicker">Slide 10</div>
+            <h1 class="big">Herramienta innovadora</h1>
+          </div>
+          <div data-lang-block="en">
+            <div class="kicker">Slide 10</div>
+            <h1 class="big">Innovative tool</h1>
+          </div>
+          <div data-lang-block="zh">
+            <div class="kicker">Slide 10</div>
+            <h1 class="big">创新工具</h1>
+          </div>
+          <div class="small-note" data-lang-block="es">
+            A medida que aumenta el uso de agentes, la necesidad de estructura cognitiva deja de ser marginal y pasa a ser central.
+          </div>
+          <div class="small-note" data-lang-block="en">
+            As agent usage grows, the need for cognitive structure stops being marginal and becomes central.
+          </div>
+          <div class="small-note" data-lang-block="zh">
+            随着代理使用的增长，对认知结构的需求已经从边缘问题变成核心问题。
+          </div>
+        </aside>
+        <div class="content">
+          <h2 data-lang-block="es">La inexistencia de herramientas eficaces para mantener el contexto y el conocimiento localmente.</h2>
+          <h2 data-lang-block="en">The lack of effective tools for keeping context and knowledge locally.</h2>
+          <h2 data-lang-block="zh">目前仍然缺少能够在本地有效保存上下文与知识的工具。</h2>
+          <p class="lead" data-lang-block="es">Eso es lo que vuelve a CTX innovador. No aparece solo como una interfaz nueva, sino como una forma distinta de preservar trabajo intelectual con agentes: continuidad cognitiva, memoria de trabajo, contexto, reglas aplicables y estados que pueden versionarse. Todavía no existen herramientas eficaces para estructurar este tipo de conocimiento como estado durable, versionable y localmente recuperable.</p>
+          <p class="lead" data-lang-block="en">That is what makes CTX innovative. It is not just a new interface, but a different way to preserve intellectual work with agents: cognitive continuity, working memory, context, applicable rules, and states that can be versioned. There are still no effective tools for structuring this kind of knowledge as durable, versionable, locally recoverable state.</p>
+          <p class="lead" data-lang-block="zh">这正是 CTX 具有创新性的地方。它不是一个新的界面，而是一种不同的方式，用来保存与代理协作时的知识性工作：认知连续性、工作记忆、上下文、适用规则，以及可被版本化的状态。目前仍然缺少能够把这类知识组织成持久、可版本化且可在本地恢复的状态的有效工具。</p>
+          <div class="grid-2">
+            <div class="card" data-lang-block="es">
+              <strong>Por qué impacta</strong>
+              <p class="muted">Porque convierte algo que hoy se pierde entre sesiones en una estructura durable, trazable y reutilizable, y porque responde a una carencia real: la falta de herramientas eficaces para mantener contexto y conocimiento localmente.</p>
+            </div>
+            <div class="card" data-lang-block="en">
+              <strong>Why it matters</strong>
+              <p class="muted">Because it turns what is usually lost between sessions into a durable, traceable, reusable structure, and because it addresses a real gap: the lack of effective tools for keeping context and knowledge locally.</p>
+            </div>
+            <div class="card" data-lang-block="es">
+              <strong>Qué habilita</strong>
+              <p class="muted">Hace posible una ingeniería más explicable, auditable y reproducible alrededor del trabajo con agentes.</p>
+            </div>
+            <div class="card" data-lang-block="en">
+              <strong>What it enables</strong>
+              <p class="muted">It enables more explainable, auditable, and reproducible engineering around agent-based work.</p>
+            </div>
+            <div class="card" data-lang-block="zh">
+              <strong>为什么有影响</strong>
+              <p class="muted">因为它把通常在会话之间丢失的东西，转化为持久、可追踪、可重用的结构，也因为它回应了一个真实缺口：缺少在本地维持上下文与知识的有效工具。</p>
+            </div>
+            <div class="card" data-lang-block="zh">
+              <strong>它开启了什么</strong>
+              <p class="muted">它使围绕代理工作的工程变得更可解释、更可审计，也更可复现。</p>
+            </div>
+          </div>
+          <div class="footer">
+            <div class="lang-inline-es">Innovación sobre continuidad cognitiva durable</div>
+            <div class="lang-inline-en">Innovation around durable cognitive continuity</div>
+            <div class="lang-inline-zh">围绕持久认知连续性的创新</div>
+            <div class="pager">10 / 11</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="A donde vamos">
+        <aside class="aside">
+          <div data-lang-block="es">
+            <div class="kicker">Slide 11</div>
+            <h1 class="big">A donde vamos</h1>
+          </div>
+          <div data-lang-block="en">
+            <div class="kicker">Slide 11</div>
+            <h1 class="big">Where we are going</h1>
+          </div>
+          <div data-lang-block="zh">
+            <div class="kicker">Slide 11</div>
+            <h1 class="big">我们要去哪里</h1>
+          </div>
+          <div class="small-note" data-lang-block="es">
+            El proximo paso no es solo usar mas agentes. Es construir continuidad durable para su trabajo.
+          </div>
+          <div class="small-note" data-lang-block="en">
+            The next step is not only using more agents. It is building durable continuity for their work.
+          </div>
+          <div class="small-note" data-lang-block="zh">
+            下一步不只是使用更多代理，而是为它们的工作构建持久连续性。
+          </div>
+        </aside>
+        <div class="content">
+          <h2 data-lang-block="es">CTX como infraestructura cognitiva</h2>
+          <h2 data-lang-block="en">CTX as cognitive infrastructure</h2>
+          <h2 data-lang-block="zh">CTX 作为认知基础设施</h2>
+          <div class="grid-2" style="gap:12px;">
+            <div class="card" data-lang-block="es" style="padding:12px 14px;">
+              <strong>Orquestación cognitiva</strong>
+              <p class="muted">CTX no solo guarda estado. Tambien puede clasificar el trabajo y decidir como sostener su continuidad.</p>
+            </div>
+            <div class="card" data-lang-block="en" style="padding:12px 14px;">
+              <strong>Cognitive orchestration</strong>
+              <p class="muted">CTX does not only store state. It can also classify work and decide how to preserve its continuity.</p>
+            </div>
+            <div class="card" data-lang-block="es" style="padding:12px 14px;">
+              <strong>Routing por tipo de tarea</strong>
+              <p class="muted">La dirección futura es asignar cada tarea al ejecutor más apropiado según forma, dificultad, costo y necesidad de continuidad.</p>
+            </div>
+            <div class="card" data-lang-block="en" style="padding:12px 14px;">
+              <strong>Task-shape routing</strong>
+              <p class="muted">The future direction is to assign each task to the most appropriate executor based on shape, difficulty, cost, and continuity needs.</p>
+            </div>
+            <div class="card" data-lang-block="es" style="padding:12px 14px;">
+              <strong>Continuidad preservada en CTX</strong>
+              <p class="muted">Las decisiones no deberían quedar atrapadas en chat. Deberían quedar preservadas como razonamiento trazable dentro de CTX.</p>
+            </div>
+            <div class="card" data-lang-block="en" style="padding:12px 14px;">
+              <strong>Continuity preserved in CTX</strong>
+              <p class="muted">Decisions should not remain trapped in chat. They should stay preserved as traceable reasoning inside CTX.</p>
+            </div>
+            <div class="card" data-lang-block="es" style="padding:12px 14px;">
+              <strong>Menor costo de reconstrucción</strong>
+              <p class="muted">Menos tiempo re-procesando trabajo ya hecho, mejor ajuste tarea-modelo y una ingeniería larga más reproducible.</p>
+            </div>
+            <div class="card" data-lang-block="en" style="padding:12px 14px;">
+              <strong>Lower reconstruction cost</strong>
+              <p class="muted">Less time re-processing work that was already done, better task-to-model fit, and more reproducible long-form engineering.</p>
+            </div>
+            <div class="card" data-lang-block="es" style="padding:12px 14px;">
+              <strong>MCP como línea futura</strong>
+              <p class="muted">También aparece como posibilidad exponer CTX vía MCP.</p>
+            </div>
+            <div class="card" data-lang-block="en" style="padding:12px 14px;">
+              <strong>MCP as a future line</strong>
+              <p class="muted">Another possible direction is exposing CTX through MCP.</p>
+            </div>
+            <div class="card" data-lang-block="zh" style="padding:12px 14px;">
+              <strong>认知编排</strong>
+              <p class="muted">CTX 不只存储状态，它还可以对工作进行分类，并决定如何保持连续性。</p>
+            </div>
+            <div class="card" data-lang-block="zh" style="padding:12px 14px;">
+              <strong>按任务形态路由</strong>
+              <p class="muted">未来方向是根据任务的形态、难度、成本与连续性需求，把任务分配给最合适的执行者。</p>
+            </div>
+            <div class="card" data-lang-block="zh" style="padding:12px 14px;">
+              <strong>连续性保存在 CTX 中</strong>
+              <p class="muted">决策不该困在聊天中，而应作为可追踪的推理保存在 CTX 里。</p>
+            </div>
+            <div class="card" data-lang-block="zh" style="padding:12px 14px;">
+              <strong>更低的重建成本</strong>
+              <p class="muted">减少对已完成工作的重复处理，改善任务与模型的匹配，并让长线工程更可复现。</p>
+            </div>
+            <div class="card" data-lang-block="zh" style="padding:12px 14px;">
+              <strong>MCP 作为未来方向</strong>
+              <p class="muted">未来也可能通过 MCP 暴露 CTX。</p>
+            </div>
+          </div>
+          <div class="quote" data-lang-block="es">La dirección no es solo hacer agentes más rápidos. Es hacer el trabajo durable, transferible y orquestable desde CTX.</div>
+          <div class="quote" data-lang-block="en">The direction is not only making agents faster. It is making work durable, transferable, and orchestrable from CTX.</div>
+          <div class="quote" data-lang-block="zh">方向不只是让代理更快，而是让工作从 CTX 出发变得持久、可转移、可编排。</div>
+          <div class="footer">
+            <div class="lang-inline-es">De herramienta a orquestación cognitiva</div>
+            <div class="lang-inline-en">From tool to cognitive orchestration</div>
+            <div class="lang-inline-zh">从工具走向认知编排</div>
+            <div class="pager">11 / 11</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide cover-slide" data-title="FIN">
+        <div class="final-content">
+          <div class="cover-top">
+            <div>
+              <div class="cover-kicker">CTX / UNJu / Facultad de Ingeniería</div>
+              <div class="cover-byline">by Diego Mariano Verrastro</div>
+            </div>
+            <div class="cover-mark">
+              <span data-lang-block="es">fin</span>
+              <span data-lang-block="en">ending</span>
+              <span data-lang-block="zh">结束</span>
+            </div>
+          </div>
+          <div class="final-main">
+            <h1 class="final-title" data-lang-block="es">FIN</h1>
+            <h1 class="final-title" data-lang-block="en">END</h1>
+            <h1 class="final-title" data-lang-block="zh">结束</h1>
+            <p class="final-conclusion" data-lang-block="es">CTX es una nueva capa, como standard, como infraestructura cognitiva, de modo de encontrar respuestas a lo largo de un proceso cognitivo, ya sea en el desarrollo de software o en el análisis científico.</p>
+            <p class="final-conclusion" data-lang-block="en">CTX is a new layer, as a standard and as cognitive infrastructure, for finding answers across a cognitive process, whether in software development or scientific analysis.</p>
+            <p class="final-conclusion" data-lang-block="zh">CTX 是新的一层：它既是一种标准，也是一种认知基础设施，使我们能够在整个认知过程中寻找答案，无论是在软件开发中还是在科学分析中。</p>
+            <p class="final-wish" data-lang-block="es">Para los que estén interesados, les propongo que me sigan en GitHub, le den una estrellita al proyecto y usen la herramienta.</p>
+            <p class="final-wish" data-lang-block="en">For those who are interested, I invite you to follow me on GitHub, give the project a star, and use the tool.</p>
+            <p class="final-wish" data-lang-block="zh">如果你对此感兴趣，欢迎在 GitHub 上关注我，给项目点一颗星，并亲自使用这项工具。</p>
+            <div class="final-star" data-lang-block="es"><strong>Gracias a todos!!!</strong></div>
+            <div class="final-star" data-lang-block="en"><strong>Thank you all!!!</strong></div>
+            <div class="final-star" data-lang-block="zh"><strong>谢谢大家！！！</strong></div>
+          </div>
+          <div class="cover-bottom">
+            <div class="cover-note">
+              <span data-lang-block="es">Repositorio oficial</span>
+              <span data-lang-block="en">Official repository</span>
+              <span data-lang-block="zh">官方仓库</span>
+            </div>
+            <a class="code-inline" href="https://github.com/diegoxtr/ctx-open" target="_blank" rel="noreferrer">github.com/diegoxtr/ctx-open</a>
+          </div>
+        </div>
+      </section>
+    </div>
+    <div class="topbar">
+      <div class="controls">
+        <button type="button" id="prevBtn">Anterior</button>
+        <button type="button" id="nextBtn">Siguiente</button>
+      </div>
+      <div class="muted">
+        <span class="lang-inline-es">Flechas izquierda/derecha o espacio para navegar</span>
+        <span class="lang-inline-en">Use left/right arrows or space to navigate</span>
+        <span class="lang-inline-zh">使用左右方向键或空格键进行导航</span>
+      </div>
+      <div class="muted">
+        <span class="lang-inline-es">Repositorio oficial:</span>
+        <span class="lang-inline-en">Official repository:</span>
+        <span class="lang-inline-zh">官方仓库：</span>
+        <a class="code-inline" href="https://github.com/diegoxtr/ctx-open" target="_blank" rel="noreferrer">github.com/diegoxtr/ctx-open</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const stage = document.querySelector('.stage');
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const langButtons = Array.from(document.querySelectorAll('[data-set-lang]'));
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    let current = 0;
+    const revealState = new Map();
+    const uiLabels = {
+      es: { prev: 'Anterior', next: 'Siguiente' },
+      en: { prev: 'Previous', next: 'Next' },
+      zh: { prev: '上一页', next: '下一页' }
+    };
+
+    function getRevealItems(slide) {
+      const activeLang = document.body.dataset.lang || 'es';
+      return Array.from(slide.querySelectorAll('.card, .quote')).filter((item) => {
+        const langBlock = item.getAttribute('data-lang-block');
+        return !langBlock || langBlock === activeLang;
+      });
+    }
+
+    function getRevealCount(index) {
+      return revealState.get(index) ?? 0;
+    }
+
+    function setRevealCount(index, count) {
+      revealState.set(index, Math.max(0, count));
+    }
+
+    function maxRevealCount(index) {
+      return getRevealItems(slides[index]).length;
+    }
+
+    function syncLocation() {
+      const hash = `#slide=${current + 1}&step=${getRevealCount(current)}`;
+      if (window.location.hash !== hash) {
+        history.replaceState(null, '', hash);
+      }
+    }
+
+    function fitCurrentSlide() {
+      const margin = 24;
+      const availableWidth = Math.max(320, stage.clientWidth - margin * 2);
+      const availableHeight = Math.max(240, stage.clientHeight - margin * 2);
+      const baseWidth = Number.parseInt(getComputedStyle(document.documentElement).getPropertyValue('--slide-width'), 10);
+      const baseHeight = Number.parseInt(getComputedStyle(document.documentElement).getPropertyValue('--slide-height'), 10);
+      const scale = Math.min(availableWidth / baseWidth, availableHeight / baseHeight);
+
+      slides.forEach((slide, index) => {
+        if (index !== current) {
+          slide.style.transform = '';
+          slide.style.left = '';
+          slide.style.top = '';
+          return;
+        }
+
+        const scaledWidth = baseWidth * scale;
+        const scaledHeight = baseHeight * scale;
+        slide.style.left = `${margin + (availableWidth - scaledWidth) / 2}px`;
+        slide.style.top = `${margin + (availableHeight - scaledHeight) / 2}px`;
+        slide.style.transform = `scale(${scale})`;
+      });
+    }
+
+    function restoreLocation() {
+      const hash = window.location.hash || '';
+      const slideMatch = hash.match(/slide=(\d+)/);
+      const stepMatch = hash.match(/step=(\d+)/);
+      if (slideMatch) {
+        current = Math.min(slides.length - 1, Math.max(0, Number.parseInt(slideMatch[1], 10) - 1));
+      }
+      if (stepMatch) {
+        setRevealCount(current, Math.min(maxRevealCount(current), Math.max(0, Number.parseInt(stepMatch[1], 10))));
+      }
+    }
+
+    function render() {
+      slides.forEach((slide, index) => {
+        slide.classList.toggle('active', index === current);
+        slide.querySelectorAll('.kicker').forEach((node) => {
+          node.textContent = `Slide ${index}`;
+        });
+        slide.querySelectorAll('.pager').forEach((node) => {
+          node.textContent = `${index} / ${slides.length - 1}`;
+        });
+        const revealItems = getRevealItems(slide);
+        const visibleCount = index === current ? getRevealCount(index) : 0;
+        revealItems.forEach((item, itemIndex) => {
+          const visible = itemIndex < visibleCount;
+          item.classList.toggle('reveal-hidden', !visible);
+          item.classList.toggle('reveal-visible', visible);
+        });
+      });
+      document.title = `${slides[current].dataset.title} - CTX en UNJu`;
+      prevBtn.disabled = current === 0 && getRevealCount(current) === 0;
+      nextBtn.disabled = current === slides.length - 1 && getRevealCount(current) >= maxRevealCount(current);
+      fitCurrentSlide();
+      syncLocation();
+    }
+
+    function setLanguage(lang) {
+      document.body.dataset.lang = lang;
+      document.documentElement.lang = lang;
+      langButtons.forEach((button) => {
+        button.classList.toggle('active', button.dataset.setLang === lang);
+      });
+      prevBtn.textContent = uiLabels[lang].prev;
+      nextBtn.textContent = uiLabels[lang].next;
+      slides.forEach((_, index) => {
+        setRevealCount(index, Math.min(getRevealCount(index), maxRevealCount(index)));
+      });
+      render();
+    }
+
+    function next() {
+      const currentReveal = getRevealCount(current);
+      const revealLimit = maxRevealCount(current);
+      if (currentReveal < revealLimit) {
+        setRevealCount(current, currentReveal + 1);
+        render();
+        return;
+      }
+      if (current >= slides.length - 1) {
+        return;
+      }
+      current += 1;
+      render();
+    }
+
+    function prev() {
+      const currentReveal = getRevealCount(current);
+      if (currentReveal > 0) {
+        setRevealCount(current, currentReveal - 1);
+        render();
+        return;
+      }
+      if (current <= 0) {
+        return;
+      }
+      current -= 1;
+      if (!revealState.has(current)) {
+        setRevealCount(current, maxRevealCount(current));
+      }
+      render();
+    }
+
+    nextBtn.addEventListener('click', next);
+    prevBtn.addEventListener('click', prev);
+    langButtons.forEach((button) => {
+      button.addEventListener('click', () => setLanguage(button.dataset.setLang));
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowRight' || event.key === ' ' || event.key === 'PageDown') {
+        event.preventDefault();
+        next();
+      }
+      if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
+        event.preventDefault();
+        prev();
+      }
+    });
+
+    window.addEventListener('resize', render);
+
+    restoreLocation();
+    setLanguage('es');
+  </script>
+</body>
+</html>
+
+
+
+
