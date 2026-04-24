@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Almacen barrial</title>
+    <link rel="stylesheet" href="src/styles.css">
+  </head>
+  <body>
+    <main class="contenedor">
+      <section class="panel">
+        <header>
+          <p class="etiqueta">Demo para CTX</p>
+          <h1>Almacen barrial</h1>
+        </header>
+
+        <form id="pedido-form">
+          <fieldset>
+            <legend>Carrito</legend>
+            <label><input type="checkbox" name="producto" value="yerbaDescuento"> Yerba con descuento</label>
+            <label><input type="checkbox" name="producto" value="energizante"> Bebida energizante</label>
+            <label><input type="checkbox" name="producto" value="pan"> Pan</label>
+            <label><input type="checkbox" name="producto" value="queso"> Queso</label>
+            <label><input type="checkbox" name="producto" value="hielo"> Hielo</label>
+            <label><input type="checkbox" name="producto" value="velas"> Velas</label>
+          </fieldset>
+
+          <div class="grilla">
+            <label>
+              Pago
+              <select id="tipo-pago">
+                <option value="contado">Contado</option>
+                <option value="fiado">Fiado</option>
+              </select>
+            </label>
+
+            <label>
+              Clima
+              <select id="clima">
+                <option value="seco">Seco</option>
+                <option value="lluvia">Lluvia</option>
+              </select>
+            </label>
+
+            <label>
+              Hora
+              <input id="hora" type="number" min="0" max="23" value="17">
+            </label>
+
+            <label>
+              Cupon
+              <input id="cupon" placeholder="1221">
+            </label>
+          </div>
+
+          <button type="submit">Evaluar pedido</button>
+        </form>
+
+        <section id="resultado" class="resultado" aria-live="polite"></section>
+      </section>
+    </main>
+    <script src="src/app.js"></script>
+  </body>
+</html>
+
