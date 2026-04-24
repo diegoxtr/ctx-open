@@ -36,6 +36,10 @@ No requiere build, npm ni servidor.
 
 ## Uso con CTX
 
+Si se quiere ejecutar la demo con un agente, abrir y copiar:
+
+- [PROMPT_DEMO_CTX.md](PROMPT_DEMO_CTX.md)
+
 Desde esta carpeta:
 
 ```powershell
