@@ -106,23 +106,24 @@
 
     .slide.active {
       display: grid;
-      grid-template-columns: 280px 1fr;
+      grid-template-columns: 318px 1fr;
     }
 
     .slide.cover-slide.active {
       display: block;
     }
 
-    .aside {
-      background:
-        linear-gradient(180deg, rgba(15, 76, 129, 0.96), rgba(10, 36, 61, 0.98)),
-        linear-gradient(135deg, rgba(255,255,255,0.06), transparent);
-      color: white;
-      padding: 28px 22px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
+      .aside {
+        background:
+          linear-gradient(180deg, rgba(15, 76, 129, 0.96), rgba(10, 36, 61, 0.98)),
+          linear-gradient(135deg, rgba(255,255,255,0.06), transparent);
+        color: white;
+        padding: 18px 26px 96px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        gap: 16px;
+      }
 
     .aside h1,
     .aside h2 {
@@ -135,19 +136,21 @@
       text-transform: uppercase;
       letter-spacing: 0.18em;
       opacity: 0.78;
-      margin-bottom: 18px;
+      margin-bottom: 12px;
     }
 
     .aside .big {
-      font-size: 40px;
+      font-size: 34px;
       font-weight: 800;
+      line-height: 1.02;
     }
 
     .aside .small-note {
-      font-size: 15px;
-      line-height: 1.38;
+      font-size: 13px;
+      line-height: 1.4;
       color: rgba(255,255,255,0.82);
-      padding-bottom: 10px;
+      padding-bottom: 0;
+      margin-top: auto;
     }
 
     .content {
@@ -373,6 +376,65 @@
       z-index: 1;
     }
 
+    .final-content {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 56px 64px 42px;
+      background:
+        radial-gradient(circle at top right, rgba(15, 76, 129, 0.10), transparent 24%),
+        radial-gradient(circle at bottom left, rgba(177, 135, 45, 0.10), transparent 28%),
+        linear-gradient(135deg, rgba(255,253,248,0.99), rgba(247,241,231,0.98));
+      position: relative;
+      overflow: hidden;
+    }
+
+    .final-content::after {
+      content: "";
+      position: absolute;
+      left: 64px;
+      right: 64px;
+      top: 146px;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(15, 76, 129, 0.24), rgba(15, 76, 129, 0.04));
+      pointer-events: none;
+    }
+
+    .final-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 18px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .final-title {
+      margin: 0;
+      font-size: 64px;
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      color: var(--ink);
+    }
+
+    .final-conclusion,
+    .final-wish {
+      margin: 0;
+      max-width: 1040px;
+      font-size: 28px;
+      line-height: 1.35;
+      color: var(--ink);
+    }
+
+    .final-star {
+      font-size: 34px;
+      line-height: 1.1;
+      color: var(--ink);
+    }
+
     .cover-note {
       font-size: 15px;
       line-height: 1.4;
@@ -457,16 +519,16 @@
       }
 
       .aside {
-        gap: 20px;
-      }
+          gap: 18px;
+        }
 
-      .aside .big {
-        font-size: 34px;
-      }
+        .aside .big {
+          font-size: 30px;
+        }
 
-      .cover-content {
-        padding: 34px 30px 28px;
-      }
+        .cover-content {
+          padding: 34px 30px 28px;
+        }
 
       .cover-content::after {
         left: 30px;
@@ -474,13 +536,36 @@
         top: 124px;
       }
 
-      .cover-title {
-        font-size: 50px;
-      }
+        .cover-title {
+          font-size: 50px;
+        }
 
-      .cover-subtitle {
-        font-size: 19px;
-      }
+        .final-content {
+          padding: 34px 30px 28px;
+        }
+
+        .final-content::after {
+          left: 30px;
+          right: 30px;
+          top: 124px;
+        }
+
+        .final-title {
+          font-size: 46px;
+        }
+
+        .final-conclusion,
+        .final-wish {
+          font-size: 20px;
+        }
+
+        .final-star {
+          font-size: 26px;
+        }
+
+        .cover-subtitle {
+          font-size: 19px;
+        }
 
       .cover-bottom,
       .cover-top {
@@ -762,7 +847,7 @@
           <p class="lead" data-lang-block="en">A good prompt gives the agent a role, objective, constraints, and output shape. But when context is flattened or compacted, what remains is a compressed operational summary, not the full cognitive process.</p>
           <p class="lead" data-lang-block="zh">一个好的提示词会给代理角色、目标、约束和输出形式。但当上下文被压平或压缩时，留下的只是被压缩的操作性摘要，而不是完整的认知过程。</p>
           <div class="grid-2" style="gap:12px;">
-            <div class="card" data-lang-block="es" style="padding:12px 14px;">
+            <div class="card no-reveal" data-lang-block="es" style="padding:12px 14px;">
               <strong>Lo que define un buen prompt</strong>
               <ul class="compact">
                 <li>rol claro</li>
@@ -1104,7 +1189,7 @@
         </div>
       </section>
 
-      <section class="slide" data-title="Demo desde cero">
+      <section class="slide" data-title="Demo desde cero" data-static-step="true">
         <aside class="aside">
           <div data-lang-block="es">
             <div class="kicker">Slide 8</div>
@@ -1395,11 +1480,11 @@ ctx commit -m "primer bloque durable"</div>
               <strong>MCP como línea futura</strong>
               <p class="muted">También aparece como posibilidad exponer CTX vía MCP.</p>
             </div>
-            <div class="card" data-lang-block="en" style="padding:12px 14px;">
+            <div class="card no-reveal" data-lang-block="en" style="padding:12px 14px;">
               <strong>MCP as a future line</strong>
               <p class="muted">Another possible direction is exposing CTX through MCP.</p>
             </div>
-            <div class="card" data-lang-block="zh" style="padding:12px 14px;">
+            <div class="card no-reveal" data-lang-block="zh" style="padding:12px 14px;">
               <strong>认知编排</strong>
               <p class="muted">CTX 不只存储状态，它还可以对工作进行分类，并决定如何保持连续性。</p>
             </div>
@@ -1503,13 +1588,19 @@ ctx commit -m "primer bloque durable"</div>
       zh: { prev: '上一页', next: '下一页' }
     };
 
-    function getRevealItems(slide) {
-      const activeLang = document.body.dataset.lang || 'es';
-      return Array.from(slide.querySelectorAll('.card, .quote')).filter((item) => {
-        const langBlock = item.getAttribute('data-lang-block');
-        return !langBlock || langBlock === activeLang;
-      });
-    }
+      function getRevealItems(slide) {
+        if (slide.dataset.staticStep === 'true') {
+          return [];
+        }
+        const activeLang = document.body.dataset.lang || 'es';
+        return Array.from(slide.querySelectorAll('.card, .quote')).filter((item) => {
+          if (item.classList.contains('no-reveal')) {
+            return false;
+          }
+          const langBlock = item.getAttribute('data-lang-block');
+          return !langBlock || langBlock === activeLang;
+        });
+      }
 
     function getRevealCount(index) {
       return revealState.get(index) ?? 0;
