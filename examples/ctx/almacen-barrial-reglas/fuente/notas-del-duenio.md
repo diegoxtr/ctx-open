@@ -1,29 +1,27 @@
 # Notas del duenio
 
-Estas notas representan informacion informal que normalmente quedaria perdida en una conversacion.
+Hipotesis principal: las reglas del almacen nacen de margen, riesgo de deuda y logistica, no de restricciones tecnicas de la interfaz.
 
-## Margen de la yerba
+Hipotesis secundaria: la lluvia debe cancelar la promo de pan y queso porque baja la circulacion del barrio y vuelve ineficiente el descuento.
 
-La bonificacion de la yerba depende de una planilla del proveedor. Si se vende despues de las 18:00, el descuento queda a cargo del almacen. El problema real no es el reloj de la interfaz, sino preservar margen.
+Hipotesis secundaria: el envio gratis requiere cupon capicua y ticket mayor a 5000 porque el costo logistico puede superar el margen.
 
-## Fiado y energizantes
+## Margen
 
-El fiado no se corta para todos los clientes. Solo se corta cuando aparecen energizantes porque historicamente esos pedidos terminaron en deuda. La regla debe ser tratada como riesgo comercial.
+El margen es mas importante que vender con descuento fuera de regla. Si el proveedor no reconoce una bonificacion, el sistema debe impedir que el vendedor cierre esa venta como promocion.
 
-## Pan, queso y lluvia
+## Riesgo de fiado
 
-La promo de pan y queso funciona cuando hay movimiento en la calle. Cuando llueve, la promo no atrae suficientes compradores y conviene conservar margen antes que forzar descuento.
+El fiado no es un problema general. El problema aparece en un patron concreto: clientes que piden energizantes y quieren pagar despues. Esa combinacion debe tratarse como riesgo.
 
-## Hielo y velas
+## Promociones sensibles al contexto
 
-Hielo y velas no son incompatibles como productos. El problema es operativo: se preparan en lugares distintos. Por eso la respuesta correcta es advertir, no bloquear.
+No todas las promociones son permanentes. La promo de pan y queso depende del movimiento del barrio. Cuando llueve, conviene vender sin descuento antes que sostener una promo que no compensa.
 
-## Hipotesis que queremos ver
+## Logistica
 
-Una buena lectura de CTX deberia separar al menos estas ideas:
+Algunas combinaciones no son riesgos comerciales. Hielo y velas se pueden vender en el mismo pedido, pero el equipo debe preparar dos bultos separados.
 
-- algunas reglas bloquean la compra
-- algunas reglas solo cambian descuentos o envio
-- algunas reglas solo generan advertencias
-- el origen de varias reglas es comercial u operativo, no tecnico
+## Criterio de decision
 
+El sistema debe separar bloqueo, ajuste economico y advertencia logistica. Si todo se trata como error, el almacen pierde ventas validas. Si todo se trata como aviso, el almacen pierde margen.

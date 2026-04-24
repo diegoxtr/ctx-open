@@ -1,36 +1,55 @@
-# Reglas de negocio del almacen
+# Caso operativo: almacen barrial
 
-Este documento esta escrito como contexto de producto. No describe componentes tecnicos: describe decisiones del negocio que el sistema debe respetar.
+Hipotesis principal: el sistema del almacen debe separar bloqueo de compra, ajuste economico y advertencia logistica para proteger margen sin perder ventas validas.
 
-## Regla 1: yerba con descuento antes de las 18:00
+Hipotesis secundaria: la combinacion de fiado y energizantes representa riesgo comercial y debe bloquear el pedido.
 
-La yerba con descuento solo se puede vender hasta las 18:00. Despues de esa hora el proveedor no reconoce la bonificacion y el almacen pierde margen.
+Hipotesis secundaria: hielo y velas no deben bloquear la compra; deben generar una advertencia logistica porque se preparan en zonas separadas.
 
-La aplicacion debe bloquear la compra si el carrito contiene yerba con descuento y la hora actual es 18:00 o mas tarde.
+## Problema central
 
-## Regla 2: fiado incompatible con energizantes
+El sistema debe distinguir tres tipos de reglas:
 
-El fiado se permite para clientes conocidos, pero no cuando el pedido incluye bebidas energizantes. La razon no es tecnica: el duenio detecto que esos pedidos suelen quedar impagos.
+- reglas que bloquean la compra
+- reglas que cambian descuentos, envio o margen
+- reglas que solo generan advertencias operativas
 
-La aplicacion debe bloquear el fiado si el carrito contiene energizantes.
+## Regla 1: yerba con descuento
 
-## Regla 3: promo de pan y queso cancelada por lluvia
+La yerba con descuento no debe venderse desde las 18:00.
 
-La promo de pan y queso existe para mover stock fresco. Si llueve, se cancela porque baja la circulacion del barrio y el descuento deja de cumplir su objetivo.
+Razon de negocio: despues de esa hora el proveedor no reconoce la bonificacion y el almacen pierde margen.
 
-La aplicacion debe quitar la promo si el clima esta marcado como lluvia.
+Hipotesis de negocio: la restriccion horaria de la yerba protege margen y debe bloquear el pedido, no solo mostrar un aviso.
+
+## Regla 2: fiado con energizantes
+
+El fiado esta permitido para clientes conocidos, salvo cuando el carrito incluye bebidas energizantes.
+
+Razon de negocio: el duenio observo que los pedidos fiados con energizantes suelen quedar impagos.
+
+Hipotesis de negocio: la combinacion de fiado y energizantes representa riesgo comercial y debe bloquear el pedido.
+
+## Regla 3: pan y queso con lluvia
+
+La promo de pan y queso se aplica cuando no llueve. Si llueve, la promo se cancela.
+
+Razon de negocio: con lluvia baja la circulacion del barrio y el descuento deja de atraer suficientes compradores.
+
+Hipotesis de negocio: la lluvia no bloquea la compra, pero debe cancelar el descuento para preservar margen.
 
 ## Regla 4: envio gratis con cupon capicua
 
-Un cupon capicua como `1221` o `3443` habilita envio gratis, pero solo si el ticket supera 5000. Si el monto es menor, el costo logistico supera el margen.
+El envio gratis solo aplica si el cupon es capicua y el ticket supera 5000.
 
-La aplicacion debe aplicar envio gratis solo cuando se cumplen ambas condiciones.
+Razon de negocio: si el ticket es menor, el costo logistico supera el margen del pedido.
 
-## Regla 5: hielo y velas generan advertencia
+Hipotesis de negocio: el cupon capicua no alcanza por si solo; tambien debe validarse el monto minimo.
 
-Hielo y velas pueden comprarse juntos, pero se preparan en zonas distintas del almacen. No debe bloquearse la compra; debe mostrarse una advertencia de preparacion separada.
+## Regla 5: hielo y velas
 
-## Expectativa para CTX
+Hielo y velas pueden comprarse juntos, pero se preparan en zonas separadas del almacen.
 
-Al correr bootstrap sobre esta carpeta, CTX deberia detectar que las reglas no son detalles visuales. Son restricciones de negocio que pueden convertirse en hipotesis, evidencia, decision y conclusion.
+Razon operativa: hielo requiere frio y velas se preparan con mercaderia seca.
 
+Hipotesis de negocio: hielo y velas no deben bloquear la compra; deben generar una advertencia logistica.

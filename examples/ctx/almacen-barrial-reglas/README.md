@@ -12,11 +12,11 @@ El caso simula un almacen barrial que tiene reglas de venta poco obvias:
 - el envio gratis requiere cupon capicua y ticket mayor a 5000
 - el pedido con hielo y velas no se bloquea, pero debe mostrar advertencia logistica
 
-El punto de la demo no es la app. El punto es mostrar que CTX puede leer archivos normales y proponer una primera linea cognitiva:
+El punto de la demo no es la app. El punto es mostrar que CTX puede leer archivos normales de negocio y proponer una primera linea cognitiva:
 
 `Proyecto -> Objetivo -> Tarea -> Hipotesis -> Evidencia`
 
-Luego la persona que opera CTX revisa esa linea, agrega evidencia manual, acepta o rechaza hipotesis, toma una decision y cierra una conclusion.
+Luego la persona que opera CTX revisa esa linea, agrega evidencia manual desde el codigo, acepta o rechaza hipotesis, toma una decision y cierra una conclusion.
 
 ## Archivos
 
@@ -36,10 +36,6 @@ No requiere build, npm ni servidor.
 
 ## Uso con CTX
 
-Si se quiere ejecutar la demo con un agente, abrir y copiar:
-
-- [PROMPT_DEMO_CTX.md](PROMPT_DEMO_CTX.md)
-
 Desde esta carpeta:
 
 ```powershell
@@ -58,4 +54,4 @@ http://127.0.0.1:5271
 
 y cargar la carpeta de este ejemplo.
 
-La guia de comandos queda fuera del bootstrap inicial para no contaminar las hipotesis con instrucciones operativas. Primero se mapea la carpeta `fuente`; despues se agrega evidencia desde el codigo.
+La guia de comandos queda fuera del bootstrap inicial para no contaminar las hipotesis con instrucciones operativas. Primero se mapea la carpeta `fuente`, que contiene solo conocimiento del almacen; despues se agrega evidencia desde el codigo.

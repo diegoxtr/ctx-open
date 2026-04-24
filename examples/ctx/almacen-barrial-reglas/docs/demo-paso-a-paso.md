@@ -42,7 +42,7 @@ Lectura esperada:
 C:\ctx\bin\ctx.cmd bootstrap apply --from .\fuente --mode project --max-files 8
 ```
 
-El bootstrap se ejecuta sobre `fuente` para que la primera lectura se concentre en el caso de negocio. El codigo se usa despues como evidencia manual.
+El bootstrap se ejecuta sobre `fuente` para que la primera lectura se concentre en el conocimiento del almacen. Esa carpeta no debe incluir instrucciones de CTX ni explicaciones de la demo; el codigo se usa despues como evidencia manual.
 
 Verificar:
 
@@ -87,7 +87,7 @@ Explicar que esto no es un commit todavia: es contexto de trabajo.
 Elegir una hipotesis detectada por bootstrap, por ejemplo:
 
 ```text
-Las reglas del almacen son restricciones de negocio, no detalles de UI.
+La combinacion de fiado y energizantes representa riesgo comercial y debe bloquear el pedido.
 ```
 
 Agregar evidencia manual desde el codigo:
