@@ -16,7 +16,6 @@ If you want to understand CTX as a product showcase, start here:
 1. `ctx/critical-checkout-regression`
 2. `ctx/catalog-cache-branch-merge`
 3. `ctx/agent-session-continuity`
-4. `ctx/almacen-barrial-reglas`
 
 If you want to validate the viewer itself, open:
 
@@ -28,7 +27,6 @@ If you want to validate bootstrap indexing quality, open:
 - `bootstrap-agriculture-demo-v2`
 - `bootstrap-agriculture-demo-v3`
 - `bootstrap-agriculture-demo-v4`
-- `ctx/almacen-barrial-reglas`
 
 ## Important Note
 
