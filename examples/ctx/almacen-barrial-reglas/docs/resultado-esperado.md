@@ -26,7 +26,7 @@ Project -> Goal -> Task -> Hypothesis -> Evidence
 La cantidad exacta puede variar si cambia el algoritmo de bootstrap, pero deberian aparecer:
 
 - una tarea de revision
-- hipotesis propuestas
+- hipotesis propuestas sobre reglas del almacen
 - evidencia documental tomada de `fuente/reglas-negocio.md` y `fuente/notas-del-duenio.md`
 
 ## Despues de la revision
@@ -44,6 +44,8 @@ La diferencia importante es semantica:
 - la evidencia valida
 - la decision acepta una direccion
 - la conclusion cierra el aprendizaje
+
+Si las hipotesis hablan de CTX, de la guia o de la mecanica de la demo, el material fuente esta contaminado con metatexto. En ese caso, correr bootstrap solo sobre `fuente` y revisar que `fuente` describa el negocio, no la herramienta.
 
 ## Despues del commit CTX
 
