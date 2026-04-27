@@ -447,6 +447,98 @@ public sealed class ApplicationServiceTests
     }
 
     [Fact]
+    public async Task Audit_FindsTasksWithoutGoalAssignment()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var clock = new FixedClock(new DateTimeOffset(2026, 4, 8, 12, 45, 0, TimeSpan.Zero));
+            var jsonSerializer = new DefaultJsonSerializer();
+            var hashing = new Sha256HashingService();
+            var workingRepository = new FileSystemWorkingContextRepository(jsonSerializer);
+            var commitRepository = new FileSystemCommitRepository(jsonSerializer);
+            var branchRepository = new FileSystemBranchRepository(jsonSerializer);
+            var packetRepository = new FileSystemPacketRepository(jsonSerializer);
+            var runRepository = new FileSystemRunRepository(jsonSerializer);
+            var metricsRepository = new FileSystemMetricsRepository(jsonSerializer);
+            var contextBuilder = new ContextBuilder(clock, hashing);
+            var commitEngine = new CommitEngine(clock, hashing, jsonSerializer, new DiffEngine());
+            var mergeEngine = new MergeEngine();
+            var providers = new Ctx.Providers.AIProviderRegistry(Array.Empty<Ctx.Application.IAIProvider>());
+            var runOrchestrator = new RunOrchestrator(contextBuilder, providers, packetRepository, runRepository, metricsRepository, clock, hashing);
+            var service = new CtxApplicationService(workingRepository, commitRepository, branchRepository, runRepository, packetRepository, metricsRepository, runOrchestrator, contextBuilder, commitEngine, mergeEngine, clock);
+
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Audit goal test", "main", "tester"), CancellationToken.None);
+            var task = await service.AddTaskAsync(repositoryPath, new Ctx.Application.AddTaskRequest("Unscoped task", string.Empty, null, Array.Empty<string>(), "tester"), CancellationToken.None);
+            var taskId = Assert.IsType<Ctx.Domain.Task>(task.Data).Id.Value;
+
+            var audit = await service.AuditAsync(repositoryPath, CancellationToken.None);
+
+            Assert.True(audit.Success);
+            var report = Assert.IsType<Ctx.Domain.AuditReport>(audit.Data);
+            Assert.Contains(report.Issues, issue => issue.IssueType == "TaskMissingGoal" && issue.EntityId == taskId);
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task UpdateTask_CanAssignGoalToExistingUnscopedTask()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var clock = new FixedClock(new DateTimeOffset(2026, 4, 8, 12, 50, 0, TimeSpan.Zero));
+            var jsonSerializer = new DefaultJsonSerializer();
+            var hashing = new Sha256HashingService();
+            var workingRepository = new FileSystemWorkingContextRepository(jsonSerializer);
+            var commitRepository = new FileSystemCommitRepository(jsonSerializer);
+            var branchRepository = new FileSystemBranchRepository(jsonSerializer);
+            var packetRepository = new FileSystemPacketRepository(jsonSerializer);
+            var runRepository = new FileSystemRunRepository(jsonSerializer);
+            var metricsRepository = new FileSystemMetricsRepository(jsonSerializer);
+            var contextBuilder = new ContextBuilder(clock, hashing);
+            var commitEngine = new CommitEngine(clock, hashing, jsonSerializer, new DiffEngine());
+            var mergeEngine = new MergeEngine();
+            var providers = new Ctx.Providers.AIProviderRegistry(Array.Empty<Ctx.Application.IAIProvider>());
+            var runOrchestrator = new RunOrchestrator(contextBuilder, providers, packetRepository, runRepository, metricsRepository, clock, hashing);
+            var service = new CtxApplicationService(workingRepository, commitRepository, branchRepository, runRepository, packetRepository, metricsRepository, runOrchestrator, contextBuilder, commitEngine, mergeEngine, clock);
+
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Task goal update test", "main", "tester"), CancellationToken.None);
+            var goal = await service.AddGoalAsync(repositoryPath, new Ctx.Application.AddGoalRequest("Scoped work", "Goal", 1, null, "tester"), CancellationToken.None);
+            var goalId = Assert.IsType<Ctx.Domain.Goal>(goal.Data).Id.Value;
+            var task = await service.AddTaskAsync(repositoryPath, new Ctx.Application.AddTaskRequest("Unscoped task", string.Empty, null, Array.Empty<string>(), "tester"), CancellationToken.None);
+            var taskId = Assert.IsType<Ctx.Domain.Task>(task.Data).Id.Value;
+
+            var updated = await service.UpdateTaskAsync(repositoryPath, new Ctx.Application.UpdateTaskRequest(taskId, null, null, null, "tester", goalId), CancellationToken.None);
+
+            Assert.True(updated.Success);
+            var updatedTask = Assert.IsType<Ctx.Domain.Task>(updated.Data);
+            Assert.Equal(goalId, updatedTask.GoalId?.Value);
+
+            var goalResult = await service.ShowArtifactAsync(repositoryPath, "goal", goalId, CancellationToken.None);
+            var shownGoal = Assert.IsType<Ctx.Domain.Goal>(goalResult.Data);
+            Assert.Contains(shownGoal.TaskIds, id => id.Value == taskId);
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public async Task Export_ReturnsFailureWhenRepositoryIsMissing()
     {
         var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
@@ -690,7 +782,7 @@ public sealed class ApplicationServiceTests
             var evidenceId = ((Ctx.Domain.Evidence)evidence.Data!).Id.Value;
             await service.AddDecisionAsync(repositoryPath, new Ctx.Application.AddDecisionRequest("Build graph export", "Needed for lineage", "Accepted", new[] { hypothesisId }, new[] { evidenceId }, "tester"), CancellationToken.None);
 
-            var export = await service.ExportGraphAsync(repositoryPath, "json", null, CancellationToken.None);
+            var export = await service.ExportGraphAsync(repositoryPath, "json", null, null, null, null, CancellationToken.None);
 
             Assert.True(export.Success);
             var graph = Assert.IsType<Ctx.Domain.CognitiveGraphExport>(export.Data);
@@ -745,7 +837,7 @@ public sealed class ApplicationServiceTests
             var baseTaskId = ((Ctx.Domain.Task)baseTask.Data!).Id.Value;
             await service.AddTaskAsync(repositoryPath, new Ctx.Application.AddTaskRequest("Build graph lineage", "Dependent task", childGoalId, new[] { baseTaskId }, "tester"), CancellationToken.None);
 
-            var export = await service.ExportGraphAsync(repositoryPath, "json", null, CancellationToken.None);
+            var export = await service.ExportGraphAsync(repositoryPath, "json", null, null, null, null, CancellationToken.None);
 
             Assert.True(export.Success);
             var graph = Assert.IsType<Ctx.Domain.CognitiveGraphExport>(export.Data);
@@ -1063,7 +1155,7 @@ public sealed class ApplicationServiceTests
             var decisionId = ((Ctx.Domain.Decision)decision.Data!).Id.Value;
             await service.AddConclusionAsync(repositoryPath, new Ctx.Application.AddConclusionRequest("Outcome mapped to both work and objective", "Accepted", new[] { decisionId }, new[] { evidenceId }, new[] { goalId }, new[] { taskId }, "tester"), CancellationToken.None);
 
-            var export = await service.ExportGraphAsync(repositoryPath, "json", null, CancellationToken.None);
+            var export = await service.ExportGraphAsync(repositoryPath, "json", null, null, null, null, CancellationToken.None);
 
             Assert.True(export.Success);
             var graph = Assert.IsType<Ctx.Domain.CognitiveGraphExport>(export.Data);
@@ -1108,7 +1200,7 @@ public sealed class ApplicationServiceTests
             var goalId = ((Ctx.Domain.Goal)goal.Data!).Id.Value;
             await service.AddTaskAsync(repositoryPath, new Ctx.Application.AddTaskRequest("Export graph", "Create graph mermaid", goalId, Array.Empty<string>(), "tester"), CancellationToken.None);
 
-            var export = await service.ExportGraphAsync(repositoryPath, "mermaid", null, CancellationToken.None);
+            var export = await service.ExportGraphAsync(repositoryPath, "mermaid", null, null, null, null, CancellationToken.None);
 
             Assert.True(export.Success);
             var exportJson = JsonSerializer.Serialize(
@@ -1671,7 +1763,7 @@ public sealed class ApplicationServiceTests
             var commitId = ((Ctx.Domain.ContextCommit)commit.Data!).Id.Value;
             await service.AddTaskAsync(repositoryPath, new Ctx.Application.AddTaskRequest("Later task", "Only in working context", null, Array.Empty<string>(), "tester"), CancellationToken.None);
 
-            var export = await service.ExportGraphAsync(repositoryPath, "json", commitId, CancellationToken.None);
+            var export = await service.ExportGraphAsync(repositoryPath, "json", commitId, null, null, null, CancellationToken.None);
 
             Assert.True(export.Success);
             var graph = Assert.IsType<Ctx.Domain.CognitiveGraphExport>(export.Data);
@@ -1948,6 +2040,52 @@ public sealed class ApplicationServiceTests
     }
 
     [Fact]
+    public async Task NextAsync_IncludesApplicableRunbookSuggestions()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var service = CreateService(new DateTimeOffset(2026, 4, 9, 12, 45, 0, TimeSpan.Zero));
+
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Next runbook test", "main", "tester"), CancellationToken.None);
+            var goal = await service.AddGoalAsync(repositoryPath, new Ctx.Application.AddGoalRequest("Primary goal", "Highest priority", 1, null, "tester"), CancellationToken.None);
+            var goalId = ((Ctx.Domain.Goal)goal.Data!).Id.Value;
+            var task = await service.AddTaskAsync(repositoryPath, new Ctx.Application.AddTaskRequest("Fix viewer route", "new-work needs guidance", goalId, Array.Empty<string>(), "tester"), CancellationToken.None);
+            var taskId = ((Ctx.Domain.Task)task.Data!).Id.Value;
+            await service.AddHypothesisAsync(repositoryPath, new Ctx.Application.AddHypothesisRequest("Route fix is the next best task", "Highest impact", 0.95m, 0.95m, 0.80m, 0.20m, taskId, "tester"), CancellationToken.None);
+            await service.AddOperationalRunbookAsync(repositoryPath, new Ctx.Application.AddOperationalRunbookRequest(
+                "CTX planning first",
+                "Guardrail",
+                new[] { "new-work", "ctx-planning" },
+                "Use before starting implementation",
+                new[] { "Open or update the intended task in CTX before touching code" },
+                new[] { "ctx next includes this runbook" },
+                new[] { "docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md" },
+                Array.Empty<string>(),
+                Array.Empty<string>(),
+                "tester"), CancellationToken.None);
+
+            var result = await service.NextAsync(repositoryPath, CancellationToken.None);
+
+            Assert.True(result.Success);
+            var json = JsonSerializer.Serialize(result.Data, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            using var document = JsonDocument.Parse(json);
+            var suggestions = document.RootElement.GetProperty("runbookSuggestions");
+            Assert.NotEmpty(suggestions.EnumerateArray());
+            Assert.Contains(suggestions.EnumerateArray(), item => item.GetProperty("title").GetString() == "CTX planning first");
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public async Task NextAsync_ReturnsGapCandidateWhenNoOpenTasksRemain()
     {
         var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
@@ -1984,7 +2122,7 @@ public sealed class ApplicationServiceTests
             await service.UpdateTaskAsync(repositoryPath, new Ctx.Application.UpdateTaskRequest(completedTaskId, null, null, "Done", "tester"), CancellationToken.None);
             await service.UpdateHypothesisAsync(
                 repositoryPath,
-                new Ctx.Application.UpdateHypothesisRequest(((Ctx.Domain.Hypothesis)lowerGapHypothesis.Data!).Id.Value, null, null, null, null, null, null, "Archived", "tester"),
+                new Ctx.Application.UpdateHypothesisRequest(((Ctx.Domain.Hypothesis)lowerGapHypothesis.Data!).Id.Value, null, null, null, null, null, null, "Archived", null, null, null, "tester"),
                 CancellationToken.None);
 
             var result = await service.NextAsync(repositoryPath, CancellationToken.None);
@@ -2125,6 +2263,7 @@ public sealed class ApplicationServiceTests
 
             await service.AddConclusionAsync(repositoryPath, new Ctx.Application.AddConclusionRequest("The thread is closed and should not become a gap candidate.", "Accepted", new[] { decisionId }, new[] { evidenceId }, new[] { goalId }, new[] { completedTaskId }, "tester"), CancellationToken.None);
             await service.UpdateTaskAsync(repositoryPath, new Ctx.Application.UpdateTaskRequest(completedTaskId, null, null, "Done", "tester"), CancellationToken.None);
+            await service.UpdateGoalAsync(repositoryPath, new Ctx.Application.UpdateGoalRequest(goalId, null, null, null, "Completed", "tester"), CancellationToken.None);
 
             var result = await service.NextAsync(repositoryPath, CancellationToken.None);
 
@@ -2400,7 +2539,7 @@ public sealed class ApplicationServiceTests
 
             var updated = await service.UpdateHypothesisAsync(
                 repositoryPath,
-                new Ctx.Application.UpdateHypothesisRequest(hypothesisId, null, null, 0.7m, 0.8m, 0.6m, 0.2m, "Supported", "tester"),
+                new Ctx.Application.UpdateHypothesisRequest(hypothesisId, null, null, 0.7m, 0.8m, 0.6m, 0.2m, "Supported", null, null, null, "tester"),
                 CancellationToken.None);
 
             Assert.True(updated.Success);

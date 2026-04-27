@@ -33,6 +33,7 @@ if ([string]::IsNullOrWhiteSpace($ViewerUrl)) {
 }
 
 $binPath = Join-Path $InstallRoot $manifest.paths.bin
+$mcpPath = Join-Path $InstallRoot $manifest.paths.mcp
 $viewerPath = Join-Path $InstallRoot $manifest.paths.viewer
 $promptsPath = Join-Path $InstallRoot $manifest.paths.prompts
 $docsPath = Join-Path $InstallRoot $manifest.paths.docs
@@ -42,6 +43,7 @@ function Reset-InstallLayout {
     param(
         [string]$Root,
         [string]$Bin,
+        [string]$Mcp,
         [string]$Viewer,
         [string]$Prompts,
         [string]$Docs
@@ -49,7 +51,7 @@ function Reset-InstallLayout {
 
     New-Item -ItemType Directory -Path $Root -Force | Out-Null
 
-    foreach ($path in @($Bin, $Viewer, $Prompts, $Docs)) {
+    foreach ($path in @($Bin, $Mcp, $Viewer, $Prompts, $Docs)) {
         if (Test-Path $path) {
             Get-ChildItem -LiteralPath $path -Force -ErrorAction SilentlyContinue |
                 Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
@@ -120,6 +122,7 @@ function Copy-ContextDocs {
 function Write-WindowsLaunchers {
     param(
         [string]$Bin,
+        [string]$Mcp,
         [string]$Viewer,
         [string]$ViewerEndpoint,
         [switch]$NoViewer
@@ -132,6 +135,14 @@ setlocal
 endlocal
 "@
     Set-Content -LiteralPath (Join-Path $Bin "ctx.cmd") -Value $cliLauncher -Encoding ASCII
+
+    $mcpLauncher = @"
+@echo off
+setlocal
+"$Mcp\Ctx.Mcp.exe" %*
+endlocal
+"@
+    Set-Content -LiteralPath (Join-Path $Bin "ctx-mcp.cmd") -Value $mcpLauncher -Encoding ASCII
 
     if ($NoViewer) {
         return
@@ -207,6 +218,7 @@ function Install-FromSource {
         [string]$RepoPath,
         [string]$CloneUrl,
         [string]$Bin,
+        [string]$Mcp,
         [string]$Viewer,
         [string]$Docs,
         [string]$Prompts,
@@ -223,15 +235,25 @@ function Install-FromSource {
     }
 
     $cliProject = Join-Path $effectiveRepoPath "Ctx.Cli\Ctx.Cli.csproj"
+    $mcpProject = Join-Path $effectiveRepoPath "Ctx.Mcp\Ctx.Mcp.csproj"
     $viewerProject = Join-Path $effectiveRepoPath "Ctx.Viewer\Ctx.Viewer.csproj"
 
     if (-not (Test-Path $cliProject)) {
         throw "Ctx.Cli project not found under source repo: $effectiveRepoPath"
     }
 
+    if (-not (Test-Path $mcpProject)) {
+        throw "Ctx.Mcp project not found under source repo: $effectiveRepoPath"
+    }
+
     & dotnet publish $cliProject -c Release -o $Bin | Out-Host
     if ($LASTEXITCODE -ne 0) {
         throw "dotnet publish failed for Ctx.Cli with exit code $LASTEXITCODE"
+    }
+
+    & dotnet publish $mcpProject -c Release -o $Mcp | Out-Host
+    if ($LASTEXITCODE -ne 0) {
+        throw "dotnet publish failed for Ctx.Mcp with exit code $LASTEXITCODE"
     }
 
     if (-not $NoViewer) {
@@ -254,6 +276,7 @@ function Install-FromPortable {
     param(
         [string]$ArchivePath,
         [string]$Bin,
+        [string]$Mcp,
         [string]$Viewer,
         [string]$Prompts,
         [string]$Docs
@@ -278,6 +301,13 @@ function Install-FromPortable {
 
     Copy-Item (Join-Path $extractRoot "bin\*") $Bin -Recurse -Force
 
+    if (Test-Path (Join-Path $extractRoot "mcp")) {
+        Copy-Item (Join-Path $extractRoot "mcp\*") $Mcp -Recurse -Force
+    }
+    elseif (Test-Path (Join-Path $extractRoot "bin\Ctx.Mcp.exe")) {
+        Copy-Item (Join-Path $extractRoot "bin\Ctx.Mcp.exe") (Join-Path $Mcp "Ctx.Mcp.exe") -Force
+    }
+
     if (Test-Path (Join-Path $extractRoot "viewer")) {
         Copy-Item (Join-Path $extractRoot "viewer\*") $Viewer -Recurse -Force
     }
@@ -301,30 +331,60 @@ function Install-FromPortable {
     return $extractRoot
 }
 
-Reset-InstallLayout -Root $InstallRoot -Bin $binPath -Viewer $viewerPath -Prompts $promptsPath -Docs $docsPath
+function Test-InstallLayout {
+    param(
+        [string]$Bin,
+        [string]$Mcp,
+        [string]$Viewer,
+        [switch]$NoViewer
+    )
+
+    $cliExe = Join-Path $Bin "Ctx.Cli.exe"
+    $mcpExe = Join-Path $Mcp "Ctx.Mcp.exe"
+    $viewerExe = Join-Path $Viewer "Ctx.Viewer.exe"
+
+    if (-not (Test-Path $cliExe)) {
+        throw "Installed CLI executable not found: $cliExe"
+    }
+
+    if (-not (Test-Path $mcpExe)) {
+        throw "Installed MCP executable not found: $mcpExe"
+    }
+
+    if (-not $NoViewer -and -not (Test-Path $viewerExe)) {
+        throw "Installed viewer executable not found: $viewerExe"
+    }
+}
+
+Reset-InstallLayout -Root $InstallRoot -Bin $binPath -Mcp $mcpPath -Viewer $viewerPath -Prompts $promptsPath -Docs $docsPath
 
 $promptSource = ""
 $sourceRoot = ""
 
 if ($Mode -eq "source") {
-    $sourceRoot = Install-FromSource -RepoPath $SourceRepoPath -CloneUrl $RepoUrl -Bin $binPath -Viewer $viewerPath -Docs $docsPath -Prompts $promptsPath -NoViewer:$SkipViewer
+    $sourceRoot = Install-FromSource -RepoPath $SourceRepoPath -CloneUrl $RepoUrl -Bin $binPath -Mcp $mcpPath -Viewer $viewerPath -Docs $docsPath -Prompts $promptsPath -NoViewer:$SkipViewer
     $promptSource = Join-Path $sourceRoot $manifest.helperPrompt
     Copy-HelperPrompt -PromptSourcePath $promptSource -PromptTargetPath (Join-Path $promptsPath "CTX_HELPER_PROMPT.md")
 }
 else {
-    $sourceRoot = Install-FromPortable -ArchivePath $BundlePath -Bin $binPath -Viewer $viewerPath -Prompts $promptsPath -Docs $docsPath
+    $sourceRoot = Install-FromPortable -ArchivePath $BundlePath -Bin $binPath -Mcp $mcpPath -Viewer $viewerPath -Prompts $promptsPath -Docs $docsPath
     $promptSource = Join-Path $promptsPath "CTX_HELPER_PROMPT.md"
     if (-not (Test-Path $promptSource)) {
         Copy-HelperPrompt -PromptSourcePath (Join-Path $repoRoot $manifest.helperPrompt) -PromptTargetPath $promptSource
     }
 }
 
-Write-WindowsLaunchers -Bin $binPath -Viewer $viewerPath -ViewerEndpoint $ViewerUrl -NoViewer:$SkipViewer
+Write-WindowsLaunchers -Bin $binPath -Mcp $mcpPath -Viewer $viewerPath -ViewerEndpoint $ViewerUrl -NoViewer:$SkipViewer
+Test-InstallLayout -Bin $binPath -Mcp $mcpPath -Viewer $viewerPath -NoViewer:$SkipViewer
 Write-InstallMetadata -Path $metadataPath -Root $InstallRoot -ModeName $Mode -SourceRoot $sourceRoot -PromptSource $promptSource -ViewerEndpoint $ViewerUrl
 Add-BinToPath -Bin $binPath -Scope $PathScope
 
 Write-Host "CTX installed to $InstallRoot via $Mode mode."
+Write-Host "CTX_INSTALL_ROOT=$InstallRoot"
+Write-Host "CTX_BIN_PATH=$binPath"
+Write-Host "CTX_MCP_PATH=$mcpPath"
 Write-Host "CLI launcher: $(Join-Path $binPath 'ctx.cmd')"
+Write-Host "MCP launcher: $(Join-Path $binPath 'ctx-mcp.cmd')"
 if (-not $SkipViewer) {
     Write-Host "Viewer launcher: $(Join-Path $binPath 'ctx-viewer.cmd')"
 }

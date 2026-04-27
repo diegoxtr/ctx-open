@@ -14,12 +14,17 @@
                 <h1>CTX Viewer</h1>
                 <span class="topbar-byline">by Diego Verrastro</span>
                 <span id="topbar-version" class="topbar-version"></span>
+                <span id="mcp-status" class="mcp-status mcp-status-unknown" title="Checking local MCP server" aria-label="Local MCP server status">
+                    <span class="mcp-status-dot" aria-hidden="true"></span>
+                    <span class="mcp-status-label">MCP Server</span>
+                </span>
             </div>
             <p>Timeline and cognitive graph explorer</p>
         </div>
         <form id="repo-form" class="repo-form">
             <label for="repo-path">Repository</label>
             <input id="repo-path" name="repoPath" type="text" placeholder="Leave empty to use configured default or project git root" />
+            <button id="browse-repo-button" type="button" class="secondary-button">Browse...</button>
             <label for="branch-select">Branch</label>
             <select id="branch-select" name="branch"></select>
             <button type="submit">Load</button>
@@ -31,17 +36,22 @@
         </form>
     </header>
 
+    <section class="workspace-tab-strip" aria-label="Open repositories">
+        <div id="workspace-tabs" class="workspace-tabs" role="tablist" aria-label="Repository tabs"></div>
+        <button id="workspace-tab-add" type="button" class="workspace-tab-add" aria-label="Open another repository tab">+</button>
+    </section>
+
     <section class="view-toolbar">
         <div class="view-mode-group" role="group" aria-label="Viewer mode">
             <span class="view-mode-label">View</span>
-            <button type="button" class="view-mode-button active" data-view-mode="history">History</button>
-            <button type="button" class="view-mode-button" data-view-mode="split">Split</button>
+            <button type="button" class="view-mode-button" data-view-mode="history">History</button>
+            <button type="button" class="view-mode-button active" data-view-mode="split">Split</button>
             <button type="button" class="view-mode-button" data-view-mode="graph">Graph</button>
         </div>
-        <p id="view-mode-caption" class="view-mode-caption">History mode keeps timeline and commit detail readable by collapsing the graph panel.</p>
+        <p id="view-mode-caption" class="view-mode-caption">Split mode uses a compact commit navigator so the graph and detail panels stay readable.</p>
     </section>
 
-    <main class="layout" data-view-mode="history">
+    <main class="layout" data-view-mode="split">
         <aside class="panel panel-left">
             <h2>Commits</h2>
             <div class="panel-rail-tabs panel-rail-tabs-left" aria-label="Collapsed left rail">

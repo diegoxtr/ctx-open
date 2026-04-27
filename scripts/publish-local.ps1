@@ -7,8 +7,10 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $cliProject = Join-Path $repoRoot "Ctx.Cli\Ctx.Cli.csproj"
+$mcpProject = Join-Path $repoRoot "Ctx.Mcp\Ctx.Mcp.csproj"
 $viewerProject = Join-Path $repoRoot "Ctx.Viewer\Ctx.Viewer.csproj"
 $binPath = Join-Path $InstallRoot "bin"
+$mcpPath = Join-Path $InstallRoot "mcp"
 $viewerPath = Join-Path $InstallRoot "viewer"
 $installedViewerExe = Join-Path $viewerPath "Ctx.Viewer.exe"
 $restartInstalledViewer = $false
@@ -35,10 +37,16 @@ if (Test-Path $viewerPath) {
     Remove-Item -Recurse -Force $viewerPath
 }
 
+if (Test-Path $mcpPath) {
+    Remove-Item -Recurse -Force $mcpPath
+}
+
 New-Item -ItemType Directory -Path $binPath -Force | Out-Null
+New-Item -ItemType Directory -Path $mcpPath -Force | Out-Null
 New-Item -ItemType Directory -Path $viewerPath -Force | Out-Null
 
 dotnet publish $cliProject -c Release -o $binPath
+dotnet publish $mcpProject -c Release -o $mcpPath
 dotnet publish $viewerProject -c Release -o $viewerPath
 
 $cliLauncher = @"
@@ -48,6 +56,14 @@ setlocal
 endlocal
 "@
 Set-Content -Path (Join-Path $binPath "ctx.cmd") -Value $cliLauncher -Encoding ASCII
+
+$mcpLauncher = @"
+@echo off
+setlocal
+"$mcpPath\Ctx.Mcp.exe" %*
+endlocal
+"@
+Set-Content -Path (Join-Path $binPath "ctx-mcp.cmd") -Value $mcpLauncher -Encoding ASCII
 
 $viewerLauncher = @"
 @echo off
@@ -74,8 +90,10 @@ if ($pathEntries -notcontains $binPath) {
 
 Write-Host "CTX published to $InstallRoot"
 Write-Host "CLI path: $binPath"
+Write-Host "MCP path: $mcpPath"
 Write-Host "Viewer path: $viewerPath"
 Write-Host "Use 'ctx version' after opening a new shell."
+Write-Host "Use 'ctx-mcp --repo <path>' to launch the local MCP server over stdio."
 Write-Host "Use 'ctx-viewer' to launch the bundled viewer."
 
 if ($restartInstalledViewer) {

@@ -13,7 +13,7 @@ var argsList = args.ToList();
 if (argsList.Count == 0)
 {
     WriteHelp(repositoryPath);
-    return 1;
+    return 0;
 }
 
 try
@@ -150,6 +150,16 @@ static async Task<CommandResult> DispatchAsync(IReadOnlyList<string> args, ICtxA
                 GetOption(args, "--parent"),
                 Environment.UserName),
             cancellationToken),
+        "goal" when Match(args, "goal", "update") => await service.UpdateGoalAsync(
+            repositoryPath,
+            new UpdateGoalRequest(
+                RequirePositional(args, 2, "goal id"),
+                GetOption(args, "--title"),
+                GetOption(args, "--description"),
+                int.TryParse(GetOption(args, "--priority"), out var goalPriority) ? goalPriority : null,
+                GetOption(args, "--state"),
+                Environment.UserName),
+            cancellationToken),
         "goal" when Match(args, "goal", "list") => await service.ListArtifactsAsync(repositoryPath, "goal", cancellationToken),
         "goal" when Match(args, "goal", "show") => await service.ShowArtifactAsync(repositoryPath, "goal", RequirePositional(args, 2, "goal id"), cancellationToken),
 
@@ -170,7 +180,8 @@ static async Task<CommandResult> DispatchAsync(IReadOnlyList<string> args, ICtxA
                 GetOption(args, "--title"),
                 GetOption(args, "--description"),
                 GetOption(args, "--state"),
-                Environment.UserName),
+                Environment.UserName,
+                GetOption(args, "--goal")),
             cancellationToken),
         "task" when Match(args, "task", "list") => await service.ListArtifactsAsync(repositoryPath, "task", cancellationToken),
         "task" when Match(args, "task", "show") => await service.ShowArtifactAsync(repositoryPath, "task", RequirePositional(args, 2, "task id"), cancellationToken),
@@ -238,6 +249,17 @@ static async Task<CommandResult> DispatchAsync(IReadOnlyList<string> args, ICtxA
                 GetOption(args, "--state") ?? "Proposed",
                 GetMultiOption(args, "--hypothesis", "--hypotheses"),
                 GetMultiOption(args, "--evidence"),
+                Environment.UserName),
+            cancellationToken),
+        "decision" when Match(args, "decision", "update") => await service.UpdateDecisionAsync(
+            repositoryPath,
+            new UpdateDecisionRequest(
+                RequirePositional(args, 2, "decision id"),
+                GetOption(args, "--title"),
+                GetOption(args, "--rationale"),
+                GetOption(args, "--state"),
+                HasOption(args, "--hypotheses", "--hypothesis") ? GetMultiOption(args, "--hypothesis", "--hypotheses") : null,
+                HasOption(args, "--evidence") ? GetMultiOption(args, "--evidence") : null,
                 Environment.UserName),
             cancellationToken),
         "decision" when Match(args, "decision", "list") => await service.ListArtifactsAsync(repositoryPath, "decision", cancellationToken),
@@ -335,6 +357,9 @@ static async Task<CommandResult> DispatchAsync(IReadOnlyList<string> args, ICtxA
 
 static bool Match(IReadOnlyList<string> args, string first, string second)
     => args.Count >= 2 && args[0].Equals(first, StringComparison.OrdinalIgnoreCase) && args[1].Equals(second, StringComparison.OrdinalIgnoreCase);
+
+static bool HasOption(IReadOnlyList<string> args, params string[] names)
+    => args.Any(arg => names.Contains(arg, StringComparer.OrdinalIgnoreCase));
 
 static string? GetOption(IReadOnlyList<string> args, params string[] names)
 {
@@ -743,11 +768,9 @@ Read These First:
   {{autonomousProtocol}}
 
 Operating Reminder:
-  Use those files as the operating baseline for this project.
+  Analyze those files and use them for everything in this project.
   Align the existing Playbook/runbook guidance before drifting into ad-hoc operation.
   If CTX already knows what's next, continue from CTX instead of waiting for chat.
-  Treat `Working context` as cognition in motion and `ctx commit` as a durable cognitive snapshot, not as a log of every thought.
-  If a cognitive delta exists, it must be visible either in `Working context` or in `Commit history`.
 """;
 
     var viewerGuide = Path.Combine(projectRoot, "docs", "CTX_VIEWER_GUIDE.md");

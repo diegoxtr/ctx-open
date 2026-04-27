@@ -264,7 +264,7 @@ Compact example:
 ```text
 Operational Runbook
 - Public install bootstrap
-  When: a user clones the public repository and runs install.ps1 or install.sh
+  When: a user clones the repository and runs install.ps1 or install.sh
   Preconditions: network access exists; the target platform has a published portable asset
   Do: run the single-entry install script from the repo root; let the bootstrap resolve the latest published release asset; use source mode only if explicitly requested
   Verify: ctx installs without requiring a local source build; install metadata reports the published version
@@ -328,6 +328,67 @@ One runbook should teach startup in the same way as the bare `ctx` helper.
     - no open work
 
 This keeps onboarding compact and removes the need to memorize a large command list before the first useful action.
+
+## Planning guardrail example
+
+Another recurring operational guardrail is now explicit:
+
+- CTX planning goes first, always
+- open or update the active task in CTX before implementation, release, sync, or recovery work starts
+- do not rely on chat-only intent when a CTX workspace is available
+
+This is not process theater. It prevents work from starting outside durable cognitive state and avoids losing the active thread once execution begins.
+
+## Repository guardrail example
+
+One recurring repository guardrail is already worth making explicit:
+
+- in this PowerShell host, do not use bash-style `&&`
+- run `git add`, `git commit`, `git push`, and any `ctx` command as separate statements
+- if the workflow touches public synchronization or Git closeout, keep the whole sequence strictly serial
+
+This is not cosmetic shell preference. It is a real operational constraint that has already caused repeated closeout failures when ignored.
+
+## Viewer validation guardrail example
+
+`Viewer local validation` now includes a version-drift check:
+
+- first verify `/api/overview` from `127.0.0.1:5271`
+- if `productVersion` already matches the expected release, the remaining mismatch is a browser cache or stale-tab problem
+- only recycle the local viewer process when the backend still reports the old version
+- remember that the installed viewer runtime is `C:\ctx\viewer\Ctx.Viewer.exe`, not the repo build output
+- if the topbar still shows an older release while `/api/overview` already reports the new version, hard-refresh or reopen the tab before assuming the backend is stale
+
+For the installed Windows viewer, the canonical recovery flow is:
+
+```powershell
+Get-CimInstance Win32_Process |
+  Where-Object { $_.Name -like 'Ctx.Viewer*' -or $_.CommandLine -like '*Ctx.Viewer*' } |
+  ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
+
+powershell -ExecutionPolicy Bypass -File .\scripts\publish-local.ps1
+
+Start-Process -FilePath C:\ctx\bin\ctx-viewer.cmd
+```
+
+For Codespaces or manual demo recovery, a canonical rebuild sequence is:
+
+```bash
+pkill -f "Ctx.Viewer" || true
+rm -rf Ctx.Viewer/bin Ctx.Viewer/obj
+bash scripts/ensure-dotnet-sdk.sh
+export DOTNET_ROOT="$HOME/.dotnet"
+export PATH="$DOTNET_ROOT:$DOTNET_ROOT/tools:/usr/share/dotnet:$PATH"
+dotnet build Ctx.Viewer/Ctx.Viewer.csproj
+bash scripts/start-codespaces-demo.sh
+curl -I http://127.0.0.1:5271
+```
+
+If a single paste-friendly command is needed in a GitHub Codespaces terminal, use:
+
+```bash
+git pull --ff-only origin main; pkill -f "Ctx.Viewer" || true; rm -rf Ctx.Viewer/bin Ctx.Viewer/obj; bash scripts/ensure-dotnet-sdk.sh; export DOTNET_ROOT="$HOME/.dotnet"; export PATH="$DOTNET_ROOT:$DOTNET_ROOT/tools:/usr/share/dotnet:$PATH"; dotnet build Ctx.Viewer/Ctx.Viewer.csproj; bash scripts/start-codespaces-demo.sh; curl -I http://127.0.0.1:5271
+```
 
 ## Implementation stance
 

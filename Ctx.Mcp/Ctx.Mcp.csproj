@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageReference Include="ModelContextProtocol" Version="1.2.0" />
+    <ProjectReference Include="..\Ctx.Domain\Ctx.Domain.csproj" />
+    <ProjectReference Include="..\Ctx.Application\Ctx.Application.csproj" />
+    <ProjectReference Include="..\Ctx.Core\Ctx.Core.csproj" />
+    <ProjectReference Include="..\Ctx.Persistence\Ctx.Persistence.csproj" />
+    <ProjectReference Include="..\Ctx.Providers\Ctx.Providers.csproj" />
+    <ProjectReference Include="..\Ctx.Infrastructure\Ctx.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

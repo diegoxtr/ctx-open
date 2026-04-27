@@ -6,6 +6,7 @@ public record CommandResult(bool Success, string Message, object? Data = null);
 
 public record InitRepositoryRequest(string ProjectName, string Description, string Branch, string CreatedBy);
 public record AddGoalRequest(string Title, string Description, int Priority, string? ParentGoalId, string CreatedBy);
+public record UpdateGoalRequest(string GoalId, string? Title, string? Description, int? Priority, string? State, string UpdatedBy);
 public record OpenWorkLineRequest(string ParentGoalId, string Title, string Description, int? Priority, string? TaskTitle, string? TaskDescription, string CreatedBy);
 public record AddOperationalRunbookRequest(
     string Title,
@@ -30,13 +31,14 @@ public record AddCognitiveTriggerRequest(
     IReadOnlyList<string> RunbookIds,
     string CreatedBy);
 public record AddTaskRequest(string Title, string Description, string? GoalId, IReadOnlyList<string> DependsOnTaskIds, string CreatedBy, string? ParentTaskId = null);
-public record UpdateTaskRequest(string TaskId, string? Title, string? Description, string? State, string UpdatedBy);
+public record UpdateTaskRequest(string TaskId, string? Title, string? Description, string? State, string UpdatedBy, string? GoalId = null);
 public record AddHypothesisRequest(string Statement, string Rationale, decimal Confidence, decimal Impact, decimal EvidenceStrength, decimal CostToValidate, string? TaskId, string CreatedBy);
 public record UpdateHypothesisRequest(string HypothesisId, string? Statement, string? Rationale, decimal? Confidence, decimal? Impact, decimal? EvidenceStrength, decimal? CostToValidate, string? State, string? BranchState, string? BranchRole, string? LineageGroupId, string UpdatedBy);
 public record RelateHypothesisRequest(string HypothesisId, string RelationType, string TargetHypothesisId, string? Note, string UpdatedBy);
 public record MergeHypothesisRequest(string SourceHypothesisId, string TargetHypothesisId, string UpdatedBy);
 public record SupersedeHypothesisRequest(string OldHypothesisId, string NewHypothesisId, string UpdatedBy);
 public record AddDecisionRequest(string Title, string Rationale, string State, IReadOnlyList<string> HypothesisIds, IReadOnlyList<string> EvidenceIds, string CreatedBy);
+public record UpdateDecisionRequest(string DecisionId, string? Title, string? Rationale, string? State, IReadOnlyList<string>? HypothesisIds, IReadOnlyList<string>? EvidenceIds, string UpdatedBy);
 public record AddEvidenceRequest(string Title, string Summary, string Source, string Kind, decimal Confidence, IReadOnlyList<string> Supports, string CreatedBy);
 public record ShareEvidenceRequest(string EvidenceId, string TargetReference, string UpdatedBy);
 public record AddConclusionRequest(string Summary, string State, IReadOnlyList<string> DecisionIds, IReadOnlyList<string> EvidenceIds, IReadOnlyList<string> GoalIds, IReadOnlyList<string> TaskIds, string CreatedBy);
@@ -111,7 +113,9 @@ public record NextWorkDiagnostics(
 public record NextWorkSummary(
     NextWorkCandidate? Recommended,
     IReadOnlyList<NextWorkCandidate> Candidates,
-    NextWorkDiagnostics Diagnostics);
+    NextWorkDiagnostics Diagnostics,
+    IReadOnlyList<RunbookSuggestion> RunbookSuggestions,
+    IReadOnlyList<string> AdditionalRunbooksAvailable);
 public record BlockCheckMissingItem(string ItemType, string Detail);
 public record RunbookSuggestion(
     string RunbookId,

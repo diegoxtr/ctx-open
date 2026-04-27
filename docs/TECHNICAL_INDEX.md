@@ -25,6 +25,8 @@ Recommended order:
 8. [BOOTSTRAP_COGNITIVE_INDEXING.md](C:/sources/ctx-open/docs/BOOTSTRAP_COGNITIVE_INDEXING.md)
 9. [BOOTSTRAP_TEST_DEVELOPMENT.md](C:/sources/ctx-open/docs/BOOTSTRAP_TEST_DEVELOPMENT.md)
 10. [HYPOTHESIS_BRANCH_SEMANTICS.md](C:/sources/ctx-open/docs/HYPOTHESIS_BRANCH_SEMANTICS.md)
+11. [CTX_MCP_AGENT_SETUP.md](C:/sources/ctx-open/docs/CTX_MCP_AGENT_SETUP.md)
+12. [MCP_SERVER_PROPOSAL.md](C:/sources/ctx-open/docs/MCP_SERVER_PROPOSAL.md)
 
 ## Documents by category
 
@@ -36,7 +38,7 @@ Recommended order:
 - [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-open/docs/V1_FUNCTIONAL_SPEC.md)
   Defines modules, requirements, acceptance criteria, and V1 definition of done.
 
-- [RELEASE_1_0_8.md](C:/sources/ctx-open/docs/RELEASE_1_0_8.md)
+- [RELEASE_1_0_10.md](C:/sources/ctx-open/docs/RELEASE_1_0_10.md)
   Summarizes the current stable release baseline.
 
 ## Architecture and design
@@ -102,6 +104,12 @@ Recommended order:
 
 - [INSTALLER_AND_DISTRIBUTION.md](C:/sources/ctx-open/docs/INSTALLER_AND_DISTRIBUTION.md)
   Packaging model, portable archives, and distribution output policy.
+
+- [CTX_MCP_AGENT_SETUP.md](C:/sources/ctx-open/docs/CTX_MCP_AGENT_SETUP.md)
+  MCP server setup examples for MCP-capable agents and IDE clients.
+
+- [MCP_SERVER_PROPOSAL.md](C:/sources/ctx-open/docs/MCP_SERVER_PROPOSAL.md)
+  Architecture and operating model for the local stdio MCP server.
 
 ## Operation prompts
 
@@ -196,6 +204,7 @@ Currently documented:
 - formal thread reconstruction
 - cognitive triggers
 - local install and distribution
+- local MCP server setup
 - bootstrap regression development
 - hypothesis branch-like semantics
 

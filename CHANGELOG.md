@@ -2,6 +2,37 @@
 
 All notable changes to CTX will be documented in this file.
 
+## [1.0.10] - 2026-04-27
+
+### Added
+
+- `Ctx.Mcp`, a local stdio MCP server for MCP-capable agents.
+- Read-only MCP tools for CTX status, audit, next-step guidance, context packets, graph inspection, thread reconstruction, preflight, check, and closeout.
+- Guarded write-mode MCP tools for creating CTX goals, tasks, hypotheses, evidence, decisions, conclusions, and cognitive commits when the server is explicitly started with `--mode write`.
+- Cross-client MCP setup documentation for generic MCP clients, Claude/Anthropic Desktop, VS Code/Copilot-style MCP configuration, DeepSeek-backed clients, and Codex.
+- Viewer `/api/mcp-status` plus a compact `MCP Server` status capsule for local installs.
+- Release handoff documentation for the 1.0.10 release branch.
+
+### Changed
+
+- First-time CTX Viewer sessions now open in Split view by default.
+- Viewer commit history now loads in 20-commit pages, with button and near-bottom scroll continuation for older commits.
+- Commit-focus graph expansion is now task-centered so broad goal anchors do not pull unrelated sibling tasks or historical conclusions into the selected commit view.
+- Viewer primary graph routing now favors the meaningful cognitive route instead of presenting misleading direct support shortcuts as the main path.
+- Locally published viewer builds now show `local-version` in the header instead of looking like an official release tag.
+- `ctx next` now returns applicable operational playbooks through `runbookSuggestions` plus overflow titles in `additionalRunbooksAvailable`.
+- Local publish and distribution scripts now include `ctx-mcp` and expose parseable install paths, including `CTX_INSTALL_ROOT`, `CTX_BIN_PATH`, and `CTX_MCP_PATH`.
+
+### Fixed
+
+- Structured JSON diffing now compares values semantically instead of treating collection reference inequality as a change.
+- `ctx audit` now reports tasks without goals, and `ctx task update --goal` can repair orphaned task lines without direct file edits.
+- Linux/macOS installation layout now installs the MCP server alongside CLI and viewer assets.
+
+### Validation
+
+- Release branch validation must confirm `ctx version` reports `1.0.10`, `Ctx.Mcp` builds, unit tests pass, install scripts parse, and no private `.ctx` state is staged.
+
 ## [1.0.9] - 2026-04-22
 
 ### Changed

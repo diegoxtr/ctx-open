@@ -60,7 +60,7 @@ If you already have the repository, move to the project root.
 Example:
 
 ```powershell
-cd C:\sources\ctx-open
+cd C:\\sources\\ctx-open
 ```
 
 ## 5. Preferred install flow
@@ -81,7 +81,7 @@ bash ./install.sh
 
 Clone-first rule:
 
-- users may clone the public repository and run the bootstrap from that checkout
+- users may clone this repository and run the bootstrap from that checkout
 - the bootstrap still resolves the latest published portable release asset by default
 - it does not treat a local clone as a request to build from source
 - source mode is only for developers or explicit unreleased validation
@@ -91,13 +91,12 @@ The bootstrap will:
 - detect `install`, `update`, or `repair`
 - choose the published portable flow by default
 - copy helper/docs assets into the install root
-- expose `ctx` globally when possible
+- expose `ctx` and `ctx-mcp` globally when possible
+- print parseable install paths:
+  - `CTX_INSTALL_ROOT`
+  - `CTX_BIN_PATH`
+  - `CTX_MCP_PATH`
 - use published GitHub Releases as the install/update source of truth
-
-Normal user rule:
-
-- `install.ps1` / `install.sh` should install from prebuilt release assets
-- source mode is for developers and unreleased validation, not for ordinary users
 
 Windows PATH scope options:
 
@@ -115,11 +114,28 @@ LINK_SCOPE=global bash ./install.sh
 LINK_SCOPE=none bash ./install.sh
 ```
 
+Default install roots:
+
+- Windows: `C:\ctx`
+- Linux/macOS: `$HOME/.local/share/ctx`
+
+Expected installed layout:
+
+```text
+<install-root>/
+  bin/
+  mcp/
+  viewer/
+  prompts/
+  docs/
+  ctx-install.json
+```
+
 Portable/source overrides remain available if needed:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\install.ps1 -Mode portable
-powershell -ExecutionPolicy Bypass -File .\install.ps1 -Mode source -SourceRepoPath C:\sources\ctx-open
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -Mode source -SourceRepoPath C:\\sources\\ctx-open
 ```
 
 Release policy note:
@@ -154,6 +170,14 @@ Run the CLI directly:
 dotnet run --project .\Ctx.Cli -- status
 ```
 
+If you are using the published local install, re-anchor first:
+
+```powershell
+ctx helper
+ctx status
+ctx next
+```
+
 If there is no cognitive repository in the current folder, run `init` first.
 
 ## 8. First decision after opening a repository
@@ -167,6 +191,9 @@ Before doing anything else, decide whether the repository is:
 
 ```powershell
 ctx
+ctx status
+ctx audit
+ctx next
 ```
 
 State-driven rule:
@@ -177,10 +204,6 @@ State-driven rule:
   - run `ctx next`
 - if `ctx` says the repo is at a durable boundary:
   - run `ctx commit -m "<durable result>"`
-- if `ctx` says the repo has no open work:
-  - run `ctx next` and inspect remaining gaps or closure state
-
-Use `ctx status` and `ctx audit` only when you need deeper inspection before acting.
 
 ### New project
 
@@ -204,7 +227,7 @@ ctx bootstrap apply --from <path>
 Move to a workspace folder and run:
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- init --name "CTX-DEMO" --description "First cognitive repo"
+dotnet run --project C:\\sources\\ctx-open\Ctx.Cli -- init --name "CTX-DEMO" --description "First cognitive repo"
 ```
 
 Expected:
@@ -216,7 +239,7 @@ Expected:
 Verify:
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- status
+dotnet run --project C:\\sources\\ctx-open\Ctx.Cli -- status
 ```
 
 ## 10. First recommended flow
@@ -224,52 +247,52 @@ dotnet run --project C:\sources\ctx-open\Ctx.Cli -- status
 ### Step 1 - Create a goal
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- goal add --title "Define testing strategy" --description "Prepare a technical pilot"
+dotnet run --project C:\\sources\\ctx-open\Ctx.Cli -- goal add --title "Define testing strategy" --description "Prepare a technical pilot"
 ```
 
 ### Step 2 - Create a task
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- task add --title "Evaluate CLI flow" --description "Validate core commands"
+dotnet run --project C:\\sources\\ctx-open\Ctx.Cli -- task add --title "Evaluate CLI flow" --description "Validate core commands"
 ```
 
 ### Step 3 - Create a hypothesis
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- hypo add --statement "Structured flow improves traceability" --rationale "State is persisted in artifacts"
+dotnet run --project C:\\sources\\ctx-open\Ctx.Cli -- hypo add --statement "Structured flow improves traceability" --rationale "State is persisted in artifacts"
 ```
 
 ### Step 4 - Record evidence
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- evidence add --title "Initial test" --summary "Structure helps resume context" --source "manual evaluation" --kind Observation --supports hypothesis:<hypothesisId>
+dotnet run --project C:\\sources\\ctx-open\Ctx.Cli -- evidence add --title "Initial test" --summary "Structure helps resume context" --source "manual evaluation" --kind Observation --supports hypothesis:<hypothesisId>
 ```
 
 ### Step 5 - Record a decision
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- decision add --title "Use CTX in pilot" --rationale "Traceability is sufficient for pilot" --state Accepted --hypotheses <hypothesisId> --evidence <evidenceId>
+dotnet run --project C:\\sources\\ctx-open\Ctx.Cli -- decision add --title "Use CTX in pilot" --rationale "Traceability is sufficient for pilot" --state Accepted --hypotheses <hypothesisId> --evidence <evidenceId>
 ```
 
 ### Step 6 - Record a conclusion
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- conclusion add --summary "Approve internal pilot usage" --state Accepted --decisions <decisionId> --evidence <evidenceId>
+dotnet run --project C:\\sources\\ctx-open\Ctx.Cli -- conclusion add --summary "Approve internal pilot usage" --state Accepted --decisions <decisionId> --evidence <evidenceId>
 ```
 
 ### Step 7 - Execute a run
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- run --provider openai --purpose "Review pilot risks"
+dotnet run --project C:\\sources\\ctx-open\Ctx.Cli -- run --provider openai --purpose "Review pilot risks"
 ```
 
 ### Step 8 - Create a cognitive commit
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- commit -m "first end-to-end flow"
+dotnet run --project C:\\sources\\ctx-open\Ctx.Cli -- commit -m "first end-to-end flow"
 ```
 
-## 11. Useful commands
+## 10. Useful commands
 
 ### State and navigation
 
@@ -307,7 +330,7 @@ dotnet run --project .\Ctx.Cli -- checkout feature-x
 dotnet run --project .\Ctx.Cli -- merge main
 ```
 
-## 12. Generated local structure
+## 11. Generated local structure
 
 When initializing a repo, CTX creates:
 
@@ -336,8 +359,9 @@ An installed CTX root also carries:
 - `docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md`
 - `ctx-install.json`
 
-## 13. Usage recommendations
+## 12. Usage recommendations
 
+- in `ctx-open`, validate self-hosting behavior before preparing or mirroring anything to `ctx-open`
 - keep each test case in a separate folder
 - use clear cognitive commit messages
 - record evidence before accepting important decisions
@@ -345,7 +369,7 @@ An installed CTX root also carries:
 - review `metrics show` at the end of each scenario
 - if cognitive conflicts appear, do not ignore them; review merge output before continuing
 
-## 14. Common issues
+## 12. Common issues
 
 ### Build fails
 
@@ -376,7 +400,7 @@ Interpretation:
 - the system detected divergence in the same cognitive artifact
 - review artifacts before accepting the merge
 
-## 15. Correct usage criteria
+## 13. Correct usage criteria
 
 A user operated CTX correctly if they:
 
@@ -386,7 +410,7 @@ A user operated CTX correctly if they:
 - created at least one cognitive commit
 - inspected results from the CLI
 
-## 16. Next recommended reading
+## 14. Next recommended reading
 
 Continue with:
 

@@ -10,8 +10,6 @@ artifacts/
 
 # CTX local state
 /.ctx/
-!/.ctx/
-!/.ctx/**
 /.ctx/write.lock
 /.ctx/metrics/usage.json
 !examples/viewer-demo/

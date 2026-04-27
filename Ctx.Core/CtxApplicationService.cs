@@ -291,6 +291,50 @@ public sealed class CtxApplicationService : ICtxApplicationService
         });
     }
 
+    public async System.Threading.Tasks.Task<CommandResult> UpdateGoalAsync(string repositoryPath, UpdateGoalRequest request, CancellationToken cancellationToken)
+    {
+        return await ExecuteWriteLockedAsync(repositoryPath, cancellationToken, async () =>
+        {
+            var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+            var goal = context.Goals.SingleOrDefault(item => item.Id.Value.Equals(request.GoalId, StringComparison.OrdinalIgnoreCase));
+
+            if (goal is null)
+            {
+                return new CommandResult(false, $"Goal not found: {request.GoalId}");
+            }
+
+            var parsedState = goal.State;
+            if (!string.IsNullOrWhiteSpace(request.State)
+                && !Enum.TryParse<LifecycleState>(request.State, true, out parsedState))
+            {
+                throw new InvalidOperationException($"Unsupported goal state '{request.State}'.");
+            }
+
+            var updated = goal with
+            {
+                Title = request.Title ?? goal.Title,
+                Description = request.Description ?? goal.Description,
+                Priority = request.Priority ?? goal.Priority,
+                State = parsedState,
+                Trace = goal.Trace with
+                {
+                    UpdatedBy = request.UpdatedBy,
+                    UpdatedAtUtc = _clock.UtcNow
+                }
+            };
+
+            context = context with
+            {
+                Dirty = true,
+                Goals = context.Goals.Select(item => item.Id == goal.Id ? updated : item).ToArray(),
+                Trace = context.Trace with { UpdatedAtUtc = _clock.UtcNow, UpdatedBy = request.UpdatedBy }
+            };
+
+            await _workingContextRepository.SaveWorkingAsync(repositoryPath, context, cancellationToken);
+            return new CommandResult(true, $"Goal updated: {updated.Title}", updated);
+        });
+    }
+
     public async System.Threading.Tasks.Task<CommandResult> OpenWorkLineAsync(string repositoryPath, OpenWorkLineRequest request, CancellationToken cancellationToken)
     {
         return await ExecuteWriteLockedAsync(repositoryPath, cancellationToken, async () =>
@@ -529,8 +573,25 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 throw new InvalidOperationException($"Unsupported task state '{request.State}'.");
             }
 
+            Goal? updatedGoal = null;
+            var hasGoalUpdate = !string.IsNullOrWhiteSpace(request.GoalId);
+            if (hasGoalUpdate)
+            {
+                updatedGoal = ResolveGoal(context, request.GoalId!);
+
+                if (task.ParentTaskId.HasValue)
+                {
+                    var parentTask = ResolveTask(context, task.ParentTaskId.Value.Value);
+                    if (parentTask.GoalId.HasValue && parentTask.GoalId.Value != updatedGoal.Id)
+                    {
+                        throw new InvalidOperationException("A subtask cannot target a different goal than its parent task.");
+                    }
+                }
+            }
+
             var updated = task with
             {
+                GoalId = hasGoalUpdate ? updatedGoal?.Id : task.GoalId,
                 Title = request.Title ?? task.Title,
                 Description = request.Description ?? task.Description,
                 State = parsedState,
@@ -544,6 +605,23 @@ public sealed class CtxApplicationService : ICtxApplicationService
             context = context with
             {
                 Dirty = true,
+                Goals = hasGoalUpdate
+                    ? context.Goals.Select(item =>
+                    {
+                        var taskIds = item.TaskIds;
+                        if (task.GoalId.HasValue && item.Id == task.GoalId.Value)
+                        {
+                            taskIds = taskIds.Where(id => id != task.Id).ToArray();
+                        }
+
+                        if (updatedGoal is not null && item.Id == updatedGoal.Id && !taskIds.Contains(task.Id))
+                        {
+                            taskIds = taskIds.Append(task.Id).ToArray();
+                        }
+
+                        return item with { TaskIds = taskIds };
+                    }).ToArray()
+                    : context.Goals,
                 Tasks = context.Tasks.Select(item => item.Id == task.Id ? updated : item).ToArray(),
                 Trace = context.Trace with { UpdatedAtUtc = _clock.UtcNow, UpdatedBy = request.UpdatedBy }
             };
@@ -824,8 +902,12 @@ public sealed class CtxApplicationService : ICtxApplicationService
     public async System.Threading.Tasks.Task<CommandResult> NextAsync(string repositoryPath, CancellationToken cancellationToken)
     {
         var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+        var runbooks = _operationalRunbookRepository is null
+            ? Array.Empty<OperationalRunbook>()
+            : await _operationalRunbookRepository.ListAsync(repositoryPath, cancellationToken);
         var candidates = BuildNextWorkCandidates(context);
         var diagnostics = BuildNextWorkDiagnostics(context, candidates);
+        var runbookSelection = BuildNextRunbookSelection(context, runbooks, candidates.FirstOrDefault());
         var message = candidates.Count == 0
             ? "No next-step candidates were found. Review diagnostics for recovery guidance."
             : $"Ranked {candidates.Count} next-step candidates from {diagnostics.SelectionMode}.";
@@ -836,7 +918,9 @@ public sealed class CtxApplicationService : ICtxApplicationService
             new NextWorkSummary(
                 candidates.FirstOrDefault(),
                 candidates,
-                diagnostics));
+                diagnostics,
+                BuildRunbookSuggestions(runbookSelection.Selected),
+                runbookSelection.Available.Select(runbook => runbook.Title).ToArray()));
     }
 
     public async System.Threading.Tasks.Task<CommandResult> AddDecisionAsync(string repositoryPath, AddDecisionRequest request, CancellationToken cancellationToken)
@@ -869,6 +953,58 @@ public sealed class CtxApplicationService : ICtxApplicationService
         });
     }
 
+    public async System.Threading.Tasks.Task<CommandResult> UpdateDecisionAsync(string repositoryPath, UpdateDecisionRequest request, CancellationToken cancellationToken)
+    {
+        return await ExecuteWriteLockedAsync(repositoryPath, cancellationToken, async () =>
+        {
+            var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+            var decision = context.Decisions.SingleOrDefault(item => item.Id.Value.Equals(request.DecisionId, StringComparison.OrdinalIgnoreCase));
+            if (decision is null)
+            {
+                return new CommandResult(false, $"Decision not found: {request.DecisionId}");
+            }
+
+            var parsedState = decision.State;
+            if (!string.IsNullOrWhiteSpace(request.State)
+                && !Enum.TryParse<DecisionState>(request.State, true, out parsedState))
+            {
+                throw new InvalidOperationException($"Unsupported decision state '{request.State}'.");
+            }
+
+            var hypothesisIds = request.HypothesisIds is not null
+                ? request.HypothesisIds.Select(id => ResolveHypothesis(context, id).Id).ToArray()
+                : decision.HypothesisIds.ToArray();
+
+            var evidenceIds = request.EvidenceIds is not null
+                ? request.EvidenceIds.Select(id => ResolveEvidence(context, id).Id).ToArray()
+                : decision.EvidenceIds.ToArray();
+
+            var updated = decision with
+            {
+                Title = request.Title ?? decision.Title,
+                Rationale = request.Rationale ?? decision.Rationale,
+                State = parsedState,
+                HypothesisIds = hypothesisIds,
+                EvidenceIds = evidenceIds,
+                Trace = decision.Trace with
+                {
+                    UpdatedBy = request.UpdatedBy,
+                    UpdatedAtUtc = _clock.UtcNow
+                }
+            };
+
+            context = context with
+            {
+                Dirty = true,
+                Decisions = context.Decisions.Select(item => item.Id == decision.Id ? updated : item).ToArray(),
+                Trace = context.Trace with { UpdatedAtUtc = _clock.UtcNow, UpdatedBy = request.UpdatedBy }
+            };
+
+            await _workingContextRepository.SaveWorkingAsync(repositoryPath, context, cancellationToken);
+            return new CommandResult(true, $"Decision updated: {updated.Title}", updated);
+        });
+    }
+
     public async System.Threading.Tasks.Task<CommandResult> AddEvidenceAsync(string repositoryPath, AddEvidenceRequest request, CancellationToken cancellationToken)
     {
         return await ExecuteWriteLockedAsync(repositoryPath, cancellationToken, async () =>
@@ -894,10 +1030,17 @@ public sealed class CtxApplicationService : ICtxApplicationService
                     : item)
                 .ToArray();
 
+            var decisions = context.Decisions
+                .Select(item => supports.Any(support => support.EntityType == nameof(Decision) && support.EntityId == item.Id.Value)
+                    ? item with { EvidenceIds = item.EvidenceIds.Append(evidence.Id).Distinct().ToArray() }
+                    : item)
+                .ToArray();
+
             context = context with
             {
                 Dirty = true,
                 Hypotheses = hypotheses,
+                Decisions = decisions,
                 Evidence = context.Evidence.Append(evidence).ToArray(),
                 Trace = context.Trace with { UpdatedAtUtc = _clock.UtcNow, UpdatedBy = request.CreatedBy }
             };
@@ -1716,6 +1859,17 @@ public sealed class CtxApplicationService : ICtxApplicationService
 
         foreach (var task in context.Tasks)
         {
+            if (task.GoalId is null)
+            {
+                issues.Add(new AuditIssue(
+                    "warning",
+                    "TaskMissingGoal",
+                    "Task",
+                    task.Id.Value,
+                    $"Task '{task.Title}' has no linked goal.",
+                    "Assign the task to a goal or create a scoped work line before closing the block."));
+            }
+
             if (task.HypothesisIds.Count == 0)
             {
                 issues.Add(new AuditIssue(
@@ -1803,6 +1957,31 @@ public sealed class CtxApplicationService : ICtxApplicationService
                     conclusion.Id.Value,
                     $"Draft conclusion '{conclusion.Summary}' is linked to Done tasks.",
                     "Accept or supersede the conclusion so the closed work stops surfacing as a gap."));
+            }
+        }
+
+        var childGoalsByParentId = context.Goals
+            .Where(goal => goal.ParentGoalId is not null)
+            .GroupBy(goal => goal.ParentGoalId!.Value.Value, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.Select(goal => goal.Id.Value).ToArray(), StringComparer.OrdinalIgnoreCase);
+
+        foreach (var goal in context.Goals.Where(item => item.State == LifecycleState.Active))
+        {
+            var subtreeGoalIds = CollectGoalSubtreeIds(goal.Id.Value, childGoalsByParentId);
+            var subtreeTasks = context.Tasks
+                .Where(task => task.GoalId is not null && subtreeGoalIds.Contains(task.GoalId.Value.Value))
+                .ToArray();
+            var openSubtreeTaskCount = subtreeTasks.Count(task => task.State != TaskExecutionState.Done);
+
+            if (openSubtreeTaskCount == 0 && subtreeTasks.Length > 0)
+            {
+                issues.Add(new AuditIssue(
+                    "warning",
+                    "HistoricalActiveGoal",
+                    "Goal",
+                    goal.Id.Value,
+                    $"Goal '{goal.Title}' is still Active even though its subtree has no open tasks.",
+                    "Review the goal lifecycle and move it to Completed, Superseded, or Archived if the line is no longer active."));
             }
         }
 
@@ -2267,20 +2446,65 @@ public sealed class CtxApplicationService : ICtxApplicationService
             conclusions.Length,
             acceptedConclusions.Length,
             missing,
-            runbookSelection.Selected.Select(runbook => new RunbookSuggestion(
-                runbook.Id.Value,
-                runbook.Title,
-                runbook.Kind.ToString(),
-                runbook.WhenToUse,
-                runbook.Do.Take(3).ToArray(),
-                runbook.Verify.Take(2).ToArray(),
-                runbook.References.Take(3).ToArray(),
-                (runbook.Preconditions ?? Array.Empty<string>()).Take(3).ToArray(),
-                (runbook.FailureSignals ?? Array.Empty<string>()).Take(3).ToArray(),
-                (runbook.EscalationBoundary ?? Array.Empty<string>()).Take(2).ToArray())).ToArray(),
+            BuildRunbookSuggestions(runbookSelection.Selected),
             runbookSelection.Available.Select(runbook => runbook.Title).ToArray(),
             guidance);
     }
+
+    private static (IReadOnlyList<OperationalRunbook> Selected, IReadOnlyList<OperationalRunbook> Available) BuildNextRunbookSelection(
+        WorkingContext context,
+        IReadOnlyList<OperationalRunbook> runbooks,
+        NextWorkCandidate? recommended)
+    {
+        Goal? selectedGoal = null;
+        Ctx.Domain.Task? selectedTask = null;
+
+        if (recommended?.CandidateType == "Task")
+        {
+            selectedTask = context.Tasks.SingleOrDefault(task => task.Id.Value.Equals(recommended.EntityId, StringComparison.OrdinalIgnoreCase));
+            if (selectedTask?.GoalId is not null)
+            {
+                selectedGoal = context.Goals.SingleOrDefault(goal => goal.Id == selectedTask.GoalId.Value);
+            }
+        }
+        else if (recommended?.CandidateType == "Goal")
+        {
+            selectedGoal = context.Goals.SingleOrDefault(goal => goal.Id.Value.Equals(recommended.EntityId, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var purposeParts = new[]
+        {
+            "ctx next",
+            "new-work",
+            "ctx-planning",
+            recommended?.CandidateType,
+            recommended?.Title,
+            selectedTask?.Description,
+            selectedGoal?.Description
+        };
+        var purpose = string.Join(" ", purposeParts.Where(part => !string.IsNullOrWhiteSpace(part)));
+
+        return OperationalRunbookSelection.Select(
+            runbooks,
+            purpose,
+            selectedGoal?.Id.Value,
+            selectedTask?.Id.Value,
+            selectedGoal is null ? Array.Empty<Goal>() : new[] { selectedGoal },
+            selectedTask is null ? Array.Empty<Ctx.Domain.Task>() : new[] { selectedTask });
+    }
+
+    private static IReadOnlyList<RunbookSuggestion> BuildRunbookSuggestions(IReadOnlyList<OperationalRunbook> runbooks)
+        => runbooks.Select(runbook => new RunbookSuggestion(
+            runbook.Id.Value,
+            runbook.Title,
+            runbook.Kind.ToString(),
+            runbook.WhenToUse,
+            runbook.Do.Take(3).ToArray(),
+            runbook.Verify.Take(2).ToArray(),
+            runbook.References.Take(3).ToArray(),
+            (runbook.Preconditions ?? Array.Empty<string>()).Take(3).ToArray(),
+            (runbook.FailureSignals ?? Array.Empty<string>()).Take(3).ToArray(),
+            (runbook.EscalationBoundary ?? Array.Empty<string>()).Take(2).ToArray())).ToArray();
 
     private static StatusPendingSummary? BuildStatusPendingSummary(RepositorySnapshot? previousSnapshot, RepositorySnapshot currentSnapshot)
     {
@@ -3793,7 +4017,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
             return taskCandidates;
         }
 
-        return context.Hypotheses
+        var gapCandidates = context.Hypotheses
             .Where(hypothesis => hypothesis.State is HypothesisState.Proposed or HypothesisState.UnderEvaluation)
             .Select(hypothesis =>
             {
@@ -3851,6 +4075,63 @@ public sealed class CtxApplicationService : ICtxApplicationService
                         ["relatedClosedTasks"] = relatedTaskCount,
                         ["relatedEvidence"] = relatedEvidenceCount,
                         ["recommendedAction"] = "Open a new task from this gap"
+                    });
+            })
+            .Where(candidate => candidate is not null)
+            .Cast<NextWorkCandidate>()
+            .OrderByDescending(item => item.Score)
+            .ThenBy(item => item.Title, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (gapCandidates.Length > 0)
+        {
+            return gapCandidates;
+        }
+
+        var childGoalsByParentId = context.Goals
+            .Where(goal => goal.ParentGoalId is not null)
+            .GroupBy(goal => goal.ParentGoalId!.Value.Value, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.Select(goal => goal.Id.Value).ToArray(), StringComparer.OrdinalIgnoreCase);
+
+        return context.Goals
+            .Where(goal => goal.State == LifecycleState.Active)
+            .Select(goal =>
+            {
+                var subtreeGoalIds = CollectGoalSubtreeIds(goal.Id.Value, childGoalsByParentId);
+                var subtreeTasks = context.Tasks
+                    .Where(task => task.GoalId is not null && subtreeGoalIds.Contains(task.GoalId.Value.Value))
+                    .ToArray();
+                var openSubtreeTaskCount = subtreeTasks.Count(task => task.State != TaskExecutionState.Done);
+
+                if (openSubtreeTaskCount > 0)
+                {
+                    return null;
+                }
+
+                var directChildGoalCount = childGoalsByParentId.TryGetValue(goal.Id.Value, out var childGoalIds)
+                    ? childGoalIds.Length
+                    : 0;
+                var goalPriorityScore = NormalizeGoalPriority(goal.Priority, context.Goals);
+                var score = Math.Round(
+                    (goalPriorityScore * 0.60m)
+                    + ((subtreeTasks.Length > 0 ? 1.00m : 0.60m) * 0.25m)
+                    + ((directChildGoalCount > 0 ? 1.00m : 0.40m) * 0.15m),
+                    4,
+                    MidpointRounding.AwayFromZero);
+
+                return new NextWorkCandidate(
+                    "Goal",
+                    goal.Id.Value,
+                    goal.Title,
+                    goal.State.ToString(),
+                    score,
+                    new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        ["goalPriority"] = goal.Priority.ToString(CultureInfo.InvariantCulture),
+                        ["goalPriorityScore"] = goalPriorityScore.ToString("0.####", CultureInfo.InvariantCulture),
+                        ["subtreeClosedTasks"] = subtreeTasks.Length.ToString(CultureInfo.InvariantCulture),
+                        ["directChildGoals"] = directChildGoalCount.ToString(CultureInfo.InvariantCulture),
+                        ["recommendedAction"] = "Review goal lifecycle and close or archive historical goals"
                     });
             })
             .Where(candidate => candidate is not null)
@@ -3952,6 +4233,15 @@ public sealed class CtxApplicationService : ICtxApplicationService
             };
         }
 
+        if (string.Equals(selectionMode, "Goal", StringComparison.OrdinalIgnoreCase))
+        {
+            return new[]
+            {
+                "No open tasks or promotable gaps remained, so CTX surfaced active goals whose subtree no longer has live work.",
+                "Review goal lifecycle and close, supersede, or archive historical goals before opening new work."
+            };
+        }
+
         var guidance = new List<string>();
         if (openTaskCount == 0)
         {
@@ -3979,6 +4269,34 @@ public sealed class CtxApplicationService : ICtxApplicationService
 
         guidance.Add("Run `ctx audit`, `ctx closeout`, or inspect task/hypothesis state if continuation still feels ambiguous.");
         return guidance;
+    }
+
+    private static HashSet<string> CollectGoalSubtreeIds(
+        string goalId,
+        IReadOnlyDictionary<string, string[]> childGoalsByParentId)
+    {
+        var included = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { goalId };
+        var queue = new Queue<string>();
+        queue.Enqueue(goalId);
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            if (!childGoalsByParentId.TryGetValue(current, out var childGoalIds))
+            {
+                continue;
+            }
+
+            foreach (var childGoalId in childGoalIds)
+            {
+                if (included.Add(childGoalId))
+                {
+                    queue.Enqueue(childGoalId);
+                }
+            }
+        }
+
+        return included;
     }
 
     private static decimal NormalizeGoalPriority(int priority, IReadOnlyList<Goal> goals)
