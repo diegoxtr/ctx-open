@@ -8,6 +8,7 @@ public interface ICtxApplicationService
     System.Threading.Tasks.Task<CommandResult> CloseoutAsync(string repositoryPath, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> PreflightAsync(string repositoryPath, string operation, string? goalId, string? taskId, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddGoalAsync(string repositoryPath, AddGoalRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> UpdateGoalAsync(string repositoryPath, UpdateGoalRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> OpenWorkLineAsync(string repositoryPath, OpenWorkLineRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddOperationalRunbookAsync(string repositoryPath, AddOperationalRunbookRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddCognitiveTriggerAsync(string repositoryPath, AddCognitiveTriggerRequest request, CancellationToken cancellationToken);
@@ -21,6 +22,7 @@ public interface ICtxApplicationService
     System.Threading.Tasks.Task<CommandResult> RankHypothesesAsync(string repositoryPath, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> NextAsync(string repositoryPath, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddDecisionAsync(string repositoryPath, AddDecisionRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> UpdateDecisionAsync(string repositoryPath, UpdateDecisionRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddEvidenceAsync(string repositoryPath, AddEvidenceRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> ShareEvidenceAsync(string repositoryPath, ShareEvidenceRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddConclusionAsync(string repositoryPath, AddConclusionRequest request, CancellationToken cancellationToken);

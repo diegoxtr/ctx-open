@@ -2,6 +2,7 @@ namespace Ctx.Core;
 
 using Ctx.Application;
 using Ctx.Domain;
+using System.Text.Json;
 
 public sealed class DiffEngine : IDiffEngine
 {
@@ -41,7 +42,7 @@ public sealed class DiffEngine : IDiffEngine
                 continue;
             }
 
-            if (!Equals(previousItem, pair.Value))
+            if (!JsonSerializer.Serialize(previousItem).Equals(JsonSerializer.Serialize(pair.Value), StringComparison.Ordinal))
             {
                 changes.Add(new("Modified", typeof(T).Name, pair.Key, summarySelector(pair.Value)));
             }

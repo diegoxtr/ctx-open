@@ -23,11 +23,51 @@ if [[ ! -f "$MANIFEST_PATH" ]]; then
   exit 1
 fi
 
+resolve_python() {
+  if command -v python3 >/dev/null 2>&1 && python3 -c 'import json, sys' >/dev/null 2>&1; then
+    command -v python3
+    return
+  fi
+
+  if command -v python >/dev/null 2>&1 && python -c 'import json, sys' >/dev/null 2>&1; then
+    command -v python
+    return
+  fi
+
+  echo "Python 3 is required by the CTX installer." >&2
+  exit 1
+}
+
+PYTHON_BIN="$(resolve_python)"
+INSTALL_MANIFEST_PATH="$SCRIPT_ROOT/distribution/install-manifest.json"
+
 if [[ -z "$INSTALL_ROOT" ]]; then
-  INSTALL_ROOT="$HOME/.local/share/ctx"
+  if [[ ! -f "$INSTALL_MANIFEST_PATH" ]]; then
+    echo "Install manifest not found: $INSTALL_MANIFEST_PATH" >&2
+    exit 1
+  fi
+
+  INSTALL_ROOT="$("$PYTHON_BIN" - "$INSTALL_MANIFEST_PATH" <<'PY'
+import json
+import os
+import platform
+import sys
+
+with open(sys.argv[1], 'r', encoding='utf-8') as f:
+    manifest = json.load(f)
+
+system = platform.system()
+key = "macos" if system == "Darwin" else "linux" if system == "Linux" else ""
+if not key:
+    raise SystemExit(f"Unsupported OS: {system}")
+
+path = manifest["installRoots"][key]
+print(os.path.expanduser(os.path.expandvars(path)))
+PY
+)"
 fi
 
-MANIFEST_VERSION="$(python - <<'PY' "$MANIFEST_PATH"
+MANIFEST_VERSION="$("$PYTHON_BIN" - "$MANIFEST_PATH" <<'PY'
 import json,sys
 with open(sys.argv[1], 'r', encoding='utf-8') as f:
     print(json.load(f)['repo']['latestReleaseApi'])
@@ -47,7 +87,7 @@ fetch_release_metadata() {
 }
 
 RELEASE_JSON="$(fetch_release_metadata)"
-RELEASE_VERSION="$(python - <<'PY' "$RELEASE_JSON"
+RELEASE_VERSION="$("$PYTHON_BIN" - "$RELEASE_JSON" <<'PY'
 import json,sys
 payload=json.loads(sys.argv[1])
 print(payload.get('tag_name','').lstrip('vV'))
@@ -55,7 +95,7 @@ PY
 )"
 
 if [[ -z "$REPO_URL" ]]; then
-  REPO_URL="$(python - <<'PY' "$MANIFEST_PATH"
+  REPO_URL="$("$PYTHON_BIN" - "$MANIFEST_PATH" <<'PY'
 import json,sys
 with open(sys.argv[1], 'r', encoding='utf-8') as f:
     print(json.load(f)['repo']['publicCloneUrl'])
@@ -66,7 +106,7 @@ fi
 INSTALL_METADATA="$INSTALL_ROOT/ctx-install.json"
 INSTALLED_VERSION=""
 if [[ -f "$INSTALL_METADATA" ]]; then
-  INSTALLED_VERSION="$(python - <<'PY' "$INSTALL_METADATA"
+  INSTALLED_VERSION="$("$PYTHON_BIN" - "$INSTALL_METADATA" <<'PY'
 import json,sys
 with open(sys.argv[1], 'r', encoding='utf-8') as f:
     print(json.load(f).get('version',''))
@@ -106,14 +146,14 @@ if [[ "$MODE" == "portable" && -z "$BUNDLE_PATH" ]]; then
 
   ASSET_KEY="${OS_KEY}-${ARCH_KEY}"
 
-  ASSET_NAME="$(python - <<'PY' "$MANIFEST_PATH" "$ASSET_KEY"
+  ASSET_NAME="$("$PYTHON_BIN" - "$MANIFEST_PATH" "$ASSET_KEY" <<'PY'
 import json,sys
 with open(sys.argv[1], 'r', encoding='utf-8') as f:
     print(json.load(f)['assets'][sys.argv[2]])
 PY
 )"
 
-  ASSET_URL="$(python - <<'PY' "$RELEASE_JSON" "$ASSET_NAME"
+  ASSET_URL="$("$PYTHON_BIN" - "$RELEASE_JSON" "$ASSET_NAME" <<'PY'
 import json,sys
 payload=json.loads(sys.argv[1])
 asset_name=sys.argv[2]
@@ -144,7 +184,7 @@ fi
 
 echo "Mode: $MODE"
 echo "Install root: $INSTALL_ROOT"
-echo "Release tag: $(python - <<'PY' "$RELEASE_JSON"
+echo "Release tag: $("$PYTHON_BIN" - "$RELEASE_JSON" <<'PY'
 import json,sys
 print(json.loads(sys.argv[1]).get('tag_name',''))
 PY
@@ -156,3 +196,5 @@ fi
 export MODE INSTALL_ROOT SOURCE_REPO_PATH REPO_URL BUNDLE_PATH SKIP_VIEWER VERSION_LABEL="$RELEASE_VERSION" LINK_SCOPE
 "$SCRIPT_ROOT/scripts/install-ctx.sh"
 echo "CTX bootstrap complete."
+echo "CTX install root: $INSTALL_ROOT"
+echo "CTX bin path: $INSTALL_ROOT/bin"

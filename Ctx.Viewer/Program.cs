@@ -3,6 +3,8 @@ using Ctx.Core;
 using Ctx.Domain;
 using Ctx.Infrastructure;
 using Ctx.Persistence;
+using System.Diagnostics;
+using System.Text.Json;
 
 var viewerProjectRoot = ResolveViewerProjectRoot();
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
@@ -26,7 +28,25 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 app.MapGet("/favicon.ico", () => Results.NoContent());
 
-app.MapGet("/api/overview", async (string? path, string? branch, int? historyLimit, string? historyCursor, CancellationToken cancellationToken) =>
+app.MapGet("/api/browse-directory", async () =>
+{
+    if (!OperatingSystem.IsWindows())
+    {
+        return Results.BadRequest(new { message = "Browse directory is only supported in the local Windows viewer today." });
+    }
+
+    var selectedPath = await TrySelectDirectoryOnWindowsAsync();
+    if (string.IsNullOrWhiteSpace(selectedPath))
+    {
+        return Results.Json(new { path = (string?)null, cancelled = true });
+    }
+
+    return Results.Json(new { path = selectedPath, cancelled = false });
+});
+
+app.MapGet("/api/mcp-status", () => Results.Json(GetLocalMcpStatus()));
+
+app.MapGet("/api/overview", async (string? path, string? branch, int? historyLimit, string? historyCursor, string? timelineScope, CancellationToken cancellationToken) =>
 {
     var repositoryPath = ResolveRepositoryPath(path);
 
@@ -38,39 +58,8 @@ app.MapGet("/api/overview", async (string? path, string? branch, int? historyLim
     var head = await workingRepository.LoadHeadAsync(repositoryPath, cancellationToken);
     var branches = await branchRepository.ListAsync(repositoryPath, cancellationToken);
     var selectedBranch = string.IsNullOrWhiteSpace(branch) ? head.Branch : branch.Trim();
-    var commits = await commitRepository.GetHistoryAsync(repositoryPath, selectedBranch, cancellationToken);
-    var allCommits = new Dictionary<string, ContextCommit>(StringComparer.OrdinalIgnoreCase);
-    foreach (var branchItem in branches)
-    {
-        var branchCommits = await commitRepository.GetHistoryAsync(repositoryPath, branchItem.Name, cancellationToken);
-        foreach (var commit in branchCommits)
-        {
-            allCommits.TryAdd(commit.Id.Value, commit);
-        }
-    }
+    var normalizedTimelineScope = NormalizeTimelineScope(timelineScope);
 
-    var orderedTimelineCommits = allCommits.Values
-        .OrderByDescending(commit => commit.CreatedAtUtc)
-        .ThenByDescending(commit => commit.Id.Value, StringComparer.OrdinalIgnoreCase)
-        .ToArray();
-
-    var branchHeadsByCommit = branches
-        .Where(item => item.CommitId is not null)
-        .GroupBy(item => item.CommitId!.Value.Value, StringComparer.OrdinalIgnoreCase)
-        .ToDictionary(
-            group => group.Key,
-            group => group.Select(item => item.Name).OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToArray(),
-            StringComparer.OrdinalIgnoreCase);
-
-    var branchTimelineCounts = orderedTimelineCommits
-        .GroupBy(commit => commit.Branch, StringComparer.OrdinalIgnoreCase)
-        .ToDictionary(
-            group => group.Key,
-            group => group.Count(),
-            StringComparer.OrdinalIgnoreCase);
-    var timelinePage = BuildTimelinePage(orderedTimelineCommits, historyCursor, historyLimit);
-
-    var summary = await runtime.ApplicationService.GraphSummaryAsync(repositoryPath, cancellationToken);
     var context = await workingRepository.LoadAsync(repositoryPath, cancellationToken);
     var goalTitles = context.Goals.ToDictionary(goal => goal.Id, goal => goal.Title);
     var taskDtos = context.Tasks
@@ -106,6 +95,7 @@ app.MapGet("/api/overview", async (string? path, string? branch, int? historyLim
     return Results.Json(new
     {
         productVersion = DomainConstants.ProductVersion,
+        productVersionLabel = ResolveViewerVersionLabel(viewerProjectRoot),
         repositoryPath,
         currentBranch = head.Branch,
         selectedBranch,
@@ -115,41 +105,46 @@ app.MapGet("/api/overview", async (string? path, string? branch, int? historyLim
             name = item.Name,
             commitId = item.CommitId?.Value,
             updatedAtUtc = item.UpdatedAtUtc,
-            timelineCommitCount = branchTimelineCounts.TryGetValue(item.Name, out var timelineCommitCount) ? timelineCommitCount : 0
+            timelineCommitCount = (int?)null
         }),
-        commits = commits.Select(commit => new
-        {
-            id = commit.Id.Value,
-            branch = commit.Branch,
-            author = commit.Trace.CreatedBy,
-            modelName = commit.Trace.ModelName,
-            modelVersion = commit.Trace.ModelVersion,
-            message = commit.Message,
-            createdAtUtc = commit.CreatedAtUtc,
-            snapshotHash = commit.SnapshotHash,
-            summary = commit.Diff.Summary,
-            changedEntityCount = CountChangedEntities(commit.Diff),
-            changedEntitySummary = BuildChangeSummary(commit.Diff),
-            parentIds = commit.ParentIds.Select(parent => parent.Value),
-            cognitivePath = BuildCognitivePath(commit)
-        }),
-        timelineCommits = timelinePage.Items.Select(commit => ToViewerTimelineCommit(commit, branchHeadsByCommit)),
+        timelineCommits = Array.Empty<object>(),
         timelinePage = new
         {
-            totalCount = orderedTimelineCommits.Length,
-            loadedCount = timelinePage.Items.Count,
-            limit = timelinePage.Limit,
-            cursor = timelinePage.Cursor,
-            nextCursor = timelinePage.NextCursor,
-            hasMore = timelinePage.HasMore
+            totalCount = (int?)null,
+            loadedCount = 0,
+            limit = historyLimit.GetValueOrDefault(20),
+            cursor = historyCursor,
+            nextCursor = (string?)null,
+            hasMore = false
         },
-        graphSummary = summary.Data,
+        timelineScope = normalizedTimelineScope,
+        historyPending = true,
+        graphSummary = (object?)null,
         tasks = taskDtos,
         taskSummary
     });
 });
 
-app.MapGet("/api/history", async (string? path, string? branch, int? limit, string? cursor, CancellationToken cancellationToken) =>
+app.MapGet("/api/graph-summary", async (string? path, CancellationToken cancellationToken) =>
+{
+    var repositoryPath = ResolveRepositoryPath(path);
+
+    if (!await workingRepository.ExistsAsync(repositoryPath, cancellationToken))
+    {
+        return Results.NotFound(new { message = $"No .ctx repository found at '{repositoryPath}'." });
+    }
+
+    var summary = await runtime.ApplicationService.GraphSummaryAsync(repositoryPath, cancellationToken);
+    return summary.Success
+        ? Results.Json(new
+        {
+            repositoryPath,
+            graphSummary = summary.Data
+        })
+        : Results.BadRequest(new { message = summary.Message });
+});
+
+app.MapGet("/api/history", async (string? path, string? branch, int? limit, string? cursor, string? timelineScope, CancellationToken cancellationToken) =>
 {
     var repositoryPath = ResolveRepositoryPath(path);
 
@@ -162,20 +157,12 @@ app.MapGet("/api/history", async (string? path, string? branch, int? limit, stri
     var selectedBranch = string.IsNullOrWhiteSpace(branch)
         ? (await workingRepository.LoadHeadAsync(repositoryPath, cancellationToken)).Branch
         : branch.Trim();
-    var allCommits = new Dictionary<string, ContextCommit>(StringComparer.OrdinalIgnoreCase);
-    foreach (var branchItem in branches)
-    {
-        var branchCommits = await commitRepository.GetHistoryAsync(repositoryPath, branchItem.Name, cancellationToken);
-        foreach (var commit in branchCommits)
-        {
-            allCommits.TryAdd(commit.Id.Value, commit);
-        }
-    }
-
-    var orderedTimelineCommits = allCommits.Values
-        .OrderByDescending(commit => commit.CreatedAtUtc)
-        .ThenByDescending(commit => commit.Id.Value, StringComparer.OrdinalIgnoreCase)
-        .ToArray();
+    var normalizedTimelineScope = NormalizeTimelineScope(timelineScope);
+    var orderedTimelineHeaders = await BuildTimelineCommitHeadersAsync(
+        repositoryPath,
+        selectedBranch,
+        normalizedTimelineScope,
+        cancellationToken);
     var branchHeadsByCommit = branches
         .Where(item => item.CommitId is not null)
         .GroupBy(item => item.CommitId!.Value.Value, StringComparer.OrdinalIgnoreCase)
@@ -183,22 +170,34 @@ app.MapGet("/api/history", async (string? path, string? branch, int? limit, stri
             group => group.Key,
             group => group.Select(item => item.Name).OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToArray(),
             StringComparer.OrdinalIgnoreCase);
-    var timelinePage = BuildTimelinePage(orderedTimelineCommits, cursor, limit);
+    var branchTimelineCounts = BuildBranchTimelineHeaderCounts(orderedTimelineHeaders, selectedBranch, normalizedTimelineScope);
+    var timelinePage = BuildTimelineHeaderPage(orderedTimelineHeaders, cursor, limit);
+    var timelineCommits = new List<ContextCommit>(timelinePage.Items.Count);
+    foreach (var header in timelinePage.Items)
+    {
+        var commit = await commitRepository.LoadAsync(repositoryPath, new ContextCommitId(header.Id), cancellationToken);
+        if (commit is not null)
+        {
+            timelineCommits.Add(commit);
+        }
+    }
 
     return Results.Json(new
     {
         repositoryPath,
         selectedBranch,
-        timelineCommits = timelinePage.Items.Select(commit => ToViewerTimelineCommit(commit, branchHeadsByCommit)),
+        timelineCommits = timelineCommits.Select(commit => ToViewerTimelineCommit(commit, branchHeadsByCommit)),
         timelinePage = new
         {
-            totalCount = orderedTimelineCommits.Length,
-            loadedCount = timelinePage.Items.Count,
+            totalCount = orderedTimelineHeaders.Length,
+            loadedCount = timelineCommits.Count,
             limit = timelinePage.Limit,
             cursor = timelinePage.Cursor,
             nextCursor = timelinePage.NextCursor,
             hasMore = timelinePage.HasMore
-        }
+        },
+        timelineScope = normalizedTimelineScope,
+        branchTimelineCounts
     });
 });
 
@@ -598,6 +597,59 @@ static string ResolveDefaultRepositoryRoot()
     return currentDirectory;
 }
 
+static object GetLocalMcpStatus()
+{
+    var installRoot = Environment.GetEnvironmentVariable("CTX_INSTALL_ROOT");
+    if (string.IsNullOrWhiteSpace(installRoot))
+    {
+        installRoot = OperatingSystem.IsWindows()
+            ? @"C:\ctx"
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".ctx");
+    }
+
+    var launcherPath = Path.Combine(installRoot, "bin", OperatingSystem.IsWindows() ? "ctx-mcp.cmd" : "ctx-mcp");
+    var executablePath = Path.Combine(installRoot, "mcp", OperatingSystem.IsWindows() ? "Ctx.Mcp.exe" : "Ctx.Mcp");
+    var launcherExists = File.Exists(launcherPath);
+    var executableExists = File.Exists(executablePath);
+    var runningProcessCount = CountMcpProcesses();
+    var healthy = launcherExists && executableExists && runningProcessCount > 0;
+
+    return new
+    {
+        healthy,
+        status = healthy ? "ok" : "unavailable",
+        launcherExists,
+        executableExists,
+        runningProcessCount,
+        launcherPath,
+        executablePath,
+        checkedAtUtc = DateTimeOffset.UtcNow
+    };
+}
+
+static int CountMcpProcesses()
+{
+    try
+    {
+        return Process.GetProcesses()
+            .Count(process =>
+            {
+                try
+                {
+                    return process.ProcessName.Contains("Ctx.Mcp", StringComparison.OrdinalIgnoreCase);
+                }
+                catch
+                {
+                    return false;
+                }
+            });
+    }
+    catch
+    {
+        return 0;
+    }
+}
+
 static string ResolveViewerProjectRoot()
 {
     var currentDirectory = new DirectoryInfo(AppContext.BaseDirectory);
@@ -623,6 +675,218 @@ static string ResolveViewerProjectRoot()
     }
 
     return Directory.GetCurrentDirectory();
+}
+
+static string ResolveViewerVersionLabel(string viewerRoot)
+{
+    var normalizedViewerRoot = Path.TrimEndingDirectorySeparator(Path.GetFullPath(viewerRoot));
+    var normalizedLocalInstallRoot = Path.TrimEndingDirectorySeparator(Path.GetFullPath("C:\\ctx\\viewer"));
+
+    return normalizedViewerRoot.Equals(normalizedLocalInstallRoot, StringComparison.OrdinalIgnoreCase)
+        ? "local-version"
+        : $"v{DomainConstants.ProductVersion}";
+}
+
+static string NormalizeTimelineScope(string? scope)
+    => string.Equals(scope, "all", StringComparison.OrdinalIgnoreCase)
+        ? "all"
+        : "selected";
+
+static async Task<TimelineCommitHeader[]> BuildTimelineCommitHeadersAsync(
+    string repositoryPath,
+    string selectedBranch,
+    string timelineScope,
+    CancellationToken cancellationToken)
+{
+    var headers = await ReadTimelineCommitHeadersAsync(repositoryPath, cancellationToken);
+    var scopedHeaders = string.Equals(timelineScope, "all", StringComparison.OrdinalIgnoreCase)
+        ? headers
+        : headers.Where(commit => commit.Branch.Equals(selectedBranch, StringComparison.OrdinalIgnoreCase));
+
+    return scopedHeaders
+        .OrderByDescending(commit => commit.CreatedAtUtc)
+        .ThenByDescending(commit => commit.Id, StringComparer.OrdinalIgnoreCase)
+        .ToArray();
+}
+
+static async Task<IReadOnlyList<TimelineCommitHeader>> ReadTimelineCommitHeadersAsync(
+    string repositoryPath,
+    CancellationToken cancellationToken)
+{
+    var commitsPath = Path.Combine(repositoryPath, ".ctx", "commits");
+    if (!Directory.Exists(commitsPath))
+    {
+        return Array.Empty<TimelineCommitHeader>();
+    }
+
+    var headers = new List<TimelineCommitHeader>();
+    foreach (var file in Directory.EnumerateFiles(commitsPath, "*.json"))
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var header = await TryReadTimelineCommitHeaderAsync(file, cancellationToken);
+        if (header is not null)
+        {
+            headers.Add(header);
+        }
+    }
+
+    return headers;
+}
+
+static async Task<TimelineCommitHeader?> TryReadTimelineCommitHeaderAsync(
+    string file,
+    CancellationToken cancellationToken)
+{
+    var id = Path.GetFileNameWithoutExtension(file);
+    string? branch = null;
+    DateTimeOffset? createdAtUtc = null;
+
+    using (var reader = new StreamReader(file))
+    {
+        for (var index = 0; index < 80 && !reader.EndOfStream; index++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var line = await reader.ReadLineAsync(cancellationToken);
+            if (line is null)
+            {
+                break;
+            }
+
+            if (branch is null && TryReadJsonStringLineProperty(line, "branch", out var branchValue))
+            {
+                branch = branchValue;
+            }
+            else if (createdAtUtc is null && TryReadJsonStringLineProperty(line, "createdAtUtc", out var createdValue)
+                && DateTimeOffset.TryParse(createdValue, out var parsedCreatedAtUtc))
+            {
+                createdAtUtc = parsedCreatedAtUtc;
+            }
+
+            if (!string.IsNullOrWhiteSpace(branch) && createdAtUtc.HasValue)
+            {
+                return new TimelineCommitHeader(id, branch, createdAtUtc.Value);
+            }
+        }
+    }
+
+    await using var stream = File.OpenRead(file);
+    using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+    var root = document.RootElement;
+    if (string.IsNullOrWhiteSpace(branch)
+        && root.TryGetProperty("branch", out var branchElement)
+        && branchElement.ValueKind == JsonValueKind.String)
+    {
+        branch = branchElement.GetString();
+    }
+
+    if (!createdAtUtc.HasValue
+        && root.TryGetProperty("createdAtUtc", out var createdElement)
+        && createdElement.ValueKind == JsonValueKind.String
+        && DateTimeOffset.TryParse(createdElement.GetString(), out var fallbackCreatedAtUtc))
+    {
+        createdAtUtc = fallbackCreatedAtUtc;
+    }
+
+    return string.IsNullOrWhiteSpace(branch) || !createdAtUtc.HasValue
+        ? null
+        : new TimelineCommitHeader(id, branch, createdAtUtc.Value);
+}
+
+static bool TryReadJsonStringLineProperty(string line, string propertyName, out string? value)
+{
+    value = null;
+    var trimmed = line.Trim();
+    var prefix = $"\"{propertyName}\"";
+    if (!trimmed.StartsWith(prefix, StringComparison.Ordinal))
+    {
+        return false;
+    }
+
+    var separatorIndex = trimmed.IndexOf(':');
+    if (separatorIndex < 0)
+    {
+        return false;
+    }
+
+    var rawValue = trimmed[(separatorIndex + 1)..].Trim().TrimEnd(',');
+    try
+    {
+        value = JsonSerializer.Deserialize<string>(rawValue);
+        return value is not null;
+    }
+    catch (JsonException)
+    {
+        value = null;
+        return false;
+    }
+}
+
+static IReadOnlyDictionary<string, int> BuildBranchTimelineHeaderCounts(
+    IReadOnlyList<TimelineCommitHeader> orderedTimelineCommits,
+    string selectedBranch,
+    string timelineScope)
+{
+    if (!string.Equals(timelineScope, "all", StringComparison.OrdinalIgnoreCase))
+    {
+        return new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+        {
+            [selectedBranch] = orderedTimelineCommits.Count
+        };
+    }
+
+    return orderedTimelineCommits
+        .GroupBy(commit => commit.Branch, StringComparer.OrdinalIgnoreCase)
+        .ToDictionary(
+            group => group.Key,
+            group => group.Count(),
+            StringComparer.OrdinalIgnoreCase);
+}
+
+static async Task<string?> TrySelectDirectoryOnWindowsAsync()
+{
+    const string script = """
+Add-Type -AssemblyName System.Windows.Forms
+$dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+$dialog.ShowNewFolderButton = $false
+if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+    $dialog.SelectedPath
+}
+""";
+
+    var encodedScript = Convert.ToBase64String(System.Text.Encoding.Unicode.GetBytes(script));
+    var startInfo = new ProcessStartInfo
+    {
+        FileName = "powershell",
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        UseShellExecute = false,
+        CreateNoWindow = true
+    };
+    startInfo.ArgumentList.Add("-NoProfile");
+    startInfo.ArgumentList.Add("-STA");
+    startInfo.ArgumentList.Add("-EncodedCommand");
+    startInfo.ArgumentList.Add(encodedScript);
+
+    using var process = Process.Start(startInfo);
+    if (process is null)
+    {
+        return null;
+    }
+
+    var outputTask = process.StandardOutput.ReadToEndAsync();
+    var errorTask = process.StandardError.ReadToEndAsync();
+    await process.WaitForExitAsync();
+
+    var output = (await outputTask).Trim();
+    var error = (await errorTask).Trim();
+    if (process.ExitCode != 0 && string.IsNullOrWhiteSpace(output))
+    {
+        throw new InvalidOperationException(string.IsNullOrWhiteSpace(error)
+            ? "Directory selection failed."
+            : error);
+    }
+
+    return string.IsNullOrWhiteSpace(output) ? null : output;
 }
 
 static int CountChangedEntities(ContextDiff diff)
@@ -891,10 +1155,10 @@ static void AddTaskAndGoal(
     AddGoalHierarchy(rootGoalIds, subGoalIds, goalsById, task.GoalId);
 }
 
-static ViewerTimelinePage BuildTimelinePage(IReadOnlyList<ContextCommit> orderedTimelineCommits, string? cursor, int? limit)
+static ViewerTimelineHeaderPage BuildTimelineHeaderPage(IReadOnlyList<TimelineCommitHeader> orderedTimelineCommits, string? cursor, int? limit)
 {
     var normalizedLimit = NormalizeTimelinePageLimit(limit);
-    var startIndex = ResolveTimelinePageStartIndex(orderedTimelineCommits, cursor);
+    var startIndex = ResolveTimelineHeaderPageStartIndex(orderedTimelineCommits, cursor);
     var items = orderedTimelineCommits
         .Skip(startIndex)
         .Take(normalizedLimit)
@@ -902,15 +1166,15 @@ static ViewerTimelinePage BuildTimelinePage(IReadOnlyList<ContextCommit> ordered
     var nextIndex = startIndex + items.Length;
     var hasMore = nextIndex < orderedTimelineCommits.Count;
     var nextCursor = hasMore && items.Length > 0
-        ? EncodeTimelineCursor(items[^1])
+        ? EncodeTimelineHeaderCursor(items[^1])
         : null;
 
-    return new ViewerTimelinePage(items, normalizedLimit, cursor, nextCursor, hasMore);
+    return new ViewerTimelineHeaderPage(items, normalizedLimit, cursor, nextCursor, hasMore);
 }
 
 static int NormalizeTimelinePageLimit(int? limit)
 {
-    const int defaultLimit = 40;
+    const int defaultLimit = 20;
     const int maxLimit = 120;
 
     if (!limit.HasValue || limit.Value <= 0)
@@ -921,7 +1185,7 @@ static int NormalizeTimelinePageLimit(int? limit)
     return Math.Min(limit.Value, maxLimit);
 }
 
-static int ResolveTimelinePageStartIndex(IReadOnlyList<ContextCommit> orderedTimelineCommits, string? cursor)
+static int ResolveTimelineHeaderPageStartIndex(IReadOnlyList<TimelineCommitHeader> orderedTimelineCommits, string? cursor)
 {
     if (!TryDecodeTimelineCursor(cursor, out var cursorTicks, out var cursorCommitId))
     {
@@ -932,7 +1196,7 @@ static int ResolveTimelinePageStartIndex(IReadOnlyList<ContextCommit> orderedTim
     {
         var commit = orderedTimelineCommits[index];
         if (commit.CreatedAtUtc.UtcTicks == cursorTicks
-            && string.Equals(commit.Id.Value, cursorCommitId, StringComparison.OrdinalIgnoreCase))
+            && string.Equals(commit.Id, cursorCommitId, StringComparison.OrdinalIgnoreCase))
         {
             return index + 1;
         }
@@ -948,7 +1212,7 @@ static int ResolveTimelinePageStartIndex(IReadOnlyList<ContextCommit> orderedTim
         }
 
         if (tickComparison == 0
-            && StringComparer.OrdinalIgnoreCase.Compare(commit.Id.Value, cursorCommitId) < 0)
+            && StringComparer.OrdinalIgnoreCase.Compare(commit.Id, cursorCommitId) < 0)
         {
             return index;
         }
@@ -979,8 +1243,8 @@ static bool TryDecodeTimelineCursor(string? cursor, out long ticks, out string c
     return true;
 }
 
-static string EncodeTimelineCursor(ContextCommit commit)
-    => $"{commit.CreatedAtUtc.UtcTicks}|{commit.Id.Value}";
+static string EncodeTimelineHeaderCursor(TimelineCommitHeader commit)
+    => $"{commit.CreatedAtUtc.UtcTicks}|{commit.Id}";
 
 static object ToViewerTimelineCommit(
     ContextCommit commit,
@@ -1017,8 +1281,13 @@ internal record ViewerCognitivePath(
     IReadOnlyList<string> DecisionTitles,
     IReadOnlyList<string> ConclusionSummaries);
 
-internal record ViewerTimelinePage(
-    IReadOnlyList<ContextCommit> Items,
+internal record TimelineCommitHeader(
+    string Id,
+    string Branch,
+    DateTimeOffset CreatedAtUtc);
+
+internal record ViewerTimelineHeaderPage(
+    IReadOnlyList<TimelineCommitHeader> Items,
     int Limit,
     string? Cursor,
     string? NextCursor,

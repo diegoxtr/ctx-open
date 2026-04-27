@@ -182,7 +182,7 @@ The strongest demos are not graph demos. They are continuity demos.
 - Tiene un valor inusualmente alto para generar inputs estructurados de entrenamiento porque el camino de razonamiento queda preservado en lugar de ser reconstruido a posteriori.
 - Esto no es solo otra herramienta de IA. Es parte de la capa de infraestructura que necesitara la proxima generacion de workflows con agentes.
 
-Current version: `1.0.9`
+Current version: `1.0.10`
 
 ## Install
 
@@ -330,6 +330,23 @@ Commit-focused trace graph for a resolved reasoning thread:
 ![CTX Viewer commit thread](assets/screenshots/ctx-viewer-commit-thread.jpg)
 
 Small note: CTX Viewer also makes durable reasoning legible after snapshot, so a commit can still be inspected as a structured cognitive thread instead of a flat log entry.
+
+## MCP Server
+
+CTX ships a local stdio MCP server for agents and IDEs that support MCP.
+
+Installed launchers:
+
+- Windows: `C:\ctx\bin\ctx-mcp.cmd`
+- Linux/macOS: `$HOME/.local/share/ctx/bin/ctx-mcp`
+
+Default mode is read-only:
+
+```powershell
+C:\ctx\bin\ctx-mcp.cmd --repo C:\sources\ctx-open --mode read-only
+```
+
+Use `--mode write` only when an operator intentionally wants the agent to create CTX artifacts. Setup examples are documented in `docs/CTX_MCP_AGENT_SETUP.md`.
 What this shows:
 
 - durable commit history preserved as structured reasoning
@@ -559,7 +576,7 @@ This is a planned direction, not a statement of current capability.
 - Formal V1 functional specification is documented in `docs/V1_FUNCTIONAL_SPEC.md`.
 - Pilot execution guidance is documented in `docs/PILOT_TESTING_GUIDE.md`.
 - Installation and first-use guidance are documented in `docs/INSTALLATION_AND_USAGE_GUIDE.md`.
-- Release baseline details are documented in `docs/RELEASE_1_0_8.md`.
+- Release baseline details are documented in `docs/RELEASE_1_0_10.md`.
 - A repeatable smoke test is available at `scripts/run-smoke-test.ps1`.
 - A repeatable branch/merge conflict demo is available at `scripts/run-merge-conflict-demo.ps1`.
 - A local publish script is available at `scripts/publish-local.ps1`.

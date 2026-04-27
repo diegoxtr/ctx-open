@@ -21,6 +21,7 @@ if [[ ! -f "$MANIFEST_PATH" ]]; then
 fi
 
 BIN_PATH="$INSTALL_ROOT/bin"
+MCP_PATH="$INSTALL_ROOT/mcp"
 VIEWER_PATH="$INSTALL_ROOT/viewer"
 PROMPTS_PATH="$INSTALL_ROOT/prompts"
 DOCS_PATH="$INSTALL_ROOT/docs"
@@ -28,8 +29,8 @@ METADATA_PATH="$INSTALL_ROOT/ctx-install.json"
 
 reset_install_layout() {
   mkdir -p "$INSTALL_ROOT"
-  rm -rf "$BIN_PATH" "$VIEWER_PATH" "$PROMPTS_PATH" "$DOCS_PATH"
-  mkdir -p "$BIN_PATH" "$VIEWER_PATH" "$PROMPTS_PATH" "$DOCS_PATH"
+  rm -rf "$BIN_PATH" "$MCP_PATH" "$VIEWER_PATH" "$PROMPTS_PATH" "$DOCS_PATH"
+  mkdir -p "$BIN_PATH" "$MCP_PATH" "$VIEWER_PATH" "$PROMPTS_PATH" "$DOCS_PATH"
 }
 
 write_install_metadata() {
@@ -57,6 +58,13 @@ set -euo pipefail
 "$BIN_PATH/Ctx.Cli" "\$@"
 EOF
   chmod +x "$BIN_PATH/ctx"
+
+  cat > "$BIN_PATH/ctx-mcp" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+"$MCP_PATH/Ctx.Mcp" "\$@"
+EOF
+  chmod +x "$BIN_PATH/ctx-mcp"
 
   if [[ "$SKIP_VIEWER" == "1" ]]; then
     return
@@ -99,6 +107,7 @@ link_binaries() {
 
   mkdir -p "$target_dir"
   ln -sf "$BIN_PATH/ctx" "$target_dir/ctx"
+  ln -sf "$BIN_PATH/ctx-mcp" "$target_dir/ctx-mcp"
 
   if [[ "$SKIP_VIEWER" != "1" ]]; then
     ln -sf "$BIN_PATH/ctx-viewer" "$target_dir/ctx-viewer"
@@ -116,6 +125,7 @@ install_from_source() {
   fi
 
   dotnet publish "$effective_repo/Ctx.Cli/Ctx.Cli.csproj" -c Release -o "$BIN_PATH"
+  dotnet publish "$effective_repo/Ctx.Mcp/Ctx.Mcp.csproj" -c Release -o "$MCP_PATH"
 
   if [[ "$SKIP_VIEWER" != "1" ]]; then
     dotnet publish "$effective_repo/Ctx.Viewer/Ctx.Viewer.csproj" -c Release -o "$VIEWER_PATH"
@@ -144,6 +154,12 @@ install_from_portable() {
   fi
 
   cp -R "$extract_root/bin/." "$BIN_PATH/"
+
+  if [[ -d "$extract_root/mcp" ]]; then
+    cp -R "$extract_root/mcp/." "$MCP_PATH/"
+  elif [[ -f "$extract_root/bin/Ctx.Mcp" ]]; then
+    cp "$extract_root/bin/Ctx.Mcp" "$MCP_PATH/Ctx.Mcp"
+  fi
 
   if [[ -d "$extract_root/viewer" ]]; then
     cp -R "$extract_root/viewer/." "$VIEWER_PATH/"
@@ -194,6 +210,23 @@ Add this to your shell profile if needed:
 EOF
 }
 
+validate_install_layout() {
+  if [[ ! -x "$BIN_PATH/Ctx.Cli" ]]; then
+    echo "Installed CLI executable not found or not executable: $BIN_PATH/Ctx.Cli" >&2
+    exit 1
+  fi
+
+  if [[ ! -x "$MCP_PATH/Ctx.Mcp" ]]; then
+    echo "Installed MCP executable not found or not executable: $MCP_PATH/Ctx.Mcp" >&2
+    exit 1
+  fi
+
+  if [[ "$SKIP_VIEWER" != "1" && ! -x "$VIEWER_PATH/Ctx.Viewer" ]]; then
+    echo "Installed viewer executable not found or not executable: $VIEWER_PATH/Ctx.Viewer" >&2
+    exit 1
+  fi
+}
+
 reset_install_layout
 
 if [[ "$MODE" == "source" ]]; then
@@ -209,10 +242,15 @@ fi
 
 write_launchers
 link_binaries
+validate_install_layout
 write_install_metadata "$MODE" "$SOURCE_ROOT" "$PROMPT_SOURCE"
 
 echo "CTX installed to $INSTALL_ROOT via $MODE mode."
+echo "CTX_INSTALL_ROOT=$INSTALL_ROOT"
+echo "CTX_BIN_PATH=$BIN_PATH"
+echo "CTX_MCP_PATH=$MCP_PATH"
 echo "CLI launcher: $BIN_PATH/ctx"
+echo "MCP launcher: $BIN_PATH/ctx-mcp"
 if [[ "$SKIP_VIEWER" != "1" ]]; then
   echo "Viewer launcher: $BIN_PATH/ctx-viewer"
 fi

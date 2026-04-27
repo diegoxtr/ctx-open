@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ctx.Tests", "Ctx.Tests\Ctx.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ctx.Viewer", "Ctx.Viewer\Ctx.Viewer.csproj", "{C64068AA-C2FB-4D1C-BCFA-04C6EF8C8D24}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ctx.Mcp", "Ctx.Mcp\Ctx.Mcp.csproj", "{BDEBAA1E-A60A-4C6E-BD8A-A0D457014597}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -66,5 +68,9 @@ Global
 		{C64068AA-C2FB-4D1C-BCFA-04C6EF8C8D24}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C64068AA-C2FB-4D1C-BCFA-04C6EF8C8D24}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C64068AA-C2FB-4D1C-BCFA-04C6EF8C8D24}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BDEBAA1E-A60A-4C6E-BD8A-A0D457014597}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDEBAA1E-A60A-4C6E-BD8A-A0D457014597}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDEBAA1E-A60A-4C6E-BD8A-A0D457014597}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BDEBAA1E-A60A-4C6E-BD8A-A0D457014597}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

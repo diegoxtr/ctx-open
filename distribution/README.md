@@ -43,6 +43,19 @@ powershell -ExecutionPolicy Bypass -File .\scripts\build-distribution.ps1
 
 The script publishes CTX for each target in `targets.json`, copies the agent-link prompt into the bundle, and emits archives under `artifacts/distribution/`.
 
+Current portable bundle layout:
+
+```text
+bin/
+mcp/
+viewer/
+prompts/
+docs/
+distribution/
+```
+
+The install scripts turn that bundle into an operational install root with `ctx`, `ctx-mcp`, and optional `ctx-viewer` launchers.
+
 Install bootstrap flows are provided by:
 
 - `install.ps1`

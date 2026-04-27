@@ -35,6 +35,7 @@ public static class CommandCoverage
         "hypo list",
         "hypo show",
         "decision add",
+        "decision update",
         "decision list",
         "decision show",
         "evidence add",

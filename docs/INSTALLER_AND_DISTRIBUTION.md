@@ -1,4 +1,4 @@
-﻿# CTX Installer and Distribution Plan
+# CTX Installer and Distribution Plan
 If a language model and its agent lose context, this is the tool you need.
 
 ## Objective
@@ -22,13 +22,13 @@ Include a standard prompt section that binds agents to the cognitive versioner w
 ### macOS
 
 - Installer: signed `.pkg` or `.dmg`.
-- Portable: tarball with `ctx` binary.
+- Portable: tarball with `ctx`, `ctx-mcp`, and optional `ctx-viewer` launchers.
 - Architectures: Apple Silicon and Intel.
 
 ### Linux
 
 - Installer: package formats (deb, rpm) plus tarball.
-- Portable: tarball with `ctx`.
+- Portable: tarball with `ctx`, `ctx-mcp`, and optional `ctx-viewer` launchers.
 - Architectures: x64 and ARM64.
 
 ## Packaging Strategy (Baseline)
@@ -97,6 +97,33 @@ Unpack a prebuilt distribution bundle, then install CTX into an operational root
 
 The install scripts should use a shared manifest so install roots, helper prompt locations, and launcher layout stay aligned across platforms.
 
+Installed layout:
+
+```text
+<install-root>/
+  bin/
+    ctx
+    ctx-mcp
+    ctx-viewer
+  mcp/
+    Ctx.Mcp
+  viewer/
+    Ctx.Viewer
+  prompts/
+  docs/
+  ctx-install.json
+```
+
+On Windows the launchers use `.cmd` wrappers and executable names include `.exe`.
+
+The installer output should include parseable path lines:
+
+```text
+CTX_INSTALL_ROOT=<install-root>
+CTX_BIN_PATH=<install-root>/bin
+CTX_MCP_PATH=<install-root>/mcp
+```
+
 ## User Entry Point
 
 User-facing installation should prefer a single copy-paste entry script per shell:
@@ -111,13 +138,13 @@ Those entrypoints should:
 - resolve the latest published version and matching asset from GitHub Releases
 - use `distribution/version-manifest.json` only as repository/API configuration plus asset-name mapping
 - delegate the actual filesystem/bootstrap work to `scripts/install-ctx.ps1` or `scripts/install-ctx.sh`
-- expose `ctx` globally when possible
+- expose `ctx` and `ctx-mcp` globally when possible
   Windows: `User` or `Machine` PATH
   Linux/macOS: symlink in `~/.local/bin` or `/usr/local/bin`
 
 User expectation rule:
 
-- a user may clone the public repository and run `install.ps1` or `install.sh` from that checkout
+- a user may clone the repository and run `install.ps1` or `install.sh` from that checkout
 - that action must still resolve to the published portable release asset by default
 - a local clone must not be interpreted as a request to compile from source
 - source mode must remain opt-in and explicit
@@ -174,6 +201,8 @@ Recommended flow:
 ## Verification Checklist
 
 - Each build runs `ctx version` successfully.
+- The CLI, MCP, and viewer binaries are present in the installed layout.
+- The installer prints `CTX_INSTALL_ROOT`, `CTX_BIN_PATH`, and `CTX_MCP_PATH`.
 - The binary launches on each OS/arch.
 - The prompt fragment is shipped alongside the binary.
 - Portable archives are emitted under `artifacts/distribution/`.
