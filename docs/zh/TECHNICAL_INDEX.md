@@ -36,7 +36,7 @@
 - [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-open/docs/V1_FUNCTIONAL_SPEC.md)
   定义模块、需求、验收标准与 V1 done 标准。
 
-- [RELEASE_1_0_8.md](C:/sources/ctx-open/docs/RELEASE_1_0_8.md)
+- [RELEASE_1_0_11.md](C:/sources/ctx-open/docs/RELEASE_1_0_11.md)
   总结当前稳定 release baseline。
 
 ### 架构与设计

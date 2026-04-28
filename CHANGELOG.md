@@ -2,6 +2,28 @@
 
 All notable changes to CTX will be documented in this file.
 
+## [1.0.11] - 2026-04-28
+
+### Added
+
+- Public local MCP quickstart page and GitHub Pages entrypoint for configuring `ctx-mcp`.
+- README explanation of CTX as structured cognitive memory beyond provider-level model memory.
+- README MCP exposure section describing local stdio transport, read-only default mode, guarded write mode, and current boundaries.
+
+### Changed
+
+- Public live-demo and MCP setup pages now point at the current release line.
+- Public README now presents the operator start model, MCP exposure, and durable memory model before deeper reference material.
+
+### Fixed
+
+- Public changelog release ordering now keeps `1.0.8` and `1.0.7` as separate release sections.
+- Public release links no longer point at stale `v1.0.9`/`v1.0.10` pages after the post-`1.0.10` documentation pass.
+
+### Validation
+
+- Release branch validation must confirm `ctx version` reports `1.0.11`, `Ctx.Mcp` builds, unit tests pass, install scripts parse, and no private `.ctx` state is staged.
+
 ## [1.0.10] - 2026-04-27
 
 ### Added
@@ -49,8 +71,6 @@ All notable changes to CTX will be documented in this file.
 
 - This hotfix exists to restore the intended public installation experience: download a published binary bundle, expose `ctx`, and start using CTX without compiling the project from source.
 
-## [1.0.7] - 2026-04-17
-
 ## [1.0.8] - 2026-04-21
 
 ### Changed
@@ -66,6 +86,8 @@ All notable changes to CTX will be documented in this file.
 ### Notes
 
 - This patch release freezes the first public line where CTX startup guidance is consistently state-driven across CLI, docs, and helper surfaces.
+
+## [1.0.7] - 2026-04-17
 
 ### Fixed
 
