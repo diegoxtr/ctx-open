@@ -1,7 +1,9 @@
 # CTX
 CTX is the standard Cognitive Version Control System for AI: a CLI for structured reasoning artifacts instead of chat transcripts. Agents do not just need context. They need continuity.
 
-If a language model and its agent lose context, this is the tool you need.
+If your models and tools lose context, this is the tool you need.
+
+CTX turns reasoning into versioned cognitive artifacts.
 
 Conceptually, CTX introduces a new innovation layer in AI: a persistent cognitive layer for agent work.
 Instead of letting daily agent activity disappear into transient chats, prompts, and short-lived runs, CTX preserves goals, tasks, hypotheses, evidence, decisions, conclusions, and cognitive commits as durable working state.
@@ -13,6 +15,56 @@ It gives agents structured working memory so they can continue work instead of r
 That same property also gives CTX unusually high value when generating structured inputs for future model training, because it preserves how an idea evolved, what evidence supported it, what decisions were taken, and how the reasoning closed.
 Since the cognitive versioner stabilized in day-to-day development, we have not lost context again in practice. That result is still striking, and it is one of the strongest signals that this approach points toward what comes next.
 CTX is not only for coding workflows. It is also for cognitive planning, research, investigation, architecture, product thinking, operational continuity, and any long-running line of reasoning that should remain reconstructable over time.
+
+## Beyond Model Memory
+
+Provider-level memory from systems like OpenAI, Anthropic, and DeepSeek is useful, but it is not enough for serious long-running agent work.
+
+The real limitation is that provider memory is not cognitive structure. It is mostly typed or inferred text: preferences, summaries, snippets, and conversational residue from previous interactions.
+
+CTX preserves structured cognitive state.
+
+Model memory remembers fragments. CTX records cognitive state at the moment it is formed, then preserves how that state evolves across a timeline of goals, tasks, hypotheses, evidence, decisions, conclusions, runbooks, origins, and cognitive commits.
+
+That makes CTX a stronger memory layer for durable agent work:
+
+- it is explicit, not latent
+- it is inspectable, not hidden inside a model
+- it is versioned, not overwritten by later summaries
+- it is structured as goals, tasks, hypotheses, evidence, decisions, and conclusions
+- it can be audited, reconstructed, and resumed by another agent
+- it survives model changes, provider changes, chat compaction, and session loss
+
+The best result is not CTX instead of OpenAI, Anthropic, or DeepSeek. The best result is CTX integrated with them.
+
+Models provide intelligence. CTX provides durable cognitive continuity.
+
+Together, the agent stops depending on fragile chat memory and starts operating over a structured, persistent cognitive substrate.
+
+## MCP Exposure
+
+CTX includes a local stdio MCP server as an in-solution adapter over the existing application layer.
+
+The value is not "wrapping CTX in another protocol" for its own sake. The value is making CTX available as cognitive infrastructure to external agents and tools through a stable interface.
+
+The current local server can let agents:
+
+- read relevant working context without loading the whole repository state
+- retrieve durable decisions, evidence, and conclusions on demand
+- consume operational runbooks as compact contextual rules
+- interact with CTX as a long-running cognitive substrate instead of a one-shot prompt attachment
+- create controlled cognitive artifacts when the server is intentionally started with `--mode write`
+
+Current boundary:
+
+- transport is local stdio
+- default mode is `read-only`
+- write tools require `--mode write`
+- repository switching is guarded by the configured repo root or explicit allowlist
+- bootstrap map/apply is exposed for local demos and controlled project onboarding
+- HTTP transport and remote auth remain future work
+
+Setup is documented in `docs/CTX_MCP_AGENT_SETUP.md`, and the short public quickstart is in `docs/MCP_LOCAL_QUICKSTART.md`.
 
 ## Commit Semantics
 
@@ -30,6 +82,13 @@ That means:
 - not every closed task deserves its own commit
 - unresolved exploration can stay in `Working context` until the line stabilizes
 - commit history should read like durable state changes, not like a chat transcript of reasoning
+
+Useful commit boundaries are moments like:
+
+- an accepted decision
+- a stabilized conclusion
+- a materially consolidated interpretation
+- a work block that became worth preserving as durable memory
 
 ## Agent Start Model
 
@@ -54,9 +113,12 @@ Use this when the project root already contains `.ctx/`.
 
 ```powershell
 ctx
+ctx status
+ctx audit
+ctx next
 ```
 
-Then follow the next command implied by the current state. Use `ctx status` and `ctx audit` only when you need deeper inspection before acting. Record evidence and decisions while working, and use `ctx closeout` before `ctx commit`.
+Then continue from the recommended line, record evidence and decisions while working, and use `ctx closeout` before `ctx commit`.
 
 ### New cognitive project
 
@@ -182,7 +244,7 @@ The strongest demos are not graph demos. They are continuity demos.
 - Tiene un valor inusualmente alto para generar inputs estructurados de entrenamiento porque el camino de razonamiento queda preservado en lugar de ser reconstruido a posteriori.
 - Esto no es solo otra herramienta de IA. Es parte de la capa de infraestructura que necesitara la proxima generacion de workflows con agentes.
 
-Current version: `1.0.10`
+Current version: `1.0.11`
 
 ## Install
 
@@ -576,7 +638,7 @@ This is a planned direction, not a statement of current capability.
 - Formal V1 functional specification is documented in `docs/V1_FUNCTIONAL_SPEC.md`.
 - Pilot execution guidance is documented in `docs/PILOT_TESTING_GUIDE.md`.
 - Installation and first-use guidance are documented in `docs/INSTALLATION_AND_USAGE_GUIDE.md`.
-- Release baseline details are documented in `docs/RELEASE_1_0_10.md`.
+- Release baseline details are documented in `docs/RELEASE_1_0_11.md`.
 - A repeatable smoke test is available at `scripts/run-smoke-test.ps1`.
 - A repeatable branch/merge conflict demo is available at `scripts/run-merge-conflict-demo.ps1`.
 - A local publish script is available at `scripts/publish-local.ps1`.
