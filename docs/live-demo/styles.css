@@ -98,6 +98,11 @@ h1 {
   color: var(--muted);
 }
 
+.button.active {
+  background: var(--accent);
+  color: #fff;
+}
+
 .live-demo-card,
 .live-demo-placeholder {
   margin-top: 18px;
@@ -170,6 +175,118 @@ h1 {
   line-height: 1.65;
 }
 
+.setup-panel,
+.agent-section {
+  margin-top: 24px;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+}
+
+.setup-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.platform-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.form-grid,
+.agent-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.form-grid {
+  grid-template-columns: 1fr 1fr minmax(140px, 0.35fr);
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+input,
+select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  background: #fff;
+  font: inherit;
+}
+
+.helper-text {
+  margin: 14px 0 0;
+  color: var(--muted);
+}
+
+.setup-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.agent-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.setup-card,
+.agent-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.agent-card {
+  padding: 22px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+}
+
+.agent-card h3,
+.agent-card p,
+.setup-card p {
+  margin: 0;
+}
+
+.agent-card p,
+.setup-card p {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+pre {
+  min-height: 96px;
+  max-height: 260px;
+  margin: 0;
+  padding: 14px;
+  overflow: auto;
+  border: 1px solid rgba(33, 66, 118, 0.14);
+  border-radius: 14px;
+  background: #0f172a;
+  color: #dbeafe;
+  line-height: 1.45;
+}
+
+pre code {
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  white-space: pre;
+}
+
 code {
   padding: 2px 6px;
   border-radius: 8px;
@@ -199,8 +316,18 @@ code {
 
 @media (max-width: 920px) {
   .grid,
-  .screens {
+  .screens,
+  .setup-grid,
+  .agent-grid,
+  .form-grid {
     grid-template-columns: 1fr;
   }
-}
 
+  .setup-header {
+    display: block;
+  }
+
+  .platform-buttons {
+    margin-top: 16px;
+  }
+}

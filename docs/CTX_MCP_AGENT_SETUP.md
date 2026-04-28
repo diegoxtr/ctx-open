@@ -8,6 +8,18 @@ It runs in `read-only` mode by default, which lets an agent inspect CTX without 
 
 It can also run in `write` mode when the operator intentionally wants an agent to create cognitive artifacts through MCP.
 
+For a shorter public setup path, use [MCP_LOCAL_QUICKSTART.md](MCP_LOCAL_QUICKSTART.md). The static landing page also includes copy-ready configuration buttons at `docs/live-demo/mcp-local.html`.
+
+## Platform Paths
+
+| Platform | Default install root | MCP launcher |
+|---|---|---|
+| Windows | `C:\ctx` | `C:\ctx\bin\ctx-mcp.cmd` |
+| Linux | `$HOME/.local/share/ctx` | `$HOME/.local/share/ctx/bin/ctx-mcp` |
+| macOS | `$HOME/.local/share/ctx` | `$HOME/.local/share/ctx/bin/ctx-mcp` |
+
+Replace the repository path in every example with the local folder that contains `.ctx`.
+
 ## What You Get
 
 The installed MCP server exposes these tools:

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Run CTX MCP Locally</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">Local MCP Setup</p>
+      <h1>Connect your agent to CTX.</h1>
+      <p class="lede">
+        GitHub Pages is static. The CTX MCP server runs locally on your machine through
+        an MCP-capable agent or IDE. Choose your platform, set the repository path, and
+        copy the configuration for your agent.
+      </p>
+      <div class="actions">
+        <a class="button primary" href="./index.html">Back To Landing</a>
+        <a class="button" href="../CTX_MCP_AGENT_SETUP.md">Full MCP Guide</a>
+        <a class="button ghost" href="https://github.com/diegoxtr/ctx-open/releases/tag/v1.0.9">Download Release</a>
+      </div>
+    </section>
+
+    <section class="setup-panel">
+      <div class="setup-header">
+        <div>
+          <p class="eyebrow">Step 1</p>
+          <h2>Set local paths</h2>
+        </div>
+        <div class="platform-buttons" aria-label="Platform presets">
+          <button type="button" class="button ghost platform-button active" data-platform="windows">Windows</button>
+          <button type="button" class="button ghost platform-button" data-platform="linux">Linux</button>
+          <button type="button" class="button ghost platform-button" data-platform="macos">macOS</button>
+        </div>
+      </div>
+      <div class="form-grid">
+        <label>
+          Install root
+          <input id="install-root" type="text" value="C:\ctx">
+        </label>
+        <label>
+          CTX repository
+          <input id="repo-path" type="text" value="C:\sources\ctx-open">
+        </label>
+        <label>
+          Mode
+          <select id="mcp-mode">
+            <option value="read-only">read-only</option>
+            <option value="write">write</option>
+          </select>
+        </label>
+      </div>
+      <p class="helper-text">
+        Keep read-only mode unless you intentionally want the agent to create or update CTX artifacts.
+      </p>
+    </section>
+
+    <section class="grid setup-grid">
+      <article class="card setup-card">
+        <h2>Verify install</h2>
+        <p>Run this first to confirm the MCP launcher exists.</p>
+        <pre><code id="verify-snippet"></code></pre>
+        <button type="button" class="button copy-button" data-copy-target="verify-snippet">Copy verify command</button>
+      </article>
+      <article class="card setup-card">
+        <h2>Generic MCP JSON</h2>
+        <p>Use this shape for MCP clients that accept an <code>mcpServers</code> block.</p>
+        <pre><code id="generic-snippet"></code></pre>
+        <button type="button" class="button copy-button" data-copy-target="generic-snippet">Copy JSON</button>
+      </article>
+      <article class="card setup-card">
+        <h2>Smoke test prompt</h2>
+        <p>Paste this into the agent after restarting it.</p>
+        <pre><code id="prompt-snippet">Use the ctx MCP server. Call ctx_status and ctx_audit for the configured repository. Report branch, head, dirty state, warning count, and error count.</code></pre>
+        <button type="button" class="button copy-button" data-copy-target="prompt-snippet">Copy prompt</button>
+      </article>
+    </section>
+
+    <section class="agent-section">
+      <div class="setup-header">
+        <div>
+          <p class="eyebrow">Step 2</p>
+          <h2>Choose your agent</h2>
+        </div>
+      </div>
+      <div class="agent-grid">
+        <article class="agent-card">
+          <h3>Claude Code</h3>
+          <p>Copies the CLI command that registers CTX as a local MCP server.</p>
+          <pre><code id="claude-code-snippet"></code></pre>
+          <button type="button" class="button copy-button" data-copy-target="claude-code-snippet">Copy Claude Code command</button>
+        </article>
+        <article class="agent-card">
+          <h3>Claude Desktop</h3>
+          <p>Copies the desktop <code>mcpServers</code> configuration block.</p>
+          <pre><code id="claude-desktop-snippet"></code></pre>
+          <button type="button" class="button copy-button" data-copy-target="claude-desktop-snippet">Copy Claude Desktop JSON</button>
+        </article>
+        <article class="agent-card">
+          <h3>VS Code / Copilot</h3>
+          <p>Copies the VS Code <code>servers</code> configuration shape.</p>
+          <pre><code id="vscode-snippet"></code></pre>
+          <button type="button" class="button copy-button" data-copy-target="vscode-snippet">Copy VS Code JSON</button>
+        </article>
+        <article class="agent-card">
+          <h3>Codex</h3>
+          <p>Copies a <code>config.toml</code> block for Codex MCP startup.</p>
+          <pre><code id="codex-snippet"></code></pre>
+          <button type="button" class="button copy-button" data-copy-target="codex-snippet">Copy Codex TOML</button>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const presets = {
+      windows: {
+        installRoot: "C:\\ctx",
+        repoPath: "C:\\sources\\ctx-open",
+        command: root => `${root}\\bin\\ctx-mcp.cmd`,
+        verify: root => `Test-Path ${root}\\bin\\ctx-mcp.cmd\nTest-Path ${root}\\mcp\\Ctx.Mcp.exe`
+      },
+      linux: {
+        installRoot: "$HOME/.local/share/ctx",
+        repoPath: "$HOME/sources/ctx-open",
+        command: root => `${root}/bin/ctx-mcp`,
+        verify: root => `test -x ${root}/bin/ctx-mcp\ntest -x ${root}/mcp/Ctx.Mcp`
+      },
+      macos: {
+        installRoot: "$HOME/.local/share/ctx",
+        repoPath: "$HOME/sources/ctx-open",
+        command: root => `${root}/bin/ctx-mcp`,
+        verify: root => `test -x ${root}/bin/ctx-mcp\ntest -x ${root}/mcp/Ctx.Mcp`
+      }
+    };
+
+    const installRootInput = document.getElementById("install-root");
+    const repoPathInput = document.getElementById("repo-path");
+    const modeInput = document.getElementById("mcp-mode");
+    let platform = "windows";
+
+    function jsonConfig(command, repoPath, mode, topKey = "mcpServers") {
+      return JSON.stringify({
+        [topKey]: {
+          ctx: {
+            command,
+            args: ["--repo", repoPath, "--mode", mode]
+          }
+        }
+      }, null, 2);
+    }
+
+    function renderSnippets() {
+      const preset = presets[platform];
+      const root = installRootInput.value.trim() || preset.installRoot;
+      const repoPath = repoPathInput.value.trim() || preset.repoPath;
+      const mode = modeInput.value;
+      const command = preset.command(root);
+      const quotedCommand = platform === "windows" ? command : `"${command}"`;
+      const quotedRepo = platform === "windows" ? repoPath : `"${repoPath}"`;
+
+      document.getElementById("verify-snippet").textContent = preset.verify(root);
+      document.getElementById("generic-snippet").textContent = jsonConfig(command, repoPath, mode);
+      document.getElementById("claude-code-snippet").textContent = `claude mcp add ctx -- ${quotedCommand} --repo ${quotedRepo} --mode ${mode}`;
+      document.getElementById("claude-desktop-snippet").textContent = jsonConfig(command, repoPath, mode);
+      document.getElementById("vscode-snippet").textContent = jsonConfig(command, repoPath, mode, "servers");
+      document.getElementById("codex-snippet").textContent = `[mcp_servers.ctx]\ncommand = "${command.replaceAll("\\", "\\\\")}"\nargs = ["--repo", "${repoPath.replaceAll("\\", "\\\\")}", "--mode", "${mode}"]`;
+    }
+
+    document.querySelectorAll(".platform-button").forEach(button => {
+      button.addEventListener("click", () => {
+        platform = button.dataset.platform;
+        document.querySelectorAll(".platform-button").forEach(item => item.classList.toggle("active", item === button));
+        installRootInput.value = presets[platform].installRoot;
+        repoPathInput.value = presets[platform].repoPath;
+        renderSnippets();
+      });
+    });
+
+    [installRootInput, repoPathInput, modeInput].forEach(input => input.addEventListener("input", renderSnippets));
+    modeInput.addEventListener("change", renderSnippets);
+
+    document.querySelectorAll(".copy-button").forEach(button => {
+      button.addEventListener("click", async () => {
+        const target = document.getElementById(button.dataset.copyTarget);
+        await navigator.clipboard.writeText(target.textContent);
+        const original = button.textContent;
+        button.textContent = "Copied";
+        setTimeout(() => { button.textContent = original; }, 1300);
+      });
+    });
+
+    renderSnippets();
+  </script>
+</body>
+</html>
