@@ -346,7 +346,7 @@ Default mode is read-only:
 C:\ctx\bin\ctx-mcp.cmd --repo C:\sources\ctx-open --mode read-only
 ```
 
-Use `--mode write` only when an operator intentionally wants the agent to create CTX artifacts. Setup examples are documented in `docs/CTX_MCP_AGENT_SETUP.md`.
+Use `--mode write` only when an operator intentionally wants the agent to create CTX artifacts. Setup examples are documented in `docs/CTX_MCP_AGENT_SETUP.md`, and the short public quickstart is in `docs/MCP_LOCAL_QUICKSTART.md`.
 What this shows:
 
 - durable commit history preserved as structured reasoning
