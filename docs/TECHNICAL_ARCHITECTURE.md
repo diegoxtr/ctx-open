@@ -60,9 +60,9 @@ Conceptual view:
 ## 1. Domain layer
 
 Files:
-- [Model.cs](C:/sources/ctx/Ctx.Domain/Model.cs)
-- [Identifiers.cs](C:/sources/ctx/Ctx.Domain/Identifiers.cs)
-- [Enums.cs](C:/sources/ctx/Ctx.Domain/Enums.cs)
+- [Model.cs](../Ctx.Domain/Model.cs)
+- [Identifiers.cs](../Ctx.Domain/Identifiers.cs)
+- [Enums.cs](../Ctx.Domain/Enums.cs)
 
 Responsibility:
 - define domain model
@@ -76,7 +76,7 @@ Principle:
 ## 2. Application layer
 
 Files:
-- [ICtxApplicationService.cs](C:/sources/ctx/Ctx.Application/ICtxApplicationService.cs)
+- [ICtxApplicationService.cs](../Ctx.Application/ICtxApplicationService.cs)
 
 Responsibility:
 - define use-case contracts
@@ -103,12 +103,12 @@ Key interfaces:
 ## 3. Core layer
 
 Files:
-- [CtxApplicationService.cs](C:/sources/ctx/Ctx.Core/CtxApplicationService.cs)
-- [ContextBuilder.cs](C:/sources/ctx/Ctx.Core/ContextBuilder.cs)
-- [RunOrchestrator.cs](C:/sources/ctx/Ctx.Core/RunOrchestrator.cs)
-- [CommitEngine.cs](C:/sources/ctx/Ctx.Core/CommitEngine.cs)
-- [DiffEngine.cs](C:/sources/ctx/Ctx.Core/DiffEngine.cs)
-- [MergeEngine.cs](C:/sources/ctx/Ctx.Core/MergeEngine.cs)
+- [CtxApplicationService.cs](../Ctx.Core/CtxApplicationService.cs)
+- [ContextBuilder.cs](../Ctx.Core/ContextBuilder.cs)
+- [RunOrchestrator.cs](../Ctx.Core/RunOrchestrator.cs)
+- [CommitEngine.cs](../Ctx.Core/CommitEngine.cs)
+- [DiffEngine.cs](../Ctx.Core/DiffEngine.cs)
+- [MergeEngine.cs](../Ctx.Core/MergeEngine.cs)
 
 Responsibility:
 - implement core product logic
@@ -203,8 +203,8 @@ Tests cover:
 
 ## Related references
 
-- [DOMAIN_MODEL.md](C:/sources/ctx-open/docs/DOMAIN_MODEL.md)
-- [CTX_STRUCTURE.md](C:/sources/ctx-open/docs/CTX_STRUCTURE.md)
-- [CLI_COMMANDS.md](C:/sources/ctx-open/docs/CLI_COMMANDS.md)
-- [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-open/docs/V1_FUNCTIONAL_SPEC.md)
+- [DOMAIN_MODEL.md](DOMAIN_MODEL.md)
+- [CTX_STRUCTURE.md](CTX_STRUCTURE.md)
+- [CLI_COMMANDS.md](CLI_COMMANDS.md)
+- [V1_FUNCTIONAL_SPEC.md](V1_FUNCTIONAL_SPEC.md)
 

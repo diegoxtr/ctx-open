@@ -1,7 +1,7 @@
-# CTX CLI Commands
+﻿# CTX CLI Commands
 If a language model and its agent lose context, this is the tool you need.
 
-This document describes the current CTX CLI surface in `C:\sources\ctx-open`.
+This document describes the current CTX CLI surface in this repository.
 
 CTX returns structured JSON output with this base format:
 
@@ -32,6 +32,8 @@ ctx <command>
 - Multiple lists use comma-separated values.
 - Most mutating changes affect `.ctx/working`, `.ctx/staging`, `.ctx/graph`, and eventually a later cognitive commit.
 
+## General Commands
+
 ## First-Use Startup Flows
 
 Do not start from a full command dump.
@@ -45,7 +47,7 @@ CTX should be operated as a small state machine, not as an unordered command lis
 |---|---|---|
 | No CTX repository | `.ctx/` does not exist yet | `ctx init --name "<project>"` |
 | Existing repo with open work | There are active task lines to continue | `ctx next` |
-| Existing repo with pending cognitive changes | `Working context` is dirty and not yet snapshotted | `ctx closeout` |
+| Existing repo with pending cognitive changes | `Working context` is dirty and not yet snapshotteado | `ctx closeout` |
 | Existing repo at a durable boundary | Closeout is clear and the block should become durable history | `ctx commit -m "<durable result>"` |
 | Existing repo with no open work | No tasks are active; inspect remaining gaps or confirm closure | `ctx next` |
 
@@ -55,9 +57,12 @@ Use this when `.ctx/` already exists in the project root.
 
 ```powershell
 ctx
+ctx status
+ctx audit
+ctx next
 ```
 
-Then follow the next command implied by the current state. Use `ctx status` and `ctx audit` only when you need deeper inspection before acting.
+Then continue from the recommended work line.
 
 ### New cognitive project
 
@@ -247,6 +252,60 @@ Current task factors:
 dotnet run --project .\Ctx.Cli -- next
 ```
 
+### `ctx plan`
+
+Builds a compact planning packet for the next work turn.
+
+MCP equivalent: `ctx_plan`.
+
+This is the preferred agent startup surface because it combines the common planning reads into one response instead of requiring separate calls to `ctx status`, `ctx next`, `ctx context`, and runbook inspection.
+
+Returns:
+- repository branch, head, and dirty state
+- `ctx next` recommendation and diagnostics
+- a focused context packet
+- applicable runbook suggestions
+- short planning guidance
+
+Options:
+- `--purpose <text>`
+- `--goal <goalId>`
+- `--task <taskId>`
+
+```powershell
+dotnet run --project .\Ctx.Cli -- plan --purpose "Plan MCP planning surface"
+```
+
+Typical output shape:
+
+```json
+{
+  "branch": "main",
+  "headCommitId": "<ctx-head>",
+  "dirty": false,
+  "purpose": "Plan MCP planning surface",
+  "next": {
+    "recommended": {
+      "candidateType": "Task",
+      "entityId": "<taskId>",
+      "title": "<task title>",
+      "state": "Ready",
+      "score": 0.62
+    },
+    "diagnostics": {},
+    "runbookSuggestions": []
+  },
+  "context": {
+    "id": { "value": "<contextPacketId>" },
+    "estimatedTokens": 1900,
+    "sections": []
+  },
+  "runbookSuggestions": [],
+  "additionalRunbooksAvailable": [],
+  "guidance": []
+}
+```
+
 ### `ctx check`
 
 Checks whether a task thread is ready for a cognitive commit.
@@ -306,7 +365,7 @@ dotnet run --project .\Ctx.Cli -- closeout
 Runs a compact operational preflight for a critical operation before execution or Git closeout.
 
 Options:
-- `--operation <git-closeout|publish-local|viewer-validation|recover-index-lock>`
+- `--operation <git-closeout|publish-local|viewer-validation|public-release|recover-index-lock>`
 - `--goal <goalId>` optional
 - `--task <taskId>` optional
 
@@ -320,11 +379,36 @@ Returns:
 Typical usage:
 - before Git commit or push: `ctx preflight --operation git-closeout`
 - before local publish: `ctx preflight --operation publish-local`
+- after publishing a GitHub Release, before sharing or closing the release: `ctx preflight --operation github-release`
 - when Git is blocked by `index.lock`: `ctx preflight --operation recover-index-lock`
 
 ```powershell
 dotnet run --project .\Ctx.Cli -- preflight --operation git-closeout
 dotnet run --project .\Ctx.Cli -- preflight --operation publish-local --task <taskId>
+dotnet run --project .\Ctx.Cli -- preflight --operation github-release
+```
+
+### `ctx operational review`
+
+Reviews repeated operational `IssueTrigger` entries and promotes recurring procedure failures into runbook-update guidance.
+
+Options:
+- `--operation <operation>` optional, for example `publish-local` or `git-closeout`
+- `--threshold <n>` optional, defaults to `2`
+
+Returns:
+- repeated issue fingerprints that reached the threshold
+- occurrence count and trigger ids
+- related runbooks when any already match the operation
+- suggested runbook updates for preconditions, failure signals, verification, and escalation boundaries
+
+Typical usage:
+- after the same blocker appears twice in one procedure
+- before retrying a procedure that preflight reports as having repeated issues
+- when deciding whether an operational lesson belongs in a playbook/runbook
+
+```powershell
+dotnet run --project .\Ctx.Cli -- operational review --operation publish-local --threshold 2
 ```
 
 ### `ctx runbook add`
@@ -385,6 +469,31 @@ Options:
 
 ```powershell
 dotnet run --project .\Ctx.Cli -- trigger add --kind UserPrompt --summary "Fix viewer collapse interaction" --text "The collapse button feels broken and should move to a cleaner rail pattern." --task <taskId>
+```
+
+### `ctx prompt list`
+
+Extracts prompt-like `CognitiveTrigger` entries in stable chronological order.
+
+Default kinds:
+- `UserPrompt`
+- `AgentPrompt`
+- `Continuation`
+
+Options:
+- `--kind <kind>` optional. Use `AgentPrompt`, `UserPrompt`, `Continuation`, `RunbookTrigger`, `IssueTrigger`, `prompt`, or `all`.
+
+Output is ordered by `createdAtUtc` ascending and then by trigger id, so repeated exports are consistent.
+
+```powershell
+dotnet run --project .\Ctx.Cli -- prompt list
+dotnet run --project .\Ctx.Cli -- prompt list --kind AgentPrompt
+```
+
+Alias:
+
+```powershell
+dotnet run --project .\Ctx.Cli -- prompts --kind all
 ```
 
 ### `ctx trigger list`
@@ -689,6 +798,48 @@ Shows a specific hypothesis.
 dotnet run --project .\Ctx.Cli -- hypo show <hypothesisId>
 ```
 
+### `ctx hypo relate <hypothesisId>`
+
+Adds an explicit relation between two hypotheses.
+
+Options:
+- `--relation <type>` required
+- `--to <hypothesisId>` required
+- `--note <text>` optional
+
+Useful relation types:
+- `competes-with`
+- `merged-into`
+- `supersedes`
+- `derived-from`
+- `borrows-evidence-from`
+
+```powershell
+dotnet run --project .\Ctx.Cli -- hypo relate <hypothesisId> --relation competes-with --to <otherHypothesisId> --note "same evidence, different interpretation"
+```
+
+### `ctx hypo merge <sourceHypothesisId>`
+
+Merges one hypothesis into another while preserving lineage.
+
+Options:
+- `--into <targetHypothesisId>` required
+
+```powershell
+dotnet run --project .\Ctx.Cli -- hypo merge <sourceHypothesisId> --into <targetHypothesisId>
+```
+
+### `ctx hypo supersede <oldHypothesisId>`
+
+Marks one hypothesis as superseded by another.
+
+Options:
+- `--by <newHypothesisId>` required
+
+```powershell
+dotnet run --project .\Ctx.Cli -- hypo supersede <oldHypothesisId> --by <newHypothesisId>
+```
+
 ### Branch-like hypothesis commands
 
 These commands support the first branch-like hypothesis surface for competing interpretations.
@@ -734,6 +885,21 @@ Options:
 
 ```powershell
 dotnet run --project .\Ctx.Cli -- evidence add --title "Benchmark" --summary "Supports the current hypothesis" --source "pilot" --kind Experiment --supports hypothesis:<hypothesisId>
+```
+
+### `ctx evidence share <evidenceId>`
+
+Shares existing evidence to another supported entity without duplicating the evidence record.
+
+Options:
+- `--to <entityType:id>` required
+
+Typical usage:
+- share evidence from one hypothesis branch to another interpretation
+- attach already-recorded evidence to a later decision or conclusion when the model supports that reference
+
+```powershell
+dotnet run --project .\Ctx.Cli -- evidence share <evidenceId> --to hypothesis:<hypothesisId>
 ```
 
 ### `ctx evidence list`
@@ -1144,7 +1310,8 @@ dotnet run --project .\Ctx.Cli -- import --input .\tmp\ctx-export.json
 Short cognitive workflow:
 
 ```powershell
-dotnet run --project .\Ctx.Cli --
+dotnet run --project .\Ctx.Cli -- status
+dotnet run --project .\Ctx.Cli -- audit
 dotnet run --project .\Ctx.Cli -- next
 dotnet run --project .\Ctx.Cli -- closeout
 dotnet run --project .\Ctx.Cli -- goal add --title "Validate flow"
@@ -1164,6 +1331,5 @@ dotnet run --project .\Ctx.Cli -- thread reconstruct --task <taskId> --format ma
 dotnet run --project .\Ctx.Cli -- log
 dotnet run --project .\Ctx.Cli -- diff
 ```
-
 
 

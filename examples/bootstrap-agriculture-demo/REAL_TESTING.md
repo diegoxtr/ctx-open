@@ -2,12 +2,12 @@
 
 Repo under test:
 
-- `C:\sources\ctx-open\examples\bootstrap-agriculture-demo`
+- `C:\path\to\ctx-repo\examples\bootstrap-agriculture-demo`
 
 Source artifact:
 
-- [agricultural-systems-article.md](C:/sources/ctx-open/examples/bootstrap-agriculture-demo/agricultural-systems-article.md)
-- [agricultural-systems-contradictions.md](C:/sources/ctx-open/examples/bootstrap-agriculture-demo/agricultural-systems-contradictions.md)
+- [agricultural-systems-article.md](agricultural-systems-article.md)
+- [agricultural-systems-contradictions.md](agricultural-systems-contradictions.md)
 
 ## Testing objective
 
@@ -29,15 +29,15 @@ ctx init --name "Bootstrap Agriculture Demo" --description "Bootstrap validation
 The installed CLI in `C:\ctx\bin` did not expose `bootstrap` yet, so the working test commands had to run from source:
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- bootstrap map --from .\agricultural-systems-article.md
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- bootstrap apply --from .\agricultural-systems-article.md
+dotnet run --project ..\..\Ctx.Cli -- bootstrap map --from .\agricultural-systems-article.md
+dotnet run --project ..\..\Ctx.Cli -- bootstrap apply --from .\agricultural-systems-article.md
 ```
 
 For inspection after `apply`, using the built DLL avoided repeated `dotnet run` rebuild locks:
 
 ```powershell
-dotnet C:\sources\ctx-open\Ctx.Cli\bin\Debug\net8.0\Ctx.Cli.dll status
-dotnet C:\sources\ctx-open\Ctx.Cli\bin\Debug\net8.0\Ctx.Cli.dll audit
+dotnet ..\..\Ctx.Cli\bin\Debug\net8.0\Ctx.Cli.dll status
+dotnet ..\..\Ctx.Cli\bin\Debug\net8.0\Ctx.Cli.dll audit
 ```
 
 ## What worked
@@ -114,7 +114,7 @@ So the line looked populated, but the core hypothesis still had no direct suppor
 
 ### 6. Repeated source execution caused file-lock warnings
 
-Running `dotnet run --project C:\sources\ctx-open\Ctx.Cli -- ...` repeatedly produced `MSB3026` copy warnings because `Ctx.Cli.exe` remained locked by previous processes during rebuild.
+Running `dotnet run --project ..\..\Ctx.Cli -- ...` repeatedly produced `MSB3026` copy warnings because `Ctx.Cli.exe` remained locked by previous processes during rebuild.
 
 This does not invalidate the feature, but it does affect the realism and smoothness of local testing.
 
@@ -177,7 +177,7 @@ Final semantic outcome of this demo:
 
 Second source artifact:
 
-- [agricultural-systems-contradictions.md](C:/sources/ctx-open/examples/bootstrap-agriculture-demo/agricultural-systems-contradictions.md)
+- [agricultural-systems-contradictions.md](agricultural-systems-contradictions.md)
 
 ## Testing objective
 
@@ -290,4 +290,3 @@ This article should remain in `examples` as a standing regression case for:
 - stronger provisional thread naming
 
 If a future bootstrap revision can ingest this article and directly emit a compact multi-hypothesis provisional map without losing the conflict structure, that will represent a real quality jump.
-

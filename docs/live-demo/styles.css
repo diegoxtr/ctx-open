@@ -205,6 +205,40 @@ h1 {
   gap: 16px;
 }
 
+.claude-guide {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(260px, 0.8fr);
+  gap: 18px;
+  margin-bottom: 18px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--panel-soft);
+}
+
+.claude-guide h3,
+.claude-guide p,
+.claude-guide ol {
+  margin: 0;
+}
+
+.claude-guide ol {
+  padding-left: 22px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.claude-guide h3 {
+  margin-bottom: 12px;
+}
+
+.claude-note {
+  display: flex;
+  align-items: center;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
 .form-grid {
   grid-template-columns: 1fr 1fr minmax(140px, 0.35fr);
 }
@@ -319,6 +353,7 @@ code {
   .screens,
   .setup-grid,
   .agent-grid,
+  .claude-guide,
   .form-grid {
     grid-template-columns: 1fr;
   }

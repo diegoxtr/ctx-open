@@ -935,6 +935,6 @@ public abstract record CognitiveEntity<TId>(TId Id, Traceability Trace);
 
 ## 相关参考
 
-- [CTX_STRUCTURE.md](C:/sources/ctx-open/docs/CTX_STRUCTURE.md)
-- [CLI_COMMANDS.md](C:/sources/ctx-open/docs/CLI_COMMANDS.md)
-- [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-open/docs/V1_FUNCTIONAL_SPEC.md)
+- [CTX_STRUCTURE.md](../CTX_STRUCTURE.md)
+- [CLI_COMMANDS.md](../CLI_COMMANDS.md)
+- [V1_FUNCTIONAL_SPEC.md](../V1_FUNCTIONAL_SPEC.md)

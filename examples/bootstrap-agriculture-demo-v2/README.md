@@ -16,15 +16,6 @@ Primary source strategy:
 
 Artifacts for this version:
 
-- [V2_PLAN.md](C:/sources/ctx-open/examples/bootstrap-agriculture-demo-v2/V2_PLAN.md)
+- [V2_PLAN.md](V2_PLAN.md)
 
-In `ctx-open`, this folder is published as a design-and-testing pack.
-
-Open it directly here:
-
-- Codespaces: `/workspaces/ctx-open/examples/bootstrap-agriculture-demo-v2`
-- Local clone: `C:\sources\ctx-open\examples\bootstrap-agriculture-demo-v2`
-
-This public example already ships with its `.ctx` workspace.
-If you want to replay the case, duplicate the folder first so the `v2` experiment can evolve independently from the published baseline.
-
+This folder is initialized as its own CTX cognitive repository so the v2 experiment can evolve independently from the closed v1 demo.

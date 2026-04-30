@@ -60,10 +60,10 @@ Vista conceptual:
 ## 1. Capa Domain
 
 Proyecto:
-- [Model.cs](C:/sources/ctx/Ctx.Domain/Model.cs)
-- [Identifiers.cs](C:/sources/ctx/Ctx.Domain/Identifiers.cs)
-- [Enums.cs](C:/sources/ctx/Ctx.Domain/Enums.cs)
-- [Class1.cs](C:/sources/ctx/Ctx.Domain/Class1.cs)
+- [Model.cs](../../Ctx.Domain/Model.cs)
+- [Identifiers.cs](../../Ctx.Domain/Identifiers.cs)
+- [Enums.cs](../../Ctx.Domain/Enums.cs)
+- [Class1.cs](../../Ctx.Domain/Class1.cs)
 
 Responsabilidad:
 - definir el modelo de dominio
@@ -82,7 +82,7 @@ Principio:
 ## 2. Capa Application
 
 Proyecto:
-- [ICtxApplicationService.cs](C:/sources/ctx/Ctx.Application/ICtxApplicationService.cs)
+- [ICtxApplicationService.cs](../../Ctx.Application/ICtxApplicationService.cs)
 
 Responsabilidad:
 - definir contratos de casos de uso
@@ -112,12 +112,12 @@ Rol arquitectonico:
 ## 3. Capa Core
 
 Proyecto:
-- [CtxApplicationService.cs](C:/sources/ctx/Ctx.Core/CtxApplicationService.cs)
-- [ContextBuilder.cs](C:/sources/ctx/Ctx.Core/ContextBuilder.cs)
-- [RunOrchestrator.cs](C:/sources/ctx/Ctx.Core/RunOrchestrator.cs)
-- [CommitEngine.cs](C:/sources/ctx/Ctx.Core/CommitEngine.cs)
-- [DiffEngine.cs](C:/sources/ctx/Ctx.Core/DiffEngine.cs)
-- [MergeEngine.cs](C:/sources/ctx/Ctx.Core/MergeEngine.cs)
+- [CtxApplicationService.cs](../../Ctx.Core/CtxApplicationService.cs)
+- [ContextBuilder.cs](../../Ctx.Core/ContextBuilder.cs)
+- [RunOrchestrator.cs](../../Ctx.Core/RunOrchestrator.cs)
+- [CommitEngine.cs](../../Ctx.Core/CommitEngine.cs)
+- [DiffEngine.cs](../../Ctx.Core/DiffEngine.cs)
+- [MergeEngine.cs](../../Ctx.Core/MergeEngine.cs)
 
 Responsabilidad:
 - implementar la lÃ³gica critica del producto
@@ -197,7 +197,7 @@ Responsabilidad:
 ## 4. Capa Persistence
 
 Proyecto:
-- [Class1.cs](C:/sources/ctx/Ctx.Persistence/Class1.cs)
+- [Class1.cs](../../Ctx.Persistence/Class1.cs)
 - otros repositorios `FileSystem*Repository`
 
 Responsabilidad:
@@ -223,9 +223,9 @@ Punto clave:
 ## 5. Capa Providers
 
 Proyecto:
-- [Class1.cs](C:/sources/ctx/Ctx.Providers/Class1.cs)
-- [OpenAiProvider.cs](C:/sources/ctx/Ctx.Providers/OpenAiProvider.cs)
-- [AnthropicProvider.cs](C:/sources/ctx/Ctx.Providers/AnthropicProvider.cs)
+- [Class1.cs](../../Ctx.Providers/Class1.cs)
+- [OpenAiProvider.cs](../../Ctx.Providers/OpenAiProvider.cs)
+- [AnthropicProvider.cs](../../Ctx.Providers/AnthropicProvider.cs)
 
 Responsabilidad:
 - abstraer ejecuciÃ³n contra proveedores LLM
@@ -245,7 +245,7 @@ Punto clave:
 ## 6. Capa Infrastructure
 
 Proyecto:
-- [Class1.cs](C:/sources/ctx/Ctx.Infrastructure/Class1.cs)
+- [Class1.cs](../../Ctx.Infrastructure/Class1.cs)
 
 Responsabilidad:
 - composition root
@@ -269,7 +269,7 @@ Punto clave:
 ## 7. Capa CLI
 
 Proyecto:
-- [Program.cs](C:/sources/ctx/Ctx.Cli/Program.cs)
+- [Program.cs](../../Ctx.Cli/Program.cs)
 
 Responsabilidad:
 - parsear argumentos
@@ -289,10 +289,10 @@ Punto clave:
 ## 8. Capa Tests
 
 Proyecto:
-- [ApplicationServiceTests.cs](C:/sources/ctx/Ctx.Tests/ApplicationServiceTests.cs)
-- [ContextBuilderTests.cs](C:/sources/ctx/Ctx.Tests/ContextBuilderTests.cs)
-- [CommitEngineTests.cs](C:/sources/ctx/Ctx.Tests/CommitEngineTests.cs)
-- [DiffEngineTests.cs](C:/sources/ctx/Ctx.Tests/DiffEngineTests.cs)
+- [ApplicationServiceTests.cs](../../Ctx.Tests/ApplicationServiceTests.cs)
+- [ContextBuilderTests.cs](../../Ctx.Tests/ContextBuilderTests.cs)
+- [CommitEngineTests.cs](../../Ctx.Tests/CommitEngineTests.cs)
+- [DiffEngineTests.cs](../../Ctx.Tests/DiffEngineTests.cs)
 
 Responsabilidad:
 - validar motores centrales
@@ -495,8 +495,8 @@ Eso permite seguir evolucionando CTX sin colapsar toda la soluciÃ³n en una sol
 
 ## Referencias Relacionadas
 
-- [DOMAIN_MODEL.md](C:/sources/ctx-open/docs/DOMAIN_MODEL.md)
-- [CTX_STRUCTURE.md](C:/sources/ctx-open/docs/CTX_STRUCTURE.md)
-- [CLI_COMMANDS.md](C:/sources/ctx-open/docs/CLI_COMMANDS.md)
-- [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-open/docs/V1_FUNCTIONAL_SPEC.md)
+- [DOMAIN_MODEL.md](../DOMAIN_MODEL.md)
+- [CTX_STRUCTURE.md](../CTX_STRUCTURE.md)
+- [CLI_COMMANDS.md](../CLI_COMMANDS.md)
+- [V1_FUNCTIONAL_SPEC.md](../V1_FUNCTIONAL_SPEC.md)
 

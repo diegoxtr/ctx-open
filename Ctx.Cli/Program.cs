@@ -57,11 +57,17 @@ static async Task<CommandResult> DispatchAsync(IReadOnlyList<string> args, ICtxA
         "usage" when Match(args, "usage", "summary") => await DispatchUsageSummaryAsync(service, repositoryPath, cancellationToken),
         "usage" when Match(args, "usage", "coverage") => await DispatchUsageCoverageAsync(service, repositoryPath, cancellationToken),
         "next" => await service.NextAsync(repositoryPath, cancellationToken),
+        "plan" => await service.PlanAsync(repositoryPath, GetOption(args, "--purpose") ?? "Plan next CTX work", GetOption(args, "--goal"), GetOption(args, "--task"), cancellationToken),
         "doctor" => await service.DoctorAsync(repositoryPath, cancellationToken),
         "audit" => await service.AuditAsync(repositoryPath, cancellationToken),
         "check" => await service.CheckAsync(repositoryPath, GetOption(args, "--task"), cancellationToken),
         "closeout" => await service.CloseoutAsync(repositoryPath, cancellationToken),
         "preflight" => await service.PreflightAsync(repositoryPath, RequireOption(args, "--operation"), GetOption(args, "--goal"), GetOption(args, "--task"), cancellationToken),
+        "operational" when Match(args, "operational", "review") => await service.OperationalReviewAsync(
+            repositoryPath,
+            GetOption(args, "--operation"),
+            int.TryParse(GetOption(args, "--threshold"), out var recurrenceThreshold) ? recurrenceThreshold : 2,
+            cancellationToken),
         "graph" when Match(args, "graph", "summary") => await service.GraphSummaryAsync(repositoryPath, cancellationToken),
         "graph" when Match(args, "graph", "show") => await service.GraphShowAsync(repositoryPath, RequirePositional(args, 2, "node id"), cancellationToken),
         "graph" when Match(args, "graph", "export") => await service.ExportGraphAsync(repositoryPath, GetOption(args, "--format") ?? "json", GetOption(args, "--commit"), null, null, null, cancellationToken),
@@ -127,6 +133,8 @@ static async Task<CommandResult> DispatchAsync(IReadOnlyList<string> args, ICtxA
             cancellationToken),
         "runbook" when Match(args, "runbook", "list") => await service.ListOperationalRunbooksAsync(repositoryPath, cancellationToken),
         "runbook" when Match(args, "runbook", "show") => await service.ShowOperationalRunbookAsync(repositoryPath, RequirePositional(args, 2, "runbook id"), cancellationToken),
+        "prompt" when Match(args, "prompt", "list") => await service.ListPromptTimelineAsync(repositoryPath, GetOption(args, "--kind"), cancellationToken),
+        "prompts" => await service.ListPromptTimelineAsync(repositoryPath, GetOption(args, "--kind"), cancellationToken),
         "trigger" when Match(args, "trigger", "add") => await service.AddCognitiveTriggerAsync(
             repositoryPath,
             new AddCognitiveTriggerRequest(
@@ -623,6 +631,8 @@ Core Commands:
   ctx status            inspect current cognitive state
   ctx audit             consistency check before continuing
   ctx next              CTX-prioritized next step
+  ctx plan              compact planning packet for the next work turn
+  ctx prompt list       prompt/trigger timeline ordered by creation date
   ctx closeout          review what still separates working state from HEAD
   ctx commit -m "..."   durable cognitive snapshot
   ctx helper            show this operator guide again
@@ -633,6 +643,7 @@ Common Surfaces:
   ctx graph summary|show|export|lineage ...
   ctx thread reconstruct ...
   ctx preflight --operation <...>
+  ctx operational review --operation <...> [--threshold 2]
 
 Full Command Reference:
   {{cliCommandsDoc}}

@@ -7,7 +7,7 @@ Esta guia esta pensada para ejecutar en vivo durante una charla.
 Abrir la carpeta:
 
 ```powershell
-cd examples\ctx\almacen-barrial-reglas
+cd C:\path\to\ctx-repo\examples\ctx\almacen-barrial-reglas
 rg --files
 ```
 
@@ -71,7 +71,7 @@ http://127.0.0.1:5271
 Cargar esta carpeta:
 
 ```text
-<repo>\examples\ctx\almacen-barrial-reglas
+C:\path\to\ctx-repo\examples\ctx\almacen-barrial-reglas
 ```
 
 Mostrar el grafo:

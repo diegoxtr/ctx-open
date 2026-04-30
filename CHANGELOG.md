@@ -2,6 +2,31 @@
 
 All notable changes to CTX will be documented in this file.
 
+## [1.0.12] - 2026-04-30
+
+### Added
+
+- `ctx prompt list` and alias `ctx prompts` for chronological prompt-like trigger extraction.
+- `ctx plan` for a compact planning packet that mirrors the MCP `ctx_plan` startup surface.
+- `ctx operational review` for repeated issue detection and runbook improvement guidance.
+- Claude-specific MCP setup blocks on the static MCP page, including Claude Code, Claude Desktop, project `.mcp.json`, and a `ctx_plan` smoke test prompt.
+
+### Changed
+
+- Static landing copy now highlights local MCP connection as a first-class path for agents.
+- MCP setup guidance now emphasizes read-only first connection, `ctx_plan` validation, and explicit write-mode opt-in.
+- `ctx preflight` now includes repeated operational issue guidance when recurrence reaches the configured threshold.
+- Example docs now avoid machine-specific checkout paths where relative or placeholder paths are sufficient.
+
+### Fixed
+
+- Stale hardcoded local checkout references in active example documentation were converted to relative paths or neutral placeholders.
+- Static MCP release links now target the 1.0.12 release line.
+
+### Validation
+
+- Release branch validation must confirm `ctx version` reports `1.0.12`, tests pass, JSON snippets parse, and no `.ctx` state is staged.
+
 ## [1.0.11] - 2026-04-28
 
 ### Added

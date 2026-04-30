@@ -19,7 +19,7 @@
       <div class="actions">
         <a class="button primary" href="./index.html">Back To Landing</a>
         <a class="button" href="https://github.com/diegoxtr/ctx-open/blob/main/docs/CTX_MCP_AGENT_SETUP.md">Full MCP Guide</a>
-        <a class="button ghost" href="https://github.com/diegoxtr/ctx-open/releases/tag/v1.0.11">Download Release</a>
+        <a class="button ghost" href="https://github.com/diegoxtr/ctx-open/releases/tag/v1.0.12">Download Release</a>
       </div>
     </section>
 
@@ -53,7 +53,8 @@
         </label>
       </div>
       <p class="helper-text">
-        Keep read-only mode unless you intentionally want the agent to create or update CTX artifacts.
+        Keep read-only mode for first connection. A successful setup should let the agent call <code>ctx_plan</code>
+        and report branch, dirty state, next work, context, and runbook guidance.
       </p>
     </section>
 
@@ -66,14 +67,14 @@
       </article>
       <article class="card setup-card">
         <h2>Generic MCP JSON</h2>
-        <p>Use this shape for MCP clients that accept an <code>mcpServers</code> block.</p>
+        <p>Use this shape for MCP clients that accept an <code>mcpServers</code> block with explicit <code>type</code> and tool exposure.</p>
         <pre><code id="generic-snippet"></code></pre>
         <button type="button" class="button copy-button" data-copy-target="generic-snippet">Copy JSON</button>
       </article>
       <article class="card setup-card">
         <h2>Smoke test prompt</h2>
         <p>Paste this into the agent after restarting it.</p>
-        <pre><code id="prompt-snippet">Use the ctx MCP server. Call ctx_status and ctx_audit for the configured repository. Report branch, head, dirty state, warning count, and error count.</code></pre>
+        <pre><code id="prompt-snippet">Use the ctx MCP server. Call ctx_plan with purpose "mcp-local-smoke-test". Report branch, dirty state, recommended task, context packet id, and runbook suggestions.</code></pre>
         <button type="button" class="button copy-button" data-copy-target="prompt-snippet">Copy prompt</button>
       </article>
     </section>
@@ -85,18 +86,44 @@
           <h2>Choose your agent</h2>
         </div>
       </div>
+      <div class="claude-guide">
+        <div>
+          <p class="eyebrow">Recommended</p>
+          <h3>Claude setup in three steps</h3>
+          <ol>
+            <li>Copy the Claude Code command or Claude Desktop JSON below.</li>
+            <li>Restart Claude so it loads the local MCP server.</li>
+            <li>Paste the smoke test prompt and confirm Claude can call <code>ctx_plan</code>.</li>
+          </ol>
+        </div>
+        <div class="claude-note">
+          <p>Use <code>read-only</code> first. Switch to <code>write</code> only when you want Claude to create or update CTX artifacts in the selected repository.</p>
+        </div>
+      </div>
       <div class="agent-grid">
         <article class="agent-card">
           <h3>Claude Code</h3>
-          <p>Copies the CLI command that registers CTX as a local MCP server.</p>
+          <p>Run this once from a terminal. Claude Code will register CTX as a local MCP server named <code>ctx</code>.</p>
           <pre><code id="claude-code-snippet"></code></pre>
           <button type="button" class="button copy-button" data-copy-target="claude-code-snippet">Copy Claude Code command</button>
         </article>
         <article class="agent-card">
           <h3>Claude Desktop</h3>
-          <p>Copies the desktop <code>mcpServers</code> configuration block.</p>
+          <p>Paste this into the Claude Desktop MCP configuration file, then restart the app.</p>
           <pre><code id="claude-desktop-snippet"></code></pre>
           <button type="button" class="button copy-button" data-copy-target="claude-desktop-snippet">Copy Claude Desktop JSON</button>
+        </article>
+        <article class="agent-card">
+          <h3>Claude project config</h3>
+          <p>For project-scoped Claude Code setup, save this as <code>.mcp.json</code> in the repository root.</p>
+          <pre><code id="claude-project-snippet"></code></pre>
+          <button type="button" class="button copy-button" data-copy-target="claude-project-snippet">Copy .mcp.json</button>
+        </article>
+        <article class="agent-card">
+          <h3>Claude smoke test</h3>
+          <p>After restarting Claude, paste this to verify CTX tools are available.</p>
+          <pre><code id="claude-smoke-snippet"></code></pre>
+          <button type="button" class="button copy-button" data-copy-target="claude-smoke-snippet">Copy Claude test prompt</button>
         </article>
         <article class="agent-card">
           <h3>VS Code / Copilot</h3>
@@ -123,14 +150,14 @@
         verify: root => `Test-Path ${root}\\bin\\ctx-mcp.cmd\nTest-Path ${root}\\mcp\\Ctx.Mcp.exe`
       },
       linux: {
-        installRoot: "$HOME/.local/share/ctx",
-        repoPath: "$HOME/sources/ctx-open",
+        installRoot: "/home/you/.local/share/ctx",
+        repoPath: "/home/you/sources/ctx-open",
         command: root => `${root}/bin/ctx-mcp`,
         verify: root => `test -x ${root}/bin/ctx-mcp\ntest -x ${root}/mcp/Ctx.Mcp`
       },
       macos: {
-        installRoot: "$HOME/.local/share/ctx",
-        repoPath: "$HOME/sources/ctx-open",
+        installRoot: "/Users/you/.local/share/ctx",
+        repoPath: "/Users/you/sources/ctx-open",
         command: root => `${root}/bin/ctx-mcp`,
         verify: root => `test -x ${root}/bin/ctx-mcp\ntest -x ${root}/mcp/Ctx.Mcp`
       }
@@ -142,12 +169,20 @@
     let platform = "windows";
 
     function jsonConfig(command, repoPath, mode, topKey = "mcpServers") {
+      const server = {
+        type: "stdio",
+        command,
+        args: ["--repo", repoPath, "--mode", mode],
+        env: {}
+      };
+
+      if (topKey === "mcpServers") {
+        server.tools = ["*"];
+      }
+
       return JSON.stringify({
         [topKey]: {
-          ctx: {
-            command,
-            args: ["--repo", repoPath, "--mode", mode]
-          }
+          ctx: server
         }
       }, null, 2);
     }
@@ -165,6 +200,8 @@
       document.getElementById("generic-snippet").textContent = jsonConfig(command, repoPath, mode);
       document.getElementById("claude-code-snippet").textContent = `claude mcp add ctx -- ${quotedCommand} --repo ${quotedRepo} --mode ${mode}`;
       document.getElementById("claude-desktop-snippet").textContent = jsonConfig(command, repoPath, mode);
+      document.getElementById("claude-project-snippet").textContent = jsonConfig(command, repoPath, mode);
+      document.getElementById("claude-smoke-snippet").textContent = `Use the ctx MCP server. Call ctx_plan with purpose "claude-smoke-test". Report the repository branch, dirty state, recommended task, context packet id, and runbook suggestions.`;
       document.getElementById("vscode-snippet").textContent = jsonConfig(command, repoPath, mode, "servers");
       document.getElementById("codex-snippet").textContent = `[mcp_servers.ctx]\ncommand = "${command.replaceAll("\\", "\\\\")}"\nargs = ["--repo", "${repoPath.replaceAll("\\", "\\\\")}", "--mode", "${mode}"]`;
     }
