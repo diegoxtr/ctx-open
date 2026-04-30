@@ -223,6 +223,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
     {
         var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
         var runbooks = await LoadRunbooksAsync(repositoryPath, cancellationToken);
+        var triggers = await LoadTriggersAsync(repositoryPath, cancellationToken);
         var (normalizedOperation, operationLabel, purpose) = NormalizePreflightOperation(operation);
         var (selectedGoals, selectedTasks, scope) = ResolvePreflightScope(context, goalId, taskId);
         var selection = OperationalRunbookSelection.Select(
@@ -232,8 +233,12 @@ public sealed class CtxApplicationService : ICtxApplicationService
             taskId,
             selectedGoals,
             selectedTasks);
+        selection = EnforcePreflightRequiredRunbooks(normalizedOperation, runbooks, selection);
 
-        var guidance = BuildPreflightGuidance(normalizedOperation, selection);
+        var operationalReview = BuildOperationalReviewSummary(runbooks, triggers, normalizedOperation, 2);
+        var guidance = BuildPreflightGuidance(normalizedOperation, selection)
+            .Concat(BuildOperationalRecurrenceGuidance(operationalReview))
+            .ToArray();
         var summary = new PreflightSummary(
             normalizedOperation,
             operationLabel,
@@ -250,11 +255,24 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 (runbook.FailureSignals ?? Array.Empty<string>()).Take(3).ToArray(),
                 (runbook.EscalationBoundary ?? Array.Empty<string>()).Take(2).ToArray())).ToArray(),
             selection.Available.Select(runbook => runbook.Title).ToArray(),
-            guidance);
+            guidance,
+            operationalReview.RepeatedIssues);
 
         var message = selection.Selected.Count > 0
             ? $"Preflight ready for {operationLabel}."
             : $"Preflight found no matching runbooks for {operationLabel}.";
+        return new(true, message, summary);
+    }
+
+    public async System.Threading.Tasks.Task<CommandResult> OperationalReviewAsync(string repositoryPath, string? operation, int threshold, CancellationToken cancellationToken)
+    {
+        var runbooks = await LoadRunbooksAsync(repositoryPath, cancellationToken);
+        var triggers = await LoadTriggersAsync(repositoryPath, cancellationToken);
+        var normalizedThreshold = Math.Max(2, threshold);
+        var summary = BuildOperationalReviewSummary(runbooks, triggers, operation, normalizedThreshold);
+        var message = summary.RepeatedIssues.Count > 0
+            ? $"Operational review found {summary.RepeatedIssues.Count} repeated issue pattern(s)."
+            : "Operational review found no repeated issue patterns.";
         return new(true, message, summary);
     }
 
@@ -748,7 +766,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
             var source = ResolveHypothesis(context, request.HypothesisId);
             var target = ResolveHypothesis(context, request.TargetHypothesisId);
 
-            if (!Enum.TryParse<HypothesisRelationType>(request.RelationType, true, out var relationType))
+            if (!Enum.TryParse<HypothesisRelationType>(NormalizeEnumToken(request.RelationType), true, out var relationType))
             {
                 throw new InvalidOperationException($"Unsupported hypothesis relation type '{request.RelationType}'.");
             }
@@ -921,6 +939,40 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 diagnostics,
                 BuildRunbookSuggestions(runbookSelection.Selected),
                 runbookSelection.Available.Select(runbook => runbook.Title).ToArray()));
+    }
+
+    public async System.Threading.Tasks.Task<CommandResult> PlanAsync(string repositoryPath, string purpose, string? goalId, string? taskId, CancellationToken cancellationToken)
+    {
+        var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+        var runbooks = await LoadRunbooksAsync(repositoryPath, cancellationToken);
+        var triggers = await LoadTriggersAsync(repositoryPath, cancellationToken);
+        var head = await _workingContextRepository.LoadHeadAsync(repositoryPath, cancellationToken);
+        var candidates = BuildNextWorkCandidates(context);
+        var diagnostics = BuildNextWorkDiagnostics(context, candidates);
+        var nextRunbookSelection = BuildNextRunbookSelection(context, runbooks, candidates.FirstOrDefault());
+        var next = new NextWorkSummary(
+            candidates.FirstOrDefault(),
+            candidates,
+            diagnostics,
+            BuildRunbookSuggestions(nextRunbookSelection.Selected),
+            nextRunbookSelection.Available.Select(runbook => runbook.Title).ToArray());
+        var packet = _contextBuilder.Build(context, runbooks, triggers, purpose, goalId, taskId);
+        var guidance = BuildPlanningGuidance(context, next, packet);
+        var summary = new PlanningSummary(
+            head.Branch,
+            head.CommitId?.Value,
+            context.Dirty,
+            purpose,
+            next,
+            packet,
+            next.RunbookSuggestions,
+            next.AdditionalRunbooksAvailable,
+            guidance);
+        var message = next.Recommended is null
+            ? "Plan generated without a recommended next candidate; review diagnostics before opening work."
+            : $"Plan generated for {next.Recommended.CandidateType} '{next.Recommended.Title}'.";
+
+        return new(true, message, summary);
     }
 
     public async System.Threading.Tasks.Task<CommandResult> AddDecisionAsync(string repositoryPath, AddDecisionRequest request, CancellationToken cancellationToken)
@@ -1392,6 +1444,36 @@ public sealed class CtxApplicationService : ICtxApplicationService
         var trigger = await _cognitiveTriggerRepository.LoadAsync(repositoryPath, new CognitiveTriggerId(triggerId), cancellationToken)
             ?? throw new InvalidOperationException($"CognitiveTrigger '{triggerId}' was not found.");
         return new(true, $"Showing cognitive trigger '{triggerId}'.", trigger);
+    }
+
+    public async System.Threading.Tasks.Task<CommandResult> ListPromptTimelineAsync(string repositoryPath, string? kind, CancellationToken cancellationToken)
+    {
+        if (_cognitiveTriggerRepository is null)
+        {
+            throw new InvalidOperationException("Cognitive triggers are not configured.");
+        }
+
+        var normalizedKind = string.IsNullOrWhiteSpace(kind) ? "prompt" : kind.Trim();
+        var allowedKinds = ResolvePromptTimelineKinds(normalizedKind);
+        var prompts = (await _cognitiveTriggerRepository.ListAsync(repositoryPath, cancellationToken))
+            .Where(trigger => allowedKinds.Contains(trigger.Kind))
+            .OrderBy(trigger => trigger.Trace.CreatedAtUtc)
+            .ThenBy(trigger => trigger.Id.Value, StringComparer.Ordinal)
+            .Select((trigger, index) => new PromptTimelineEntry(
+                index + 1,
+                trigger.Id.Value,
+                trigger.Kind.ToString(),
+                trigger.Trace.CreatedAtUtc,
+                trigger.Trace.CreatedBy,
+                trigger.Summary,
+                trigger.Text,
+                trigger.GoalIds.Select(id => id.Value).ToArray(),
+                trigger.TaskIds.Select(id => id.Value).ToArray(),
+                trigger.State.ToString()))
+            .ToArray();
+
+        var summary = new PromptTimelineSummary(normalizedKind, prompts.Length, prompts);
+        return new(true, $"Listed {prompts.Length} prompt trigger(s) ordered by creation date.", summary);
     }
 
     public async System.Threading.Tasks.Task<CommandResult> ListArtifactsAsync(string repositoryPath, string artifactType, CancellationToken cancellationToken)
@@ -2287,6 +2369,31 @@ public sealed class CtxApplicationService : ICtxApplicationService
             ? Array.Empty<CognitiveTrigger>()
             : await _cognitiveTriggerRepository.ListAsync(repositoryPath, cancellationToken);
 
+    private static IReadOnlySet<CognitiveTriggerKind> ResolvePromptTimelineKinds(string kind)
+    {
+        if (kind.Equals("all", StringComparison.OrdinalIgnoreCase))
+        {
+            return Enum.GetValues<CognitiveTriggerKind>().ToHashSet();
+        }
+
+        if (kind.Equals("prompt", StringComparison.OrdinalIgnoreCase) || kind.Equals("prompts", StringComparison.OrdinalIgnoreCase))
+        {
+            return new HashSet<CognitiveTriggerKind>
+            {
+                CognitiveTriggerKind.UserPrompt,
+                CognitiveTriggerKind.AgentPrompt,
+                CognitiveTriggerKind.Continuation
+            };
+        }
+
+        if (Enum.TryParse<CognitiveTriggerKind>(kind, true, out var parsed))
+        {
+            return new HashSet<CognitiveTriggerKind> { parsed };
+        }
+
+        throw new InvalidOperationException($"Prompt kind '{kind}' is not supported. Use prompt, all, UserPrompt, AgentPrompt, Continuation, RunbookTrigger, or IssueTrigger.");
+    }
+
     private static string BuildDiffSummary(ContextDiff diff)
     {
         var parts = new List<string>
@@ -2506,6 +2613,160 @@ public sealed class CtxApplicationService : ICtxApplicationService
             (runbook.FailureSignals ?? Array.Empty<string>()).Take(3).ToArray(),
             (runbook.EscalationBoundary ?? Array.Empty<string>()).Take(2).ToArray())).ToArray();
 
+    private static OperationalReviewSummary BuildOperationalReviewSummary(
+        IReadOnlyList<OperationalRunbook> runbooks,
+        IReadOnlyList<CognitiveTrigger> triggers,
+        string? operation,
+        int threshold)
+    {
+        var normalizedOperation = NormalizeOperationalToken(operation);
+        var runbooksById = runbooks.ToDictionary(item => item.Id.Value, StringComparer.OrdinalIgnoreCase);
+        var issueTriggers = triggers
+            .Where(trigger => trigger.State == LifecycleState.Active && trigger.Kind == CognitiveTriggerKind.IssueTrigger)
+            .Where(trigger => string.IsNullOrWhiteSpace(normalizedOperation) || TriggerMatchesOperation(trigger, runbooksById, normalizedOperation))
+            .GroupBy(trigger => string.IsNullOrWhiteSpace(trigger.Fingerprint) ? NormalizeIssueFingerprint(trigger) : trigger.Fingerprint, StringComparer.OrdinalIgnoreCase)
+            .Where(group => group.Count() >= threshold)
+            .OrderByDescending(group => group.Count())
+            .ThenBy(group => group.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(group => BuildOperationalIssueRecurrence(group.ToArray(), runbooksById, normalizedOperation))
+            .ToArray();
+
+        var guidance = new List<string>();
+        if (issueTriggers.Length == 0)
+        {
+            guidance.Add("No repeated operational issue has reached the promotion threshold.");
+        }
+        else
+        {
+            guidance.Add("Promote repeated operational issues into runbook updates before retrying the same procedure.");
+            guidance.Add("Use the suggested updates to strengthen preconditions, failure signals, verification, or escalation boundaries.");
+        }
+
+        return new OperationalReviewSummary(
+            string.IsNullOrWhiteSpace(operation) ? "all" : operation!.Trim(),
+            threshold,
+            issueTriggers,
+            guidance);
+    }
+
+    private static OperationalIssueRecurrence BuildOperationalIssueRecurrence(
+        IReadOnlyList<CognitiveTrigger> triggers,
+        IReadOnlyDictionary<string, OperationalRunbook> runbooksById,
+        string? normalizedOperation)
+    {
+        var linkedRunbooks = triggers
+            .SelectMany(trigger => trigger.OperationalRunbookIds)
+            .Select(id => runbooksById.TryGetValue(id.Value, out var runbook) ? runbook : null)
+            .Where(runbook => runbook is not null)
+            .Select(runbook => runbook!)
+            .DistinctBy(runbook => runbook.Id.Value, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        var first = triggers.OrderBy(trigger => trigger.Trace.CreatedAtUtc).First();
+        var procedure = ResolveOperationalProcedure(first, linkedRunbooks, normalizedOperation);
+        var issueSummary = first.Summary;
+        var updateTarget = linkedRunbooks.Length == 0
+            ? "a new operational runbook"
+            : string.Join(", ", linkedRunbooks.Select(runbook => runbook.Title));
+        var suggestedUpdates = new[]
+        {
+            $"Add a precondition to check for the repeated symptom before running {procedure}.",
+            $"Add a failure signal for: {issueSummary}.",
+            $"Add a verification step proving the blocker is gone before retrying {procedure}.",
+            $"Add an escalation boundary to stop retries and switch to troubleshooting after the first recurrence."
+        };
+
+        return new OperationalIssueRecurrence(
+            string.IsNullOrWhiteSpace(first.Fingerprint) ? NormalizeIssueFingerprint(first) : first.Fingerprint,
+            issueSummary,
+            procedure,
+            triggers.Count,
+            triggers.Select(trigger => trigger.Id.Value).ToArray(),
+            BuildRunbookSuggestions(linkedRunbooks),
+            suggestedUpdates,
+            $"Issue repeated {triggers.Count} times; update {updateTarget} before the next {procedure} run.");
+    }
+
+    private static bool TriggerMatchesOperation(
+        CognitiveTrigger trigger,
+        IReadOnlyDictionary<string, OperationalRunbook> runbooksById,
+        string normalizedOperation)
+    {
+        var triggerText = NormalizeOperationalToken($"{trigger.Summary} {trigger.Text} {trigger.Fingerprint}");
+        if (triggerText.Contains(normalizedOperation, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return trigger.OperationalRunbookIds.Any(id =>
+            runbooksById.TryGetValue(id.Value, out var runbook)
+            && NormalizeOperationalToken($"{runbook.Title} {runbook.Kind} {string.Join(' ', runbook.Triggers)} {runbook.WhenToUse}")
+                .Contains(normalizedOperation, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string ResolveOperationalProcedure(
+        CognitiveTrigger trigger,
+        IReadOnlyList<OperationalRunbook> linkedRunbooks,
+        string? normalizedOperation)
+    {
+        if (!string.IsNullOrWhiteSpace(normalizedOperation))
+        {
+            return normalizedOperation!;
+        }
+
+        var runbookTrigger = linkedRunbooks
+            .SelectMany(runbook => runbook.Triggers)
+            .FirstOrDefault(trigger => !string.IsNullOrWhiteSpace(trigger));
+        if (!string.IsNullOrWhiteSpace(runbookTrigger))
+        {
+            return runbookTrigger.Trim();
+        }
+
+        return linkedRunbooks.FirstOrDefault()?.Title ?? "operational procedure";
+    }
+
+    private static string NormalizeIssueFingerprint(CognitiveTrigger trigger)
+        => NormalizeOperationalToken($"{trigger.Kind}:{trigger.Summary}:{trigger.Text}");
+
+    private static string NormalizeOperationalToken(string? value)
+        => Regex.Replace(value ?? string.Empty, @"[^a-zA-Z0-9]+", "-").Trim('-').ToLowerInvariant();
+
+    private static IReadOnlyList<string> BuildOperationalRecurrenceGuidance(OperationalReviewSummary review)
+        => review.RepeatedIssues.Count == 0
+            ? Array.Empty<string>()
+            : new[]
+            {
+                $"Operational recurrence threshold reached for {review.RepeatedIssues.Count} issue pattern(s).",
+                "Update or follow the related runbook before retrying the procedure."
+            };
+
+    private static IReadOnlyList<string> BuildPlanningGuidance(WorkingContext context, NextWorkSummary next, ContextPacket packet)
+    {
+        var guidance = new List<string>();
+
+        if (next.Recommended is null)
+        {
+            guidance.Add("No recommended next candidate was found; use diagnostics to decide whether to open a new line or close stale state.");
+        }
+        else
+        {
+            guidance.Add($"Start from the recommended {next.Recommended.CandidateType} unless newer operator direction overrides it.");
+        }
+
+        if (context.Dirty)
+        {
+            guidance.Add("Working context is dirty; run ctx closeout before creating a durable commit.");
+        }
+
+        if (next.RunbookSuggestions.Count > 0)
+        {
+            guidance.Add($"Review {next.RunbookSuggestions.Count} runbook suggestion(s) before execution.");
+        }
+
+        guidance.Add($"Use context packet {packet.Id.Value} as the compact planning anchor for this turn.");
+        guidance.Add("Record evidence, decision, and conclusion artifacts before closing the task thread.");
+        return guidance;
+    }
+
     private static StatusPendingSummary? BuildStatusPendingSummary(RepositorySnapshot? previousSnapshot, RepositorySnapshot currentSnapshot)
     {
         if (!currentSnapshot.WorkingContext.Dirty)
@@ -2622,8 +2883,9 @@ public sealed class CtxApplicationService : ICtxApplicationService
             "git-closeout" or "git" or "git-commit" or "closeout" => ("git-closeout", "Git closeout", "git-commit git-push closeout"),
             "publish-local" or "publish" or "local-publish" => ("publish-local", "Local publish", "publish-local local publish install refresh"),
             "viewer-validation" or "viewer" => ("viewer-validation", "Viewer validation", "viewer local validation refresh"),
+            "public-release" or "release-cut" or "github-release" or "release" => ("public-release", "Public release", "release-cut github-release public-publish release-announcement release-flyer"),
             "recover-index-lock" or "index-lock" or "lock-recovery" => ("recover-index-lock", "Index.lock recovery", "index.lock lock recovery git closeout"),
-            _ => throw new InvalidOperationException($"Unsupported preflight operation '{operation}'. Use git-closeout, publish-local, viewer-validation, or recover-index-lock.")
+            _ => throw new InvalidOperationException($"Unsupported preflight operation '{operation}'. Use git-closeout, publish-local, viewer-validation, public-release, or recover-index-lock.")
         };
     }
 
@@ -2697,6 +2959,10 @@ public sealed class CtxApplicationService : ICtxApplicationService
             case "viewer-validation":
                 guidance.Add("Use the canonical local viewer port and validate the installed instance, not only the dev server.");
                 break;
+            case "public-release":
+                guidance.Add("Before sharing or closing the release, produce the bilingual announcement and flyer, or record an explicit omission decision with the reason.");
+                guidance.Add("Run `ctx preflight --operation github-release` after publishing the GitHub Release so the post-release announcement/flyer runbook is surfaced deliberately.");
+                break;
             case "recover-index-lock":
                 guidance.Add("Check for live Git processes first and only remove orphaned locks.");
                 guidance.Add("Return to `ctx preflight --operation git-closeout` once the lock condition is gone.");
@@ -2704,6 +2970,52 @@ public sealed class CtxApplicationService : ICtxApplicationService
         }
 
         return guidance;
+    }
+
+    private static (IReadOnlyList<OperationalRunbook> Selected, IReadOnlyList<OperationalRunbook> Available) EnforcePreflightRequiredRunbooks(
+        string operation,
+        IReadOnlyList<OperationalRunbook> runbooks,
+        (IReadOnlyList<OperationalRunbook> Selected, IReadOnlyList<OperationalRunbook> Available) selection)
+    {
+        if (!operation.Equals("public-release", StringComparison.OrdinalIgnoreCase))
+        {
+            return selection;
+        }
+
+        var requiredTitles = new[]
+        {
+            "Public release cut",
+            "Release bilingual announcement and flyer"
+        };
+
+        var required = requiredTitles
+            .Select(title => runbooks.FirstOrDefault(runbook =>
+                runbook.State == LifecycleState.Active
+                && runbook.Title.Equals(title, StringComparison.OrdinalIgnoreCase)))
+            .Where(runbook => runbook is not null)
+            .Select(runbook => runbook!)
+            .ToArray();
+
+        if (required.Length == 0)
+        {
+            return selection;
+        }
+
+        var selected = required
+            .Concat(selection.Selected)
+            .DistinctBy(runbook => runbook.Id.Value, StringComparer.OrdinalIgnoreCase)
+            .Take(2)
+            .ToArray();
+        var selectedIds = selected.Select(runbook => runbook.Id.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var available = selection.Selected
+            .Concat(selection.Available)
+            .Concat(required)
+            .Where(runbook => !selectedIds.Contains(runbook.Id.Value))
+            .DistinctBy(runbook => runbook.Id.Value, StringComparer.OrdinalIgnoreCase)
+            .Take(3)
+            .ToArray();
+
+        return (selected, available);
     }
 
     private static MicroCloseoutSuggestion? BuildMicroCloseoutSuggestion(
@@ -4983,6 +5295,9 @@ public sealed class CtxApplicationService : ICtxApplicationService
 
         return $"{normalized[..Math.Max(0, maxLength - 1)].TrimEnd()}…";
     }
+
+    private static string NormalizeEnumToken(string value)
+        => value.Replace("-", string.Empty, StringComparison.Ordinal).Replace("_", string.Empty, StringComparison.Ordinal);
 
     private async System.Threading.Tasks.Task<T> ExecuteWriteLockedAsync<T>(string repositoryPath, CancellationToken cancellationToken, Func<System.Threading.Tasks.Task<T>> action)
     {

@@ -82,7 +82,7 @@ Test-Path C:\ctx\bin\ctx-mcp.cmd
 ctx-viewer
 ```
 
-MCP agent setup is documented in [CTX_MCP_AGENT_SETUP.md](C:/sources/ctx-open/docs/CTX_MCP_AGENT_SETUP.md).
+MCP agent setup is documented in [CTX_MCP_AGENT_SETUP.md](CTX_MCP_AGENT_SETUP.md).
 
 Viewer-specific verification:
 

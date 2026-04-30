@@ -7,6 +7,7 @@ public interface ICtxApplicationService
     System.Threading.Tasks.Task<CommandResult> CheckAsync(string repositoryPath, string? taskId, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> CloseoutAsync(string repositoryPath, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> PreflightAsync(string repositoryPath, string operation, string? goalId, string? taskId, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> OperationalReviewAsync(string repositoryPath, string? operation, int threshold, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddGoalAsync(string repositoryPath, AddGoalRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> UpdateGoalAsync(string repositoryPath, UpdateGoalRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> OpenWorkLineAsync(string repositoryPath, OpenWorkLineRequest request, CancellationToken cancellationToken);
@@ -21,6 +22,7 @@ public interface ICtxApplicationService
     System.Threading.Tasks.Task<CommandResult> SupersedeHypothesisAsync(string repositoryPath, SupersedeHypothesisRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> RankHypothesesAsync(string repositoryPath, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> NextAsync(string repositoryPath, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> PlanAsync(string repositoryPath, string purpose, string? goalId, string? taskId, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddDecisionAsync(string repositoryPath, AddDecisionRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> UpdateDecisionAsync(string repositoryPath, UpdateDecisionRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddEvidenceAsync(string repositoryPath, AddEvidenceRequest request, CancellationToken cancellationToken);
@@ -39,6 +41,7 @@ public interface ICtxApplicationService
     System.Threading.Tasks.Task<CommandResult> ShowOperationalRunbookAsync(string repositoryPath, string runbookId, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> ListCognitiveTriggersAsync(string repositoryPath, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> ShowCognitiveTriggerAsync(string repositoryPath, string triggerId, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> ListPromptTimelineAsync(string repositoryPath, string? kind, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> ListArtifactsAsync(string repositoryPath, string artifactType, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> ShowArtifactAsync(string repositoryPath, string artifactType, string artifactId, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> ListProvidersAsync(string repositoryPath, CancellationToken cancellationToken);

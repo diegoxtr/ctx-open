@@ -2,11 +2,11 @@
 
 Repo under test:
 
-- `C:\sources\ctx-open\examples\bootstrap-agriculture-demo-v3`
+- `C:\path\to\ctx-repo\examples\bootstrap-agriculture-demo-v3`
 
 Source artifact:
 
-- [agricultural-systems-contradictions.md](C:/sources/ctx-open/examples/bootstrap-agriculture-demo-v3/agricultural-systems-contradictions.md)
+- [agricultural-systems-contradictions.md](agricultural-systems-contradictions.md)
 
 ## Objective
 
@@ -80,4 +80,3 @@ The third hypothesis is still an integrative reading, so later review still has 
 But the core v3 objective is satisfied:
 
 - contradiction no longer collapses immediately into one promoted hypothesis during bootstrap
-

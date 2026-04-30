@@ -25,28 +25,64 @@ Replace the repository path in every example with the local folder that contains
 The installed MCP server exposes these tools:
 
 ```text
+ctx_version
+ctx_doctor
 ctx_status
 ctx_audit
 ctx_next
 ctx_context
+ctx_plan
 ctx_graph_summary
 ctx_graph_show
+ctx_graph_export
+ctx_graph_lineage
 ctx_thread_reconstruct
 ctx_preflight
+ctx_operational_review
 ctx_check
 ctx_closeout
+ctx_log
+ctx_diff
+ctx_artifact_list
+ctx_artifact_show
+ctx_goal_list
+ctx_goal_show
+ctx_task_list
+ctx_task_show
+ctx_hypothesis_list
+ctx_hypothesis_show
+ctx_hypothesis_rank
+ctx_evidence_list
+ctx_evidence_show
+ctx_decision_list
+ctx_decision_show
+ctx_conclusion_list
+ctx_conclusion_show
+ctx_runbook_list
+ctx_runbook_show
+ctx_trigger_list
+ctx_trigger_show
+ctx_bootstrap_map
+ctx_init
 ctx_goal_add
+ctx_goal_update
 ctx_line_open
 ctx_task_add
 ctx_task_update
 ctx_hypothesis_add
 ctx_hypothesis_update
+ctx_hypothesis_relate
+ctx_hypothesis_merge
+ctx_hypothesis_supersede
 ctx_evidence_add
 ctx_evidence_share
 ctx_decision_add
 ctx_decision_update
 ctx_conclusion_add
 ctx_conclusion_update
+ctx_runbook_add
+ctx_trigger_add
+ctx_bootstrap_apply
 ctx_commit
 ```
 
@@ -58,14 +94,14 @@ Write tools are rejected unless the server was started with `--mode write`.
 - .NET 8 SDK available in the development environment
 - A local CTX repository with a `.ctx` folder
 - CTX published locally to `C:\ctx`
-- An agent or IDE client that supports MCP servers through an `mcpServers` JSON configuration
+- An agent or IDE client that supports MCP servers through an MCP JSON configuration
 
 ## Step 1: Publish CTX Locally
 
 From the CTX repository:
 
 ```powershell
-cd C:\\sources\\ctx-open
+cd C:\path\to\ctx-repo
 powershell -ExecutionPolicy Bypass -File .\scripts\publish-local.ps1
 ```
 
@@ -85,7 +121,7 @@ Choose the repository the agent should inspect.
 Example:
 
 ```powershell
-cd C:\\sources\\ctx-open
+cd C:\path\to\ctx-repo
 C:\ctx\bin\ctx.cmd status
 C:\ctx\bin\ctx.cmd audit
 ```
@@ -115,27 +151,38 @@ Do not expect `ctx-mcp.cmd` to print a normal CLI help screen. MCP clients commu
 
 ## Step 4: Add The MCP Server To The Agent
 
-Most MCP clients accept a JSON block shaped like this:
+Most MCP clients accept a local stdio server block shaped like this.
+
+For clients that expose a tool allowlist, keep `tools: ["*"]` so the full CTX MCP surface is available.
 
 ```json
 {
   "mcpServers": {
     "ctx": {
+      "type": "stdio",
       "command": "C:\\ctx\\bin\\ctx-mcp.cmd",
       "args": [
         "--repo",
-        "C:\\sources\\ctx-open",
+        "C:\\path\\to\\ctx-repo",
         "--mode",
         "read-only"
-      ]
+      ],
+      "env": {},
+      "tools": ["*"]
     }
   }
 }
 ```
 
-Replace `C:\\sources\\ctx-open` with the repository the agent should inspect.
+Replace `C:\\path\\to\\ctx-repo` with the repository the agent should inspect.
 
 Keep `--mode read-only` unless you intentionally want the agent to write cognitive artifacts.
+
+Some clients use a slightly different connection type:
+
+- VS Code uses top-level `servers` and `type: "stdio"`.
+- GitHub Copilot CLI/SDK uses `mcpServers`, commonly with `type: "local"` and `tools: ["*"]`.
+- Claude Code accepts explicit `type: "stdio"` in JSON-based setup.
 
 For write-enabled operation:
 
@@ -143,13 +190,16 @@ For write-enabled operation:
 {
   "mcpServers": {
     "ctx": {
+      "type": "stdio",
       "command": "C:\\ctx\\bin\\ctx-mcp.cmd",
       "args": [
         "--repo",
-        "C:\\sources\\ctx-open",
+        "C:\\path\\to\\ctx-repo",
         "--mode",
         "write"
-      ]
+      ],
+      "env": {},
+      "tools": ["*"]
     }
   }
 }
@@ -162,7 +212,7 @@ Use write mode only for trusted local repositories. The write tools mutate `.ctx
 The CTX MCP server is the same process in every client:
 
 ```text
-C:\ctx\bin\ctx-mcp.cmd --repo C:\\sources\\ctx-open --mode read-only
+C:\ctx\bin\ctx-mcp.cmd --repo C:\path\to\ctx-repo --mode read-only
 ```
 
 What changes is only the MCP client configuration format.
@@ -172,13 +222,13 @@ What changes is only the MCP client configuration format.
 Claude Code can add a local stdio server from the CLI:
 
 ```powershell
-claude mcp add ctx -- C:\ctx\bin\ctx-mcp.cmd --repo C:\\sources\\ctx-open --mode read-only
+claude mcp add ctx -- C:\ctx\bin\ctx-mcp.cmd --repo C:\path\to\ctx-repo --mode read-only
 ```
 
 For write-enabled local operation:
 
 ```powershell
-claude mcp add ctx-write -- C:\ctx\bin\ctx-mcp.cmd --repo C:\\sources\\ctx-open --mode write
+claude mcp add ctx-write -- C:\ctx\bin\ctx-mcp.cmd --repo C:\path\to\ctx-repo --mode write
 ```
 
 Project-scoped Claude Code configuration can also live in `.mcp.json`:
@@ -187,10 +237,11 @@ Project-scoped Claude Code configuration can also live in `.mcp.json`:
 {
   "mcpServers": {
     "ctx": {
+      "type": "stdio",
       "command": "C:\\ctx\\bin\\ctx-mcp.cmd",
       "args": [
         "--repo",
-        "C:\\sources\\ctx-open",
+        "C:\\path\\to\\ctx-repo",
         "--mode",
         "read-only"
       ],
@@ -206,10 +257,11 @@ Use the write-mode variant only in trusted local repositories:
 {
   "mcpServers": {
     "ctx-write": {
+      "type": "stdio",
       "command": "C:\\ctx\\bin\\ctx-mcp.cmd",
       "args": [
         "--repo",
-        "C:\\sources\\ctx-open",
+        "C:\\path\\to\\ctx-repo",
         "--mode",
         "write"
       ],
@@ -227,10 +279,11 @@ Claude Desktop uses the same `mcpServers` shape in its desktop configuration fil
 {
   "mcpServers": {
     "ctx": {
+      "type": "stdio",
       "command": "C:\\ctx\\bin\\ctx-mcp.cmd",
       "args": [
         "--repo",
-        "C:\\sources\\ctx-open",
+        "C:\\path\\to\\ctx-repo",
         "--mode",
         "read-only"
       ],
@@ -262,7 +315,7 @@ Use `servers`, not `mcpServers`:
       "command": "C:\\ctx\\bin\\ctx-mcp.cmd",
       "args": [
         "--repo",
-        "C:\\sources\\ctx-open",
+        "C:\\path\\to\\ctx-repo",
         "--mode",
         "read-only"
       ],
@@ -292,7 +345,7 @@ Example:
       "command": "C:\\ctx\\bin\\ctx-mcp.cmd",
       "args": [
         "--repo",
-        "C:\\sources\\ctx-open",
+        "C:\\path\\to\\ctx-repo",
         "--mode",
         "read-only"
       ],
@@ -321,7 +374,7 @@ const session = await client.createSession({
       command: "C:\\ctx\\bin\\ctx-mcp.cmd",
       args: [
         "--repo",
-        "C:\\sources\\ctx-open",
+        "C:\\path\\to\\ctx-repo",
         "--mode",
         "read-only"
       ],
@@ -351,13 +404,16 @@ For example, if a DeepSeek-backed custom agent uses a generic `mcpServers` JSON 
   },
   "mcpServers": {
     "ctx": {
+      "type": "stdio",
       "command": "C:\\ctx\\bin\\ctx-mcp.cmd",
       "args": [
         "--repo",
-        "C:\\sources\\ctx-open",
+        "C:\\path\\to\\ctx-repo",
         "--mode",
         "read-only"
-      ]
+      ],
+      "env": {},
+      "tools": ["*"]
     }
   }
 }
@@ -372,18 +428,24 @@ Prefer one MCP server entry per CTX repository:
 ```json
 {
   "mcpServers": {
-    "ctx-open": {
+    "ctx-main": {
+      "type": "stdio",
       "command": "C:\\ctx\\bin\\ctx-mcp.cmd",
-      "args": ["--repo", "C:\\sources\\ctx-open", "--mode", "read-only"]
+      "args": ["--repo", "C:\\path\\to\\ctx-repo", "--mode", "read-only"],
+      "env": {},
+      "tools": ["*"]
     },
     "ctx-almacen-demo": {
+      "type": "stdio",
       "command": "C:\\ctx\\bin\\ctx-mcp.cmd",
       "args": [
         "--repo",
-        "C:\\sources\\ctx-open\\examples\\ctx\\almacen-barrial-reglas",
+        "C:\\path\\to\\ctx-repo\\examples\\ctx\\almacen-barrial-reglas",
         "--mode",
         "read-only"
-      ]
+      ],
+      "env": {},
+      "tools": ["*"]
     }
   }
 }
@@ -404,7 +466,7 @@ Reference points for client-specific formats:
 For a local Codex agent on this Windows workstation, edit:
 
 ```text
-C:\Users\diegoxtr\.codex\config.toml
+C:\Users\you\.codex\config.toml
 ```
 
 Add:
@@ -412,17 +474,17 @@ Add:
 ```toml
 [mcp_servers.ctx]
 command = "C:\\ctx\\bin\\ctx-mcp.cmd"
-args = ["--repo", "C:\\sources\\ctx-open", "--mode", "read-only"]
+args = ["--repo", "C:\\path\\to\\ctx-repo", "--mode", "read-only"]
 ```
 
-This binds the MCP server name `ctx` to the selected repository.
+This binds the MCP server name `ctx` to the selected local repository.
 
 To let Codex record CTX artifacts directly through MCP:
 
 ```toml
 [mcp_servers.ctx]
 command = "C:\\ctx\\bin\\ctx-mcp.cmd"
-args = ["--repo", "C:\\sources\\ctx-open", "--mode", "write"]
+args = ["--repo", "C:\\path\\to\\ctx-repo", "--mode", "write"]
 ```
 
 Use a different server name when testing another repository:
@@ -430,7 +492,7 @@ Use a different server name when testing another repository:
 ```toml
 [mcp_servers.ctx_almacen_demo]
 command = "C:\\ctx\\bin\\ctx-mcp.cmd"
-args = ["--repo", "C:\\sources\\ctx-open\\examples\\ctx\\almacen-barrial-reglas", "--mode", "read-only"]
+args = ["--repo", "C:\\path\\to\\ctx-repo\\examples\\ctx\\almacen-barrial-reglas", "--mode", "read-only"]
 ```
 
 After changing `config.toml`, restart the Codex session. MCP servers are loaded at process startup, so an already-running agent session should not be treated as proof that the configuration failed.
@@ -452,10 +514,12 @@ Use a prompt like:
 ```text
 Use the CTX MCP server named ctx.
 
-First call ctx_status, ctx_audit, and ctx_next.
-Then summarize the current cognitive state and tell me what CTX says should happen next.
-Do not infer from chat if CTX already answers the question.
+Call ctx_plan with purpose "agent-startup".
+Use the returned recommended task, context packet, runbook suggestions, and guidance as the planning anchor.
+Do not reconstruct the plan from chat when ctx_plan already provides it.
 ```
+
+Use lower-level tools only when you need a narrower follow-up after `ctx_plan`.
 
 For graph inspection:
 
@@ -503,6 +567,30 @@ Useful arguments:
 }
 ```
 
+### `ctx_plan`
+
+Builds a compact planning packet for the next work turn.
+
+This is the preferred first tool for agents because it combines the common startup calls into one packet:
+
+- repository branch, head, and dirty state
+- `ctx_next` recommendation and diagnostics
+- focused `ctx_context` packet
+- applicable runbook suggestions
+- short planning guidance
+
+Useful arguments:
+
+```json
+{
+  "purpose": "agent-startup",
+  "goalId": null,
+  "taskId": null
+}
+```
+
+Use `goalId` or `taskId` when the operator has already identified the work line. Otherwise, let CTX rank the next task.
+
 ### `ctx_graph_summary`
 
 Summarizes nodes, edges, and graph shape.
@@ -519,6 +607,47 @@ Hypothesis:<hypothesisId>
 Decision:<decisionId>
 Conclusion:<conclusionId>
 ```
+
+### `ctx_graph_export` and `ctx_graph_lineage`
+
+Export the graph or inspect a focused semantic lineage.
+
+Useful lineage arguments:
+
+```json
+{
+  "focusType": "task",
+  "focusId": "<taskId>",
+  "format": "json"
+}
+```
+
+### `ctx_log` and `ctx_diff`
+
+Read durable cognitive history and compare working or committed cognitive states.
+
+### `ctx_*_list`, `ctx_*_show`, and `ctx_artifact_*`
+
+Use typed tools for common entities:
+
+```text
+ctx_goal_list / ctx_goal_show
+ctx_task_list / ctx_task_show
+ctx_hypothesis_list / ctx_hypothesis_show / ctx_hypothesis_rank
+ctx_evidence_list / ctx_evidence_show
+ctx_decision_list / ctx_decision_show
+ctx_conclusion_list / ctx_conclusion_show
+```
+
+Use `ctx_artifact_list` and `ctx_artifact_show` when a client wants one generic list/show surface.
+
+### `ctx_runbook_list`, `ctx_runbook_show`, `ctx_trigger_list`, and `ctx_trigger_show`
+
+Inspect operational runbooks and cognitive triggers that can explain why a work line exists or which procedure applies.
+
+### `ctx_bootstrap_map`
+
+Builds a provisional cognitive map from existing source material. This is read-only and does not mutate `.ctx`.
 
 ### `ctx_thread_reconstruct`
 
@@ -548,6 +677,21 @@ Example:
 }
 ```
 
+### `ctx_operational_review`
+
+Reviews repeated operational issue triggers and recommends runbook updates when a recurrence threshold is reached.
+
+Example:
+
+```json
+{
+  "operation": "publish-local",
+  "threshold": 2
+}
+```
+
+Use this when a procedure fails in the same way more than once and the fix should become durable playbook/runbook guidance.
+
 ### `ctx_check`
 
 Checks whether a task thread has enough hypotheses, evidence, decisions, and conclusions for a coherent cognitive commit.
@@ -569,18 +713,26 @@ Reviews pending cognitive changes against HEAD. This is read-only and should be 
 These tools require `--mode write`:
 
 ```text
+ctx_init
 ctx_goal_add
+ctx_goal_update
 ctx_line_open
 ctx_task_add
 ctx_task_update
 ctx_hypothesis_add
 ctx_hypothesis_update
+ctx_hypothesis_relate
+ctx_hypothesis_merge
+ctx_hypothesis_supersede
 ctx_evidence_add
 ctx_evidence_share
 ctx_decision_add
 ctx_decision_update
 ctx_conclusion_add
 ctx_conclusion_update
+ctx_runbook_add
+ctx_trigger_add
+ctx_bootstrap_apply
 ctx_commit
 ```
 
@@ -602,6 +754,10 @@ ctx_commit
 
 The server still uses the existing CTX application-service layer and repository write lock.
 
+`ctx_bootstrap_apply` also requires write mode because it promotes a provisional line into CTX.
+
+Full CLI/MCP parity tracking is documented in [CTX_MCP_TOOL_PARITY.md](CTX_MCP_TOOL_PARITY.md).
+
 ## Agent Operating Flow
 
 Use the MCP server as the agent-facing CTX interface. Use the CLI as a human/operator fallback, or for commands that have not been exposed through MCP yet.
@@ -609,8 +765,8 @@ Use the MCP server as the agent-facing CTX interface. Use the CLI as a human/ope
 The normal agent flow is:
 
 1. Start the MCP server through the client configuration.
-2. Read repository state with `ctx_status`.
-3. Re-anchor on the active cognitive context with `ctx_context`, `ctx_next`, or `ctx_graph_summary`.
+2. Re-anchor on the active cognitive context with `ctx_plan`.
+3. Use `ctx_status`, `ctx_context`, `ctx_next`, or `ctx_graph_summary` only when you need a narrower follow-up.
 4. Open the work block with `ctx_task_add` or `ctx_line_open` when no suitable task already exists.
 5. Record the reasoning structure while the work happens:
    - `ctx_hypothesis_add`
@@ -633,7 +789,8 @@ Recommended prompt for agents:
 
 ```text
 Use CTX through MCP before answering or editing.
-Call ctx_status and ctx_context first.
+Call ctx_plan first with purpose "agent-startup".
+Use the returned task recommendation, context packet, runbooks, and guidance as the planning anchor.
 If there is no active task for this work, open one with ctx_task_add or ctx_line_open.
 Record hypotheses, evidence, decisions, and conclusions as the work evolves.
 Before the final Git commit, call ctx_check, ctx_closeout, ctx_audit, and ctx_commit.
@@ -644,7 +801,7 @@ Before the final Git commit, call ctx_check, ctx_closeout, ctx_audit, and ctx_co
 The server is started with one repository root:
 
 ```text
---repo C:\\sources\\ctx-open
+--repo C:\path\to\ctx-repo
 ```
 
 Dynamic `repo` arguments are intentionally restricted by default. If you need another repository, configure another MCP server entry with a different name.
@@ -656,13 +813,19 @@ Example:
 ```json
 {
   "mcpServers": {
-    "ctx-open": {
+    "ctx-main": {
+      "type": "stdio",
       "command": "C:\\ctx\\bin\\ctx-mcp.cmd",
-      "args": ["--repo", "C:\\sources\\ctx-open", "--mode", "read-only"]
+      "args": ["--repo", "C:\\path\\to\\ctx-repo", "--mode", "read-only"],
+      "env": {},
+      "tools": ["*"]
     },
     "ctx-demo": {
+      "type": "stdio",
       "command": "C:\\ctx\\bin\\ctx-mcp.cmd",
-      "args": ["--repo", "C:\\sources\\ctx-open\\examples\\ctx\\almacen-barrial-reglas", "--mode", "read-only"]
+      "args": ["--repo", "C:\\path\\to\\ctx-repo\\examples\\ctx\\almacen-barrial-reglas", "--mode", "read-only"],
+      "env": {},
+      "tools": ["*"]
     }
   }
 }
@@ -688,7 +851,7 @@ The `--repo` path must point to a folder that contains `.ctx`.
 Check:
 
 ```powershell
-Test-Path C:\\sources\\ctx-open\.ctx
+Test-Path C:\path\to\ctx-repo\.ctx
 ```
 
 ### The Agent Uses Chat Instead Of CTX
@@ -697,7 +860,7 @@ Use a stricter prompt:
 
 ```text
 Do not answer from chat memory.
-Call ctx_status, ctx_audit, and ctx_next through MCP before answering.
+Call ctx_plan through MCP before answering.
 If MCP is unavailable, say that instead of guessing.
 ```
 
@@ -717,8 +880,8 @@ If `ctx_status` reports `dirty: true`, close the cognitive block with the normal
 
 - No HTTP transport.
 - No remote auth model.
-- Bootstrap tools are not exposed through MCP yet.
 - Write mode is local-only and should be enabled only for trusted repositories.
+- Branch, checkout, merge, import, export, provider run, packet, metrics, and usage telemetry surfaces are intentionally deferred from the MCP baseline.
 
 This is intentional for the MVP. The first purpose is reliable context access and controlled local cognitive writes for agents.
 
@@ -731,7 +894,7 @@ Use this sequence after configuring an agent.
 ```powershell
 Test-Path C:\ctx\bin\ctx-mcp.cmd
 Test-Path C:\ctx\mcp\Ctx.Mcp.exe
-Test-Path C:\\sources\\ctx-open\.ctx
+Test-Path C:\path\to\ctx-repo\.ctx
 ```
 
 Expected:
@@ -755,7 +918,23 @@ Expected:
 - the session reports the `ctx` MCP server or its tools
 - if no MCP tools are visible, restart the agent and re-check the config file
 
-### Test 3: Read CTX status through MCP
+### Test 3: Read CTX plan through MCP
+
+Ask:
+
+```text
+Use the ctx MCP server. Call ctx_plan with purpose "smoke-test".
+Tell me the repository branch, dirty state, recommended task, context packet id, runbook suggestions, and guidance.
+```
+
+Expected:
+
+- branch is reported
+- dirty state is reported
+- open work is reported from CTX, not from chat memory
+- `ctx_plan` returns a compact planning packet that can replace separate startup calls to `ctx_status`, `ctx_next`, `ctx_context`, and runbook inspection
+
+### Test 4: Validate lower-level diagnostics
 
 Ask:
 
@@ -766,32 +945,17 @@ Report branch, head, dirty state, warning count, and error count.
 
 Expected:
 
-- branch is reported
 - head commit is reported
-- dirty state is reported
 - audit returns without protocol errors
-
-### Test 4: Validate next-step context
-
-Ask:
-
-```text
-Use the ctx MCP server. Call ctx_next.
-Tell me whether CTX has an open task, and list any runbook suggestions returned by CTX.
-```
-
-Expected:
-
-- open work is reported from CTX, not from chat memory
-- runbooks appear when CTX says they apply
+- lower-level status and audit agree with the `ctx_plan` startup packet
 
 ### Test 5: Validate write mode on a disposable repository
 
-Use a temporary repository first, not the target root workspace:
+Use a temporary repository first, not an important production workspace:
 
 ```powershell
-mkdir C:\\sources\\ctx-open\tmp\mcp-write-smoke
-cd C:\\sources\\ctx-open\tmp\mcp-write-smoke
+mkdir C:\path\to\ctx-repo\tmp\mcp-write-smoke
+cd C:\path\to\ctx-repo\tmp\mcp-write-smoke
 C:\ctx\bin\ctx.cmd init --name "MCP Write Smoke"
 ```
 
@@ -800,7 +964,7 @@ Configure a separate MCP server entry:
 ```toml
 [mcp_servers.ctx_write_smoke]
 command = "C:\\ctx\\bin\\ctx-mcp.cmd"
-args = ["--repo", "C:\\sources\\ctx-open\\tmp\\mcp-write-smoke", "--mode", "write"]
+args = ["--repo", "C:\\path\\to\\ctx-repo\\tmp\\mcp-write-smoke", "--mode", "write"]
 ```
 
 Restart the agent and ask:
@@ -836,35 +1000,37 @@ Expected:
 The local viewer exposes a server-side MCP health probe:
 
 ```powershell
-Invoke-RestMethod http://127.0.0.1:5271/api/mcp-status
+Invoke-RestMethod "http://127.0.0.1:5271/api/mcp-status?path=C%3A%5Cpath%5Cto%5Cctx-repo&ensure=true"
 ```
 
-Expected when the local MCP server is installed and an MCP client session is connected:
+Expected when the local MCP server is installed:
 
 ```text
 healthy: true
 launcherExists: true
 executableExists: true
-runningProcessCount: 1 or greater
+startedByViewer: true
+ownedRepositoryPath: C:\path\to\ctx-repo
 ```
 
 Expected viewer behavior:
 
 - the top bar shows `MCP Server` inside a compact status capsule
 - the status dot is green when `healthy` is true
-- the status dot is red when the launcher, executable, or running MCP process is missing
+- the viewer may start a read-only MCP process for the active repository when `ensure=true`
+- the status dot is red when the launcher or executable is missing, or when MCP startup fails
 
 Failure drill:
 
-1. Stop the local MCP client/session or `Ctx.Mcp.exe` process.
+1. Stop the installed viewer and any viewer-owned `Ctx.Mcp.exe` process.
 2. Refresh the viewer.
-3. Confirm `/api/mcp-status` returns `healthy: false`.
-4. Confirm the top bar `MCP Server` dot turns red.
-5. Restart the MCP client/session and confirm the dot returns green.
+3. Confirm `/api/mcp-status?path=<repo>&ensure=true` returns `healthy: true` and `startedByViewer: true`.
+4. Temporarily move or remove the installed MCP executable only in a disposable install test.
+5. Confirm `/api/mcp-status` reports `healthy: false` and the top bar `MCP Server` dot turns red.
 
 ## Next Planned MCP Phases
 
-1. Add bootstrap map/apply tools for demos.
-2. Add optional HTTP transport with auth and repository allowlists.
-3. Add richer multi-repository allowlist support.
+1. Add optional HTTP transport with auth and repository allowlists.
+2. Add richer multi-repository allowlist support.
+3. Add guarded branch, checkout, merge, import, and export tools.
 4. Add higher-level agent workflows that bundle check, closeout, and commit guidance without hiding the underlying CTX artifacts.

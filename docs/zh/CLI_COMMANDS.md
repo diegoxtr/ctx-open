@@ -209,4 +209,4 @@ dotnet run --project .\Ctx.Cli -- status
 
 如果你需要完整选项、示例或较冷命令，请优先参考英文版：
 
-- [CLI_COMMANDS.md](C:/sources/ctx-open/docs/CLI_COMMANDS.md)
+- [CLI_COMMANDS.md](../CLI_COMMANDS.md)

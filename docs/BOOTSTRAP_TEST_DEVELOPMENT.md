@@ -16,7 +16,7 @@ It should evolve as a running test-development log.
 Public packaging note:
 
 - `ctx-open` publishes the source texts, plans, and testing notes for these bootstrap cases
-- the full private `.ctx` workspaces used during development remain in `ctx-private`
+- full generated `.ctx` workspaces are intentionally not published with the public examples
 
 ## Why this document exists
 
@@ -81,15 +81,15 @@ Known limitation:
 
 Repo:
 
-- [examples/bootstrap-agriculture-demo/README.md](C:/sources/ctx-open/examples/bootstrap-agriculture-demo/README.md)
+- [examples/bootstrap-agriculture-demo/README.md](../examples/bootstrap-agriculture-demo/README.md)
 
 Source:
 
-- [examples/bootstrap-agriculture-demo/agricultural-systems-article.md](C:/sources/ctx-open/examples/bootstrap-agriculture-demo/agricultural-systems-article.md)
+- [examples/bootstrap-agriculture-demo/agricultural-systems-article.md](../examples/bootstrap-agriculture-demo/agricultural-systems-article.md)
 
 Testing notes:
 
-- [examples/bootstrap-agriculture-demo/REAL_TESTING.md](C:/sources/ctx-open/examples/bootstrap-agriculture-demo/REAL_TESTING.md)
+- [examples/bootstrap-agriculture-demo/REAL_TESTING.md](../examples/bootstrap-agriculture-demo/REAL_TESTING.md)
 
 Purpose:
 
@@ -112,15 +112,15 @@ What it exposed:
 
 Repo:
 
-- [examples/bootstrap-agriculture-demo/README.md](C:/sources/ctx-open/examples/bootstrap-agriculture-demo/README.md)
+- [examples/bootstrap-agriculture-demo/README.md](../examples/bootstrap-agriculture-demo/README.md)
 
 Source:
 
-- [examples/bootstrap-agriculture-demo/agricultural-systems-contradictions.md](C:/sources/ctx-open/examples/bootstrap-agriculture-demo/agricultural-systems-contradictions.md)
+- [examples/bootstrap-agriculture-demo/agricultural-systems-contradictions.md](../examples/bootstrap-agriculture-demo/agricultural-systems-contradictions.md)
 
 Testing notes:
 
-- [examples/bootstrap-agriculture-demo/REAL_TESTING.md](C:/sources/ctx-open/examples/bootstrap-agriculture-demo/REAL_TESTING.md)
+- [examples/bootstrap-agriculture-demo/REAL_TESTING.md](../examples/bootstrap-agriculture-demo/REAL_TESTING.md)
 
 Purpose:
 
@@ -143,11 +143,11 @@ What it exposed:
 
 Repo:
 
-- [examples/bootstrap-agriculture-demo-v2/README.md](C:/sources/ctx-open/examples/bootstrap-agriculture-demo-v2/README.md)
+- [examples/bootstrap-agriculture-demo-v2/README.md](../examples/bootstrap-agriculture-demo-v2/README.md)
 
 Plan:
 
-- [examples/bootstrap-agriculture-demo-v2/V2_PLAN.md](C:/sources/ctx-open/examples/bootstrap-agriculture-demo-v2/V2_PLAN.md)
+- [examples/bootstrap-agriculture-demo-v2/V2_PLAN.md](../examples/bootstrap-agriculture-demo-v2/V2_PLAN.md)
 
 Purpose:
 
@@ -167,15 +167,15 @@ must survive as separate provisional hypotheses through the first reviewable out
 
 Repo:
 
-- [examples/bootstrap-agriculture-demo-v3/README.md](C:/sources/ctx-open/examples/bootstrap-agriculture-demo-v3/README.md)
+- [examples/bootstrap-agriculture-demo-v3/README.md](../examples/bootstrap-agriculture-demo-v3/README.md)
 
 Plan:
 
-- [examples/bootstrap-agriculture-demo-v3/V3_PLAN.md](C:/sources/ctx-open/examples/bootstrap-agriculture-demo-v3/V3_PLAN.md)
+- [examples/bootstrap-agriculture-demo-v3/V3_PLAN.md](../examples/bootstrap-agriculture-demo-v3/V3_PLAN.md)
 
 Testing notes:
 
-- [examples/bootstrap-agriculture-demo-v3/REAL_TESTING.md](C:/sources/ctx-open/examples/bootstrap-agriculture-demo-v3/REAL_TESTING.md)
+- [examples/bootstrap-agriculture-demo-v3/REAL_TESTING.md](../examples/bootstrap-agriculture-demo-v3/REAL_TESTING.md)
 
 Purpose:
 
@@ -197,15 +197,15 @@ What still needs judgment:
 
 Repo:
 
-- [examples/bootstrap-agriculture-demo-v4/README.md](C:/sources/ctx-open/examples/bootstrap-agriculture-demo-v4/README.md)
+- [examples/bootstrap-agriculture-demo-v4/README.md](../examples/bootstrap-agriculture-demo-v4/README.md)
 
 Plan:
 
-- [examples/bootstrap-agriculture-demo-v4/V4_PLAN.md](C:/sources/ctx-open/examples/bootstrap-agriculture-demo-v4/V4_PLAN.md)
+- [examples/bootstrap-agriculture-demo-v4/V4_PLAN.md](../examples/bootstrap-agriculture-demo-v4/V4_PLAN.md)
 
 Testing notes:
 
-- [examples/bootstrap-agriculture-demo-v4/REAL_TESTING.md](C:/sources/ctx-open/examples/bootstrap-agriculture-demo-v4/REAL_TESTING.md)
+- [examples/bootstrap-agriculture-demo-v4/REAL_TESTING.md](../examples/bootstrap-agriculture-demo-v4/REAL_TESTING.md)
 
 Purpose:
 

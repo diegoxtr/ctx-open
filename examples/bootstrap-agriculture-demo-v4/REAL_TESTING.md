@@ -2,11 +2,11 @@
 
 Repo under test:
 
-- `C:\sources\ctx-open\examples\bootstrap-agriculture-demo-v4`
+- `C:\path\to\ctx-repo\examples\bootstrap-agriculture-demo-v4`
 
 Source artifact:
 
-- [agricultural-systems-contradictions.md](C:/sources/ctx-open/examples/bootstrap-agriculture-demo-v4/agricultural-systems-contradictions.md)
+- [agricultural-systems-contradictions.md](agricultural-systems-contradictions.md)
 
 ## Objective
 
@@ -36,7 +36,7 @@ This file should document:
 - `C:\ctx\bin\Ctx.Cli.exe hypo add --statement "Persistent sector behavior and hidden structural constraints should now be treated as the dominant interpretation over the earlier integrative branch." --rationale "V4 review inference: the text's persistence pattern and explicit hidden-variable language justify promoting a structural-constraints reading beyond the earlier integrative summary." --confidence 0.77 --impact 0.78 --evidence-strength 0.72 --cost-to-validate 0.45 --task d5c559decfbf4050981bebab4130518a`
 - `C:\ctx\bin\Ctx.Cli.exe hypo update 63890d65ca674bfba45b8c04ffdc5c08 --branch-state Promoted --branch-role Dominant --lineage-group agriculture-conflict-v4`
 - `C:\ctx\bin\Ctx.Cli.exe hypo relate 63890d65ca674bfba45b8c04ffdc5c08 --relation DerivedFrom --to 820713e2c36b4affa745a01715f673fa --note "v4 review branch"`
-- `C:\ctx\bin\Ctx.Cli.exe evidence add --title "V4 review evidence: persistence favors structural constraints" --summary "The article reports repeated sector persistence across campaigns, which supports treating hidden structural conditions as a stronger interpretation than the earlier integrative branch alone." --source "C:\sources\ctx-open\examples\bootstrap-agriculture-demo-v4\agricultural-systems-contradictions.md" --kind Document --confidence 0.77 --supports hypothesis:63890d65ca674bfba45b8c04ffdc5c08`
+- `C:\ctx\bin\Ctx.Cli.exe evidence add --title "V4 review evidence: persistence favors structural constraints" --summary "The article reports repeated sector persistence across campaigns, which supports treating hidden structural conditions as a stronger interpretation than the earlier integrative branch alone." --source ".\agricultural-systems-contradictions.md" --kind Document --confidence 0.77 --supports hypothesis:63890d65ca674bfba45b8c04ffdc5c08`
 - `C:\ctx\bin\Ctx.Cli.exe evidence share 2e8dbec9ddeb4336ad64118d2649bfbd --to hypothesis:63890d65ca674bfba45b8c04ffdc5c08`
 - `C:\ctx\bin\Ctx.Cli.exe hypo supersede 820713e2c36b4affa745a01715f673fa --by 63890d65ca674bfba45b8c04ffdc5c08`
 - `C:\ctx\bin\Ctx.Cli.exe graph export --format json`
@@ -104,4 +104,3 @@ The next bottleneck is no longer the core model. It is surface quality:
 - viewer rendering
 - clearer CLI inspection
 - better differentiation between native, shared, and borrowed evidence
-

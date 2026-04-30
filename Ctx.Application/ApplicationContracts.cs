@@ -116,6 +116,16 @@ public record NextWorkSummary(
     NextWorkDiagnostics Diagnostics,
     IReadOnlyList<RunbookSuggestion> RunbookSuggestions,
     IReadOnlyList<string> AdditionalRunbooksAvailable);
+public record PlanningSummary(
+    string Branch,
+    string? HeadCommitId,
+    bool Dirty,
+    string Purpose,
+    NextWorkSummary Next,
+    ContextPacket Context,
+    IReadOnlyList<RunbookSuggestion> RunbookSuggestions,
+    IReadOnlyList<string> AdditionalRunbooksAvailable,
+    IReadOnlyList<string> Guidance);
 public record BlockCheckMissingItem(string ItemType, string Detail);
 public record RunbookSuggestion(
     string RunbookId,
@@ -128,6 +138,20 @@ public record RunbookSuggestion(
     IReadOnlyList<string> Preconditions,
     IReadOnlyList<string> FailureSignals,
     IReadOnlyList<string> EscalationBoundary);
+public record OperationalIssueRecurrence(
+    string Fingerprint,
+    string Summary,
+    string Procedure,
+    int OccurrenceCount,
+    IReadOnlyList<string> TriggerIds,
+    IReadOnlyList<RunbookSuggestion> Runbooks,
+    IReadOnlyList<string> SuggestedRunbookUpdates,
+    string Recommendation);
+public record OperationalReviewSummary(
+    string Operation,
+    int Threshold,
+    IReadOnlyList<OperationalIssueRecurrence> RepeatedIssues,
+    IReadOnlyList<string> Guidance);
 public record OpenWorkLineSummary(
     string ParentGoalId,
     string ParentGoalTitle,
@@ -170,7 +194,23 @@ public record PreflightSummary(
     string Scope,
     IReadOnlyList<RunbookSuggestion> RunbookSuggestions,
     IReadOnlyList<string> AdditionalRunbooksAvailable,
-    IReadOnlyList<string> Guidance);
+    IReadOnlyList<string> Guidance,
+    IReadOnlyList<OperationalIssueRecurrence>? RepeatedIssues = null);
+public record PromptTimelineEntry(
+    int Index,
+    string TriggerId,
+    string Kind,
+    DateTimeOffset CreatedAtUtc,
+    string CreatedBy,
+    string Summary,
+    string? Text,
+    IReadOnlyList<string> GoalIds,
+    IReadOnlyList<string> TaskIds,
+    string State);
+public record PromptTimelineSummary(
+    string Kind,
+    int Count,
+    IReadOnlyList<PromptTimelineEntry> Prompts);
 
 public interface IWorkingContextRepository
 {

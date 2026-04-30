@@ -427,7 +427,7 @@ La fuente primaria siempre debe ser el conjunto de entidades estructuradas del d
 
 ## Documentos Relacionados
 
-- [CLI_COMMANDS.md](C:/sources/ctx-open/docs/CLI_COMMANDS.md)
-- [INSTALLATION_AND_USAGE_GUIDE.md](C:/sources/ctx-open/docs/INSTALLATION_AND_USAGE_GUIDE.md)
-- [V1_FUNCTIONAL_SPEC.md](C:/sources/ctx-open/docs/V1_FUNCTIONAL_SPEC.md)
+- [CLI_COMMANDS.md](../CLI_COMMANDS.md)
+- [INSTALLATION_AND_USAGE_GUIDE.md](../INSTALLATION_AND_USAGE_GUIDE.md)
+- [V1_FUNCTIONAL_SPEC.md](../V1_FUNCTIONAL_SPEC.md)
 

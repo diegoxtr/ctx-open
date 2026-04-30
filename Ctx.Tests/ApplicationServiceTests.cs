@@ -2086,6 +2086,55 @@ public sealed class ApplicationServiceTests
     }
 
     [Fact]
+    public async Task PlanAsync_BuildsCompactPlanningPacket()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var service = CreateService(new DateTimeOffset(2026, 4, 28, 14, 20, 0, TimeSpan.Zero));
+
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Planning packet test", "main", "tester"), CancellationToken.None);
+            var goal = await service.AddGoalAsync(repositoryPath, new Ctx.Application.AddGoalRequest("Plan MCP work", "Planning surface", 1, null, "tester"), CancellationToken.None);
+            var goalId = ((Ctx.Domain.Goal)goal.Data!).Id.Value;
+            var task = await service.AddTaskAsync(repositoryPath, new Ctx.Application.AddTaskRequest("Add ctx plan", "Expose planning packet", goalId, Array.Empty<string>(), "tester"), CancellationToken.None);
+            var taskId = ((Ctx.Domain.Task)task.Data!).Id.Value;
+            await service.AddOperationalRunbookAsync(repositoryPath, new Ctx.Application.AddOperationalRunbookRequest(
+                "CTX planning first",
+                "Guardrail",
+                new[] { "ctx-planning", "plan" },
+                "Use before starting implementation",
+                new[] { "Build the plan from CTX surfaces first" },
+                new[] { "ctx plan includes this runbook" },
+                Array.Empty<string>(),
+                Array.Empty<string>(),
+                Array.Empty<string>(),
+                "tester"), CancellationToken.None);
+
+            var result = await service.PlanAsync(repositoryPath, "Plan MCP planning surface", goalId, taskId, CancellationToken.None);
+
+            Assert.True(result.Success);
+            var data = Assert.IsType<Ctx.Application.PlanningSummary>(result.Data);
+            Assert.Equal("main", data.Branch);
+            Assert.True(data.Dirty);
+            Assert.Equal("Plan MCP planning surface", data.Purpose);
+            Assert.NotNull(data.Next.Recommended);
+            Assert.Equal(taskId, data.Next.Recommended!.EntityId);
+            Assert.Equal("Plan MCP planning surface", data.Context.Purpose);
+            Assert.Contains(data.RunbookSuggestions, item => item.Title == "CTX planning first");
+            Assert.Contains(data.Guidance, item => item.Contains(data.Context.Id.Value, StringComparison.Ordinal));
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public async Task NextAsync_ReturnsGapCandidateWhenNoOpenTasksRemain()
     {
         var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
@@ -2657,6 +2706,50 @@ public sealed class ApplicationServiceTests
     }
 
     [Fact]
+    public async Task RelateHypothesis_AcceptsDocumentedKebabCaseRelationTokens()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var service = CreateService(new DateTimeOffset(2026, 4, 28, 16, 15, 0, TimeSpan.Zero));
+
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Hypothesis relation token test", "main", "tester"), CancellationToken.None);
+            var first = await service.AddHypothesisAsync(
+                repositoryPath,
+                new Ctx.Application.AddHypothesisRequest("First interpretation", "", 0.6m, 0.6m, 0.4m, 0.2m, null, "tester"),
+                CancellationToken.None);
+            var second = await service.AddHypothesisAsync(
+                repositoryPath,
+                new Ctx.Application.AddHypothesisRequest("Second interpretation", "", 0.6m, 0.6m, 0.4m, 0.2m, null, "tester"),
+                CancellationToken.None);
+            var firstId = ((Ctx.Domain.Hypothesis)first.Data!).Id.Value;
+            var secondId = ((Ctx.Domain.Hypothesis)second.Data!).Id.Value;
+
+            var relation = await service.RelateHypothesisAsync(
+                repositoryPath,
+                new Ctx.Application.RelateHypothesisRequest(firstId, "derived-from", secondId, null, "tester"),
+                CancellationToken.None);
+
+            Assert.True(relation.Success);
+
+            var shown = await service.ShowArtifactAsync(repositoryPath, "hypothesis", firstId, CancellationToken.None);
+            var hypothesis = Assert.IsType<Ctx.Domain.Hypothesis>(shown.Data);
+            var storedRelation = Assert.Single(hypothesis.Relations!);
+            Assert.Equal(Ctx.Domain.HypothesisRelationType.DerivedFrom, storedRelation.RelationType);
+            Assert.Equal(secondId, storedRelation.TargetHypothesisId.Value);
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public async Task OperationalRunbook_AddListShow_ReturnsStructuredResults()
     {
         var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
@@ -2753,6 +2846,75 @@ public sealed class ApplicationServiceTests
             Assert.True(added.Success);
             Assert.True(Directory.Exists(runbookDirectory));
             Assert.Single(Directory.GetFiles(runbookDirectory, "*.json"));
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task OperationalReview_PromotesRepeatedIssueTriggersIntoRunbookGuidance()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var service = CreateService(new DateTimeOffset(2026, 4, 28, 18, 10, 0, TimeSpan.Zero));
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Operational review test", "main", "tester"), CancellationToken.None);
+            var runbook = await service.AddOperationalRunbookAsync(
+                repositoryPath,
+                new Ctx.Application.AddOperationalRunbookRequest(
+                    "Git closeout",
+                    "Guardrail",
+                    new[] { "git-closeout", "index.lock" },
+                    "Use before git commit or push.",
+                    new[] { "Run ctx audit", "Run ctx closeout" },
+                    new[] { "git status is clean" },
+                    new[] { "ctx preflight --operation git-closeout" },
+                    Array.Empty<string>(),
+                    Array.Empty<string>(),
+                    "tester",
+                    new[] { "No unresolved git.exe process or .git/index.lock is blocking writes" },
+                    new[] { "fatal: Unable to create '.git/index.lock'" },
+                    new[] { "Switch to Recover index.lock before touching the lock manually" }),
+                CancellationToken.None);
+            var runbookId = ((Ctx.Domain.OperationalRunbook)runbook.Data!).Id.Value;
+
+            for (var i = 0; i < 2; i++)
+            {
+                await service.AddCognitiveTriggerAsync(
+                    repositoryPath,
+                    new Ctx.Application.AddCognitiveTriggerRequest(
+                        "IssueTrigger",
+                        "git-closeout blocked by active git.exe/index.lock",
+                        "fatal: Unable to create '.git/index.lock' because another process is using the repository",
+                        Array.Empty<string>(),
+                        Array.Empty<string>(),
+                        new[] { runbookId },
+                        "tester"),
+                    CancellationToken.None);
+            }
+
+            var review = await service.OperationalReviewAsync(repositoryPath, "git-closeout", 2, CancellationToken.None);
+            var reviewData = Assert.IsType<Ctx.Application.OperationalReviewSummary>(review.Data);
+            var repeatedIssue = Assert.Single(reviewData.RepeatedIssues);
+
+            Assert.True(review.Success);
+            Assert.Equal(2, repeatedIssue.OccurrenceCount);
+            Assert.Equal("git-closeout", repeatedIssue.Procedure);
+            Assert.Contains(repeatedIssue.Runbooks, item => item.Title == "Git closeout");
+            Assert.Contains(repeatedIssue.SuggestedRunbookUpdates, item => item.Contains("precondition", StringComparison.OrdinalIgnoreCase));
+
+            var preflight = await service.PreflightAsync(repositoryPath, "git-closeout", null, null, CancellationToken.None);
+            var preflightData = Assert.IsType<Ctx.Application.PreflightSummary>(preflight.Data);
+            Assert.NotNull(preflightData.RepeatedIssues);
+            Assert.Single(preflightData.RepeatedIssues!);
+            Assert.Contains(preflightData.Guidance, item => item.Contains("recurrence threshold", StringComparison.OrdinalIgnoreCase));
         }
         finally
         {
@@ -2962,6 +3124,81 @@ public sealed class ApplicationServiceTests
     }
 
     [Fact]
+    public async Task ListPromptTimelineAsync_ReturnsPromptTriggersInStableChronologicalOrder()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var initService = CreateService(new DateTimeOffset(2026, 4, 13, 18, 0, 0, TimeSpan.Zero));
+            await initService.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Prompt timeline test", "main", "tester"), CancellationToken.None);
+
+            var laterService = CreateService(new DateTimeOffset(2026, 4, 13, 18, 20, 0, TimeSpan.Zero));
+            await laterService.AddCognitiveTriggerAsync(
+                repositoryPath,
+                new Ctx.Application.AddCognitiveTriggerRequest(
+                    "AgentPrompt",
+                    "Second prompt",
+                    "Generated after the first prompt.",
+                    Array.Empty<string>(),
+                    Array.Empty<string>(),
+                    Array.Empty<string>(),
+                    "tester"),
+                CancellationToken.None);
+
+            var earlierService = CreateService(new DateTimeOffset(2026, 4, 13, 18, 10, 0, TimeSpan.Zero));
+            await earlierService.AddCognitiveTriggerAsync(
+                repositoryPath,
+                new Ctx.Application.AddCognitiveTriggerRequest(
+                    "UserPrompt",
+                    "First prompt",
+                    "User opened the prompt sequence.",
+                    Array.Empty<string>(),
+                    Array.Empty<string>(),
+                    Array.Empty<string>(),
+                    "tester"),
+                CancellationToken.None);
+
+            var issueService = CreateService(new DateTimeOffset(2026, 4, 13, 18, 5, 0, TimeSpan.Zero));
+            await issueService.AddCognitiveTriggerAsync(
+                repositoryPath,
+                new Ctx.Application.AddCognitiveTriggerRequest(
+                    "IssueTrigger",
+                    "Operational failure",
+                    "Not a prompt timeline item by default.",
+                    Array.Empty<string>(),
+                    Array.Empty<string>(),
+                    Array.Empty<string>(),
+                    "tester"),
+                CancellationToken.None);
+
+            var result = await initService.ListPromptTimelineAsync(repositoryPath, null, CancellationToken.None);
+
+            Assert.True(result.Success);
+            var timeline = Assert.IsType<Ctx.Application.PromptTimelineSummary>(result.Data);
+            Assert.Equal("prompt", timeline.Kind);
+            Assert.Equal(2, timeline.Count);
+            Assert.Equal(new[] { "First prompt", "Second prompt" }, timeline.Prompts.Select(item => item.Summary).ToArray());
+            Assert.Equal(new[] { 1, 2 }, timeline.Prompts.Select(item => item.Index).ToArray());
+            Assert.All(timeline.Prompts, item => Assert.NotEqual("IssueTrigger", item.Kind));
+
+            var agentOnly = await initService.ListPromptTimelineAsync(repositoryPath, "AgentPrompt", CancellationToken.None);
+            var agentTimeline = Assert.IsType<Ctx.Application.PromptTimelineSummary>(agentOnly.Data);
+            var prompt = Assert.Single(agentTimeline.Prompts);
+            Assert.Equal("Second prompt", prompt.Summary);
+            Assert.Equal("Generated after the first prompt.", prompt.Text);
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public async Task Check_IncludesSuggestedRunbooksForFocusedTask()
     {
         var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
@@ -3085,6 +3322,61 @@ public sealed class ApplicationServiceTests
             Assert.Contains("Switch to Recover index.lock before touching the lock manually", data.RunbookSuggestions[0].EscalationBoundary);
             Assert.DoesNotContain(data.RunbookSuggestions, item => item.Title == "Recover index.lock");
             Assert.Contains(data.Guidance, item => item.Contains("ctx audit", StringComparison.OrdinalIgnoreCase));
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Preflight_PublicReleaseSurfacesAnnouncementFlyerGuard()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var service = CreateService(new DateTimeOffset(2026, 4, 30, 13, 45, 0, TimeSpan.Zero));
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Release preflight test", "main", "tester"), CancellationToken.None);
+
+            await service.AddOperationalRunbookAsync(repositoryPath, new Ctx.Application.AddOperationalRunbookRequest(
+                "Public release cut",
+                "Procedure",
+                new[] { "release-cut", "github-release", "public-publish" },
+                "Use when publishing a public CTX release.",
+                new[] { "Tag release", "Publish GitHub Release" },
+                new[] { "Release assets are published" },
+                new[] { "docs/INSTALLER_AND_DISTRIBUTION.md" },
+                Array.Empty<string>(),
+                Array.Empty<string>(),
+                "tester"), CancellationToken.None);
+
+            await service.AddOperationalRunbookAsync(repositoryPath, new Ctx.Application.AddOperationalRunbookRequest(
+                "Release bilingual announcement and flyer",
+                "Procedure",
+                new[] { "release", "release-announcement", "release-flyer", "github-release" },
+                "Use after release notes are consolidated and before sharing a release publicly or with stakeholders.",
+                new[] { "Write English release description", "Write Spanish version", "Create flyer-style block" },
+                new[] { "The flyer names the release version", "The final chat output is self-contained and shareable" },
+                new[] { "docs/RELEASE_NEXT.md", "docs/OPERATIONAL_RUNBOOKS.md" },
+                Array.Empty<string>(),
+                Array.Empty<string>(),
+                "tester"), CancellationToken.None);
+
+            var result = await service.PreflightAsync(repositoryPath, "github-release", null, null, CancellationToken.None);
+
+            Assert.True(result.Success);
+            var data = Assert.IsType<Ctx.Application.PreflightSummary>(result.Data);
+            Assert.Equal("public-release", data.Operation);
+            Assert.Equal(2, data.RunbookSuggestions.Count);
+            Assert.Contains(data.RunbookSuggestions, item => item.Title == "Public release cut");
+            Assert.Contains(data.RunbookSuggestions, item => item.Title == "Release bilingual announcement and flyer");
+            Assert.Contains(data.Guidance, item => item.Contains("bilingual announcement and flyer", StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(data.Guidance, item => item.Contains("omission decision", StringComparison.OrdinalIgnoreCase));
         }
         finally
         {
