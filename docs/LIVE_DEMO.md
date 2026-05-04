@@ -10,6 +10,8 @@ Public demo entrypoints:
 
 - Landing: `https://diegoxtr.github.io/ctx-open/`
 - Demo notes: `https://diegoxtr.github.io/ctx-open/notes.html`
+- Local MCP setup: `https://diegoxtr.github.io/ctx-open/mcp-local.html`
+- UNJu talk deck: `https://diegoxtr.github.io/ctx-open/talk-unju.html`
 - Codespaces quickstart: `https://codespaces.new/diegoxtr/ctx-open?quickstart=1`
 When a temporary public viewer session is alive, publish that URL on the landing page or demo notes. If no temporary session is published, use the landing page or the Codespaces quickstart link.
 
@@ -120,6 +122,8 @@ Its job is:
 - explain the thesis briefly
 - link to the live demo URL
 - link to release downloads
+- link to the local MCP setup page
+- identify the current public release as CTX 1.0.12
 - show one or two screenshots
 
 Pages should not try to host the viewer directly.
@@ -141,6 +145,8 @@ The static artifact is built from:
 
 - `GitHub Pages` = static landing
 - `GitHub Codespaces` = live viewer
+- `Local MCP` = `ctx-mcp` running on the user's machine
+- `Local ACP` = read-only `ctx-agent-acp` session adapter for ACP-style clients
 - tracked `.ctx` example = demo data
 
 This keeps the first public demo GitHub-native without introducing another hosting provider.

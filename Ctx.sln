@@ -23,6 +23,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ctx.Viewer", "Ctx.Viewer\Ct
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ctx.Mcp", "Ctx.Mcp\Ctx.Mcp.csproj", "{BDEBAA1E-A60A-4C6E-BD8A-A0D457014597}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ctx.Agent", "Ctx.Agent\Ctx.Agent.csproj", "{B0CDEE28-F6D4-4548-B35C-9809780AE4B9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ctx.Agent.Acp", "Ctx.Agent.Acp\Ctx.Agent.Acp.csproj", "{72B4D2B1-A18A-419D-8B57-A6FB1125BDAE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -72,5 +76,13 @@ Global
 		{BDEBAA1E-A60A-4C6E-BD8A-A0D457014597}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BDEBAA1E-A60A-4C6E-BD8A-A0D457014597}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BDEBAA1E-A60A-4C6E-BD8A-A0D457014597}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0CDEE28-F6D4-4548-B35C-9809780AE4B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0CDEE28-F6D4-4548-B35C-9809780AE4B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0CDEE28-F6D4-4548-B35C-9809780AE4B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0CDEE28-F6D4-4548-B35C-9809780AE4B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{72B4D2B1-A18A-419D-8B57-A6FB1125BDAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{72B4D2B1-A18A-419D-8B57-A6FB1125BDAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{72B4D2B1-A18A-419D-8B57-A6FB1125BDAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{72B4D2B1-A18A-419D-8B57-A6FB1125BDAE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

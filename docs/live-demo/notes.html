@@ -9,11 +9,11 @@
 <body>
   <main class="page">
     <section class="hero">
-      <p class="eyebrow">Live Demo Notes</p>
+      <p class="eyebrow">CTX 1.0.12 / Live Demo Notes</p>
       <h1>How the GitHub-native CTX demo is delivered.</h1>
       <p class="lede">
         CTX uses GitHub Codespaces for the runnable viewer and GitHub Pages for the
-        static landing. Pages explains the demo. Codespaces runs it.
+        static landing. Pages explains the demo and the local MCP setup. Codespaces runs it.
       </p>
       <div class="actions">
         <a class="button primary" href="./index.html">Back To Landing</a>
@@ -72,6 +72,7 @@
           <li><code>GitHub Pages</code> = static landing</li>
           <li><code>GitHub Codespaces</code> = live viewer</li>
           <li><code>Local MCP</code> = your machine plus your MCP-capable agent</li>
+          <li><code>Local ACP</code> = read-only session adapter through <code>ctx-agent-acp</code></li>
           <li>tracked <code>.ctx</code> example = demo data</li>
         </ul>
       </article>
@@ -79,10 +80,21 @@
         <h2>Local MCP setup</h2>
         <p>
           The static page can prepare copy-ready configuration for each agent, but the MCP
-          server itself still runs locally through <code>ctx-mcp</code>.
+          server itself still runs locally through <code>ctx-mcp</code>. The release smoke test
+          is <code>ctx_plan</code>.
         </p>
         <p>
           <a class="button ghost" href="./mcp-local.html">Configure MCP locally</a>
+        </p>
+      </article>
+      <article class="card">
+        <h2>Local ACP adapter</h2>
+        <p>
+          CTX 1.0.12 also exposes <code>ctx-agent-acp</code> for local ACP-style clients.
+          It is read-only in this public release and is documented separately from MCP.
+        </p>
+        <p>
+          <a class="button ghost" href="https://github.com/diegoxtr/ctx-open/blob/main/docs/ACP_LOCAL_CONNECTION_GUIDE.md">Read ACP guide</a>
         </p>
       </article>
     </section>

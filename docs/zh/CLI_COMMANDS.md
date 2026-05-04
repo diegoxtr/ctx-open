@@ -1,7 +1,7 @@
 # CTX CLI 命令
 如果语言模型及其代理丢失了上下文，这就是你需要的工具。
 
-本文档描述 `C:\sources\ctx-open` 中当前公开的 CTX CLI 表面。
+本文档描述 `<repo-root>` 中当前公开的 CTX CLI 表面。
 
 CTX 返回结构化 JSON，基本格式如下：
 

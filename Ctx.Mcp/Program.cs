@@ -11,6 +11,7 @@ var builder = Host.CreateEmptyApplicationBuilder(settings: null);
 builder.Services.AddSingleton(options);
 builder.Services.AddSingleton(runtime);
 builder.Services.AddSingleton(runtime.ApplicationService);
+builder.Services.AddSingleton(runtime.AgentService);
 builder.Services.AddSingleton<RepositoryGuard>();
 builder.Services
     .AddMcpServer()

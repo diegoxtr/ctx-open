@@ -7,6 +7,21 @@ using ModelContextProtocol.Server;
 [McpServerToolType]
 public static class CtxWriteTools
 {
+    [McpServerTool(Name = "ctx_init", ReadOnly = false, Destructive = false), Description("Initialize a CTX repository. Requires ctx-mcp --mode write.")]
+    public static Task<CommandResult> InitAsync(
+        ICtxApplicationService service,
+        RepositoryGuard guard,
+        CancellationToken cancellationToken,
+        string name,
+        string description = "",
+        string branch = "main",
+        string createdBy = "mcp-agent",
+        string? repo = null)
+        => service.InitAsync(
+            guard.ResolveWritableInitialization(repo),
+            new InitRepositoryRequest(name, description, branch, createdBy),
+            cancellationToken);
+
     [McpServerTool(Name = "ctx_goal_add", ReadOnly = false, Destructive = false), Description("Add a CTX goal. Requires ctx-mcp --mode write.")]
     public static Task<CommandResult> AddGoalAsync(
         ICtxApplicationService service,
@@ -21,6 +36,23 @@ public static class CtxWriteTools
         => service.AddGoalAsync(
             guard.ResolveWritable(repo),
             new AddGoalRequest(title, description, priority, parentGoalId, createdBy),
+            cancellationToken);
+
+    [McpServerTool(Name = "ctx_goal_update", ReadOnly = false, Destructive = false), Description("Update a CTX goal. Requires ctx-mcp --mode write.")]
+    public static Task<CommandResult> UpdateGoalAsync(
+        ICtxApplicationService service,
+        RepositoryGuard guard,
+        CancellationToken cancellationToken,
+        string goalId,
+        string? title = null,
+        string? description = null,
+        int? priority = null,
+        string? state = null,
+        string updatedBy = "mcp-agent",
+        string? repo = null)
+        => service.UpdateGoalAsync(
+            guard.ResolveWritable(repo),
+            new UpdateGoalRequest(goalId, title, description, priority, state, updatedBy),
             cancellationToken);
 
     [McpServerTool(Name = "ctx_line_open", ReadOnly = false, Destructive = false), Description("Open a tactical CTX work line under an existing parent goal. Requires ctx-mcp --mode write.")]
@@ -149,6 +181,50 @@ public static class CtxWriteTools
             new ShareEvidenceRequest(evidenceId, targetReference, updatedBy),
             cancellationToken);
 
+    [McpServerTool(Name = "ctx_hypothesis_relate", ReadOnly = false, Destructive = false), Description("Relate two CTX hypotheses. Requires ctx-mcp --mode write.")]
+    public static Task<CommandResult> RelateHypothesisAsync(
+        ICtxApplicationService service,
+        RepositoryGuard guard,
+        CancellationToken cancellationToken,
+        string hypothesisId,
+        string relationType,
+        string targetHypothesisId,
+        string? note = null,
+        string updatedBy = "mcp-agent",
+        string? repo = null)
+        => service.RelateHypothesisAsync(
+            guard.ResolveWritable(repo),
+            new RelateHypothesisRequest(hypothesisId, relationType, targetHypothesisId, note, updatedBy),
+            cancellationToken);
+
+    [McpServerTool(Name = "ctx_hypothesis_merge", ReadOnly = false, Destructive = false), Description("Merge one CTX hypothesis into another. Requires ctx-mcp --mode write.")]
+    public static Task<CommandResult> MergeHypothesisAsync(
+        ICtxApplicationService service,
+        RepositoryGuard guard,
+        CancellationToken cancellationToken,
+        string sourceHypothesisId,
+        string targetHypothesisId,
+        string updatedBy = "mcp-agent",
+        string? repo = null)
+        => service.MergeHypothesisAsync(
+            guard.ResolveWritable(repo),
+            new MergeHypothesisRequest(sourceHypothesisId, targetHypothesisId, updatedBy),
+            cancellationToken);
+
+    [McpServerTool(Name = "ctx_hypothesis_supersede", ReadOnly = false, Destructive = false), Description("Supersede one CTX hypothesis with another. Requires ctx-mcp --mode write.")]
+    public static Task<CommandResult> SupersedeHypothesisAsync(
+        ICtxApplicationService service,
+        RepositoryGuard guard,
+        CancellationToken cancellationToken,
+        string oldHypothesisId,
+        string newHypothesisId,
+        string updatedBy = "mcp-agent",
+        string? repo = null)
+        => service.SupersedeHypothesisAsync(
+            guard.ResolveWritable(repo),
+            new SupersedeHypothesisRequest(oldHypothesisId, newHypothesisId, updatedBy),
+            cancellationToken);
+
     [McpServerTool(Name = "ctx_decision_add", ReadOnly = false, Destructive = false), Description("Add a CTX decision. Requires ctx-mcp --mode write.")]
     public static Task<CommandResult> AddDecisionAsync(
         ICtxApplicationService service,
@@ -228,6 +304,92 @@ public static class CtxWriteTools
         => service.CommitAsync(
             guard.ResolveWritable(repo),
             new CommitRequest(message, createdBy),
+            cancellationToken);
+
+    [McpServerTool(Name = "ctx_runbook_add", ReadOnly = false, Destructive = false), Description("Add a CTX operational runbook. Requires ctx-mcp --mode write.")]
+    public static Task<CommandResult> AddRunbookAsync(
+        ICtxApplicationService service,
+        RepositoryGuard guard,
+        CancellationToken cancellationToken,
+        string title,
+        string kind,
+        string whenToUse,
+        string[]? triggers = null,
+        string[]? steps = null,
+        string[]? verify = null,
+        string[]? references = null,
+        string[]? goalIds = null,
+        string[]? taskIds = null,
+        string[]? preconditions = null,
+        string[]? failureSignals = null,
+        string[]? escalationBoundary = null,
+        string createdBy = "mcp-agent",
+        string? repo = null)
+        => service.AddOperationalRunbookAsync(
+            guard.ResolveWritable(repo),
+            new AddOperationalRunbookRequest(
+                title,
+                kind,
+                Normalize(triggers),
+                whenToUse,
+                Normalize(steps),
+                Normalize(verify),
+                Normalize(references),
+                Normalize(goalIds),
+                Normalize(taskIds),
+                createdBy,
+                Normalize(preconditions),
+                Normalize(failureSignals),
+                Normalize(escalationBoundary)),
+            cancellationToken);
+
+    [McpServerTool(Name = "ctx_trigger_add", ReadOnly = false, Destructive = false), Description("Add a CTX cognitive trigger. Requires ctx-mcp --mode write.")]
+    public static Task<CommandResult> AddTriggerAsync(
+        ICtxApplicationService service,
+        RepositoryGuard guard,
+        CancellationToken cancellationToken,
+        string kind,
+        string summary,
+        string? text = null,
+        string[]? goalIds = null,
+        string[]? taskIds = null,
+        string[]? runbookIds = null,
+        string createdBy = "mcp-agent",
+        string? repo = null)
+        => service.AddCognitiveTriggerAsync(
+            guard.ResolveWritable(repo),
+            new AddCognitiveTriggerRequest(kind, summary, text, Normalize(goalIds), Normalize(taskIds), Normalize(runbookIds), createdBy),
+            cancellationToken);
+
+    [McpServerTool(Name = "ctx_bootstrap_map", ReadOnly = true, Destructive = false), Description("Build a provisional bootstrap map from existing source material.")]
+    public static Task<CommandResult> BootstrapMapAsync(
+        ICtxApplicationService service,
+        RepositoryGuard guard,
+        CancellationToken cancellationToken,
+        [Description("Source file or directory path to map.")] string from,
+        string mode = "auto",
+        int maxFiles = 8,
+        string requestedBy = "mcp-agent",
+        string? repo = null)
+        => service.BootstrapMapAsync(
+            guard.Resolve(repo),
+            new BootstrapMapRequest(from, mode, maxFiles, requestedBy),
+            cancellationToken);
+
+    [McpServerTool(Name = "ctx_bootstrap_apply", ReadOnly = false, Destructive = false), Description("Apply the strongest provisional bootstrap line into CTX. Requires ctx-mcp --mode write.")]
+    public static Task<CommandResult> BootstrapApplyAsync(
+        ICtxApplicationService service,
+        RepositoryGuard guard,
+        CancellationToken cancellationToken,
+        [Description("Source file or directory path to apply from.")] string from,
+        string mode = "auto",
+        int maxFiles = 8,
+        string? parentGoalId = null,
+        string requestedBy = "mcp-agent",
+        string? repo = null)
+        => service.BootstrapApplyAsync(
+            guard.ResolveWritable(repo),
+            new BootstrapApplyRequest(from, mode, maxFiles, parentGoalId, requestedBy),
             cancellationToken);
 
     private static IReadOnlyList<string> Normalize(string[]? values)

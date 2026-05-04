@@ -12,6 +12,8 @@ public interface ICtxApplicationService
     System.Threading.Tasks.Task<CommandResult> UpdateGoalAsync(string repositoryPath, UpdateGoalRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> OpenWorkLineAsync(string repositoryPath, OpenWorkLineRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddOperationalRunbookAsync(string repositoryPath, AddOperationalRunbookRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> AttachOperationalRunbookAsync(string repositoryPath, AttachOperationalRunbookRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> DetachOperationalRunbookAsync(string repositoryPath, DetachOperationalRunbookRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddCognitiveTriggerAsync(string repositoryPath, AddCognitiveTriggerRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddTaskAsync(string repositoryPath, AddTaskRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> UpdateTaskAsync(string repositoryPath, UpdateTaskRequest request, CancellationToken cancellationToken);

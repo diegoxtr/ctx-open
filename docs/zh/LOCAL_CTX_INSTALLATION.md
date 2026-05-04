@@ -15,7 +15,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\publish-local.ps1
 替代的 source-install bootstrap：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\install-ctx.ps1 -Mode source -SourceRepoPath C:\sources\ctx-open
+powershell -ExecutionPolicy Bypass -File .\scripts\install-ctx.ps1 -Mode source -SourceRepoPath <repo-root>
 ```
 
 带 install/update/repair 检测的单入口 bootstrap：

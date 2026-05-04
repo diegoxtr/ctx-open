@@ -2,7 +2,7 @@
 ; Requires Inno Setup to build a Git-for-Windows-style EXE installer.
 
 #define AppName "CTX"
-#define AppVersion "1.0.11"
+#define AppVersion "1.0.12"
 #define AppPublisher "CTX Project"
 #define AppExeName "ctx.cmd"
 

@@ -19,6 +19,7 @@ if ([string]::IsNullOrWhiteSpace($TargetManifest)) {
 
 $cliProject = Join-Path $repoRoot "Ctx.Cli\Ctx.Cli.csproj"
 $mcpProject = Join-Path $repoRoot "Ctx.Mcp\Ctx.Mcp.csproj"
+$acpProject = Join-Path $repoRoot "Ctx.Agent.Acp\Ctx.Agent.Acp.csproj"
 $viewerProject = Join-Path $repoRoot "Ctx.Viewer\Ctx.Viewer.csproj"
 $agentLinkPrompt = Join-Path $repoRoot "distribution\agent-link\CTX_AGENT_LINK_PROMPT.txt"
 $helperPrompt = Join-Path $repoRoot "prompts\CTX_HELPER_PROMPT.md"
@@ -53,6 +54,10 @@ if (-not (Test-Path $mcpProject)) {
     throw "Ctx.Mcp project not found: $mcpProject"
 }
 
+if (-not (Test-Path $acpProject)) {
+    throw "Ctx.Agent.Acp project not found: $acpProject"
+}
+
 $manifest = Get-Content $TargetManifest -Raw | ConvertFrom-Json
 
 $targets = $manifest.targets
@@ -65,6 +70,7 @@ foreach ($target in $targets) {
     $bundleRoot = Join-Path $targetRoot "bundle"
     $cliOut = Join-Path $bundleRoot "bin"
     $mcpOut = Join-Path $bundleRoot "mcp"
+    $acpOut = Join-Path $bundleRoot "acp"
     $viewerOut = Join-Path $bundleRoot "viewer"
     $metaOut = Join-Path $bundleRoot "distribution"
     $promptOut = Join-Path $bundleRoot "prompts"
@@ -76,12 +82,14 @@ foreach ($target in $targets) {
 
     New-Item -ItemType Directory -Path $cliOut -Force | Out-Null
     New-Item -ItemType Directory -Path $mcpOut -Force | Out-Null
+    New-Item -ItemType Directory -Path $acpOut -Force | Out-Null
     New-Item -ItemType Directory -Path $metaOut -Force | Out-Null
     New-Item -ItemType Directory -Path $promptOut -Force | Out-Null
     New-Item -ItemType Directory -Path $docsOut -Force | Out-Null
 
     dotnet publish $cliProject -c $Configuration -r $target.rid --self-contained true -p:PublishSingleFile=true -o $cliOut
     dotnet publish $mcpProject -c $Configuration -r $target.rid --self-contained true -p:PublishSingleFile=true -o $mcpOut
+    dotnet publish $acpProject -c $Configuration -r $target.rid --self-contained true -p:PublishSingleFile=true -o $acpOut
 
     if (-not $SkipViewer -and $target.includeViewer) {
         New-Item -ItemType Directory -Path $viewerOut -Force | Out-Null

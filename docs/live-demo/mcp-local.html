@@ -9,12 +9,13 @@
 <body>
   <main class="page">
     <section class="hero">
-      <p class="eyebrow">Local MCP Setup</p>
+      <p class="eyebrow">CTX 1.0.12 / Local MCP Setup</p>
       <h1>Connect your agent to CTX.</h1>
       <p class="lede">
         GitHub Pages is static. The CTX MCP server runs locally on your machine through
         an MCP-capable agent or IDE. Choose your platform, set the repository path, and
-        copy the configuration for your agent.
+        copy the configuration for your agent. Use <code>ctx_plan</code> as the first
+        smoke test for this release.
       </p>
       <div class="actions">
         <a class="button primary" href="./index.html">Back To Landing</a>
@@ -42,7 +43,7 @@
         </label>
         <label>
           CTX repository
-          <input id="repo-path" type="text" value="C:\sources\ctx-open">
+          <input id="repo-path" type="text" value="C:\path\to\ctx-repo">
         </label>
         <label>
           Mode
@@ -70,6 +71,12 @@
         <p>Use this shape for MCP clients that accept an <code>mcpServers</code> block with explicit <code>type</code> and tool exposure.</p>
         <pre><code id="generic-snippet"></code></pre>
         <button type="button" class="button copy-button" data-copy-target="generic-snippet">Copy JSON</button>
+      </article>
+      <article class="card setup-card">
+        <h2>ACP launcher</h2>
+        <p>Use this only with clients that speak an ACP-style JSON-RPC session protocol. Current public ACP mode is read-only.</p>
+        <pre><code id="acp-snippet"></code></pre>
+        <button type="button" class="button copy-button" data-copy-target="acp-snippet">Copy ACP command</button>
       </article>
       <article class="card setup-card">
         <h2>Smoke test prompt</h2>
@@ -145,21 +152,24 @@
     const presets = {
       windows: {
         installRoot: "C:\\ctx",
-        repoPath: "C:\\sources\\ctx-open",
+        repoPath: "C:\\path\\to\\ctx-repo",
         command: root => `${root}\\bin\\ctx-mcp.cmd`,
-        verify: root => `Test-Path ${root}\\bin\\ctx-mcp.cmd\nTest-Path ${root}\\mcp\\Ctx.Mcp.exe`
+        acpCommand: root => `${root}\\bin\\ctx-agent-acp.cmd`,
+        verify: root => `Test-Path ${root}\\bin\\ctx-mcp.cmd\nTest-Path ${root}\\bin\\ctx-agent-acp.cmd\nTest-Path ${root}\\mcp\\Ctx.Mcp.exe`
       },
       linux: {
         installRoot: "/home/you/.local/share/ctx",
-        repoPath: "/home/you/sources/ctx-open",
+        repoPath: "/home/you/sources/ctx-repo",
         command: root => `${root}/bin/ctx-mcp`,
-        verify: root => `test -x ${root}/bin/ctx-mcp\ntest -x ${root}/mcp/Ctx.Mcp`
+        acpCommand: root => `${root}/bin/ctx-agent-acp`,
+        verify: root => `test -x ${root}/bin/ctx-mcp\ntest -x ${root}/bin/ctx-agent-acp\ntest -x ${root}/mcp/Ctx.Mcp`
       },
       macos: {
         installRoot: "/Users/you/.local/share/ctx",
-        repoPath: "/Users/you/sources/ctx-open",
+        repoPath: "/Users/you/sources/ctx-repo",
         command: root => `${root}/bin/ctx-mcp`,
-        verify: root => `test -x ${root}/bin/ctx-mcp\ntest -x ${root}/mcp/Ctx.Mcp`
+        acpCommand: root => `${root}/bin/ctx-agent-acp`,
+        verify: root => `test -x ${root}/bin/ctx-mcp\ntest -x ${root}/bin/ctx-agent-acp\ntest -x ${root}/mcp/Ctx.Mcp`
       }
     };
 
@@ -193,11 +203,14 @@
       const repoPath = repoPathInput.value.trim() || preset.repoPath;
       const mode = modeInput.value;
       const command = preset.command(root);
+      const acpCommand = preset.acpCommand(root);
       const quotedCommand = platform === "windows" ? command : `"${command}"`;
       const quotedRepo = platform === "windows" ? repoPath : `"${repoPath}"`;
+      const quotedAcpCommand = platform === "windows" ? acpCommand : `"${acpCommand}"`;
 
       document.getElementById("verify-snippet").textContent = preset.verify(root);
       document.getElementById("generic-snippet").textContent = jsonConfig(command, repoPath, mode);
+      document.getElementById("acp-snippet").textContent = `${quotedAcpCommand} --repo ${quotedRepo}`;
       document.getElementById("claude-code-snippet").textContent = `claude mcp add ctx -- ${quotedCommand} --repo ${quotedRepo} --mode ${mode}`;
       document.getElementById("claude-desktop-snippet").textContent = jsonConfig(command, repoPath, mode);
       document.getElementById("claude-project-snippet").textContent = jsonConfig(command, repoPath, mode);

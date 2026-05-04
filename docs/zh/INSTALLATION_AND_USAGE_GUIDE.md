@@ -43,7 +43,7 @@ dotnet --version
 如果已经有仓库，进入项目根目录：
 
 ```powershell
-cd C:\sources\ctx-open
+cd <repo-root>
 ```
 
 ## 5. 推荐安装流程
@@ -132,7 +132,7 @@ ctx bootstrap apply --from <path>
 ## 9. 创建认知仓库
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- init --name "CTX-DEMO" --description "First cognitive repo"
+dotnet run --project <repo-root>\Ctx.Cli -- init --name "CTX-DEMO" --description "First cognitive repo"
 ```
 
 期望：
@@ -146,49 +146,49 @@ dotnet run --project C:\sources\ctx-open\Ctx.Cli -- init --name "CTX-DEMO" --des
 ### 第一步：创建 goal
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- goal add --title "Define testing strategy" --description "Prepare a technical pilot"
+dotnet run --project <repo-root>\Ctx.Cli -- goal add --title "Define testing strategy" --description "Prepare a technical pilot"
 ```
 
 ### 第二步：创建 task
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- task add --title "Evaluate CLI flow" --description "Validate core commands"
+dotnet run --project <repo-root>\Ctx.Cli -- task add --title "Evaluate CLI flow" --description "Validate core commands"
 ```
 
 ### 第三步：创建 hypothesis
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- hypo add --statement "Structured flow improves traceability" --rationale "State is persisted in artifacts"
+dotnet run --project <repo-root>\Ctx.Cli -- hypo add --statement "Structured flow improves traceability" --rationale "State is persisted in artifacts"
 ```
 
 ### 第四步：记录 evidence
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- evidence add --title "Initial test" --summary "Structure helps resume context" --source "manual evaluation" --kind Observation --supports hypothesis:<hypothesisId>
+dotnet run --project <repo-root>\Ctx.Cli -- evidence add --title "Initial test" --summary "Structure helps resume context" --source "manual evaluation" --kind Observation --supports hypothesis:<hypothesisId>
 ```
 
 ### 第五步：记录 decision
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- decision add --title "Use CTX in pilot" --rationale "Traceability is sufficient for pilot" --state Accepted --hypotheses <hypothesisId> --evidence <evidenceId>
+dotnet run --project <repo-root>\Ctx.Cli -- decision add --title "Use CTX in pilot" --rationale "Traceability is sufficient for pilot" --state Accepted --hypotheses <hypothesisId> --evidence <evidenceId>
 ```
 
 ### 第六步：记录 conclusion
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- conclusion add --summary "Approve internal pilot usage" --state Accepted --decisions <decisionId> --evidence <evidenceId>
+dotnet run --project <repo-root>\Ctx.Cli -- conclusion add --summary "Approve internal pilot usage" --state Accepted --decisions <decisionId> --evidence <evidenceId>
 ```
 
 ### 第七步：执行 run
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- run --provider openai --purpose "Review pilot risks"
+dotnet run --project <repo-root>\Ctx.Cli -- run --provider openai --purpose "Review pilot risks"
 ```
 
 ### 第八步：创建 cognitive commit
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- commit -m "first end-to-end flow"
+dotnet run --project <repo-root>\Ctx.Cli -- commit -m "first end-to-end flow"
 ```
 
 ## 11. 常用命令

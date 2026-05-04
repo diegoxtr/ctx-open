@@ -12,13 +12,15 @@ For a shorter public setup path, use [MCP_LOCAL_QUICKSTART.md](MCP_LOCAL_QUICKST
 
 ## Platform Paths
 
-| Platform | Default install root | MCP launcher |
-|---|---|---|
-| Windows | `C:\ctx` | `C:\ctx\bin\ctx-mcp.cmd` |
-| Linux | `$HOME/.local/share/ctx` | `$HOME/.local/share/ctx/bin/ctx-mcp` |
-| macOS | `$HOME/.local/share/ctx` | `$HOME/.local/share/ctx/bin/ctx-mcp` |
+| Platform | Default install root | MCP launcher | ACP launcher |
+|---|---|---|---|
+| Windows | `C:\ctx` | `C:\ctx\bin\ctx-mcp.cmd` | `C:\ctx\bin\ctx-agent-acp.cmd` |
+| Linux | `$HOME/.local/share/ctx` | `$HOME/.local/share/ctx/bin/ctx-mcp` | `$HOME/.local/share/ctx/bin/ctx-agent-acp` |
+| macOS | `$HOME/.local/share/ctx` | `$HOME/.local/share/ctx/bin/ctx-mcp` | `$HOME/.local/share/ctx/bin/ctx-agent-acp` |
 
 Replace the repository path in every example with the local folder that contains `.ctx`.
+
+MCP is the primary tool-rich integration path. `ctx-agent-acp` is also installed for ACP-style session clients and is documented in [ACP_LOCAL_CONNECTION_GUIDE.md](ACP_LOCAL_CONNECTION_GUIDE.md).
 
 ## What You Get
 
