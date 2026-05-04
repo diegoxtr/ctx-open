@@ -50,6 +50,7 @@ The value is not "wrapping CTX in another protocol" for its own sake. The value 
 The current local server can let agents:
 
 - read relevant working context without loading the whole repository state
+- call `ctx_plan` to get repository state, the next recommended task, focused context, runbooks, and guidance in one MCP response
 - retrieve durable decisions, evidence, and conclusions on demand
 - consume operational runbooks as compact contextual rules
 - interact with CTX as a long-running cognitive substrate instead of a one-shot prompt attachment
@@ -116,6 +117,7 @@ ctx
 ctx status
 ctx audit
 ctx next
+ctx plan --purpose "Plan the next work turn"
 ```
 
 Then continue from the recommended line, record evidence and decisions while working, and use `ctx closeout` before `ctx commit`.
@@ -158,6 +160,7 @@ For most agents, the correct loop is:
 ```powershell
 ctx
 ctx next
+ctx plan --purpose "Plan the next work turn"
 ```
 
 Do the work.
@@ -341,9 +344,9 @@ Demo repositories you can copy and paste:
 - Public Codespaces default: `/workspaces/ctx-open/examples/ctx/agent-session-continuity`
 - Public Codespaces alternate: `/workspaces/ctx-open/examples/ctx/catalog-cache-branch-merge`
 - Public Codespaces alternate: `/workspaces/ctx-open/examples/ctx/critical-checkout-regression`
-- Local clone default: `C:\sources\ctx-open\examples\ctx\agent-session-continuity`
-- Local clone alternate: `C:\sources\ctx-open\examples\ctx\catalog-cache-branch-merge`
-- Local clone alternate: `C:\sources\ctx-open\examples\ctx\critical-checkout-regression`
+- Local clone default: `<repo>\examples\ctx\agent-session-continuity`
+- Local clone alternate: `<repo>\examples\ctx\catalog-cache-branch-merge`
+- Local clone alternate: `<repo>\examples\ctx\critical-checkout-regression`
 
 What each demo should show:
 
@@ -405,7 +408,7 @@ Installed launchers:
 Default mode is read-only:
 
 ```powershell
-C:\ctx\bin\ctx-mcp.cmd --repo C:\sources\ctx-open --mode read-only
+C:\ctx\bin\ctx-mcp.cmd --repo <repo> --mode read-only
 ```
 
 Use `--mode write` only when an operator intentionally wants the agent to create CTX artifacts. Setup examples are documented in `docs/CTX_MCP_AGENT_SETUP.md`, and the short public quickstart is in `docs/MCP_LOCAL_QUICKSTART.md`.
@@ -428,6 +431,7 @@ In practice, the operator often has to restate the rule more than once:
 If you are an autonomous agent, treat CTX as the primary operating surface before free-form reasoning. Read the repository, recover the active cognitive line, inspect the runbooks and origins, and only then execute.
 
 If an agent starts improvising from chat instead of CTX, repeat the instruction and redirect it back to `ctx`, then to the next command implied by the current state.
+Use `ctx plan --purpose "<current intent>"` before execution when the next step needs a compact packet with state, recommended task, context, runbooks, and guidance.
 
 Treat CTX as a small operating state machine, not as a giant command list:
 
@@ -447,6 +451,7 @@ The minimum loop stays:
 ```powershell
 ctx
 ctx next
+ctx plan --purpose "Plan the next work turn"
 ctx closeout
 ctx commit -m "<durable result>"
 ```
@@ -560,7 +565,7 @@ Viewer:
 - `dotnet run --project .\Ctx.Viewer`
 - Open `http://localhost:5271`
 - Load a `.ctx` repository path to inspect branches, timeline lanes, commits and graph traces over time
-- If no repository path is stored or entered, the viewer first uses `CTX_VIEWER_DEFAULT_REPOSITORY_PATH` or `Viewer__DefaultRepositoryPath` when configured, and otherwise falls back to the project git root, which for this self-hosting repository resolves to `C:\sources\ctx-open`
+- If no repository path is stored or entered, the viewer first uses `CTX_VIEWER_DEFAULT_REPOSITORY_PATH` or `Viewer__DefaultRepositoryPath` when configured, and otherwise falls back to the current project git root
 - Default branch is `main` unless the browser already remembers a newer repository or branch selection
 - `Auto-refresh` starts enabled by default unless the browser already remembers that you turned it off, and the viewer remembers that preference across reloads
 - Use `Refresh` for manual reloads or keep `Auto-refresh` enabled for periodic sync
@@ -581,8 +586,8 @@ Viewer:
 - The viewer remembers the last repository, branch, focus combination and task-state filter mix across reloads
 - The left panel shows both active and closed tasks so current and completed work stay visible without opening the graph first
 - Task items in the left panel can now focus the corresponding `Task` node and restore the working graph context
-- Primary self-hosting repository: `C:\sources\ctx-open`
-- Bundled demo repository: `C:\sources\ctx-open\examples\viewer-demo`
+- Primary self-hosting repository: the current repo root
+- Bundled demo repository: `examples/viewer-demo`
 - The bundled demo includes `main`, `feature/ux-timeline` and `research/validation`
 - The repo-root `.ctx` workspace tracks the real product roadmap, evidence, decisions and cognitive commits for CTX itself
 - Local publish/install is documented in `docs/LOCAL_CTX_INSTALLATION.md`
