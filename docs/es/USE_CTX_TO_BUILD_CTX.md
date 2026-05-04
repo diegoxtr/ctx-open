@@ -1,4 +1,4 @@
-﻿# Usar CTX Para Construir CTX
+# Usar CTX Para Construir CTX
 Si un modelo de lenguaje y su agente pierden el contexto, esta es la herramienta que necesitas.
 
 ## Objetivo
@@ -119,7 +119,7 @@ No debe esperar direccion manual si el repositorio CTX ya deja claro que sigue.
 
 Usar un repositorio CTX especifico para el desarrollo del producto:
 
-- `C:\sources\ctx-open`
+- `<repo-root>`
 
 ## Resultado esperado
 

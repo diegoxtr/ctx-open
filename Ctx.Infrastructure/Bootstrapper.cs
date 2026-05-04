@@ -1,6 +1,7 @@
 ﻿namespace Ctx.Infrastructure;
 
 using System.Text.Json;
+using Ctx.Agent;
 using Ctx.Application;
 using Ctx.Core;
 using Ctx.Persistence;
@@ -8,14 +9,16 @@ using Ctx.Providers;
 
 public sealed class CtxRuntime
 {
-    public CtxRuntime(ICtxApplicationService applicationService, IMetricsRepository metricsRepository, JsonSerializerOptions jsonOptions)
+    public CtxRuntime(ICtxApplicationService applicationService, ICtxAgentService agentService, IMetricsRepository metricsRepository, JsonSerializerOptions jsonOptions)
     {
         ApplicationService = applicationService;
+        AgentService = agentService;
         MetricsRepository = metricsRepository;
         JsonOptions = jsonOptions;
     }
 
     public ICtxApplicationService ApplicationService { get; }
+    public ICtxAgentService AgentService { get; }
     public IMetricsRepository MetricsRepository { get; }
     public JsonSerializerOptions JsonOptions { get; }
 }
@@ -49,9 +52,11 @@ public static class Bootstrapper
         });
         var runOrchestrator = new RunOrchestrator(contextBuilder, providerRegistry, packetRepository, runRepository, metricsRepository, clock, hashingService, runbookRepository, triggerRepository);
         var applicationService = new CtxApplicationService(workingRepository, commitRepository, branchRepository, runRepository, packetRepository, metricsRepository, runOrchestrator, contextBuilder, commitEngine, mergeEngine, clock, hashingService, repositoryWriteLock, runbookRepository, triggerRepository);
+        var agentService = new CtxAgentService(applicationService);
 
         return new CtxRuntime(
             applicationService,
+            agentService,
             metricsRepository,
             new JsonSerializerOptions
             {

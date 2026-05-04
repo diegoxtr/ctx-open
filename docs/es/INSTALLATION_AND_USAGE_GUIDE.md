@@ -1,4 +1,4 @@
-﻿# CTX - Guia de Instalacion y Uso
+# CTX - Guia de Instalacion y Uso
 Si un modelo de lenguaje y su agente pierden el contexto, esta es la herramienta que necesitas.
 
 ## 1. Objetivo
@@ -53,7 +53,7 @@ Si ya tenes el repositorio en tu maquina, ubicate en la carpeta raiz del proyect
 Ejemplo:
 
 ```powershell
-cd C:\sources\ctx-open
+cd <repo-root>
 ```
 
 ## 5. Restaurar, compilar y testear
@@ -131,7 +131,7 @@ ctx bootstrap apply --from <path>
 Ubicate en una carpeta de trabajo donde quieras iniciar CTX y ejecutar:
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- init --name "CTX-DEMO" --description "Primer repositorio cognitivo"
+dotnet run --project <repo-root>\Ctx.Cli -- init --name "CTX-DEMO" --description "Primer repositorio cognitivo"
 ```
 
 Resultado esperado:
@@ -143,7 +143,7 @@ Resultado esperado:
 Verificar:
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- status
+dotnet run --project <repo-root>\Ctx.Cli -- status
 ```
 
 ## 9. Primer flujo de uso recomendado
@@ -151,49 +151,49 @@ dotnet run --project C:\sources\ctx-open\Ctx.Cli -- status
 ## Paso 1 - Crear un objetivo
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- goal add --title "Definir estrategia de prueba" --description "Preparar un piloto tecnico"
+dotnet run --project <repo-root>\Ctx.Cli -- goal add --title "Definir estrategia de prueba" --description "Preparar un piloto tecnico"
 ```
 
 ## Paso 2 - Crear una tarea
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- task add --title "Evaluar flujo CLI" --description "Validar comandos principales"
+dotnet run --project <repo-root>\Ctx.Cli -- task add --title "Evaluar flujo CLI" --description "Validar comandos principales"
 ```
 
 ## Paso 3 - Crear una hipotesis
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- hypo add --statement "El flujo estructurado mejora la trazabilidad" --rationale "El estado queda persistido en artefactos"
+dotnet run --project <repo-root>\Ctx.Cli -- hypo add --statement "El flujo estructurado mejora la trazabilidad" --rationale "El estado queda persistido en artefactos"
 ```
 
 ## Paso 4 - Registrar evidencia
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- evidence add --title "Prueba inicial" --summary "La estructura permite retomar contexto" --source "evaluacion manual" --kind Observation --supports hypothesis:<hypothesisId>
+dotnet run --project <repo-root>\Ctx.Cli -- evidence add --title "Prueba inicial" --summary "La estructura permite retomar contexto" --source "evaluacion manual" --kind Observation --supports hypothesis:<hypothesisId>
 ```
 
 ## Paso 5 - Registrar una decision
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- decision add --title "Usar CTX en piloto" --rationale "La trazabilidad es suficiente para un piloto" --state Accepted --hypotheses <hypothesisId> --evidence <evidenceId>
+dotnet run --project <repo-root>\Ctx.Cli -- decision add --title "Usar CTX en piloto" --rationale "La trazabilidad es suficiente para un piloto" --state Accepted --hypotheses <hypothesisId> --evidence <evidenceId>
 ```
 
 ## Paso 6 - Registrar una conclusion
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- conclusion add --summary "Se aprueba el uso en piloto interno" --state Accepted --decisions <decisionId> --evidence <evidenceId>
+dotnet run --project <repo-root>\Ctx.Cli -- conclusion add --summary "Se aprueba el uso en piloto interno" --state Accepted --decisions <decisionId> --evidence <evidenceId>
 ```
 
 ## Paso 7 - Ejecutar una corrida
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- run --provider openai --purpose "Revisar riesgos del piloto"
+dotnet run --project <repo-root>\Ctx.Cli -- run --provider openai --purpose "Revisar riesgos del piloto"
 ```
 
 ## Paso 8 - Generar commit cognitivo
 
 ```powershell
-dotnet run --project C:\sources\ctx-open\Ctx.Cli -- commit -m "primer flujo completo de uso"
+dotnet run --project <repo-root>\Ctx.Cli -- commit -m "primer flujo completo de uso"
 ```
 
 ## 10. Comandos utiles

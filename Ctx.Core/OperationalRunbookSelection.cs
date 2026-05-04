@@ -55,8 +55,43 @@ public static class OperationalRunbookSelection
             .Select(item => item.Runbook)
             .ToList();
 
-        var selected = matches.Take(2).ToArray();
-        var available = matches.Skip(2).Take(3).ToArray();
+        var selected = PromoteMandatoryRunbooks(normalizedPurpose, matches.Take(2).ToArray(), matches);
+        var selectedIds = selected.Select(runbook => runbook.Id.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var available = matches
+            .Where(runbook => !selectedIds.Contains(runbook.Id.Value))
+            .Take(3)
+            .ToArray();
         return (selected, available);
     }
+
+    private static IReadOnlyList<OperationalRunbook> PromoteMandatoryRunbooks(
+        string normalizedPurpose,
+        IReadOnlyList<OperationalRunbook> selected,
+        IReadOnlyList<OperationalRunbook> matches)
+    {
+        if (!IsReleaseContext(normalizedPurpose))
+        {
+            return selected;
+        }
+
+        var mandatory = matches
+            .Where(runbook => runbook.Title.Equals("Release bilingual announcement and flyer", StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+
+        if (mandatory.Length == 0)
+        {
+            return selected;
+        }
+
+        return selected
+            .Concat(mandatory)
+            .DistinctBy(runbook => runbook.Id.Value, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private static bool IsReleaseContext(string normalizedPurpose)
+        => normalizedPurpose.Contains("release", StringComparison.OrdinalIgnoreCase)
+            || normalizedPurpose.Contains("github-release", StringComparison.OrdinalIgnoreCase)
+            || normalizedPurpose.Contains("release-announcement", StringComparison.OrdinalIgnoreCase)
+            || normalizedPurpose.Contains("release-flyer", StringComparison.OrdinalIgnoreCase);
 }

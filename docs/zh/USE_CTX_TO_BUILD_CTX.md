@@ -119,7 +119,7 @@ ctx commit -m "<block result>"
 
 使用专门的 CTX 仓库来开发产品：
 
-- `C:\sources\ctx-open`
+- `<repo-root>`
 
 ## 预期结果
 

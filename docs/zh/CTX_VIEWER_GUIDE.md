@@ -44,7 +44,7 @@
 
 - 如果没有保存或输入仓库路径，viewer 会先检查 `CTX_VIEWER_DEFAULT_REPOSITORY_PATH` 或 `Viewer__DefaultRepositoryPath`
 - 如果没有配置默认路径，就从最近的项目 `.git` 根目录推断默认根路径
-- 在这个 self-hosting 仓库中，该 fallback 根路径解析为 `C:\sources\ctx-open`
+- 在这个 self-hosting 仓库中，该 fallback 根路径解析为 `<repo-root>`
 - 默认认知 branch 是 `main`
 - `Auto-refresh` 默认开启，除非浏览器已经记住你把它关掉
 - 浏览器会记住最近使用的 `Repository` 与 `Branch`
@@ -54,7 +54,7 @@
 
 示例仓库：
 
-- `C:\sources\ctx-open\examples\viewer-demo`
+- `<repo-root>\examples\viewer-demo`
 - `C:\ctx\workspace\ctx-self-host`
 
 示例 override：

@@ -16,6 +16,18 @@ That same property also gives CTX unusually high value when generating structure
 Since the cognitive versioner stabilized in day-to-day development, we have not lost context again in practice. That result is still striking, and it is one of the strongest signals that this approach points toward what comes next.
 CTX is not only for coding workflows. It is also for cognitive planning, research, investigation, architecture, product thinking, operational continuity, and any long-running line of reasoning that should remain reconstructable over time.
 
+## Quick Navigation
+
+| Need | Start here |
+|---|---|
+| Understand what CTX is | [Beyond Model Memory](#beyond-model-memory), [Why It Matters](#why-it-matters) |
+| Start using an existing CTX repo | [Existing Repo vs New Project](#existing-repo-vs-new-project), [Minimum Operator Loop](#minimum-operator-loop) |
+| Install or update CTX | [Install](#install), [Installation and Usage Guide](docs/INSTALLATION_AND_USAGE_GUIDE.md) |
+| Connect an agent through MCP | [MCP Exposure](#mcp-exposure), [MCP Server](#mcp-server), [MCP Agent Setup](docs/CTX_MCP_AGENT_SETUP.md), [MCP Local Quickstart](docs/MCP_LOCAL_QUICKSTART.md) |
+| Connect an ACP-style client | [ACP Local Connection Guide](docs/ACP_LOCAL_CONNECTION_GUIDE.md) |
+| Explore the viewer and public demo | [Viewer](#viewer), [Live Demo](#live-demo), [CTX Viewer Guide](docs/CTX_VIEWER_GUIDE.md) |
+| Browse the full docs set | [Documentation Index](#documentation-index), [Technical Index](docs/TECHNICAL_INDEX.md) |
+
 ## Beyond Model Memory
 
 Provider-level memory from systems like OpenAI, Anthropic, and DeepSeek is useful, but it is not enough for serious long-running agent work.
@@ -65,7 +77,7 @@ Current boundary:
 - bootstrap map/apply is exposed for local demos and controlled project onboarding
 - HTTP transport and remote auth remain future work
 
-Setup is documented in `docs/CTX_MCP_AGENT_SETUP.md`, and the short public quickstart is in `docs/MCP_LOCAL_QUICKSTART.md`.
+Setup is documented in `docs/CTX_MCP_AGENT_SETUP.md`, and the short public quickstart is in `docs/MCP_LOCAL_QUICKSTART.md`. Tool parity is tracked in `docs/CTX_MCP_TOOL_PARITY.md`.
 
 ## Commit Semantics
 
@@ -280,7 +292,7 @@ What the bootstrap does:
 - installs from the published prebuilt bundle by default
 - uses source mode only when explicitly requested
 - copies the helper prompt plus the canonical CTX docs into the install root
-- exposes `ctx` globally when possible
+- exposes `ctx`, `ctx-mcp`, and `ctx-agent-acp` globally when possible
 
 Windows PATH/global exposure:
 
@@ -301,6 +313,11 @@ Linux/macOS shell exposure:
 - user-level links: `LINK_SCOPE=user`
 - global links: `LINK_SCOPE=global`
 - no links: `LINK_SCOPE=none`
+
+Default install roots:
+
+- Windows: `C:\ctx`
+- Linux/macOS: `$HOME/.local/share/ctx`
 
 The installed helper is dynamic: it resolves the install root or repository root and points agents to the copied `CTX_VIEWER_GUIDE`, `CTX_AGENT_PROMPT`, and `CTX_AUTONOMOUS_OPERATION_PROTOCOL` before they start operating.
 
@@ -402,8 +419,11 @@ CTX ships a local stdio MCP server for agents and IDEs that support MCP.
 
 Installed launchers:
 
-- Windows: `C:\ctx\bin\ctx-mcp.cmd`
-- Linux/macOS: `$HOME/.local/share/ctx/bin/ctx-mcp`
+| Platform | MCP launcher | ACP launcher |
+|---|---|---|
+| Windows | `C:\ctx\bin\ctx-mcp.cmd` | `C:\ctx\bin\ctx-agent-acp.cmd` |
+| Linux | `$HOME/.local/share/ctx/bin/ctx-mcp` | `$HOME/.local/share/ctx/bin/ctx-agent-acp` |
+| macOS | `$HOME/.local/share/ctx/bin/ctx-mcp` | `$HOME/.local/share/ctx/bin/ctx-agent-acp` |
 
 Default mode is read-only:
 
@@ -412,6 +432,11 @@ C:\ctx\bin\ctx-mcp.cmd --repo <repo> --mode read-only
 ```
 
 Use `--mode write` only when an operator intentionally wants the agent to create CTX artifacts. Setup examples are documented in `docs/CTX_MCP_AGENT_SETUP.md`, and the short public quickstart is in `docs/MCP_LOCAL_QUICKSTART.md`.
+
+The MCP startup smoke test is `ctx_plan`: it returns repository state, dirty state, next work, focused context, runbook suggestions, and guidance in one response.
+
+`ctx-agent-acp` is the local ACP-style adapter for clients that want a session flow with `initialize`, `session/new`, and `session/prompt`. It is read-only in the current public release. Use `docs/ACP_LOCAL_CONNECTION_GUIDE.md` for the full local connection shape.
+
 What this shows:
 
 - durable commit history preserved as structured reasoning
@@ -492,6 +517,9 @@ Structural rule:
 - `Ctx.Providers`: interchangeable OpenAI and Anthropic providers plus registry
 - `Ctx.Infrastructure`: composition root
 - `Ctx.Cli`: command-line interface for repository operations
+- `Ctx.Mcp`: local stdio MCP server for MCP-capable agents
+- `Ctx.Agent`: internal agent-session planning layer
+- `Ctx.Agent.Acp`: read-only local ACP-style stdio adapter
 
 ## Commands
 
@@ -520,6 +548,7 @@ ctx packet list
 ctx provider list
 ctx metrics show
 ctx next
+ctx plan --purpose "Plan the next CTX work turn"
 ctx check --task <taskId>
 ctx closeout
 ctx usage summary
@@ -542,6 +571,10 @@ Documentation:
 - `docs/INSTALLER_AND_DISTRIBUTION.md`
 - `docs/LIVE_DEMO.md`
 - `docs/LOCAL_CTX_INSTALLATION.md`
+- `docs/MCP_LOCAL_QUICKSTART.md`
+- `docs/CTX_MCP_AGENT_SETUP.md`
+- `docs/CTX_MCP_TOOL_PARITY.md`
+- `docs/ACP_LOCAL_CONNECTION_GUIDE.md`
 - `docs/TECHNICAL_ARCHITECTURE.md`
 - `docs/TECHNICAL_INDEX.md`
 - `docs/PROJECT_PHILOSOPHY.md`
@@ -669,5 +702,96 @@ This is a planned direction, not a statement of current capability.
 - `docs/WORK_MODEL_AND_PRIORITIZATION.md` now defines the canonical distinction between `issue`, `gap`, `task`, `subtask`, `blocker`, `duplicate` and `follow-up`.
 - Distribution assets now live under `distribution/`, including target manifests, platform installer scaffolding, and the shipped agent-link prompt fragment.
 
-- Diego Mariano Verrastro   
+## Documentation Index
+
+Use this index as the navigable entrypoint into the public repository documentation. For the exhaustive technical map, use [docs/TECHNICAL_INDEX.md](docs/TECHNICAL_INDEX.md).
+
+### First Read
+
+| Document | Use it for |
+|---|---|
+| [Project Philosophy](docs/PROJECT_PHILOSOPHY.md) | Product principles, local-first posture, and project intent |
+| [Commercial and Governance Philosophy](docs/COMMERCIAL_AND_GOVERNANCE_PHILOSOPHY.md) | Governance, usage boundaries, and service posture |
+| [V1 Plan](docs/V1_PLAN.md) | Scope, phases, backlog, and product direction |
+| [V1 Functional Spec](docs/V1_FUNCTIONAL_SPEC.md) | Requirements, modules, and definition of done |
+| [CTX Specification v1](docs/CTX_SPECIFICATION_V1.md) | Minimal storage and structure specification |
+
+### Operate CTX
+
+| Document | Use it for |
+|---|---|
+| [Installation and Usage Guide](docs/INSTALLATION_AND_USAGE_GUIDE.md) | Install, update, repair, build, and first use |
+| [CLI Commands](docs/CLI_COMMANDS.md) | Full CLI command reference |
+| [Use CTX to Build CTX](docs/USE_CTX_TO_BUILD_CTX.md) | Self-hosting workflow |
+| [Autonomous Operation Protocol](docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md) | Agent/operator execution protocol |
+| [Operational Runbooks](docs/OPERATIONAL_RUNBOOKS.md) | Recurring procedures, guardrails, and release/playbook flows |
+| [Command Adoption and Coverage](docs/COMMAND_ADOPTION_AND_COVERAGE.md) | Which commands are actively used and which need validation |
+
+### MCP, ACP, And Agents
+
+| Document | Use it for |
+|---|---|
+| [MCP Agent Setup](docs/CTX_MCP_AGENT_SETUP.md) | Configure CTX in MCP-capable agents |
+| [MCP Local Quickstart](docs/MCP_LOCAL_QUICKSTART.md) | Short local MCP setup and smoke test |
+| [MCP Tool Parity](docs/CTX_MCP_TOOL_PARITY.md) | CLI-to-MCP parity and deferred tool surfaces |
+| [ACP Local Connection Guide](docs/ACP_LOCAL_CONNECTION_GUIDE.md) | Local `ctx-agent-acp` command, JSON-RPC messages, and read-only connection test |
+| [MCP Server Proposal](docs/MCP_SERVER_PROPOSAL.md) | Historical design proposal and architecture background |
+| [Agent Prompt](prompts/CTX_AGENT_PROMPT.md) | Agent rules for CTX-first work |
+| [Autonomous Operator Prompt](prompts/CTX_AUTONOMOUS_OPERATOR_PROMPT.md) | Stricter autonomous execution prompt |
+| [Base Prompt Template](prompts/CTX_BASE_PROMPT.md) | Template for adapting CTX to new tools |
+
+### Architecture And Internals
+
+| Document | Use it for |
+|---|---|
+| [Technical Architecture](docs/TECHNICAL_ARCHITECTURE.md) | Layers, dependencies, and end-to-end flows |
+| [Domain Model](docs/DOMAIN_MODEL.md) | Entities, states, relationships, and invariants |
+| [CTX Structure](docs/CTX_STRUCTURE.md) | `.ctx/` folder layout and persistence rules |
+| [Cognitive Graph and Lineage](docs/COGNITIVE_GRAPH_AND_LINEAGE.md) | Graph projection and lineage model |
+| [Cognitive Thread Reconstruction](docs/COGNITIVE_THREAD_RECONSTRUCTION.md) | Reconstructing reasoning from artifacts and commits |
+| [Cognitive Triggers](docs/COGNITIVE_TRIGGERS.md) | Durable origin records for work lines |
+| [Hypothesis Scoring](docs/HYPOTHESIS_SCORING.md) | Confidence, evidence, validation cost, and ranking |
+| [Hypothesis Branch Semantics](docs/HYPOTHESIS_BRANCH_SEMANTICS.md) | Branch-like hypothesis lifecycle and relations |
+| [Work Model and Prioritization](docs/WORK_MODEL_AND_PRIORITIZATION.md) | Issue/gap/task taxonomy and prioritization model |
+
+### Viewer, Bootstrap, And Demos
+
+| Document | Use it for |
+|---|---|
+| [CTX Viewer Guide](docs/CTX_VIEWER_GUIDE.md) | Timeline, graph, focus modes, and viewer interpretation |
+| [Local CTX Installation](docs/LOCAL_CTX_INSTALLATION.md) | Local publish/install flow |
+| [Live Demo](docs/LIVE_DEMO.md) | Public demo surfaces and validation paths |
+| [Bootstrap Cognitive Indexing](docs/BOOTSTRAP_COGNITIVE_INDEXING.md) | `bootstrap map/apply` concept and workflow |
+| [Bootstrap Test Development](docs/BOOTSTRAP_TEST_DEVELOPMENT.md) | Bootstrap regression cases and conclusions |
+| [Examples](examples/README.md) | Demo repository map |
+| [CTX Example Repositories](examples/ctx/README.md) | Operational example repositories |
+
+### Release And Distribution
+
+| Document | Use it for |
+|---|---|
+| [Release 1.0.12](docs/RELEASE_1_0_12.md) | Current stable public release notes |
+| [Release 1.0.11](docs/RELEASE_1_0_11.md) | Previous release notes |
+| [Changelog](CHANGELOG.md) | Product change history |
+| [Installer and Distribution](docs/INSTALLER_AND_DISTRIBUTION.md) | Packaging, portable archives, and distribution outputs |
+| [Distribution Assets](distribution/README.md) | Distribution folder structure and manifests |
+
+### Translations
+
+| Language | Entry points |
+|---|---|
+| Spanish | [docs/es](docs/es), [Spanish Agent Prompt](prompts/es/CTX_AGENT_PROMPT.md), [Spanish Operator Prompt](prompts/es/CTX_AUTONOMOUS_OPERATOR_PROMPT.md) |
+| Chinese | [docs/zh](docs/zh), [Chinese Agent Prompt](prompts/zh/CTX_AGENT_PROMPT.md), [Chinese Operator Prompt](prompts/zh/CTX_AUTONOMOUS_OPERATOR_PROMPT.md) |
+
+### Legal And Repository Metadata
+
+| Document | Use it for |
+|---|---|
+| [License](LICENSE) | Source-available license |
+| [Copyright](COPYRIGHT.md) | Copyright notice |
+| [Trademark](TRADEMARK.md) | Trademark usage rules |
+| [Contributor Assignment](CONTRIBUTOR_ASSIGNMENT.md) | Contribution assignment terms |
+| [Notice](NOTICE) | Supplemental notices |
+
+- Diego Mariano Verrastro
 - diego.verrastro.ctx@gmail.com

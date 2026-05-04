@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ctx.Agent\Ctx.Agent.csproj" />
+    <ProjectReference Include="..\Ctx.Application\Ctx.Application.csproj" />
+    <ProjectReference Include="..\Ctx.Domain\Ctx.Domain.csproj" />
+    <ProjectReference Include="..\Ctx.Infrastructure\Ctx.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

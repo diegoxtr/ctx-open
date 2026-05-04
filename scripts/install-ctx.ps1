@@ -34,6 +34,7 @@ if ([string]::IsNullOrWhiteSpace($ViewerUrl)) {
 
 $binPath = Join-Path $InstallRoot $manifest.paths.bin
 $mcpPath = Join-Path $InstallRoot $manifest.paths.mcp
+$acpPath = Join-Path $InstallRoot $manifest.paths.acp
 $viewerPath = Join-Path $InstallRoot $manifest.paths.viewer
 $promptsPath = Join-Path $InstallRoot $manifest.paths.prompts
 $docsPath = Join-Path $InstallRoot $manifest.paths.docs
@@ -44,6 +45,7 @@ function Reset-InstallLayout {
         [string]$Root,
         [string]$Bin,
         [string]$Mcp,
+        [string]$Acp,
         [string]$Viewer,
         [string]$Prompts,
         [string]$Docs
@@ -51,7 +53,7 @@ function Reset-InstallLayout {
 
     New-Item -ItemType Directory -Path $Root -Force | Out-Null
 
-    foreach ($path in @($Bin, $Mcp, $Viewer, $Prompts, $Docs)) {
+    foreach ($path in @($Bin, $Mcp, $Acp, $Viewer, $Prompts, $Docs)) {
         if (Test-Path $path) {
             Get-ChildItem -LiteralPath $path -Force -ErrorAction SilentlyContinue |
                 Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
@@ -123,6 +125,7 @@ function Write-WindowsLaunchers {
     param(
         [string]$Bin,
         [string]$Mcp,
+        [string]$Acp,
         [string]$Viewer,
         [string]$ViewerEndpoint,
         [switch]$NoViewer
@@ -143,6 +146,14 @@ setlocal
 endlocal
 "@
     Set-Content -LiteralPath (Join-Path $Bin "ctx-mcp.cmd") -Value $mcpLauncher -Encoding ASCII
+
+    $acpLauncher = @"
+@echo off
+setlocal
+"$Acp\Ctx.Agent.Acp.exe" %*
+endlocal
+"@
+    Set-Content -LiteralPath (Join-Path $Bin "ctx-agent-acp.cmd") -Value $acpLauncher -Encoding ASCII
 
     if ($NoViewer) {
         return
@@ -219,6 +230,7 @@ function Install-FromSource {
         [string]$CloneUrl,
         [string]$Bin,
         [string]$Mcp,
+        [string]$Acp,
         [string]$Viewer,
         [string]$Docs,
         [string]$Prompts,
@@ -236,6 +248,7 @@ function Install-FromSource {
 
     $cliProject = Join-Path $effectiveRepoPath "Ctx.Cli\Ctx.Cli.csproj"
     $mcpProject = Join-Path $effectiveRepoPath "Ctx.Mcp\Ctx.Mcp.csproj"
+    $acpProject = Join-Path $effectiveRepoPath "Ctx.Agent.Acp\Ctx.Agent.Acp.csproj"
     $viewerProject = Join-Path $effectiveRepoPath "Ctx.Viewer\Ctx.Viewer.csproj"
 
     if (-not (Test-Path $cliProject)) {
@@ -246,6 +259,10 @@ function Install-FromSource {
         throw "Ctx.Mcp project not found under source repo: $effectiveRepoPath"
     }
 
+    if (-not (Test-Path $acpProject)) {
+        throw "Ctx.Agent.Acp project not found under source repo: $effectiveRepoPath"
+    }
+
     & dotnet publish $cliProject -c Release -o $Bin | Out-Host
     if ($LASTEXITCODE -ne 0) {
         throw "dotnet publish failed for Ctx.Cli with exit code $LASTEXITCODE"
@@ -254,6 +271,11 @@ function Install-FromSource {
     & dotnet publish $mcpProject -c Release -o $Mcp | Out-Host
     if ($LASTEXITCODE -ne 0) {
         throw "dotnet publish failed for Ctx.Mcp with exit code $LASTEXITCODE"
+    }
+
+    & dotnet publish $acpProject -c Release -o $Acp | Out-Host
+    if ($LASTEXITCODE -ne 0) {
+        throw "dotnet publish failed for Ctx.Agent.Acp with exit code $LASTEXITCODE"
     }
 
     if (-not $NoViewer) {
@@ -277,6 +299,7 @@ function Install-FromPortable {
         [string]$ArchivePath,
         [string]$Bin,
         [string]$Mcp,
+        [string]$Acp,
         [string]$Viewer,
         [string]$Prompts,
         [string]$Docs
@@ -308,6 +331,13 @@ function Install-FromPortable {
         Copy-Item (Join-Path $extractRoot "bin\Ctx.Mcp.exe") (Join-Path $Mcp "Ctx.Mcp.exe") -Force
     }
 
+    if (Test-Path (Join-Path $extractRoot "acp")) {
+        Copy-Item (Join-Path $extractRoot "acp\*") $Acp -Recurse -Force
+    }
+    elseif (Test-Path (Join-Path $extractRoot "bin\Ctx.Agent.Acp.exe")) {
+        Copy-Item (Join-Path $extractRoot "bin\Ctx.Agent.Acp.exe") (Join-Path $Acp "Ctx.Agent.Acp.exe") -Force
+    }
+
     if (Test-Path (Join-Path $extractRoot "viewer")) {
         Copy-Item (Join-Path $extractRoot "viewer\*") $Viewer -Recurse -Force
     }
@@ -335,12 +365,14 @@ function Test-InstallLayout {
     param(
         [string]$Bin,
         [string]$Mcp,
+        [string]$Acp,
         [string]$Viewer,
         [switch]$NoViewer
     )
 
     $cliExe = Join-Path $Bin "Ctx.Cli.exe"
     $mcpExe = Join-Path $Mcp "Ctx.Mcp.exe"
+    $acpExe = Join-Path $Acp "Ctx.Agent.Acp.exe"
     $viewerExe = Join-Path $Viewer "Ctx.Viewer.exe"
 
     if (-not (Test-Path $cliExe)) {
@@ -351,31 +383,35 @@ function Test-InstallLayout {
         throw "Installed MCP executable not found: $mcpExe"
     }
 
+    if (-not (Test-Path $acpExe)) {
+        throw "Installed ACP executable not found: $acpExe"
+    }
+
     if (-not $NoViewer -and -not (Test-Path $viewerExe)) {
         throw "Installed viewer executable not found: $viewerExe"
     }
 }
 
-Reset-InstallLayout -Root $InstallRoot -Bin $binPath -Mcp $mcpPath -Viewer $viewerPath -Prompts $promptsPath -Docs $docsPath
+Reset-InstallLayout -Root $InstallRoot -Bin $binPath -Mcp $mcpPath -Acp $acpPath -Viewer $viewerPath -Prompts $promptsPath -Docs $docsPath
 
 $promptSource = ""
 $sourceRoot = ""
 
 if ($Mode -eq "source") {
-    $sourceRoot = Install-FromSource -RepoPath $SourceRepoPath -CloneUrl $RepoUrl -Bin $binPath -Mcp $mcpPath -Viewer $viewerPath -Docs $docsPath -Prompts $promptsPath -NoViewer:$SkipViewer
+    $sourceRoot = Install-FromSource -RepoPath $SourceRepoPath -CloneUrl $RepoUrl -Bin $binPath -Mcp $mcpPath -Acp $acpPath -Viewer $viewerPath -Docs $docsPath -Prompts $promptsPath -NoViewer:$SkipViewer
     $promptSource = Join-Path $sourceRoot $manifest.helperPrompt
     Copy-HelperPrompt -PromptSourcePath $promptSource -PromptTargetPath (Join-Path $promptsPath "CTX_HELPER_PROMPT.md")
 }
 else {
-    $sourceRoot = Install-FromPortable -ArchivePath $BundlePath -Bin $binPath -Mcp $mcpPath -Viewer $viewerPath -Prompts $promptsPath -Docs $docsPath
+    $sourceRoot = Install-FromPortable -ArchivePath $BundlePath -Bin $binPath -Mcp $mcpPath -Acp $acpPath -Viewer $viewerPath -Prompts $promptsPath -Docs $docsPath
     $promptSource = Join-Path $promptsPath "CTX_HELPER_PROMPT.md"
     if (-not (Test-Path $promptSource)) {
         Copy-HelperPrompt -PromptSourcePath (Join-Path $repoRoot $manifest.helperPrompt) -PromptTargetPath $promptSource
     }
 }
 
-Write-WindowsLaunchers -Bin $binPath -Mcp $mcpPath -Viewer $viewerPath -ViewerEndpoint $ViewerUrl -NoViewer:$SkipViewer
-Test-InstallLayout -Bin $binPath -Mcp $mcpPath -Viewer $viewerPath -NoViewer:$SkipViewer
+Write-WindowsLaunchers -Bin $binPath -Mcp $mcpPath -Acp $acpPath -Viewer $viewerPath -ViewerEndpoint $ViewerUrl -NoViewer:$SkipViewer
+Test-InstallLayout -Bin $binPath -Mcp $mcpPath -Acp $acpPath -Viewer $viewerPath -NoViewer:$SkipViewer
 Write-InstallMetadata -Path $metadataPath -Root $InstallRoot -ModeName $Mode -SourceRoot $sourceRoot -PromptSource $promptSource -ViewerEndpoint $ViewerUrl
 Add-BinToPath -Bin $binPath -Scope $PathScope
 
@@ -383,8 +419,10 @@ Write-Host "CTX installed to $InstallRoot via $Mode mode."
 Write-Host "CTX_INSTALL_ROOT=$InstallRoot"
 Write-Host "CTX_BIN_PATH=$binPath"
 Write-Host "CTX_MCP_PATH=$mcpPath"
+Write-Host "CTX_ACP_PATH=$acpPath"
 Write-Host "CLI launcher: $(Join-Path $binPath 'ctx.cmd')"
 Write-Host "MCP launcher: $(Join-Path $binPath 'ctx-mcp.cmd')"
+Write-Host "ACP launcher: $(Join-Path $binPath 'ctx-agent-acp.cmd')"
 if (-not $SkipViewer) {
     Write-Host "Viewer launcher: $(Join-Path $binPath 'ctx-viewer.cmd')"
 }

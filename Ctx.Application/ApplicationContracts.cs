@@ -22,6 +22,16 @@ public record AddOperationalRunbookRequest(
     IReadOnlyList<string>? Preconditions = null,
     IReadOnlyList<string>? FailureSignals = null,
     IReadOnlyList<string>? EscalationBoundary = null);
+public record AttachOperationalRunbookRequest(
+    string RunbookId,
+    IReadOnlyList<string> GoalIds,
+    IReadOnlyList<string> TaskIds,
+    string UpdatedBy);
+public record DetachOperationalRunbookRequest(
+    string RunbookId,
+    IReadOnlyList<string> GoalIds,
+    IReadOnlyList<string> TaskIds,
+    string UpdatedBy);
 public record AddCognitiveTriggerRequest(
     string Kind,
     string Summary,

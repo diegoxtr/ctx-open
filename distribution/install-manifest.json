@@ -8,6 +8,7 @@
   "paths": {
     "bin": "bin",
     "mcp": "mcp",
+    "acp": "acp",
     "viewer": "viewer",
     "prompts": "prompts",
     "docs": "docs"

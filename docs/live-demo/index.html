@@ -12,7 +12,8 @@
       <p class="eyebrow">CTX 1.0.12</p>
       <h1>Connect agents to durable CTX memory.</h1>
       <p class="lede">
-        CTX gives agents a local, versioned working memory and a copy-ready MCP server.
+        CTX 1.0.12 gives agents a local, versioned working memory, a copy-ready MCP server,
+        and a local ACP-style adapter.
         Install CTX, point the server at a repository, and let Claude, Codex, VS Code,
         or another MCP-capable client recover goals, tasks, decisions, and runbooks.
       </p>
@@ -36,8 +37,9 @@
       <article class="card">
         <h2>UNJu Talk Deck</h2>
         <p>
-          A public slide deck that explains why CTX became necessary, what problem it solves,
-          and how to use it from a clean VS Code setup with an agent and Git installed.
+          A public slide deck for CTX 1.0.12 that explains why CTX became necessary,
+          what problem it solves, and how to use it from a clean VS Code setup with
+          an agent, Git, MCP, and the public landing page.
         </p>
         <p>
           <a class="button ghost" href="./talk-unju.html">Open the presentation</a>
@@ -69,6 +71,18 @@
         </p>
         <p>
           <a class="button ghost" href="./mcp-local.html">Configure MCP locally</a>
+        </p>
+      </article>
+      <article class="card">
+        <h2>Local ACP</h2>
+        <p>
+          CTX 1.0.12 also ships <code>ctx-agent-acp</code>, a read-only local adapter
+          for ACP-style session flows. MCP remains the main tool-rich agent path today;
+          ACP is available for clients that want <code>initialize</code>,
+          <code>session/new</code>, and <code>session/prompt</code>.
+        </p>
+        <p>
+          <a class="button ghost" href="https://github.com/diegoxtr/ctx-open/blob/main/docs/ACP_LOCAL_CONNECTION_GUIDE.md">Read ACP guide</a>
         </p>
       </article>
       <article class="card">

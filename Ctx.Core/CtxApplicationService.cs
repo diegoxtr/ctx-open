@@ -459,6 +459,68 @@ public sealed class CtxApplicationService : ICtxApplicationService
         });
     }
 
+    public async System.Threading.Tasks.Task<CommandResult> AttachOperationalRunbookAsync(string repositoryPath, AttachOperationalRunbookRequest request, CancellationToken cancellationToken)
+    {
+        if (_operationalRunbookRepository is null)
+        {
+            throw new InvalidOperationException("Operational runbooks are not configured.");
+        }
+
+        return await ExecuteWriteLockedAsync(repositoryPath, cancellationToken, async () =>
+        {
+            var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+            var runbook = await _operationalRunbookRepository.LoadAsync(repositoryPath, new OperationalRunbookId(request.RunbookId), cancellationToken)
+                ?? throw new InvalidOperationException($"OperationalRunbook '{request.RunbookId}' was not found.");
+            var goalIds = request.GoalIds.Select(id => ResolveGoal(context, id).Id).ToArray();
+            var taskIds = request.TaskIds.Select(id => ResolveTask(context, id).Id).ToArray();
+            if (goalIds.Length == 0 && taskIds.Length == 0)
+            {
+                throw new InvalidOperationException("At least one --goal or --task is required.");
+            }
+
+            var updated = runbook with
+            {
+                GoalIds = runbook.GoalIds.Concat(goalIds).Distinct().ToArray(),
+                TaskIds = runbook.TaskIds.Concat(taskIds).Distinct().ToArray(),
+                Trace = runbook.Trace with { UpdatedBy = request.UpdatedBy, UpdatedAtUtc = _clock.UtcNow }
+            };
+
+            await _operationalRunbookRepository.SaveAsync(repositoryPath, updated, cancellationToken);
+            return new CommandResult(true, $"OperationalRunbook attached: {updated.Title}", updated);
+        });
+    }
+
+    public async System.Threading.Tasks.Task<CommandResult> DetachOperationalRunbookAsync(string repositoryPath, DetachOperationalRunbookRequest request, CancellationToken cancellationToken)
+    {
+        if (_operationalRunbookRepository is null)
+        {
+            throw new InvalidOperationException("Operational runbooks are not configured.");
+        }
+
+        return await ExecuteWriteLockedAsync(repositoryPath, cancellationToken, async () =>
+        {
+            var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+            var runbook = await _operationalRunbookRepository.LoadAsync(repositoryPath, new OperationalRunbookId(request.RunbookId), cancellationToken)
+                ?? throw new InvalidOperationException($"OperationalRunbook '{request.RunbookId}' was not found.");
+            var goalIds = request.GoalIds.Select(id => ResolveGoal(context, id).Id).ToHashSet();
+            var taskIds = request.TaskIds.Select(id => ResolveTask(context, id).Id).ToHashSet();
+            if (goalIds.Count == 0 && taskIds.Count == 0)
+            {
+                throw new InvalidOperationException("At least one --goal or --task is required.");
+            }
+
+            var updated = runbook with
+            {
+                GoalIds = runbook.GoalIds.Where(id => !goalIds.Contains(id)).ToArray(),
+                TaskIds = runbook.TaskIds.Where(id => !taskIds.Contains(id)).ToArray(),
+                Trace = runbook.Trace with { UpdatedBy = request.UpdatedBy, UpdatedAtUtc = _clock.UtcNow }
+            };
+
+            await _operationalRunbookRepository.SaveAsync(repositoryPath, updated, cancellationToken);
+            return new CommandResult(true, $"OperationalRunbook detached: {updated.Title}", updated);
+        });
+    }
+
     public async System.Threading.Tasks.Task<CommandResult> AddCognitiveTriggerAsync(string repositoryPath, AddCognitiveTriggerRequest request, CancellationToken cancellationToken)
     {
         if (_cognitiveTriggerRepository is null)
