@@ -12,6 +12,12 @@ public readonly record struct GoalId(string Value)
     public override string ToString() => Value;
 }
 
+public readonly record struct EpicId(string Value)
+{
+    public static EpicId New() => new(Guid.NewGuid().ToString("N"));
+    public override string ToString() => Value;
+}
+
 public readonly record struct TaskId(string Value)
 {
     public static TaskId New() => new(Guid.NewGuid().ToString("N"));

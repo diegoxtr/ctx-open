@@ -108,6 +108,7 @@ function Copy-ContextDocs {
 
     $docMappings = @(
         @{ Source = Join-Path $SourceRoot "docs\CTX_VIEWER_GUIDE.md"; Target = Join-Path $DocsTargetPath "CTX_VIEWER_GUIDE.md" },
+        @{ Source = Join-Path $SourceRoot "docs\CLI_COMMANDS.md"; Target = Join-Path $DocsTargetPath "CLI_COMMANDS.md" },
         @{ Source = Join-Path $SourceRoot "docs\CTX_AUTONOMOUS_OPERATION_PROTOCOL.md"; Target = Join-Path $DocsTargetPath "CTX_AUTONOMOUS_OPERATION_PROTOCOL.md" },
         @{ Source = Join-Path $SourceRoot "prompts\CTX_AGENT_PROMPT.md"; Target = Join-Path $PromptsTargetPath "CTX_AGENT_PROMPT.md" }
     )
@@ -354,6 +355,10 @@ function Install-FromPortable {
         Copy-Item (Join-Path $extractRoot "docs\CTX_VIEWER_GUIDE.md") (Join-Path $Docs "CTX_VIEWER_GUIDE.md") -Force
     }
 
+    if (Test-Path (Join-Path $extractRoot "docs\CLI_COMMANDS.md")) {
+        Copy-Item (Join-Path $extractRoot "docs\CLI_COMMANDS.md") (Join-Path $Docs "CLI_COMMANDS.md") -Force
+    }
+
     if (Test-Path (Join-Path $extractRoot "docs\CTX_AUTONOMOUS_OPERATION_PROTOCOL.md")) {
         Copy-Item (Join-Path $extractRoot "docs\CTX_AUTONOMOUS_OPERATION_PROTOCOL.md") (Join-Path $Docs "CTX_AUTONOMOUS_OPERATION_PROTOCOL.md") -Force
     }
@@ -389,6 +394,13 @@ function Test-InstallLayout {
 
     if (-not $NoViewer -and -not (Test-Path $viewerExe)) {
         throw "Installed viewer executable not found: $viewerExe"
+    }
+
+    foreach ($requiredDoc in @("CTX_VIEWER_GUIDE.md", "CLI_COMMANDS.md", "CTX_AUTONOMOUS_OPERATION_PROTOCOL.md")) {
+        $docPath = Join-Path (Split-Path -Parent $Bin) "docs\$requiredDoc"
+        if (-not (Test-Path $docPath)) {
+            throw "Installed console-referenced documentation not found: $docPath"
+        }
     }
 }
 

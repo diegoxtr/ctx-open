@@ -11,10 +11,12 @@ The core idea:
 - not every global priority should beat a local blocker
 - not every finding is a hypothesis
 - not every related item should open a new thread
+- not every closed task should become its own commit
 
 CTX needs to distinguish between:
 
 - new roadmap work
+- future roadmap ideas
 - subwork
 - duplicated work
 - blockers
@@ -26,6 +28,7 @@ Before deciding whether something deserves a `task`, CTX should distinguish thes
 
 - `goal`
 - `sub-goal`
+- `epic`
 - `issue`
 - `gap`
 - `task`
@@ -39,6 +42,7 @@ Base rule:
 
 - `goal` defines a durable strategic lane
 - `sub-goal` defines a tactical line under a broader goal
+- `epic` preserves future planning material without making it executable
 - `operational runbook` defines compact reusable operational knowledge
 - `issue` describes something that bothers, fails, or creates friction
 - `gap` names the concrete difference between current state and desired state
@@ -48,6 +52,7 @@ Short formula:
 
 ```text
 goal -> sub-goal -> task
+goal -> epic -> future task candidates
 operational runbook -> execution guidance
 issue -> gap -> task
 ```
@@ -138,6 +143,67 @@ Operationally:
 - open new UI or product lines under them as `sub-goals`
 - attach new tasks to the nearest tactical line, not to the umbrella goal by default
 - use `ctx line open` when the operator intent is "open a tactical line here and start working inside it"
+
+### `Epic`
+
+An `epic` is a durable future planning container.
+
+Use it when the work:
+
+- is too large for one executable task
+- should not enter `ctx next`
+- should remain visible for future roadmap generation
+- needs multiple future tasks or decisions
+- is not ready for implementation
+
+Do not use an `epic` when the work is already executable.
+In that case create a `task` under the nearest goal or sub-goal.
+
+Execution rule:
+
+- `ctx next` must stay focused on executable work
+- epics must not compete as next-step candidates
+- future epics should appear in `ctx roadmap`
+- concrete missing work derived from an epic may appear in `ctx gaps`
+
+Blocked-work rule:
+
+- `Blocked` tasks are preserved as CTX work items
+- `ctx next` does not recommend them as executable work
+- `ctx gaps` shows blocked or deferred material so it is not forgotten
+- `ctx roadmap` keeps parked future ideas visible for planning review
+- a blocked item becomes executable only after an explicit state change or after a new unblocker task is opened
+
+See [Roadmap And Gaps Design](ROADMAP_AND_GAPS_DESIGN.md) for the proposed command split.
+
+## Commit boundary
+
+CTX also needs to distinguish:
+
+- unit of work
+- unit of durable memory
+
+These are not always the same.
+
+Rule:
+
+- `task` is an executable work unit
+- `ctx commit` is a durable cognitive snapshot
+
+That means:
+
+- a task can close without forcing a commit
+- several task closures can belong to one larger durable snapshot
+- a commit can happen while a broader line is still active if a stable sub-result already exists
+
+Short formula:
+
+```text
+working context = cognition in motion
+ctx commit = durable cognitive state transition
+```
+
+Use `ctx commit` when the current state became worth preserving as durable memory, not merely because something moved.
 
 Viewer rule:
 

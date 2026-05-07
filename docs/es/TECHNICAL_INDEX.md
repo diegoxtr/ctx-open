@@ -22,6 +22,9 @@ Si queres entender CTX rapido, este es el orden recomendado:
 5. [DOMAIN_MODEL.md](../DOMAIN_MODEL.md)
 6. [CTX_STRUCTURE.md](../CTX_STRUCTURE.md)
 7. [CLI_COMMANDS.md](../CLI_COMMANDS.md)
+8. [BOOTSTRAP_COGNITIVE_INDEXING.md](BOOTSTRAP_COGNITIVE_INDEXING.md)
+9. [CTX_MCP_AGENT_SETUP.md](../CTX_MCP_AGENT_SETUP.md)
+10. [INSTALLER_AND_DISTRIBUTION.md](../INSTALLER_AND_DISTRIBUTION.md)
 
 ## Documentos por Categoria
 
@@ -33,13 +36,13 @@ Si queres entender CTX rapido, este es el orden recomendado:
 - [V1_FUNCTIONAL_SPEC.md](../V1_FUNCTIONAL_SPEC.md)
   Define modulos, requisitos, criterios de aceptacion y definicion de terminado de V1.
 
-- [RELEASE_1_0_12.md](RELEASE_1_0_12.md)
+- [RELEASE_1_0_11.md](../RELEASE_1_0_11.md)
   Resume la linea base funcional de la release estable actual.
 
 - [archive/README.md](archive/README.md)
   Reune releases internas historicas fuera del flujo principal de lectura.
 
-## Arquitectura y DiseÃ±o
+## Arquitectura y Diseño
 
 - [TECHNICAL_ARCHITECTURE.md](../TECHNICAL_ARCHITECTURE.md)
   Describe capas, responsabilidades, dependencias y flujos end-to-end.
@@ -62,8 +65,14 @@ Si queres entender CTX rapido, este es el orden recomendado:
 - [WORK_MODEL_AND_PRIORITIZATION.md](../WORK_MODEL_AND_PRIORITIZATION.md)
   Define la taxonomia canonica entre issue, gap, task, subtask, duplicate y blocker, ademas de la prioridad por cercania dentro de CTX.
 
+- [ROADMAP_AND_GAPS_DESIGN.md](ROADMAP_AND_GAPS_DESIGN.md)
+  Define la separacion actual entre `ctx next` ejecutable, `ctx gaps` read-only, `ctx roadmap` read-only e ideas futuras estacionadas.
+
 - [OPERATIONAL_RUNBOOKS.md](../OPERATIONAL_RUNBOOKS.md)
   Define el diseno compacto de conocimiento operativo recurrente, su inyeccion en packets y el manejo de overflow.
+
+- [COGNITIVE_TRIGGERS.md](../COGNITIVE_TRIGGERS.md)
+  Define el modelo persistente de origen de lineas cognitivas y su integracion en packets.
 
 - [WORK_TOPOLOGY_AND_EXECUTION_SCORING.md](WORK_TOPOLOGY_AND_EXECUTION_SCORING.md)
   Explica como clasificar trabajo nuevo, evitar duplicacion y combinar prioridad con cercania operativa.
@@ -76,6 +85,9 @@ Si queres entender CTX rapido, este es el orden recomendado:
 - [CLI_COMMANDS.md](../CLI_COMMANDS.md)
   Referencia completa de todos los comandos CLI implementados hoy.
 
+- [BOOTSTRAP_COGNITIVE_INDEXING.md](BOOTSTRAP_COGNITIVE_INDEXING.md)
+  Define la superficie bootstrap `map/apply` para reconstruir hilos cognitivos provisionales desde material externo sin perder la idea que el material intentaba sostener.
+
 - [COMMAND_ADOPTION_AND_COVERAGE.md](../COMMAND_ADOPTION_AND_COVERAGE.md)
   Resume que comandos se usan de verdad, cuales siguen frios y en que orden conviene adoptar las superficies de menor cobertura.
 
@@ -87,6 +99,18 @@ Si queres entender CTX rapido, este es el orden recomendado:
 
 - [CTX_VIEWER_GUIDE.md](../CTX_VIEWER_GUIDE.md)
   Explica paso a paso como interpretar el viewer, su timeline, ramas y paneles.
+
+- [LOCAL_CTX_INSTALLATION.md](../LOCAL_CTX_INSTALLATION.md)
+  Describe la instalacion local, rutas esperadas, viewer y MCP server instalado.
+
+- [CTX_MCP_AGENT_SETUP.md](../CTX_MCP_AGENT_SETUP.md)
+  Explica como configurar agentes compatibles con MCP para usar el servidor local de CTX.
+
+- [MCP_SERVER_PROPOSAL.md](../MCP_SERVER_PROPOSAL.md)
+  Documenta arquitectura, alcance y roadmap del servidor MCP de CTX.
+
+- [INSTALLER_AND_DISTRIBUTION.md](../INSTALLER_AND_DISTRIBUTION.md)
+  Define el modelo de empaquetado, instaladores y layout cross-platform.
 
 ## Prompts de Operacion
 
@@ -132,6 +156,9 @@ Si queres entender CTX rapido, este es el orden recomendado:
 
 - [publish-local.ps1](../../scripts/publish-local.ps1)
   Publica la instalacion local en `C:\ctx` preservando el workspace versionado.
+
+- [build-distribution.ps1](../../scripts/build-distribution.ps1)
+  Construye bundles portables cross-platform desde `distribution/targets.json`.
 
 ## Rutas Recomendadas por Perfil
 
@@ -179,6 +206,8 @@ Hoy el repositorio ya documenta:
 - propiedad intelectual y contribuciones
 - grafo cognitivo
 - reconstruccion formal del hilo cognitivo
+- triggers cognitivos
+- instalacion local, distribucion y servidor MCP
 
 ## Proximos Documentos Utiles
 
@@ -189,4 +218,3 @@ Documentacion que todavia seria valiosa agregar:
 - guia para agregar un nuevo provider
 - guia de troubleshooting operativo
 - roadmap posterior a V1
-

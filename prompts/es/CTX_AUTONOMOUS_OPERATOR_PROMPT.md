@@ -26,15 +26,11 @@ El siguiente paso debe surgir del estado del repositorio CTX, no de improvisacio
 1. inspeccionar:
 
 ```powershell
-ctx
-ctx next
-```
-
-Si eso no alcanza para decidir con seguridad, profundiza con:
-
-```powershell
 ctx status
+ctx graph summary
+ctx log
 ctx audit
+ctx next
 ```
 
 2. elegir el siguiente bloque usando:

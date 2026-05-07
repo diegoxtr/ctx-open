@@ -210,3 +210,83 @@ dotnet run --project .\Ctx.Cli -- status
 如果你需要完整选项、示例或较冷命令，请优先参考英文版：
 
 - [CLI_COMMANDS.md](../CLI_COMMANDS.md)
+
+## CTX 1.0.13 planning commands
+
+This public release adds the following planning surfaces. The English
+`docs/CLI_COMMANDS.md` file remains the canonical full reference, but these
+commands are intentionally listed here so the localized command index does not
+miss the new public surface.
+
+### `ctx plan`
+
+Builds a compact planning packet with repository state, next recommendation,
+focused context, `runbookSuggestions`, and guidance.
+
+MCP equivalent: `ctx_plan`.
+
+```powershell
+ctx plan --purpose "Plan the next work turn"
+ctx plan --task <taskId> --purpose "continue this task"
+```
+
+### `ctx gaps`
+
+Builds a read-only list of unresolved planning gaps, blocked work, and deferred
+candidates. It does not create tasks by default.
+
+```powershell
+ctx gaps
+```
+
+### `ctx roadmap`
+
+Builds a read-only future planning view. Use it for parked epics, blocked work,
+and future ideas that should not compete in `ctx next`.
+
+```powershell
+ctx roadmap
+```
+
+### `ctx epic add|update|promote|list|show`
+
+Stores durable future planning material outside the executable `ctx next` loop.
+Promote an epic only when it becomes a concrete executable task.
+
+```powershell
+ctx epic add --title "<future capability>" --description "<why it matters>" --goal <goalId>
+ctx epic update <epicId> --state Ready
+ctx epic promote <epicId> --task-title "<first executable task>"
+ctx epic list
+ctx epic show <epicId>
+```
+
+MCP equivalents:
+
+- `ctx_epic_add`
+- `ctx_epic_update`
+- `ctx_epic_promote`
+- `ctx_epic_list`
+- `ctx_epic_show`
+
+### `ctx preflight`
+
+Runs operational preflight guidance for a named operation. In CTX 1.0.13 the
+operation token can be arbitrary when a matching runbook exists.
+
+```powershell
+ctx preflight --operation git-closeout
+ctx preflight --operation github-release
+ctx preflight --operation <custom-operation>
+```
+
+MCP equivalent: `ctx_preflight`.
+
+### `ctx prompt list`
+
+Lists prompt-like cognitive triggers in a stable chronological order.
+
+```powershell
+ctx prompt list --kind UserPrompt
+ctx prompt list --kind AgentPrompt
+```

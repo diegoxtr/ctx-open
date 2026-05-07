@@ -51,7 +51,7 @@ Vista conceptual:
 
 - `Ctx.Domain` no depende de otras capas
 - `Ctx.Application` depende del dominio y expone abstracciones
-- `Ctx.Core` implementa interfaces de aplicaciÃ³n usando dominio
+- `Ctx.Core` implementa interfaces de aplicación usando dominio
 - `Ctx.Persistence` implementa repositorios filesystem
 - `Ctx.Providers` implementa providers intercambiables
 - `Ctx.Infrastructure` compone implementaciones concretas
@@ -63,13 +63,13 @@ Proyecto:
 - [Model.cs](../../Ctx.Domain/Model.cs)
 - [Identifiers.cs](../../Ctx.Domain/Identifiers.cs)
 - [Enums.cs](../../Ctx.Domain/Enums.cs)
-- [Class1.cs](../../Ctx.Domain/Class1.cs)
+- [DomainPrimitives.cs](../../Ctx.Domain/DomainPrimitives.cs)
 
 Responsabilidad:
 - definir el modelo de dominio
 - definir IDs fuertes
 - definir estados de ciclo de vida
-- definir artefactos de diff, merge, mÃ©tricas y export
+- definir artefactos de diff, merge, métricas y export
 
 Contiene:
 - entidades como `Project`, `Goal`, `Task`, `Hypothesis`, `Decision`, `Evidence`, `Conclusion`
@@ -107,7 +107,7 @@ Interfaces principales:
 - `IMergeEngine`
 
 Rol arquitectonico:
-- es el boundary entre interfaz y lÃ³gica implementada
+- es el boundary entre interfaz y lógica implementada
 
 ## 3. Capa Core
 
@@ -120,24 +120,24 @@ Proyecto:
 - [MergeEngine.cs](../../Ctx.Core/MergeEngine.cs)
 
 Responsabilidad:
-- implementar la lÃ³gica critica del producto
+- implementar la lógica critica del producto
 - coordinar repositorios y motores
 - convertir comandos en operaciones de dominio persistidas
 
 ### `CtxApplicationService`
 
-Es el servicio de aplicaciÃ³n principal.
+Es el servicio de aplicación principal.
 
 Responsabilidad:
 - orquestar casos de uso CLI
 - validar referencias
 - cargar y persistir estado
-- delegar lÃ³gica especÃ­fica a motores especializados
+- delegar lógica específica a motores especializados
 
 Ejemplos de casos de uso implementados:
-- inicializaciÃ³n de repositorio
+- inicialización de repositorio
 - alta de artefactos
-- ejecuciÃ³n de runs
+- ejecución de runs
 - commits
 - diff
 - branching y merge
@@ -149,7 +149,7 @@ Ejemplos de casos de uso implementados:
 Responsabilidad:
 - construir `ContextPacket`
 - seleccionar goals, tasks, hypotheses, decisions, evidence y conclusions relevantes
-- evitar secciones vacÃ­as
+- evitar secciones vacías
 - generar fingerprint del contexto
 - estimar tokens
 
@@ -164,10 +164,10 @@ Responsabilidad:
 - resolver provider desde `IAIProviderRegistry`
 - ejecutar provider
 - persistir `Run`
-- actualizar mÃ©tricas
+- actualizar métricas
 
 Punto clave:
-- centraliza la interacciÃ³n estructurada con IA
+- centraliza la interacción estructurada con IA
 
 ### `CommitEngine`
 
@@ -191,20 +191,22 @@ Responsabilidad:
 
 Responsabilidad:
 - integrar ramas cognitivas
-- detectar conflictos semÃ¡nticos
+- detectar conflictos semánticos
 - devolver `MergeResult`
 
 ## 4. Capa Persistence
 
 Proyecto:
-- [Class1.cs](../../Ctx.Persistence/Class1.cs)
-- otros repositorios `FileSystem*Repository`
+- [WorkingContextRepository.cs](../../Ctx.Persistence/WorkingContextRepository.cs)
+- [CommitRepository.cs](../../Ctx.Persistence/CommitRepository.cs)
+- [BranchRepository.cs](../../Ctx.Persistence/BranchRepository.cs)
+- otros repositorios filesystem-backed
 
 Responsabilidad:
 - persistir el repositorio cognitivo local
 - administrar la estructura `.ctx/`
 - leer y escribir JSON
-- encapsular paths y serializaciÃ³n filesystem
+- encapsular paths y serialización filesystem
 
 Implementaciones principales:
 - `FileSystemWorkingContextRepository`
@@ -214,7 +216,7 @@ Implementaciones principales:
 - `FileSystemPacketRepository`
 - `FileSystemMetricsRepository`
 
-PatrÃ³n usado:
+Patrón usado:
 - repositorios concretos filesystem-backed
 
 Punto clave:
@@ -223,14 +225,14 @@ Punto clave:
 ## 5. Capa Providers
 
 Proyecto:
-- [Class1.cs](../../Ctx.Providers/Class1.cs)
+- [ProviderInfrastructure.cs](../../Ctx.Providers/ProviderInfrastructure.cs)
 - [OpenAiProvider.cs](../../Ctx.Providers/OpenAiProvider.cs)
 - [AnthropicProvider.cs](../../Ctx.Providers/AnthropicProvider.cs)
 
 Responsabilidad:
-- abstraer ejecuciÃ³n contra proveedores LLM
+- abstraer ejecución contra proveedores LLM
 - mantener providers intercambiables
-- encapsular HTTP, autenticaciÃ³n y parseo de respuesta
+- encapsular HTTP, autenticación y parseo de respuesta
 
 Componentes:
 - `AIProviderRegistry`
@@ -239,13 +241,13 @@ Componentes:
 - `AnthropicProvider`
 
 Punto clave:
-- si faltan credenciales, hay fallback offline determinÃ­stico
+- si faltan credenciales, hay fallback offline determinístico
 - eso permite probar el flujo sin depender de red o API keys
 
 ## 6. Capa Infrastructure
 
 Proyecto:
-- [Class1.cs](../../Ctx.Infrastructure/Class1.cs)
+- [Bootstrapper.cs](../../Ctx.Infrastructure/Bootstrapper.cs)
 
 Responsabilidad:
 - composition root
@@ -253,7 +255,7 @@ Responsabilidad:
 - conectar dependencias entre capas
 - definir opciones JSON para salida CLI
 
-ComposiciÃ³n actual:
+Composición actual:
 - serializer
 - clock
 - hashing service
@@ -273,17 +275,17 @@ Proyecto:
 
 Responsabilidad:
 - parsear argumentos
-- mapearlos a requests de aplicaciÃ³n
+- mapearlos a requests de aplicación
 - serializar `CommandResult`
 - devolver salida estructurada en JSON
 
-CaracterÃ­sticas:
+Características:
 - comandos estilo herramienta de control de versiones
 - manejo simple de opciones y posicionales
-- una Ãºnica salida estructurada consistente
+- una única salida estructurada consistente
 
 Punto clave:
-- la CLI no contiene lÃ³gica de negocio compleja
+- la CLI no contiene lógica de negocio compleja
 - delega en `ICtxApplicationService`
 
 ## 8. Capa Tests
@@ -296,12 +298,12 @@ Proyecto:
 
 Responsabilidad:
 - validar motores centrales
-- validar casos de uso crÃ­ticos
-- validar portabilidad, doctor, export/import y resÃºmenes CLI
+- validar casos de uso críticos
+- validar portabilidad, doctor, export/import y resúmenes CLI
 
 Punto clave:
 - cubre lo esencial del flujo interno
-- todavÃ­a no reemplaza pruebas de producto mÃ¡s exigentes
+- todavía no reemplaza pruebas de producto más exigentes
 
 ## Dependencias Entre Capas
 
@@ -316,7 +318,7 @@ Resumen simplificado:
 - `Ctx.Cli` depende de `Ctx.Infrastructure` y `Ctx.Application`
 
 Regla buscada:
-- los detalles concretos cuelgan de abstracciones de aplicaciÃ³n
+- los detalles concretos cuelgan de abstracciones de aplicación
 
 ## Flujos End-to-End
 
@@ -346,7 +348,7 @@ Recorrido:
 6. actualiza `graph/current-graph.json`
 
 Resultado:
-- estado de trabajo actualizado, sin commit todavÃ­a
+- estado de trabajo actualizado, sin commit todavía
 
 ## Flujo 3. `ctx context`
 
@@ -360,7 +362,7 @@ Recorrido:
 6. CLI lo serializa
 
 Resultado:
-- packet usable para iteraciÃ³n con IA
+- packet usable para iteración con IA
 
 ## Flujo 4. `ctx run`
 
@@ -378,7 +380,7 @@ Recorrido:
 10. persiste `working/`
 
 Resultado:
-- corrida registrada, packet persistido y mÃ©tricas actualizadas
+- corrida registrada, packet persistido y métricas actualizadas
 
 ## Flujo 5. `ctx commit`
 
@@ -399,7 +401,7 @@ Resultado:
 
 Recorrido:
 
-1. CLI envÃ­a IDs opcionales
+1. CLI envía IDs opcionales
 2. `CtxApplicationService` resuelve commits o working context
 3. usa `CommitEngine` y/o `MergeEngine` para calcular diff o conflictos
 4. devuelve resumen estructurado
@@ -419,7 +421,7 @@ Recorrido:
 6. devuelve `MergeResult`
 
 Resultado:
-- integraciÃ³n de ramas con conflictos cognitivos explÃ­citos si corresponde
+- integración de ramas con conflictos cognitivos explícitos si corresponde
 
 ## Decisiones Arquitectonicas Clave
 
@@ -434,29 +436,29 @@ Elegida para:
 ### JSON como formato principal
 
 Elegido para:
-- inspecciÃ³n humana
-- serializaciÃ³n simple
+- inspección humana
+- serialización simple
 - portabilidad entre entornos
 
 ### CLI como interfaz principal
 
 Elegida para:
-- velocidad de iteraciÃ³n
-- automatizaciÃ³n
-- cercanÃ­a con workflows de versionado
+- velocidad de iteración
+- automatización
+- cercanía con workflows de versionado
 
 ### Providers desacoplados
 
-Elegidos asÃ­ para:
+Elegidos así para:
 - intercambiar OpenAI y Anthropic sin reescribir flujos
-- permitir agregar mÃ¡s proveedores despuÃ©s
+- permitir agregar más proveedores después
 
 ### Motores especializados en Core
 
-Elegidos asÃ­ para:
-- aislar lÃ³gica crÃ­tica
+Elegidos así para:
+- aislar lógica crítica
 - facilitar testeo
-- evitar que `CtxApplicationService` se convierta en un objeto monolÃ­tico
+- evitar que `CtxApplicationService` se convierta en un objeto monolítico
 
 ## Extensibilidad
 
@@ -465,33 +467,33 @@ La arquitectura actual ya permite extender:
 - nuevos providers implementando `IAIProvider`
 - nuevas formas de persistencia implementando repositorios
 - nuevos comandos CLI agregando mapping en `Program.cs`
-- nuevos motores internos siguiendo interfaces de aplicaciÃ³n
+- nuevos motores internos siguiendo interfaces de aplicación
 
-## LÃ­mites Actuales
+## Límites Actuales
 
-Puntos todavÃ­a simples en esta base:
+Puntos todavía simples en esta base:
 
 - wiring manual en `Infrastructure`
 - parseo CLI artesanal
-- persistencia local sin sincronizaciÃ³n remota
-- sin resoluciÃ³n guiada de conflictos
+- persistencia local sin sincronización remota
+- sin resolución guiada de conflictos
 - sin bus de eventos o background processing
 - sin control de concurrencia avanzada
 
 Eso no invalida la arquitectura base, pero marca el borde de V1 interna.
 
-## QuÃ© Hace SÃ³lida Esta Base
+## Qué Hace Sólida Esta Base
 
 La base actual ya separa correctamente:
 
 - lenguaje de dominio
-- contratos de aplicaciÃ³n
-- lÃ³gica crÃ­tica
+- contratos de aplicación
+- lógica crítica
 - detalles de persistencia
-- detalles de integraciÃ³n con IA
+- detalles de integración con IA
 - interfaz de usuario
 
-Eso permite seguir evolucionando CTX sin colapsar toda la soluciÃ³n en una sola capa.
+Eso permite seguir evolucionando CTX sin colapsar toda la solución en una sola capa.
 
 ## Referencias Relacionadas
 
@@ -499,4 +501,3 @@ Eso permite seguir evolucionando CTX sin colapsar toda la soluciÃ³n en una sol
 - [CTX_STRUCTURE.md](../CTX_STRUCTURE.md)
 - [CLI_COMMANDS.md](../CLI_COMMANDS.md)
 - [V1_FUNCTIONAL_SPEC.md](../V1_FUNCTIONAL_SPEC.md)
-

@@ -145,11 +145,11 @@ public static class CtxAcpBridgeTools
             });
         }
 
-        foreach (var runbook in planning.RunbookSuggestions.Take(2))
+        foreach (var runbook in planning.RunbookSuggestions)
         {
             entries.Add(new
             {
-                content = $"Runbook: {runbook.Title}",
+                content = $"Runbook: {runbook.Title}. Check Preconditions, follow applicable Do steps, verify with Verify, and stop at EscalationBoundary if a failure signal appears.",
                 priority = "medium",
                 status = "pending"
             });

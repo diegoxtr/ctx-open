@@ -25,6 +25,7 @@ $agentLinkPrompt = Join-Path $repoRoot "distribution\agent-link\CTX_AGENT_LINK_P
 $helperPrompt = Join-Path $repoRoot "prompts\CTX_HELPER_PROMPT.md"
 $installManifest = Join-Path $repoRoot "distribution\install-manifest.json"
 $viewerGuide = Join-Path $repoRoot "docs\CTX_VIEWER_GUIDE.md"
+$cliCommands = Join-Path $repoRoot "docs\CLI_COMMANDS.md"
 $agentPrompt = Join-Path $repoRoot "prompts\CTX_AGENT_PROMPT.md"
 $autonomousProtocol = Join-Path $repoRoot "docs\CTX_AUTONOMOUS_OPERATION_PROTOCOL.md"
 
@@ -44,7 +45,7 @@ if (-not (Test-Path $installManifest)) {
     throw "Install manifest not found: $installManifest"
 }
 
-foreach ($requiredDoc in @($viewerGuide, $agentPrompt, $autonomousProtocol)) {
+foreach ($requiredDoc in @($viewerGuide, $cliCommands, $agentPrompt, $autonomousProtocol)) {
     if (-not (Test-Path $requiredDoc)) {
         throw "Required helper asset not found: $requiredDoc"
     }
@@ -63,6 +64,57 @@ $manifest = Get-Content $TargetManifest -Raw | ConvertFrom-Json
 $targets = $manifest.targets
 if ($TargetIds.Count -gt 0) {
     $targets = $targets | Where-Object { $TargetIds -contains $_.id }
+}
+
+function Write-PortableLaunchers {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$BundleRoot,
+
+        [Parameter(Mandatory = $true)]
+        [string]$TargetOs,
+
+        [Parameter(Mandatory = $true)]
+        [bool]$IncludeViewerLauncher
+    )
+
+    $binPath = Join-Path $BundleRoot "bin"
+
+    if ($TargetOs -eq "windows") {
+        Set-Content -Path (Join-Path $binPath "ctx.cmd") -Value '@echo off
+"%~dp0Ctx.Cli.exe" %*' -Encoding ASCII
+
+        Set-Content -Path (Join-Path $binPath "ctx-mcp.cmd") -Value '@echo off
+"%~dp0..\mcp\Ctx.Mcp.exe" %*' -Encoding ASCII
+
+        Set-Content -Path (Join-Path $binPath "ctx-agent-acp.cmd") -Value '@echo off
+"%~dp0..\acp\Ctx.Agent.Acp.exe" %*' -Encoding ASCII
+
+        if ($IncludeViewerLauncher) {
+            Set-Content -Path (Join-Path $binPath "ctx-viewer.cmd") -Value '@echo off
+"%~dp0..\viewer\Ctx.Viewer.exe" %*' -Encoding ASCII
+        }
+
+        return
+    }
+
+    Set-Content -Path (Join-Path $binPath "ctx") -Value '#!/usr/bin/env bash
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$DIR/Ctx.Cli" "$@"' -Encoding ASCII
+
+    Set-Content -Path (Join-Path $binPath "ctx-mcp") -Value '#!/usr/bin/env bash
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$DIR/../mcp/Ctx.Mcp" "$@"' -Encoding ASCII
+
+    Set-Content -Path (Join-Path $binPath "ctx-agent-acp") -Value '#!/usr/bin/env bash
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$DIR/../acp/Ctx.Agent.Acp" "$@"' -Encoding ASCII
+
+    if ($IncludeViewerLauncher) {
+        Set-Content -Path (Join-Path $binPath "ctx-viewer") -Value '#!/usr/bin/env bash
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$DIR/../viewer/Ctx.Viewer" "$@"' -Encoding ASCII
+    }
 }
 
 foreach ($target in $targets) {
@@ -100,9 +152,15 @@ foreach ($target in $targets) {
     Copy-Item $helperPrompt (Join-Path $promptOut "CTX_HELPER_PROMPT.md")
     Copy-Item $installManifest (Join-Path $metaOut "install-manifest.json")
     Copy-Item $viewerGuide (Join-Path $docsOut "CTX_VIEWER_GUIDE.md")
+    Copy-Item $cliCommands (Join-Path $docsOut "CLI_COMMANDS.md")
     Copy-Item $agentPrompt (Join-Path $promptOut "CTX_AGENT_PROMPT.md")
     Copy-Item $autonomousProtocol (Join-Path $docsOut "CTX_AUTONOMOUS_OPERATION_PROTOCOL.md")
     $target | ConvertTo-Json -Depth 4 | Set-Content -Path (Join-Path $metaOut "target.json") -Encoding ASCII
+
+    Write-PortableLaunchers `
+        -BundleRoot $bundleRoot `
+        -TargetOs $target.os `
+        -IncludeViewerLauncher ((-not $SkipViewer) -and [bool]$target.includeViewer)
 
     $archiveBase = Join-Path $OutputRoot ("ctx-" + $target.id)
     switch ($target.portableFormat) {

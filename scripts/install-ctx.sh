@@ -144,6 +144,7 @@ install_from_source() {
   cp "$effective_repo/prompts/CTX_HELPER_PROMPT.md" "$PROMPTS_PATH/CTX_HELPER_PROMPT.md"
   cp "$effective_repo/prompts/CTX_AGENT_PROMPT.md" "$PROMPTS_PATH/CTX_AGENT_PROMPT.md"
   cp "$effective_repo/docs/CTX_VIEWER_GUIDE.md" "$DOCS_PATH/CTX_VIEWER_GUIDE.md"
+  cp "$effective_repo/docs/CLI_COMMANDS.md" "$DOCS_PATH/CLI_COMMANDS.md"
   cp "$effective_repo/docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md" "$DOCS_PATH/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md"
   printf '%s' "$effective_repo"
 }
@@ -199,6 +200,12 @@ install_from_portable() {
     cp "$REPO_ROOT/docs/CTX_VIEWER_GUIDE.md" "$DOCS_PATH/CTX_VIEWER_GUIDE.md"
   fi
 
+  if [[ -f "$extract_root/docs/CLI_COMMANDS.md" ]]; then
+    cp "$extract_root/docs/CLI_COMMANDS.md" "$DOCS_PATH/CLI_COMMANDS.md"
+  else
+    cp "$REPO_ROOT/docs/CLI_COMMANDS.md" "$DOCS_PATH/CLI_COMMANDS.md"
+  fi
+
   if [[ -f "$extract_root/docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md" ]]; then
     cp "$extract_root/docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md" "$DOCS_PATH/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md"
   else
@@ -246,6 +253,13 @@ validate_install_layout() {
     echo "Installed viewer executable not found or not executable: $VIEWER_PATH/Ctx.Viewer" >&2
     exit 1
   fi
+
+  for required_doc in CTX_VIEWER_GUIDE.md CLI_COMMANDS.md CTX_AUTONOMOUS_OPERATION_PROTOCOL.md; do
+    if [[ ! -f "$DOCS_PATH/$required_doc" ]]; then
+      echo "Installed console-referenced documentation not found: $DOCS_PATH/$required_doc" >&2
+      exit 1
+    fi
+  done
 }
 
 reset_install_layout

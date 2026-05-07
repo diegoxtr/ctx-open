@@ -12,15 +12,13 @@ For a shorter public setup path, use [MCP_LOCAL_QUICKSTART.md](MCP_LOCAL_QUICKST
 
 ## Platform Paths
 
-| Platform | Default install root | MCP launcher | ACP launcher |
-|---|---|---|---|
-| Windows | `C:\ctx` | `C:\ctx\bin\ctx-mcp.cmd` | `C:\ctx\bin\ctx-agent-acp.cmd` |
-| Linux | `$HOME/.local/share/ctx` | `$HOME/.local/share/ctx/bin/ctx-mcp` | `$HOME/.local/share/ctx/bin/ctx-agent-acp` |
-| macOS | `$HOME/.local/share/ctx` | `$HOME/.local/share/ctx/bin/ctx-mcp` | `$HOME/.local/share/ctx/bin/ctx-agent-acp` |
+| Platform | Default install root | MCP launcher |
+|---|---|---|
+| Windows | `C:\ctx` | `C:\ctx\bin\ctx-mcp.cmd` |
+| Linux | `$HOME/.local/share/ctx` | `$HOME/.local/share/ctx/bin/ctx-mcp` |
+| macOS | `$HOME/.local/share/ctx` | `$HOME/.local/share/ctx/bin/ctx-mcp` |
 
 Replace the repository path in every example with the local folder that contains `.ctx`.
-
-MCP is the primary tool-rich integration path. `ctx-agent-acp` is also installed for ACP-style session clients and is documented in [ACP_LOCAL_CONNECTION_GUIDE.md](ACP_LOCAL_CONNECTION_GUIDE.md).
 
 ## What You Get
 
@@ -32,6 +30,8 @@ ctx_doctor
 ctx_status
 ctx_audit
 ctx_next
+ctx_gaps
+ctx_roadmap
 ctx_context
 ctx_plan
 ctx_graph_summary
@@ -521,6 +521,27 @@ Use the returned recommended task, context packet, runbook suggestions, and guid
 Do not reconstruct the plan from chat when ctx_plan already provides it.
 ```
 
+Then apply the returned playbooks:
+
+```text
+Read data.runbookSuggestions before answering or editing.
+For each returned runbook:
+- check Preconditions
+- follow applicable Do steps
+- validate with Verify
+- stop at EscalationBoundary if a failure signal appears
+If runbookSuggestions is empty, continue from the returned task, context packet, and guidance.
+```
+
+For task-specific work, pass the task id so CTX can surface runbooks attached directly to that task:
+
+```json
+{
+  "purpose": "continue this task",
+  "taskId": "<taskId>"
+}
+```
+
 Use lower-level tools only when you need a narrower follow-up after `ctx_plan`.
 
 For graph inspection:
@@ -554,6 +575,18 @@ Use before trusting a repository state.
 ### `ctx_next`
 
 Returns CTX's next-step recommendation, diagnostics, and runbook suggestions.
+
+### `ctx_gaps`
+
+Returns a read-only planning gap summary for unresolved missing work, blocked work, and deferred candidates that should not be treated as the next executable recommendation.
+
+Use it when `ctx_next` has no executable work, or when the operator asks what important work is parked, blocked, or missing.
+
+### `ctx_roadmap`
+
+Returns a read-only roadmap view of future planning lanes and parked work.
+
+Use it for planning review. Do not turn roadmap items into tasks automatically unless the operator explicitly asks for promotion or implementation.
 
 ### `ctx_context`
 
@@ -592,6 +625,14 @@ Useful arguments:
 ```
 
 Use `goalId` or `taskId` when the operator has already identified the work line. Otherwise, let CTX rank the next task.
+
+Agent handling rule:
+
+- `runbookSuggestions` are the applicable playbooks for the current context.
+- Direct task-attached runbooks are mandatory context for that task.
+- The agent should state which runbooks apply before acting.
+- The agent should not execute a runbook blindly; it must check preconditions and verify the result.
+- The agent should stop at the runbook escalation boundary if a failure signal appears.
 
 ### `ctx_graph_summary`
 
@@ -768,7 +809,7 @@ The normal agent flow is:
 
 1. Start the MCP server through the client configuration.
 2. Re-anchor on the active cognitive context with `ctx_plan`.
-3. Use `ctx_status`, `ctx_context`, `ctx_next`, or `ctx_graph_summary` only when you need a narrower follow-up.
+3. Use `ctx_status`, `ctx_context`, `ctx_next`, `ctx_gaps`, `ctx_roadmap`, or `ctx_graph_summary` only when you need a narrower follow-up.
 4. Open the work block with `ctx_task_add` or `ctx_line_open` when no suitable task already exists.
 5. Record the reasoning structure while the work happens:
    - `ctx_hypothesis_add`
@@ -953,7 +994,7 @@ Expected:
 
 ### Test 5: Validate write mode on a disposable repository
 
-Use a temporary repository first, not an important production workspace:
+Use a temporary repository first, not the private root workspace:
 
 ```powershell
 mkdir C:\path\to\ctx-repo\tmp\mcp-write-smoke
@@ -997,12 +1038,14 @@ Expected:
 - to inspect a second repository, configure a second MCP server entry with a different name
 - dynamic switching requires an explicit `--allow-root` boundary
 
-### Test 7: Viewer MCP Status Indicator
+### Test 7: Viewer MCP Server Control
 
-The local viewer exposes a server-side MCP health probe:
+The local viewer exposes a server-side MCP health probe plus explicit start and stop actions:
 
 ```powershell
-Invoke-RestMethod "http://127.0.0.1:5271/api/mcp-status?path=C%3A%5Cpath%5Cto%5Cctx-repo&ensure=true"
+Invoke-RestMethod "http://127.0.0.1:5271/api/mcp-status?path=C%3A%5Cpath%5Cto%5Cctx-repo&ensure=false"
+Invoke-RestMethod "http://127.0.0.1:5271/api/mcp-start?path=C%3A%5Cpath%5Cto%5Cctx-repo" -Method Post
+Invoke-RestMethod "http://127.0.0.1:5271/api/mcp-stop?path=C%3A%5Cpath%5Cto%5Cctx-repo" -Method Post
 ```
 
 Expected when the local MCP server is installed:
@@ -1017,18 +1060,21 @@ ownedRepositoryPath: C:\path\to\ctx-repo
 
 Expected viewer behavior:
 
-- the top bar shows `MCP Server` inside a compact status capsule
+- the top bar shows `MCP Server` inside a compact status control
 - the status dot is green when `healthy` is true
-- the viewer may start a read-only MCP process for the active repository when `ensure=true`
+- `/api/mcp-status?ensure=false` checks health without starting MCP
+- `Start` calls `/api/mcp-start` and launches a read-only MCP process for the active repository
+- `Stop` calls `/api/mcp-stop` and shuts down local `Ctx.Mcp` processes
 - the status dot is red when the launcher or executable is missing, or when MCP startup fails
 
 Failure drill:
 
-1. Stop the installed viewer and any viewer-owned `Ctx.Mcp.exe` process.
+1. Stop the installed viewer and any local `Ctx.Mcp.exe` process.
 2. Refresh the viewer.
-3. Confirm `/api/mcp-status?path=<repo>&ensure=true` returns `healthy: true` and `startedByViewer: true`.
-4. Temporarily move or remove the installed MCP executable only in a disposable install test.
-5. Confirm `/api/mcp-status` reports `healthy: false` and the top bar `MCP Server` dot turns red.
+3. Confirm `/api/mcp-status?path=<repo>&ensure=false` does not start MCP by itself.
+4. Click `Start` or call `/api/mcp-start?path=<repo>` and confirm `healthy: true` plus `startedByViewer: true`.
+5. Temporarily move or remove the installed MCP executable only in a disposable install test.
+6. Confirm `/api/mcp-status` reports `healthy: false` and the top bar `MCP Server` dot turns red.
 
 ## Next Planned MCP Phases
 

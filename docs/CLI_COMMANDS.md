@@ -28,7 +28,7 @@ dotnet run --project .\Ctx.Cli -- <command>
 ctx <command>
 ```
 
-- IDs like `<goalId>`, `<taskId>`, `<hypothesisId>`, or `<commitId>` come from previous commands.
+- IDs like `<goalId>`, `<epicId>`, `<taskId>`, `<hypothesisId>`, or `<commitId>` come from previous commands.
 - Multiple lists use comma-separated values.
 - Most mutating changes affect `.ctx/working`, `.ctx/staging`, `.ctx/graph`, and eventually a later cognitive commit.
 
@@ -98,6 +98,7 @@ For most agents, the correct operating loop is:
 ```powershell
 ctx
 ctx next
+ctx plan --purpose "Plan the next work turn"
 ```
 
 Work inside `Working context`, then:
@@ -109,6 +110,38 @@ ctx commit -m "<durable result>"
 
 `ctx commit` is not a raw thought log.
 It records a durable cognitive state transition.
+
+When the idea is future planning rather than executable work, record it as an epic:
+
+```powershell
+ctx epic add --title "<future capability>" --description "<why it matters>" --goal <goalId>
+ctx roadmap
+ctx epic promote <epicId> --task-title "<first executable task>"
+```
+
+Epics are durable roadmap artifacts. They do not compete in `ctx next` until promoted into a task.
+
+### Daily Self-Inspection Loop
+
+Before a larger change, release pass, repo sync, or agent handoff, inspect the active CTX state with the read-only commands that are closest to the normal work loop:
+
+```powershell
+ctx doctor
+ctx plan --task <taskId> --purpose "<current work>"
+ctx context --task <taskId> --purpose "<current work>"
+ctx evidence list
+ctx evidence show <evidenceId>
+ctx conclusion show <conclusionId>
+ctx goal show <goalId>
+```
+
+Rules:
+
+- run `ctx doctor` first when the local install, repository path, head, dirty state, or providers may matter
+- prefer `ctx plan --task <taskId>` when a task is known, because it returns next work, focused context, and runbook suggestions together
+- use `ctx context --task <taskId>` when an agent needs a compact packet before acting
+- use `ctx evidence list` as inventory only; inspect specific items with `ctx evidence show <evidenceId>`
+- inspect the exact conclusion and goal IDs returned by `plan`, `context`, `check`, or `next` before changing state
 
 ### `ctx`
 
@@ -161,7 +194,7 @@ Includes:
 - current branch
 - `HEAD`
 - `dirty` state
-- counts for goals, tasks, hypotheses, decisions, evidence, conclusions, and runs
+- counts for goals, epics, tasks, hypotheses, decisions, evidence, conclusions, and runs
 - when `dirty`, a bounded pending preview with:
   - compact diff summary
   - pending artifact count
@@ -236,7 +269,10 @@ Current types:
 - `Gap`
 
 Important rules:
-- prioritizes open tasks when they exist
+- prioritizes executable tasks when they exist
+- does not recommend `Blocked` tasks as executable next work
+- keeps `Blocked` tasks visible in diagnostics instead of hiding them
+- when only blocked work remains, returns no executable recommendation and points to `ctx gaps` / `ctx roadmap`
 - can promote gaps from strong hypotheses when no tasks are open
 - only hypotheses in `Proposed` or `UnderEvaluation` are eligible as `Gap`
 - hypotheses already closed by accepted conclusions should not resurface
@@ -252,6 +288,69 @@ Current task factors:
 dotnet run --project .\Ctx.Cli -- next
 ```
 
+### `ctx gaps`
+
+Builds a read-only list of unresolved planning gap candidates.
+
+Use it when:
+
+- `ctx next` has no clear executable task
+- blocked work should be inspected without treating it as the next action
+- a closed task left an active hypothesis that may justify a new task
+- future planning material needs review before promotion
+
+Returns:
+
+- candidate counts
+- actionable / blocked / deferred counts
+- gap candidates with source type and source id
+- rationale
+- recommended action
+- optional suggested task title
+- artifact references
+- guidance
+
+Important rules:
+
+- read-only; it does not create tasks
+- actionable hypothesis gaps can be promoted manually into tasks
+- blocked tasks are shown as unresolved work, not executable next work
+- deferred future items remain roadmap material
+- `Blocked` means "do not execute now"; use this command to inspect why the work is still relevant
+
+```powershell
+dotnet run --project .\Ctx.Cli -- gaps
+```
+
+### `ctx roadmap`
+
+Builds a read-only roadmap view from CTX planning material.
+
+Use it when:
+
+- future ideas should be reviewed without polluting `ctx next`
+- parked epics or future tasks need to stay visible
+- actionable gaps should be separated from blocked and parked work
+
+Current lanes:
+
+- `Ready to promote`
+- `Blocked work`
+- `Parked ideas`
+
+Important rules:
+
+- read-only; it does not promote or create work
+- `Parked ideas` includes first-class epics and can still show legacy future tasks acting as epic placeholders
+- use `ctx next` for execution and `ctx roadmap` for planning review
+- use `ctx epic add` for durable parked ideas instead of blocked placeholder tasks
+- use `ctx epic promote` when an epic becomes concrete executable work
+- use this surface to keep long-horizon ideas visible without turning them into immediate work
+
+```powershell
+dotnet run --project .\Ctx.Cli -- roadmap
+```
+
 ### `ctx plan`
 
 Builds a compact planning packet for the next work turn.
@@ -264,8 +363,15 @@ Returns:
 - repository branch, head, and dirty state
 - `ctx next` recommendation and diagnostics
 - a focused context packet
-- applicable runbook suggestions
+- one effective `runbookSuggestions` list for the planning turn
 - short planning guidance
+
+Runbook contract:
+
+- in `ctx plan`, `data.runbookSuggestions` is the authoritative playbook list for the turn
+- `data.next.runbookSuggestions` mirrors that same effective list for compatibility
+- the effective list is selected from the focused context packet, so task attachments, explicit triggers, goal scope, and global guardrails are resolved consistently
+- agents should read this list before acting and should not infer playbooks from chat memory or titles
 
 Options:
 - `--purpose <text>`
@@ -365,7 +471,7 @@ dotnet run --project .\Ctx.Cli -- closeout
 Runs a compact operational preflight for a critical operation before execution or Git closeout.
 
 Options:
-- `--operation <git-closeout|publish-local|viewer-validation|public-release|recover-index-lock>`
+- `--operation <operation>` required. Built-in aliases include `git-closeout`, `publish-local`, `viewer-validation`, `public-release` / `github-release`, and `recover-index-lock`. Custom operation tokens are also accepted and matched dynamically against runbook triggers.
 - `--goal <goalId>` optional
 - `--task <taskId>` optional
 
@@ -375,6 +481,7 @@ Returns:
 - compact `runbookSuggestions`
 - `additionalRunbooksAvailable` when more matches exist than the suggestion limit allows
 - short guidance for the specific critical operation
+- custom-operation guidance when the operation is not one of the built-in aliases
 
 Typical usage:
 - before Git commit or push: `ctx preflight --operation git-closeout`
@@ -386,6 +493,7 @@ Typical usage:
 dotnet run --project .\Ctx.Cli -- preflight --operation git-closeout
 dotnet run --project .\Ctx.Cli -- preflight --operation publish-local --task <taskId>
 dotnet run --project .\Ctx.Cli -- preflight --operation github-release
+dotnet run --project .\Ctx.Cli -- preflight --operation docs-freeze
 ```
 
 ### `ctx operational review`
@@ -437,6 +545,46 @@ Design rules:
 
 ```powershell
 dotnet run --project .\Ctx.Cli -- runbook add --title "Local publish" --kind Procedure --trigger publish-local --when "Use when refreshing the installed local viewer" --precondition "No installed CTX binary is locked" --do "Run scripts/publish-local.ps1" --verify "Viewer responds locally" --signal "Failed to copy Ctx.Viewer.exe" --escalate "Stop retrying publish if binaries remain locked" --reference "scripts/publish-local.ps1"
+```
+
+### `ctx runbook attach <runbookId>`
+
+Attaches an existing `OperationalRunbook` to one or more goals or tasks.
+
+Options:
+- `--goal <goalId>` repeatable
+- `--task <taskId>` repeatable
+
+Use it when a recurring procedure should become mandatory context for a specific task. A task-attached runbook gets selected by `ctx plan`, `ctx context`, and `ctx check` even when the prompt text does not mention the runbook trigger.
+
+```powershell
+dotnet run --project .\Ctx.Cli -- runbook attach <runbookId> --task <taskId>
+```
+
+Recommended verification:
+
+```powershell
+ctx plan --task <taskId> --purpose "continue this task"
+ctx check --task <taskId>
+```
+
+Expected behavior:
+
+- every active runbook attached to `<taskId>` appears in `runbookSuggestions`
+- the result does not depend on the task title, runbook title, or trigger text
+- the runbook is not executed automatically; CTX surfaces it as operational context
+- goal attachments, triggers, and global guardrails are fallback matches after direct task attachments
+
+### `ctx runbook detach <runbookId>`
+
+Removes an existing `OperationalRunbook` from one or more goals or tasks without deleting the runbook.
+
+Options:
+- `--goal <goalId>` repeatable
+- `--task <taskId>` repeatable
+
+```powershell
+dotnet run --project .\Ctx.Cli -- runbook detach <runbookId> --task <taskId>
 ```
 
 ### `ctx runbook list`
@@ -669,6 +817,70 @@ Shows a specific goal.
 
 ```powershell
 dotnet run --project .\Ctx.Cli -- goal show <goalId>
+```
+
+## Epics
+
+Epics are durable future-planning artifacts.
+
+Use epics when an idea is important enough to preserve, but not specific enough to become the next executable task. Epics appear in `ctx roadmap`, are included in graph/diff/closeout state, and stay out of `ctx next` until promotion.
+
+### `ctx epic add`
+
+Creates a parked epic.
+
+Options:
+- `--title <text>` required
+- `--description <text>`
+- `--goal <goalId>` or `--goals <goalId1,goalId2>`
+
+```powershell
+dotnet run --project .\Ctx.Cli -- epic add --title "Design epic planning layer" --description "Keep future ideas out of ctx next" --goal <goalId>
+```
+
+### `ctx epic update <epicId>`
+
+Updates epic metadata, state, or goal links.
+
+Options:
+- `--title <text>`
+- `--description <text>`
+- `--state <Parked|Active|Completed|Archived>`
+- `--goal <goalId>` or `--goals <goalId1,goalId2>`
+
+```powershell
+dotnet run --project .\Ctx.Cli -- epic update <epicId> --state Active
+```
+
+### `ctx epic promote <epicId>`
+
+Creates the first executable task from an epic and records the promoted task on the epic.
+
+Options:
+- `--task-title <text>` required
+- `--task-description <text>`
+- `--goal <goalId>`
+
+If the epic has exactly one linked goal, `--goal` can be omitted and that goal is used.
+
+```powershell
+dotnet run --project .\Ctx.Cli -- epic promote <epicId> --task-title "Implement epic command"
+```
+
+### `ctx epic list`
+
+Lists epics.
+
+```powershell
+dotnet run --project .\Ctx.Cli -- epic list
+```
+
+### `ctx epic show <epicId>`
+
+Shows one epic.
+
+```powershell
+dotnet run --project .\Ctx.Cli -- epic show <epicId>
 ```
 
 ## Tasks

@@ -27,18 +27,20 @@ The screen is divided into three main zones.
 Elements:
 
 - `Repository`
+- `Browse...` button
 - `Branch`
 - `Load` button
-- `Refresh` button
-- `Auto-refresh` toggle
+- `MCP Server` control
+- release bell
 
 What each does:
 
 - `Repository`: local path where a `.ctx/` folder exists
+- `Browse...`: opens the local folder picker first; after a folder is selected, the Viewer validates whether that folder or a direct child contains `.ctx/`
 - `Branch`: the cognitive branch you want to inspect
 - `Load`: loads the repository and refreshes the entire view
-- `Refresh`: re-reads the current repository without reloading the page
-- `Auto-refresh`: automatically reloads the view every few seconds
+- `MCP Server`: shows local MCP status and exposes `Start` / `Stop` controls for the selected repository
+- release bell: checks the latest public CTX GitHub Release and highlights when the installed `productVersion` is behind
 
 Current default behavior:
 
@@ -46,11 +48,11 @@ Current default behavior:
 - if no configured default exists, the viewer resolves the default root from the nearest project `.git` directory
 - in this self-hosting repository that fallback root resolves to `<repo-root>`
 - default cognitive branch is `main`
-- `Auto-refresh` starts enabled by default unless the browser already remembers it being turned off
 - it remembers the last `Repository` and `Branch` used in the browser
-- it also remembers the `Auto-refresh` preference
+- live sync runs automatically after a repository is loaded and pauses if a background reload fails
 - side panels can be resized with vertical dividers, and widths are saved per mode (`History`, `Split`, `Graph`)
 - side panels can also collapse into compact rails from the vertical dividers, and that collapsed state is saved per mode
+- browser-only directory APIs do not provide a reliable absolute OS path such as `C:\path\to\ctx-repo`; the local Viewer backend owns the native picker and repository validation flow
 
 Example repositories:
 
@@ -96,7 +98,7 @@ Each item shows:
 Below the title you also see:
 
 - `Last loaded`: when the view last loaded
-- `Auto-refresh off/on`: current freshness state
+- live sync status: current freshness state
 
 Interpretation:
 

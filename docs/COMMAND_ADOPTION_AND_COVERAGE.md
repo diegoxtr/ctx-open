@@ -110,6 +110,13 @@ Interpretation:
 - some are cold because the product does not push them in real self-hosting
 - some are edge capabilities, not the happy path
 
+Update:
+
+- `doctor`, `context`, `evidence list`, `evidence show`, `conclusion show`, and `goal show` are now promoted into the documented daily self-inspection loop
+- they should be used before larger work blocks, release passes, repo syncs, and agent handoffs
+- `evidence list` remains an inventory command; the decision-quality check is `evidence show <evidenceId>` against the exact supporting item
+- `gaps` and `roadmap` are now implemented as read-only planning commands so future ideas and unresolved work can be inspected without polluting `ctx next`
+
 ## Not all cold commands are equally important
 
 To prioritize them, separate by value.
@@ -254,15 +261,16 @@ Reading:
 
 Validate and document:
 
-- `evidence list`
+- `evidence list` in inventory mode
 - `evidence show`
-- `goal add`
 - `goal show`
 - `conclusion show`
+- `doctor`
+- `context`
 
 ### Step 2
 
-Review whether `context` and `doctor` should enter the standard operational protocol.
+Validate whether `goal add` should enter the standard loop or remain a structural command for opening new work lines.
 
 ### Step 3
 

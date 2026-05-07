@@ -15,6 +15,7 @@ La idea central es esta:
 CTX necesita distinguir mejor entre:
 
 - roadmap nuevo
+- ideas futuras de roadmap
 - subtrabajo
 - trabajo duplicado
 - bloqueo
@@ -26,6 +27,7 @@ Antes de decidir si algo merece una `task`, CTX deberia distinguir estos niveles
 
 - `goal`
 - `sub-goal`
+- `epic`
 - `issue`
 - `gap`
 - `task`
@@ -39,6 +41,7 @@ La regla base es:
 
 - `goal` define una linea estrategica durable
 - `sub-goal` define una linea tactica debajo de un goal mas amplio
+- `epic` preserva material futuro de planificacion sin volverlo ejecutable
 - `operational runbook` define conocimiento operativo reusable y compacto
 - `issue` describe que algo molesta, falla o genera friccion
 - `gap` nombra la brecha concreta entre el estado actual y el estado que deberia existir
@@ -48,6 +51,7 @@ Formula corta:
 
 ```text
 goal -> sub-goal -> task
+goal -> epic -> futuras task candidates
 operational runbook -> guia de ejecucion
 issue -> gap -> task
 ```
@@ -139,6 +143,36 @@ Operativamente:
 - abrir debajo de ellos las lineas nuevas de UI o producto como `sub-goals`
 - apuntar las tasks nuevas a la linea tactica mas cercana y no al goal paraguas por defecto
 - usar `ctx line open` cuando la intencion del operador sea "abrir una linea tactica aca y empezar a trabajar dentro de ella"
+
+### `Epic`
+
+Un `epic` es un contenedor durable de planificacion futura.
+
+Usarlo cuando la idea:
+
+- es demasiado grande para una sola task ejecutable
+- no deberia entrar en `ctx next`
+- debe seguir visible para roadmap futuro
+- necesita varias tasks o decisions futuras
+- todavia no esta lista para implementacion
+
+No usar `epic` si el trabajo ya es ejecutable.
+En ese caso crear una `task` debajo del goal o sub-goal mas cercano.
+
+Regla de ejecucion:
+
+- `ctx next` debe enfocarse en trabajo ejecutable
+- los epics no compiten como candidatos de siguiente paso
+- las ideas futuras aparecen en `ctx roadmap`
+- el trabajo concreto derivado de un epic puede aparecer en `ctx gaps`
+
+Regla de trabajo bloqueado:
+
+- las tasks `Blocked` se conservan en CTX
+- `ctx next` no las recomienda como trabajo ejecutable
+- `ctx gaps` muestra material bloqueado o deferred para que no se pierda
+- `ctx roadmap` mantiene visibles las ideas estacionadas para revision
+- un item bloqueado vuelve a ser ejecutable solo con un cambio de estado explicito o abriendo una task desbloqueadora
 
 Regla para el viewer:
 

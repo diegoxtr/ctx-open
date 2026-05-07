@@ -57,6 +57,8 @@ static async Task<CommandResult> DispatchAsync(IReadOnlyList<string> args, ICtxA
         "usage" when Match(args, "usage", "summary") => await DispatchUsageSummaryAsync(service, repositoryPath, cancellationToken),
         "usage" when Match(args, "usage", "coverage") => await DispatchUsageCoverageAsync(service, repositoryPath, cancellationToken),
         "next" => await service.NextAsync(repositoryPath, cancellationToken),
+        "gaps" => await service.GapsAsync(repositoryPath, cancellationToken),
+        "roadmap" => await service.RoadmapAsync(repositoryPath, cancellationToken),
         "plan" => await service.PlanAsync(repositoryPath, GetOption(args, "--purpose") ?? "Plan next CTX work", GetOption(args, "--goal"), GetOption(args, "--task"), cancellationToken),
         "doctor" => await service.DoctorAsync(repositoryPath, cancellationToken),
         "audit" => await service.AuditAsync(repositoryPath, cancellationToken),
@@ -131,6 +133,22 @@ static async Task<CommandResult> DispatchAsync(IReadOnlyList<string> args, ICtxA
                 GetMultiOption(args, "--signal", "--signals", "--failure-signal", "--failure-signals"),
                 GetMultiOption(args, "--escalate", "--escalation", "--escalation-boundary")),
             cancellationToken),
+        "runbook" when Match(args, "runbook", "attach") => await service.AttachOperationalRunbookAsync(
+            repositoryPath,
+            new AttachOperationalRunbookRequest(
+                RequirePositional(args, 2, "runbook id"),
+                GetMultiOption(args, "--goal", "--goals"),
+                GetMultiOption(args, "--task", "--tasks"),
+                Environment.UserName),
+            cancellationToken),
+        "runbook" when Match(args, "runbook", "detach") => await service.DetachOperationalRunbookAsync(
+            repositoryPath,
+            new DetachOperationalRunbookRequest(
+                RequirePositional(args, 2, "runbook id"),
+                GetMultiOption(args, "--goal", "--goals"),
+                GetMultiOption(args, "--task", "--tasks"),
+                Environment.UserName),
+            cancellationToken),
         "runbook" when Match(args, "runbook", "list") => await service.ListOperationalRunbooksAsync(repositoryPath, cancellationToken),
         "runbook" when Match(args, "runbook", "show") => await service.ShowOperationalRunbookAsync(repositoryPath, RequirePositional(args, 2, "runbook id"), cancellationToken),
         "prompt" when Match(args, "prompt", "list") => await service.ListPromptTimelineAsync(repositoryPath, GetOption(args, "--kind"), cancellationToken),
@@ -170,6 +188,36 @@ static async Task<CommandResult> DispatchAsync(IReadOnlyList<string> args, ICtxA
             cancellationToken),
         "goal" when Match(args, "goal", "list") => await service.ListArtifactsAsync(repositoryPath, "goal", cancellationToken),
         "goal" when Match(args, "goal", "show") => await service.ShowArtifactAsync(repositoryPath, "goal", RequirePositional(args, 2, "goal id"), cancellationToken),
+
+        "epic" when Match(args, "epic", "add") => await service.AddEpicAsync(
+            repositoryPath,
+            new AddEpicRequest(
+                RequireOption(args, "--title"),
+                GetOption(args, "--description") ?? string.Empty,
+                GetMultiOption(args, "--goal", "--goals"),
+                Environment.UserName),
+            cancellationToken),
+        "epic" when Match(args, "epic", "update") => await service.UpdateEpicAsync(
+            repositoryPath,
+            new UpdateEpicRequest(
+                RequirePositional(args, 2, "epic id"),
+                GetOption(args, "--title"),
+                GetOption(args, "--description"),
+                GetOption(args, "--state"),
+                HasOption(args, "--goal", "--goals") ? GetMultiOption(args, "--goal", "--goals") : null,
+                Environment.UserName),
+            cancellationToken),
+        "epic" when Match(args, "epic", "promote") => await service.PromoteEpicAsync(
+            repositoryPath,
+            new PromoteEpicRequest(
+                RequirePositional(args, 2, "epic id"),
+                RequireOption(args, "--task-title"),
+                GetOption(args, "--task-description") ?? GetOption(args, "--description"),
+                GetOption(args, "--goal"),
+                Environment.UserName),
+            cancellationToken),
+        "epic" when Match(args, "epic", "list") => await service.ListArtifactsAsync(repositoryPath, "epic", cancellationToken),
+        "epic" when Match(args, "epic", "show") => await service.ShowArtifactAsync(repositoryPath, "epic", RequirePositional(args, 2, "epic id"), cancellationToken),
 
         "task" when Match(args, "task", "add") => await service.AddTaskAsync(
             repositoryPath,
@@ -600,7 +648,7 @@ static string BuildHelpText(string repositoryPath)
         : string.Empty;
 
     return $$"""
-CTX - Cognitive Version Control System
+CTX - Cognitive Version Control System by Diego Mariano Verrastro
 
 Current State:
   {{helpState.Label}}
@@ -613,17 +661,23 @@ Next Command:
   {{helpState.NextCommand}}
 {{followupLine}}
 
+Operate From Plan:
+  ctx plan --purpose "<current intent>"
+  If a task is known: ctx plan --task <taskId> --purpose "<current work>"
+  Read data.runbookSuggestions first. That is the effective playbook list for the turn.
+  Apply returned runbooks by checking Preconditions, following Do, validating Verify, and stopping at EscalationBoundary.
+
 State Machine:
   - No CTX repository:
       ctx init --name "<project>"
   - Existing repo + open work:
-      ctx next
+      ctx plan --purpose "<current intent>"
   - Existing repo + pending cognitive delta:
       ctx closeout
   - Existing repo + durable block ready:
       ctx commit -m "<message>"
   - Existing repo + no open work:
-      ctx next
+      ctx next, then ctx gaps or ctx roadmap if no executable work exists
 
 {{projectContext}}
 
@@ -631,19 +685,32 @@ Core Commands:
   ctx status            inspect current cognitive state
   ctx audit             consistency check before continuing
   ctx next              CTX-prioritized next step
-  ctx plan              compact planning packet for the next work turn
+  ctx check             closure and runbook check for a task
+  ctx context           focused context packet for a goal or task
+  ctx plan              planning packet: state, next, context, runbooks, guidance
+  ctx gaps              read-only unresolved planning gaps
+  ctx roadmap           read-only future planning lanes
+  ctx epic add|list|promote
+                        durable future planning that stays out of ctx next until promoted
   ctx prompt list       prompt/trigger timeline ordered by creation date
+  ctx runbook list      list operational playbooks
   ctx closeout          review what still separates working state from HEAD
   ctx commit -m "..."   durable cognitive snapshot
   ctx helper            show this operator guide again
 
 Common Surfaces:
-  ctx context           summarized context for a goal or task
   ctx bootstrap map|apply ...
   ctx graph summary|show|export|lineage ...
   ctx thread reconstruct ...
   ctx preflight --operation <...>
   ctx operational review --operation <...> [--threshold 2]
+
+MCP Agent Surface:
+  ctx_plan              first MCP call for planning packets
+  ctx_gaps              MCP read-only planning gaps
+  ctx_roadmap           MCP read-only future planning lanes
+  ctx_preflight         MCP runbook-aware operation guidance
+  ctx_epic_*            MCP epic list/show/add/update/promote parity
 
 Full Command Reference:
   {{cliCommandsDoc}}

@@ -98,6 +98,8 @@ El flujo base de actualizacion deberia soportar:
 - Cada build ejecuta `ctx version` correctamente.
 - El binario arranca en cada OS/arch.
 - El fragmento de prompt se distribuye junto al binario.
+- La documentacion referenciada desde consola se distribuye junto al binario: `docs/CLI_COMMANDS.md`, `docs/CTX_VIEWER_GUIDE.md`, `docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md`, `prompts/CTX_HELPER_PROMPT.md` y `prompts/CTX_AGENT_PROMPT.md`.
+- Si `ctx helper`, la instalacion o las notas de release apuntan a un archivo instalado, el preflight de release debe fallar hasta que el bundle portable y los scripts de instalacion copien ese archivo.
 - Los archivos portables se emiten bajo `artifacts/distribution/`.
 
 ## Preguntas abiertas

@@ -11,6 +11,7 @@ Planning and decisions must come from `ctx`, not from chat habit, unless there i
 You are an agent working on CTX and must record:
 
 - goals
+- epics
 - tasks
 - hypotheses
 - evidence
@@ -27,10 +28,7 @@ This rule must be treated as an active instruction to the agent, not passive doc
 
 Bootstrap rule:
 
-- if the agent starts planning from chat, stop and re-anchor on `ctx`
-- read the printed `Current State`
-- execute the printed `Next Command`
-- use `ctx status`, `ctx audit`, `ctx graph summary`, or `ctx log` only when deeper inspection is actually needed
+- if the agent starts planning from chat, stop and re-anchor on `ctx status`, `ctx audit`, `ctx log`, `ctx graph summary`, and `ctx next`
 - repeating this reminder is correct behavior, not redundancy
 - chat is for user intent, clarification, and reporting
 - CTX is for planning, state, evidence, decisions, and next-step selection
@@ -40,18 +38,52 @@ Bootstrap rule:
 1. Before starting a unit of work, inspect state:
 
 ```powershell
-ctx
-ctx next
-```
-
-If that is not enough to choose safely, deepen inspection with:
-
-```powershell
+ctx doctor
 ctx status
+ctx graph summary
+ctx log
 ctx audit
 ```
 
-2. If a new line of work appears, record it structurally:
+2. Build a planning packet and apply returned playbooks:
+
+```powershell
+ctx plan --purpose "<current intent>"
+```
+
+If a task is already known, pass it explicitly:
+
+```powershell
+ctx plan --task <taskId> --purpose "continue this task"
+ctx check --task <taskId>
+ctx context --task <taskId> --purpose "continue this task"
+```
+
+For large work blocks, release work, repo syncs, or handoffs, inspect the exact referenced context before acting:
+
+```powershell
+ctx evidence list
+ctx evidence show <evidenceId>
+ctx conclusion show <conclusionId>
+ctx goal show <goalId>
+```
+
+Use `evidence list` as inventory only. Decisions and conclusions must be grounded in the specific `evidence show`, `conclusion show`, and `goal show` records returned by `plan`, `context`, `check`, or `next`.
+
+Read `runbookSuggestions` before acting. Treat every returned runbook as an operational playbook:
+
+- check `Preconditions`
+- follow applicable `Do` steps
+- validate with `Verify`
+- stop at `EscalationBoundary` when a failure signal appears
+
+For `ctx plan`, `data.runbookSuggestions` is the effective playbook list for the current turn.
+It is selected from the focused context packet and mirrored into `data.next.runbookSuggestions` for compatibility.
+Do not reconcile separate plan/next playbook lists; use the top-level planning list.
+
+Do not infer playbooks from chat memory, task titles, or runbook titles. If CTX returns `runbookSuggestions`, those are the playbooks for the current context.
+
+3. If a new line of work appears, record it structurally:
 
 ```powershell
 ctx goal add --title "<goal>"
@@ -59,31 +91,41 @@ ctx task add --title "<task>" --goal <goalId>
 ctx hypo add --statement "<hypothesis>" --task <taskId>
 ```
 
-3. All relevant evidence must be explicit:
+For future ideas that should not compete in `ctx next`, use epics:
+
+```powershell
+ctx epic add --title "<future capability>" --description "<why it matters>" --goal <goalId>
+ctx roadmap
+ctx epic promote <epicId> --task-title "<first executable task>"
+```
+
+Do not use blocked tasks as a parking lot when a first-class epic is the correct artifact.
+
+4. All relevant evidence must be explicit:
 
 ```powershell
 ctx evidence add --title "<title>" --summary "<finding>" --source "<source>" --kind Observation --supports hypothesis:<hypothesisId>
 ```
 
-4. All important decisions must be recorded:
+5. All important decisions must be recorded:
 
 ```powershell
 ctx decision add --title "<decision>" --rationale "<rationale>" --state Accepted --hypotheses <hypothesisId> --evidence <evidenceId>
 ```
 
-5. Every conclusion must close the loop with goals or tasks:
+6. Every conclusion must close the loop with goals or tasks:
 
 ```powershell
 ctx conclusion add --summary "<conclusion>" --decisions <decisionId> --goals <goalId> --tasks <taskId>
 ```
 
-6. When closing a coherent unit of work, generate a cognitive commit:
+7. When closing a coherent unit of work, generate a cognitive commit:
 
 ```powershell
 ctx commit -m "<short precise message>"
 ```
 
-7. After the cognitive commit, only then do the Git commit of the real change.
+8. After the cognitive commit, only then do the Git commit of the real change.
 
 Git rule:
 
@@ -94,9 +136,9 @@ Git rule:
 - do not say "I'll clean the lock later"; resolve the lock first, then continue with Git
 - if the lock is fresh or there are live `git.exe` processes, treat it as a real block and do not force delete
 
-8. Every operational failure must be recorded as `evidence`, even if it is a minor friction.
+9. Every operational failure must be recorded as `evidence`, even if it is a minor friction.
 
-9. Do not mutate `.ctx` manually as the normal path:
+10. Do not mutate `.ctx` manually as the normal path:
 
 - use `ctx ...` as the default surface for goals, tasks, hypotheses, evidence, decisions, conclusions, and cognitive commits
 - do not edit `.ctx` files by hand except as a last-resort recovery or real block

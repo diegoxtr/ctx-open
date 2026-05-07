@@ -57,6 +57,8 @@ internal static class RepositoryPaths
 
 public sealed class FileSystemWorkingContextRepository : IWorkingContextRepository
 {
+    private const int FileRetryCount = 80;
+    private static readonly TimeSpan FileRetryDelay = TimeSpan.FromMilliseconds(25);
     private readonly IJsonSerializer _jsonSerializer;
 
     public FileSystemWorkingContextRepository(IJsonSerializer jsonSerializer)
@@ -152,15 +154,119 @@ public sealed class FileSystemWorkingContextRepository : IWorkingContextReposito
 
     private async System.Threading.Tasks.Task WriteAsync<T>(string path, T data, CancellationToken cancellationToken)
     {
-        await File.WriteAllTextAsync(path, _jsonSerializer.Serialize(data), Encoding.UTF8, cancellationToken);
+        var directory = Path.GetDirectoryName(path)
+            ?? throw new InvalidOperationException($"Directory path could not be resolved for '{path}'.");
+        Directory.CreateDirectory(directory);
+
+        var tempPath = Path.Combine(directory, $"{Path.GetFileName(path)}.{Guid.NewGuid():N}.tmp");
+
+        try
+        {
+            await WriteTextWithRetryAsync(tempPath, _jsonSerializer.Serialize(data), cancellationToken);
+            await ReplaceWithRetryAsync(tempPath, path, cancellationToken);
+            tempPath = string.Empty;
+        }
+        finally
+        {
+            if (!string.IsNullOrWhiteSpace(tempPath) && File.Exists(tempPath))
+            {
+                File.Delete(tempPath);
+            }
+        }
     }
 
     private async System.Threading.Tasks.Task<T> ReadAsync<T>(string path, CancellationToken cancellationToken)
     {
-        var json = await File.ReadAllTextAsync(path, cancellationToken);
+        var json = await ReadTextWithRetryAsync(path, cancellationToken);
         return _jsonSerializer.Deserialize<T>(json);
     }
 
     private static System.Threading.Tasks.Task WriteTextAsync(string path, string content, CancellationToken cancellationToken)
-        => File.WriteAllTextAsync(path, content, Encoding.UTF8, cancellationToken);
+        => WriteTextWithRetryAsync(path, content, cancellationToken);
+
+    private static async System.Threading.Tasks.Task<string> ReadTextWithRetryAsync(string path, CancellationToken cancellationToken)
+    {
+        for (var attempt = 0; ; attempt++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            try
+            {
+                await using var stream = new FileStream(
+                    path,
+                    FileMode.Open,
+                    FileAccess.Read,
+                    FileShare.ReadWrite | FileShare.Delete,
+                    bufferSize: 4096,
+                    options: FileOptions.Asynchronous);
+                using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+                return await reader.ReadToEndAsync(cancellationToken);
+            }
+            catch (Exception ex) when (IsTransientFileAccess(ex) && attempt < FileRetryCount)
+            {
+                await System.Threading.Tasks.Task.Delay(FileRetryDelay, cancellationToken);
+            }
+        }
+    }
+
+    private static async System.Threading.Tasks.Task WriteTextWithRetryAsync(string path, string content, CancellationToken cancellationToken)
+    {
+        var directory = Path.GetDirectoryName(path);
+        if (!string.IsNullOrWhiteSpace(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        for (var attempt = 0; ; attempt++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            try
+            {
+                await using var stream = new FileStream(
+                    path,
+                    FileMode.Create,
+                    FileAccess.Write,
+                    FileShare.Read,
+                    bufferSize: 4096,
+                    options: FileOptions.Asynchronous);
+                await using var writer = new StreamWriter(stream, Encoding.UTF8);
+                await writer.WriteAsync(content.AsMemory(), cancellationToken);
+                return;
+            }
+            catch (Exception ex) when (IsTransientFileAccess(ex) && attempt < FileRetryCount)
+            {
+                await System.Threading.Tasks.Task.Delay(FileRetryDelay, cancellationToken);
+            }
+        }
+    }
+
+    private static async System.Threading.Tasks.Task ReplaceWithRetryAsync(string tempPath, string path, CancellationToken cancellationToken)
+    {
+        for (var attempt = 0; ; attempt++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            try
+            {
+                if (File.Exists(path))
+                {
+                    File.Move(tempPath, path, overwrite: true);
+                }
+                else
+                {
+                    File.Move(tempPath, path);
+                }
+
+                return;
+            }
+            catch (Exception ex) when (IsTransientFileAccess(ex) && attempt < FileRetryCount)
+            {
+                await System.Threading.Tasks.Task.Delay(FileRetryDelay, cancellationToken);
+            }
+        }
+    }
+
+    private static bool IsTransientFileAccess(Exception exception)
+        => exception is IOException or UnauthorizedAccessException;
 }

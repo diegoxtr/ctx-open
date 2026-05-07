@@ -12,28 +12,40 @@
         <div>
             <div class="topbar-title">
                 <h1>CTX Viewer</h1>
-                <span class="topbar-byline">by Diego Verrastro</span>
+                <span class="topbar-byline">by Diego Mariano Verrastro</span>
                 <span id="topbar-version" class="topbar-version"></span>
-                <span id="mcp-status" class="mcp-status mcp-status-unknown" title="Checking local MCP server" aria-label="Local MCP server status">
-                    <span class="mcp-status-dot" aria-hidden="true"></span>
-                    <span class="mcp-status-label">MCP Server</span>
+                <span class="mcp-control" aria-label="Local MCP server controls">
+                    <span id="mcp-status" class="mcp-status mcp-status-unknown" title="Checking local MCP server" aria-label="Local MCP server status">
+                        <span class="mcp-status-dot" aria-hidden="true"></span>
+                        <span class="mcp-status-label">MCP Server</span>
+                    </span>
+                    <button id="mcp-start-button" class="mcp-action mcp-start-action" type="button" title="Start local MCP server">
+                        <span class="mcp-action-icon mcp-action-icon-start" aria-hidden="true"></span>
+                        <span>Start</span>
+                    </button>
+                    <button id="mcp-stop-button" class="mcp-action mcp-stop-action" type="button" title="Stop local MCP server" hidden>
+                        <span class="mcp-action-icon mcp-action-icon-stop" aria-hidden="true"></span>
+                        <span>Stop</span>
+                    </button>
                 </span>
             </div>
             <p>Timeline and cognitive graph explorer</p>
         </div>
-        <form id="repo-form" class="repo-form">
-            <label for="repo-path">Repository</label>
-            <input id="repo-path" name="repoPath" type="text" placeholder="Leave empty to use configured default or project git root" />
-            <button id="browse-repo-button" type="button" class="secondary-button">Browse...</button>
-            <label for="branch-select">Branch</label>
-            <select id="branch-select" name="branch"></select>
-            <button type="submit">Load</button>
-            <button id="refresh-button" type="button" class="secondary-button">Refresh</button>
-            <label for="auto-refresh-toggle" class="toggle-label">
-                <input id="auto-refresh-toggle" type="checkbox" />
-                Auto-refresh
-            </label>
-        </form>
+        <div class="topbar-right">
+            <button id="release-bell" class="release-bell release-status-unknown" type="button" title="Checking CTX releases" aria-label="Checking CTX releases">
+                <span class="release-bell-icon" aria-hidden="true"></span>
+                <span id="release-bell-badge" class="release-bell-badge" aria-hidden="true"></span>
+            </button>
+            <form id="repo-form" class="repo-form">
+                <label for="repo-path">Repository</label>
+                <input id="repo-path" name="repoPath" type="text" placeholder="Leave empty to use configured default or project git root" />
+                <button id="browse-repo-button" type="button" class="secondary-button">Browse...</button>
+                <div id="repository-browser" class="repository-browser" hidden></div>
+                <label for="branch-select">Branch</label>
+                <select id="branch-select" name="branch"></select>
+                <button type="submit">Load</button>
+            </form>
+        </div>
     </header>
 
     <section class="workspace-tab-strip" aria-label="Open repositories">
@@ -76,8 +88,17 @@
                         </select>
                     </div>
                     <div id="commit-list" class="commit-list"></div>
+                    <footer id="history-footer" class="history-footer" aria-label="History summary">
+                        <span>No history loaded.</span>
+                    </footer>
                 </section>
-                <div id="summary-cards" class="cards"></div>
+                <section id="history-summary-panel" class="history-summary-panel" aria-label="Workspace summary">
+                    <button id="history-summary-toggle" class="history-summary-toggle" type="button" aria-expanded="true">
+                        <span>Workspace summary</span>
+                        <span class="history-summary-toggle-icon" aria-hidden="true">-</span>
+                    </button>
+                    <div id="summary-cards" class="cards"></div>
+                </section>
             </section>
             <section class="sidebar-tab-panel" data-left-panel="tasks" role="tabpanel" hidden>
                 <section class="sidebar-section">
@@ -111,61 +132,85 @@
         </div>
 
         <section class="panel panel-center">
-            <div class="panel-header">
-                <div>
+            <div class="panel-header graph-panel-header">
+                <div class="graph-title-block">
                     <h2>Trace Graph</h2>
                     <span id="graph-caption"></span>
                 </div>
-                <div class="graph-filter-toolbar">
-                <div class="graph-preset-group" role="group" aria-label="Graph focus presets">
-                    <span class="graph-filter-label">Focus</span>
-                    <button type="button" class="graph-preset-button active" data-graph-preset="all">All</button>
-                    <button type="button" class="graph-preset-button" data-graph-preset="working">Working</button>
-                    <button type="button" class="graph-preset-button" data-graph-preset="thinking">Thinking</button>
-                    <button type="button" class="graph-preset-button" data-graph-preset="closed">Closed</button>
-                </div>
-                <label class="graph-filter-option graph-filter-commit">
-                    <input id="commit-focus-toggle" type="checkbox" checked>
-                    Focus
-                </label>
-                <label class="graph-filter-option graph-filter-commit">
-                    <input id="primary-lineage-toggle" type="checkbox">
-                    Primary lineage only
-                </label>
-                <label class="graph-filter-option">
-                    <input id="graph-expand-active-toggle" type="checkbox">
-                    All active lines
-                </label>
-                <label class="graph-filter-option graph-filter-commit">
-                    <input id="interpretation-relations-toggle" type="checkbox">
-                    Show interpretation relations
-                </label>
-                <span class="graph-filter-label">Task states</span>
-                    <label class="graph-filter-option">
-                        <input id="graph-filter-draft" type="checkbox" data-task-filter="Draft" checked>
-                        Draft
-                    </label>
-                    <label class="graph-filter-option">
-                        <input id="graph-filter-ready" type="checkbox" data-task-filter="Ready" checked>
-                        Ready
-                    </label>
-                    <label class="graph-filter-option">
-                        <input id="graph-filter-inprogress" type="checkbox" data-task-filter="InProgress" checked>
-                        InProgress
-                    </label>
-                    <label class="graph-filter-option">
-                        <input id="graph-filter-blocked" type="checkbox" data-task-filter="Blocked" checked>
-                        Blocked
-                    </label>
-                    <label class="graph-filter-option">
-                        <input id="graph-filter-done" type="checkbox" data-task-filter="Done" checked>
-                        Done
-                    </label>
+                <div class="graph-toolbar-stack">
+                    <div class="graph-control-row">
+                        <div class="graph-zoom-group" role="group" aria-label="Graph zoom controls">
+                            <span class="graph-zoom-label">Zoom</span>
+                            <button id="graph-zoom-out" type="button" class="graph-zoom-button" aria-label="Zoom out" title="Zoom out">
+                                <span class="graph-zoom-button-icon" aria-hidden="true">-</span>
+                                <span class="graph-zoom-button-label">Out</span>
+                            </button>
+                            <button id="graph-zoom-reset" type="button" class="graph-zoom-value" aria-label="Reset graph zoom" title="Reset zoom to 100%">100%</button>
+                            <button id="graph-zoom-in" type="button" class="graph-zoom-button" aria-label="Zoom in" title="Zoom in">
+                                <span class="graph-zoom-button-icon" aria-hidden="true">+</span>
+                                <span class="graph-zoom-button-label">In</span>
+                            </button>
+                            <button id="graph-zoom-fit" type="button" class="graph-zoom-fit" title="Fit graph width">Fit</button>
+                        </div>
+                        <label class="graph-filter-option graph-filter-commit">
+                            <input id="commit-focus-toggle" type="checkbox" checked>
+                            Focus
+                        </label>
+                        <label class="graph-filter-option graph-filter-commit">
+                            <input id="primary-lineage-toggle" type="checkbox">
+                            Primary lineage only
+                        </label>
+                        <label class="graph-filter-option">
+                            <input id="graph-expand-active-toggle" type="checkbox">
+                            All active lines
+                        </label>
+                        <label class="graph-filter-option graph-filter-commit">
+                            <input id="interpretation-relations-toggle" type="checkbox">
+                            Show interpretation relations
+                        </label>
+                    </div>
+                    <div class="graph-filter-row">
+                        <div class="graph-preset-group" role="group" aria-label="Graph focus presets">
+                            <span class="graph-filter-label">Focus</span>
+                            <button type="button" class="graph-preset-button active" data-graph-preset="all">All</button>
+                            <button type="button" class="graph-preset-button" data-graph-preset="working">Working</button>
+                            <button type="button" class="graph-preset-button" data-graph-preset="thinking">Thinking</button>
+                            <button type="button" class="graph-preset-button" data-graph-preset="closed">Closed</button>
+                        </div>
+                        <div class="graph-state-group" role="group" aria-label="Task state filters">
+                            <span class="graph-filter-label">Task states</span>
+                            <label class="graph-filter-option">
+                                <input id="graph-filter-draft" type="checkbox" data-task-filter="Draft" checked>
+                                Draft
+                            </label>
+                            <label class="graph-filter-option">
+                                <input id="graph-filter-ready" type="checkbox" data-task-filter="Ready" checked>
+                                Ready
+                            </label>
+                            <label class="graph-filter-option">
+                                <input id="graph-filter-inprogress" type="checkbox" data-task-filter="InProgress" checked>
+                                InProgress
+                            </label>
+                            <label class="graph-filter-option">
+                                <input id="graph-filter-blocked" type="checkbox" data-task-filter="Blocked" checked>
+                                Blocked
+                            </label>
+                            <label class="graph-filter-option">
+                                <input id="graph-filter-done" type="checkbox" data-task-filter="Done" checked>
+                                Done
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </div>
             <p id="graph-focus-caption" class="graph-focus-caption">Showing all task states.</p>
             <div id="graph-node-actions" class="graph-node-actions" hidden></div>
             <div id="graph-canvas" class="graph-canvas"></div>
+            <div id="epic-rail" class="epic-rail" hidden></div>
+            <footer class="graph-footer" aria-label="Graph summary">
+                <span id="graph-footer-summary">No graph loaded.</span>
+                <span id="graph-footer-epics">No parked epics.</span>
+            </footer>
             <p id="viewer-hint" class="viewer-hint">Load a local `.ctx` repository to inspect its timeline and graph.</p>
         </section>
 
@@ -224,12 +269,18 @@
                         <span id="hypothesis-count" class="detail-count"></span>
                     </div>
                     <p id="last-loaded" class="last-loaded">Not loaded yet</p>
-                    <p id="freshness-status" class="freshness-status">Auto-refresh off</p>
+                    <p id="freshness-status" class="freshness-status">Live sync waiting</p>
                     <ul id="hypothesis-ranking" class="hypothesis-ranking hypothesis-ranking-detail"></ul>
                 </section>
             </section>
         </aside>
     </main>
+
+    <footer class="app-footer" aria-label="CTX Viewer status">
+        <span id="app-footer-repository">No repository loaded.</span>
+        <span class="app-footer-brand">DMV</span>
+        <span id="app-footer-summary">Waiting for workspace data.</span>
+    </footer>
 
     <script src="/app.js"></script>
 </body>

@@ -3,7 +3,7 @@ Si un modelo de lenguaje y su agente pierden el contexto, esta es la herramienta
 
 Este documento describe el modelo de dominio actual de CTX.
 
-Su objetivo es dejar explÃ­citas:
+Su objetivo es dejar explícitas:
 
 - las entidades del sistema
 - sus identificadores fuertes
@@ -16,14 +16,14 @@ CTX no modela conversaciones como fuente primaria. Modela artefactos cognitivos 
 
 ## Principios del Modelo
 
-El modelo de dominio estÃ¡ diseÃ±ado para cumplir estas reglas:
+El modelo de dominio está diseñado para cumplir estas reglas:
 
-- toda informaciÃ³n importante debe ser estructurada
+- toda información importante debe ser estructurada
 - cada artefacto relevante debe tener identidad fuerte
-- las decisiones deben ser explÃ­citas
+- las decisiones deben ser explícitas
 - la evidencia debe ser referenciable
 - los commits deben ser reproducibles
-- la evoluciÃ³n del razonamiento debe poder compararse
+- la evolución del razonamiento debe poder compararse
 - el estado de trabajo y el historial deben estar separados
 
 ## Identificadores Fuertes
@@ -44,7 +44,7 @@ Tipos actuales:
 - `ContextPacketId`
 - `WorkingContextId`
 
-CaracterÃ­sticas:
+Características:
 
 - encapsulan el valor string
 - se generan con GUID en formato compacto
@@ -56,7 +56,7 @@ Ejemplo conceptual:
 public readonly record struct GoalId(string Value);
 ```
 
-## Base ComÃºn de Entidades
+## Base Común de Entidades
 
 Las entidades trazables del dominio heredan conceptualmente de:
 
@@ -84,16 +84,16 @@ Estructura:
 
 Objetivo:
 
-- saber quiÃ©n creÃ³ un artefacto
-- cuÃ¡ndo fue creado o actualizado
-- con quÃ© etiquetas conceptuales se relaciona
-- quÃ© otros IDs se vinculan de forma secundaria
+- saber quién creó un artefacto
+- cuándo fue creado o actualizado
+- con qué etiquetas conceptuales se relaciona
+- qué otros IDs se vinculan de forma secundaria
 
 ## Entidades Principales
 
 ### Project
 
-Representa el proyecto cognitivo raÃ­z.
+Representa el proyecto cognitivo raíz.
 
 Campos principales:
 
@@ -110,11 +110,11 @@ Estado:
 Responsabilidad:
 - definir la identidad general del repositorio
 - establecer el branch por defecto
-- actuar como raÃ­z conceptual del contexto
+- actuar como raíz conceptual del contexto
 
 ### Goal
 
-Representa un objetivo explÃ­cito del trabajo cognitivo.
+Representa un objetivo explícito del trabajo cognitivo.
 
 Campos principales:
 
@@ -133,7 +133,7 @@ Relaciones:
 - un `Goal` puede agrupar muchas `Task`
 
 Responsabilidad:
-- expresar intenciÃ³n de alto nivel
+- expresar intención de alto nivel
 - organizar tareas vinculadas
 
 ### Task
@@ -165,11 +165,11 @@ Relaciones:
 - puede vincularse a muchas `Hypothesis`
 
 Responsabilidad:
-- modelar una acciÃ³n o frente de trabajo especÃ­fico
+- modelar una acción o frente de trabajo específico
 
 ### Hypothesis
 
-Representa una suposiciÃ³n o proposiciÃ³n a evaluar.
+Representa una suposición o proposición a evaluar.
 
 Campos principales:
 
@@ -198,11 +198,11 @@ Relaciones:
 
 Responsabilidad:
 - explicitar ideas evaluables
-- evitar razonamiento implÃ­cito o difuso
+- evitar razonamiento implícito o difuso
 
 ### Decision
 
-Representa una decisiÃ³n explÃ­cita del proceso de razonamiento.
+Representa una decisión explícita del proceso de razonamiento.
 
 Campos principales:
 
@@ -228,8 +228,8 @@ Relaciones:
 - referencia `Evidence`
 
 Responsabilidad:
-- dejar constancia explÃ­cita de elecciones
-- conectar una decisiÃ³n con su fundamento
+- dejar constancia explícita de elecciones
+- conectar una decisión con su fundamento
 
 ### Evidence
 
@@ -266,11 +266,11 @@ Relaciones:
 
 Responsabilidad:
 - registrar sustento verificable
-- evitar decisiones sin fundamento explÃ­cito
+- evitar decisiones sin fundamento explícito
 
 ### Conclusion
 
-Representa una conclusiÃ³n consolidada.
+Representa una conclusión consolidada.
 
 Campos principales:
 
@@ -295,11 +295,11 @@ Relaciones:
 
 Responsabilidad:
 - condensar un resultado razonado
-- dejar un cierre explÃ­cito de una lÃ­nea de trabajo
+- dejar un cierre explícito de una línea de trabajo
 
 ### Run
 
-Representa una ejecuciÃ³n de IA sobre un `ContextPacket`.
+Representa una ejecución de IA sobre un `ContextPacket`.
 
 Campos principales:
 
@@ -330,13 +330,13 @@ Relaciones:
 - produce `RunArtifact`
 
 Responsabilidad:
-- registrar una interacciÃ³n estructurada con un provider
-- medir costo, tokens y duraciÃ³n
-- capturar salida Ãºtil para evoluciÃ³n del contexto
+- registrar una interacción estructurada con un provider
+- medir costo, tokens y duración
+- capturar salida útil para evolución del contexto
 
 ### ContextPacket
 
-Representa un paquete optimizado de contexto para una ejecuciÃ³n.
+Representa un paquete optimizado de contexto para una ejecución.
 
 Campos principales:
 
@@ -355,12 +355,12 @@ Campos principales:
 - `Sections`
 
 Responsabilidad:
-- seleccionar informaciÃ³n relevante
+- seleccionar información relevante
 - reducir redundancia
-- dejar trazado quÃ© se enviÃ³ al provider
+- dejar trazado qué se envió al provider
 
 Notas:
-- no hereda de `CognitiveEntity<TId>` en la implementaciÃ³n actual
+- no hereda de `CognitiveEntity<TId>` en la implementación actual
 - funciona como artefacto estructurado y persistible
 
 ### WorkingContext
@@ -389,7 +389,7 @@ Responsabilidad:
 - servir de base para `status`, `context`, `run` y `commit`
 - permitir reconstruir el grafo cognitivo actual
 
-MÃ©todo relevante:
+Método relevante:
 
 - `ToGraph()` construye un `ContextGraph`
 
@@ -421,7 +421,7 @@ Regla:
 
 ### ContextGraph
 
-Es una proyecciÃ³n del estado cognitivo completo.
+Es una proyección del estado cognitivo completo.
 
 Contiene:
 
@@ -439,7 +439,7 @@ Responsabilidad:
 
 ### RunArtifact
 
-Describe un artefacto producido por una ejecuciÃ³n.
+Describe un artefacto producido por una ejecución.
 
 Campos:
 
@@ -453,7 +453,7 @@ Responsabilidad:
 
 ### TokenUsage
 
-Modela consumo de ejecuciÃ³n.
+Modela consumo de ejecución.
 
 Campos:
 
@@ -468,7 +468,7 @@ Propiedad derivada:
 
 ### ContentSection
 
-Es una secciÃ³n textual estructurada dentro de un `ContextPacket`.
+Es una sección textual estructurada dentro de un `ContextPacket`.
 
 Campos:
 
@@ -505,7 +505,7 @@ Campos:
 
 ### CognitiveConflict
 
-Representa un conflicto cognitivo explÃ­cito.
+Representa un conflicto cognitivo explícito.
 
 Campos:
 
@@ -516,7 +516,7 @@ Campos:
 - `IncomingSummary`
 
 Responsabilidad:
-- explicar divergencias semÃ¡nticas relevantes
+- explicar divergencias semánticas relevantes
 
 ### ContextDiff
 
@@ -535,11 +535,11 @@ Campos:
 - `Summary`
 
 Responsabilidad:
-- permitir inspecciÃ³n de evoluciÃ³n del razonamiento
+- permitir inspección de evolución del razonamiento
 
 ### MergeResult
 
-Resultado de una operaciÃ³n de merge.
+Resultado de una operación de merge.
 
 Campos:
 
@@ -549,9 +549,9 @@ Campos:
 - `Summary`
 
 Responsabilidad:
-- expresar el resultado de integraciÃ³n entre ramas cognitivas
+- expresar el resultado de integración entre ramas cognitivas
 
-## ConfiguraciÃ³n y Repositorio
+## Configuración y Repositorio
 
 ### ProviderConfiguration
 
@@ -566,7 +566,7 @@ Campos:
 
 ### RepositoryConfig
 
-ConfiguraciÃ³n operativa del repositorio.
+Configuración operativa del repositorio.
 
 Campos:
 
@@ -577,7 +577,7 @@ Campos:
 
 ### RepositoryVersion
 
-Describe la versiÃ³n del formato persistido.
+Describe la versión del formato persistido.
 
 Campos:
 
@@ -620,7 +620,7 @@ Campos:
 
 ### DoctorCheck
 
-Resultado individual de diagnÃ³stico.
+Resultado individual de diagnóstico.
 
 Campos:
 
@@ -630,7 +630,7 @@ Campos:
 
 ### DoctorReport
 
-Reporte completo de diagnÃ³stico del entorno y repositorio.
+Reporte completo de diagnóstico del entorno y repositorio.
 
 Campos:
 
@@ -759,11 +759,11 @@ Valores:
 
 ## Agregados Operativos
 
-Aunque la implementaciÃ³n actual usa records persistidos y servicios de aplicaciÃ³n, conceptualmente hay agregados claros:
+Aunque la implementación actual usa records persistidos y servicios de aplicación, conceptualmente hay agregados claros:
 
 - `WorkingContext` como agregado operativo principal
-- `ContextCommit` como agregado histÃ³rico inmutable
-- `Run` como agregado de ejecuciÃ³n
+- `ContextCommit` como agregado histórico inmutable
+- `Run` como agregado de ejecución
 - `ContextPacket` como artefacto derivado de contexto
 
 ## Reglas de Integridad Relevantes
@@ -771,27 +771,26 @@ Aunque la implementaciÃ³n actual usa records persistidos y servicios de aplica
 Estas reglas importan para mantener coherencia:
 
 - los IDs referenciados deben existir en el contexto
-- `Decision` no debe referenciar hipÃ³tesis o evidencias inexistentes
+- `Decision` no debe referenciar hipótesis o evidencias inexistentes
 - `Conclusion` no debe referenciar decisiones o evidencias inexistentes
-- `Evidence.Supports` debe usar referencias vÃ¡lidas
+- `Evidence.Supports` debe usar referencias válidas
 - `Run.PacketId` debe apuntar a un packet persistido
 - `WorkingContext.HeadCommitId` debe ser consistente con `HEAD`
 - `ContextCommit.SnapshotHash` debe representar exactamente el snapshot persistido
 
-## QuÃ© Hace Valioso Este Modelo
+## Qué Hace Valioso Este Modelo
 
 Este modelo permite:
 
 - versionar pensamiento estructurado
-- comparar evoluciÃ³n cognitiva
+- comparar evolución cognitiva
 - justificar decisiones
 - rastrear evidencia
 - reconstruir el estado completo del razonamiento
-- exportar e importar el repositorio sin perder semÃ¡ntica central
+- exportar e importar el repositorio sin perder semántica central
 
 ## Referencias Relacionadas
 
 - [CTX_STRUCTURE.md](../CTX_STRUCTURE.md)
 - [CLI_COMMANDS.md](../CLI_COMMANDS.md)
 - [V1_FUNCTIONAL_SPEC.md](../V1_FUNCTIONAL_SPEC.md)
-

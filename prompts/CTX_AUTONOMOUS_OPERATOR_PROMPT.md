@@ -31,18 +31,33 @@ Chat is a narrow exception surface for intent, clarification, reporting, and exp
 1. inspect:
 
 ```powershell
-ctx
+ctx status
+ctx graph summary
+ctx log
+ctx audit
 ctx next
+ctx plan --purpose "<current intent>"
 ```
 
-If that is not enough to choose safely, deepen inspection with:
+2. apply returned playbooks before acting:
+
+- read `runbookSuggestions` from `ctx plan`, `ctx check`, or MCP `ctx_plan`
+- treat each returned runbook as an operational playbook for this context
+- check `Preconditions`
+- follow applicable `Do` steps
+- validate with `Verify`
+- stop at `EscalationBoundary` when a failure signal appears
+
+If a task is already known, use:
 
 ```powershell
-ctx status
-ctx audit
+ctx plan --task <taskId> --purpose "continue this task"
+ctx check --task <taskId>
 ```
 
-2. choose the next block using:
+Do not rely on chat memory to decide which playbook applies. CTX returns the applicable playbooks in `runbookSuggestions`.
+
+3. choose the next block using:
 
 - active goal
 - open tasks
@@ -50,7 +65,7 @@ ctx audit
 - missing evidence
 - recent frictions
 
-3. if structure is missing, create it:
+4. if structure is missing, create it:
 
 ```powershell
 ctx goal add ...
@@ -58,33 +73,33 @@ ctx task add ...
 ctx hypo add ...
 ```
 
-4. execute real work
+5. execute real work
 
-5. record any findings:
+6. record any findings:
 
 ```powershell
 ctx evidence add ...
 ```
 
-6. record a decision when a direction is set:
+7. record a decision when a direction is set:
 
 ```powershell
 ctx decision add ...
 ```
 
-7. close a conclusion:
+8. close a conclusion:
 
 ```powershell
 ctx conclusion add ...
 ```
 
-8. close a cognitive commit:
+9. close a cognitive commit:
 
 ```powershell
 ctx commit -m "<resultado>"
 ```
 
-9. only after that, do the Git commit of the code
+10. only after that, do the Git commit of the code
 
 Git rule:
 

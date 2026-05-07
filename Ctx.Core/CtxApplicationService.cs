@@ -159,6 +159,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
             head.CommitId?.Value,
             context.Dirty,
             context.Goals.Count,
+            (context.Epics ?? Array.Empty<Epic>()).Count,
             context.Tasks.Count,
             context.Hypotheses.Count,
             context.Decisions.Count,
@@ -350,6 +351,128 @@ public sealed class CtxApplicationService : ICtxApplicationService
 
             await _workingContextRepository.SaveWorkingAsync(repositoryPath, context, cancellationToken);
             return new CommandResult(true, $"Goal updated: {updated.Title}", updated);
+        });
+    }
+
+    public async System.Threading.Tasks.Task<CommandResult> AddEpicAsync(string repositoryPath, AddEpicRequest request, CancellationToken cancellationToken)
+    {
+        return await ExecuteWriteLockedAsync(repositoryPath, cancellationToken, async () =>
+        {
+            var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+            var goalIds = request.GoalIds
+                .Select(id => ResolveGoal(context, id).Id)
+                .Distinct()
+                .ToArray();
+            var epic = new Epic(
+                EpicId.New(),
+                request.Title,
+                request.Description,
+                EpicState.Parked,
+                NewTrace(request.CreatedBy, "epic"),
+                goalIds,
+                Array.Empty<TaskId>());
+
+            context = context with
+            {
+                Dirty = true,
+                Epics = (context.Epics ?? Array.Empty<Epic>()).Append(epic).ToArray(),
+                Trace = context.Trace with { UpdatedAtUtc = _clock.UtcNow, UpdatedBy = request.CreatedBy }
+            };
+
+            await _workingContextRepository.SaveWorkingAsync(repositoryPath, context, cancellationToken);
+            return new CommandResult(true, $"Epic added: {epic.Title}", epic);
+        });
+    }
+
+    public async System.Threading.Tasks.Task<CommandResult> UpdateEpicAsync(string repositoryPath, UpdateEpicRequest request, CancellationToken cancellationToken)
+    {
+        return await ExecuteWriteLockedAsync(repositoryPath, cancellationToken, async () =>
+        {
+            var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+            var epic = ResolveEpic(context, request.EpicId);
+            var parsedState = epic.State;
+            if (!string.IsNullOrWhiteSpace(request.State)
+                && !Enum.TryParse<EpicState>(request.State, true, out parsedState))
+            {
+                throw new InvalidOperationException($"Unsupported epic state '{request.State}'.");
+            }
+
+            var goalIds = request.GoalIds is null
+                ? epic.GoalIds
+                : request.GoalIds.Select(id => ResolveGoal(context, id).Id).Distinct().ToArray();
+            var updated = epic with
+            {
+                Title = request.Title ?? epic.Title,
+                Description = request.Description ?? epic.Description,
+                State = parsedState,
+                GoalIds = goalIds,
+                Trace = epic.Trace with { UpdatedAtUtc = _clock.UtcNow, UpdatedBy = request.UpdatedBy }
+            };
+
+            context = context with
+            {
+                Dirty = true,
+                Epics = (context.Epics ?? Array.Empty<Epic>()).Select(item => item.Id == epic.Id ? updated : item).ToArray(),
+                Trace = context.Trace with { UpdatedAtUtc = _clock.UtcNow, UpdatedBy = request.UpdatedBy }
+            };
+
+            await _workingContextRepository.SaveWorkingAsync(repositoryPath, context, cancellationToken);
+            return new CommandResult(true, $"Epic updated: {updated.Title}", updated);
+        });
+    }
+
+    public async System.Threading.Tasks.Task<CommandResult> PromoteEpicAsync(string repositoryPath, PromoteEpicRequest request, CancellationToken cancellationToken)
+    {
+        return await ExecuteWriteLockedAsync(repositoryPath, cancellationToken, async () =>
+        {
+            var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+            var epic = ResolveEpic(context, request.EpicId);
+            Goal? goal = null;
+            if (!string.IsNullOrWhiteSpace(request.GoalId))
+            {
+                goal = ResolveGoal(context, request.GoalId);
+            }
+            else if (epic.GoalIds.Count == 1)
+            {
+                goal = context.Goals.Single(item => item.Id == epic.GoalIds[0]);
+            }
+
+            var task = new Ctx.Domain.Task(
+                TaskId.New(),
+                goal?.Id,
+                request.TaskTitle,
+                request.TaskDescription ?? epic.Description,
+                TaskExecutionState.Ready,
+                NewTrace(request.CreatedBy, "task"),
+                Array.Empty<TaskId>(),
+                Array.Empty<HypothesisId>());
+            var updatedEpic = epic with
+            {
+                State = EpicState.Active,
+                PromotedTaskIds = epic.PromotedTaskIds.Append(task.Id).Distinct().ToArray(),
+                Trace = epic.Trace with { UpdatedAtUtc = _clock.UtcNow, UpdatedBy = request.CreatedBy }
+            };
+
+            context = context with
+            {
+                Dirty = true,
+                Goals = context.Goals.Select(item => item.Id.Equals(goal?.Id) ? item with { TaskIds = item.TaskIds.Append(task.Id).ToArray() } : item).ToArray(),
+                Tasks = context.Tasks.Append(task).ToArray(),
+                Epics = (context.Epics ?? Array.Empty<Epic>()).Select(item => item.Id == epic.Id ? updatedEpic : item).ToArray(),
+                Trace = context.Trace with { UpdatedAtUtc = _clock.UtcNow, UpdatedBy = request.CreatedBy }
+            };
+
+            await _workingContextRepository.SaveWorkingAsync(repositoryPath, context, cancellationToken);
+            await TryCreateAutomaticTriggerAsync(
+                repositoryPath,
+                CognitiveTriggerKind.AgentPrompt,
+                $"Open task line: {task.Title}",
+                task.Description,
+                goal is null ? Array.Empty<GoalId>() : new[] { goal.Id },
+                new[] { task.Id },
+                request.CreatedBy,
+                cancellationToken);
+            return new CommandResult(true, $"Epic promoted to task: {task.Title}", new { epic = updatedEpic, task });
         });
     }
 
@@ -1003,6 +1126,44 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 runbookSelection.Available.Select(runbook => runbook.Title).ToArray()));
     }
 
+    public async System.Threading.Tasks.Task<CommandResult> GapsAsync(string repositoryPath, CancellationToken cancellationToken)
+    {
+        var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+        var candidates = BuildGapPlanningCandidates(context);
+        var summary = new GapsSummary(
+            candidates.Length,
+            candidates.Count(candidate => string.Equals(candidate.State, "Actionable", StringComparison.OrdinalIgnoreCase)),
+            candidates.Count(candidate => string.Equals(candidate.State, "Blocked", StringComparison.OrdinalIgnoreCase)),
+            candidates.Count(candidate => string.Equals(candidate.State, "Deferred", StringComparison.OrdinalIgnoreCase)),
+            candidates,
+            BuildGapsGuidance(candidates));
+        var message = candidates.Length == 0
+            ? "No unresolved planning gaps found."
+            : $"Found {candidates.Length} planning gap candidate(s).";
+
+        return new(true, message, summary);
+    }
+
+    public async System.Threading.Tasks.Task<CommandResult> RoadmapAsync(string repositoryPath, CancellationToken cancellationToken)
+    {
+        var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+        var gaps = BuildGapPlanningCandidates(context);
+        var lanes = BuildRoadmapLanes(context, gaps);
+        var items = lanes.SelectMany(lane => lane.Items).ToArray();
+        var summary = new RoadmapSummary(
+            lanes.Length,
+            items.Length,
+            items.Count(item => string.Equals(item.RecommendedAction, "Promote to task", StringComparison.OrdinalIgnoreCase)),
+            items.Count(item => string.Equals(item.State, "Parked", StringComparison.OrdinalIgnoreCase)),
+            lanes,
+            BuildRoadmapGuidance(lanes));
+        var message = items.Length == 0
+            ? "No roadmap suggestions found."
+            : $"Built roadmap with {items.Length} item(s) across {lanes.Length} lane(s).";
+
+        return new(true, message, summary);
+    }
+
     public async System.Threading.Tasks.Task<CommandResult> PlanAsync(string repositoryPath, string purpose, string? goalId, string? taskId, CancellationToken cancellationToken)
     {
         var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
@@ -1011,15 +1172,17 @@ public sealed class CtxApplicationService : ICtxApplicationService
         var head = await _workingContextRepository.LoadHeadAsync(repositoryPath, cancellationToken);
         var candidates = BuildNextWorkCandidates(context);
         var diagnostics = BuildNextWorkDiagnostics(context, candidates);
-        var nextRunbookSelection = BuildNextRunbookSelection(context, runbooks, candidates.FirstOrDefault());
+        var packet = _contextBuilder.Build(context, runbooks, triggers, purpose, goalId, taskId);
+        var effectiveRunbookSelection = BuildPacketRunbookSelection(context, runbooks, packet, purpose, goalId, taskId);
+        var effectiveRunbookSuggestions = BuildRunbookSuggestions(effectiveRunbookSelection.Selected);
+        var effectiveAdditionalRunbooks = effectiveRunbookSelection.Available.Select(runbook => runbook.Title).ToArray();
         var next = new NextWorkSummary(
             candidates.FirstOrDefault(),
             candidates,
             diagnostics,
-            BuildRunbookSuggestions(nextRunbookSelection.Selected),
-            nextRunbookSelection.Available.Select(runbook => runbook.Title).ToArray());
-        var packet = _contextBuilder.Build(context, runbooks, triggers, purpose, goalId, taskId);
-        var guidance = BuildPlanningGuidance(context, next, packet);
+            effectiveRunbookSuggestions,
+            effectiveAdditionalRunbooks);
+        var guidance = BuildPlanningGuidance(context, next, packet, effectiveRunbookSuggestions);
         var summary = new PlanningSummary(
             head.Branch,
             head.CommitId?.Value,
@@ -1027,8 +1190,8 @@ public sealed class CtxApplicationService : ICtxApplicationService
             purpose,
             next,
             packet,
-            next.RunbookSuggestions,
-            next.AdditionalRunbooksAvailable,
+            effectiveRunbookSuggestions,
+            effectiveAdditionalRunbooks,
             guidance);
         var message = next.Recommended is null
             ? "Plan generated without a recommended next candidate; review diagnostics before opening work."
@@ -1546,6 +1709,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
         return normalized switch
         {
             "goal" => new(true, $"Listed {context.Goals.Count} goals.", context.Goals),
+            "epic" => new(true, $"Listed {(context.Epics ?? Array.Empty<Epic>()).Count} epics.", context.Epics ?? Array.Empty<Epic>()),
             "task" => new(true, $"Listed {context.Tasks.Count} tasks.", context.Tasks),
             "hypothesis" => new(true, $"Listed {context.Hypotheses.Count} hypotheses.", context.Hypotheses),
             "decision" => new(true, $"Listed {context.Decisions.Count} decisions.", context.Decisions),
@@ -1564,6 +1728,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
         {
             "goal" => context.Goals.SingleOrDefault(item => item.Id.Value.Equals(artifactId, StringComparison.OrdinalIgnoreCase))
                 ?? throw new InvalidOperationException($"Goal '{artifactId}' was not found."),
+            "epic" => ResolveEpic(context, artifactId),
             "task" => context.Tasks.SingleOrDefault(item => item.Id.Value.Equals(artifactId, StringComparison.OrdinalIgnoreCase))
                 ?? throw new InvalidOperationException($"Task '{artifactId}' was not found."),
             "hypothesis" => ResolveHypothesis(context, artifactId),
@@ -1633,6 +1798,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
             entities = new
             {
                 goals = context.Goals.Count,
+                epics = (context.Epics ?? Array.Empty<Epic>()).Count,
                 tasks = context.Tasks.Count,
                 hypotheses = context.Hypotheses.Count,
                 decisions = context.Decisions.Count,
@@ -1643,6 +1809,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
             lineageFocuses = new
             {
                 goals = context.Goals.Select(item => item.Id.Value).ToArray(),
+                epics = (context.Epics ?? Array.Empty<Epic>()).Select(item => item.Id.Value).ToArray(),
                 tasks = context.Tasks.Select(item => item.Id.Value).ToArray(),
                 hypotheses = context.Hypotheses.Select(item => item.Id.Value).ToArray(),
                 decisions = context.Decisions.Select(item => item.Id.Value).ToArray(),
@@ -2116,8 +2283,12 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 .Where(task => task.GoalId is not null && subtreeGoalIds.Contains(task.GoalId.Value.Value))
                 .ToArray();
             var openSubtreeTaskCount = subtreeTasks.Count(task => task.State != TaskExecutionState.Done);
+            var activeSubtreeEpicCount = (context.Epics ?? Array.Empty<Epic>())
+                .Count(epic =>
+                    epic.State is EpicState.Parked or EpicState.Active
+                    && epic.GoalIds.Any(id => subtreeGoalIds.Contains(id.Value)));
 
-            if (openSubtreeTaskCount == 0 && subtreeTasks.Length > 0)
+            if (openSubtreeTaskCount == 0 && activeSubtreeEpicCount == 0 && subtreeTasks.Length > 0)
             {
                 issues.Add(new AuditIssue(
                     "warning",
@@ -2133,6 +2304,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
         var summary = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
             ["tasks"] = context.Tasks.Count,
+            ["epics"] = (context.Epics ?? Array.Empty<Epic>()).Count,
             ["hypotheses"] = context.Hypotheses.Count,
             ["decisions"] = context.Decisions.Count,
             ["conclusions"] = context.Conclusions.Count,
@@ -2302,6 +2474,10 @@ public sealed class CtxApplicationService : ICtxApplicationService
         => context.Goals.SingleOrDefault(item => item.Id.Value.Equals(goalId, StringComparison.OrdinalIgnoreCase))
             ?? throw new InvalidOperationException($"Goal '{goalId}' was not found.");
 
+    private static Epic ResolveEpic(WorkingContext context, string epicId)
+        => (context.Epics ?? Array.Empty<Epic>()).SingleOrDefault(item => item.Id.Value.Equals(epicId, StringComparison.OrdinalIgnoreCase))
+            ?? throw new InvalidOperationException($"Epic '{epicId}' was not found.");
+
     private static Ctx.Domain.Task ResolveTask(WorkingContext context, string taskId)
         => context.Tasks.SingleOrDefault(item => item.Id.Value.Equals(taskId, StringComparison.OrdinalIgnoreCase))
             ?? throw new InvalidOperationException($"Task '{taskId}' was not found.");
@@ -2354,6 +2530,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
     private static string NormalizeArtifactType(string artifactType) => artifactType.Trim().ToLowerInvariant() switch
     {
         "goal" or "goals" => "goal",
+        "epic" or "epics" => "epic",
         "task" or "tasks" => "task",
         "hypothesis" or "hypotheses" or "hypo" => "hypothesis",
         "decision" or "decisions" => "decision",
@@ -2463,6 +2640,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
             $"decisions:{diff.Decisions.Count}",
             $"hypotheses:{diff.Hypotheses.Count}",
             $"evidence:{diff.Evidence.Count}",
+            $"epics:{(diff.Epics ?? Array.Empty<ContextDiffChange>()).Count}",
             $"tasks:{diff.Tasks.Count}",
             $"conclusions:{diff.Conclusions.Count}",
             $"runbooks:{diff.Runbooks.Count}",
@@ -2481,6 +2659,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
         => diff.Decisions
             .Concat(diff.Hypotheses)
             .Concat(diff.Evidence)
+            .Concat(diff.Epics ?? Array.Empty<ContextDiffChange>())
             .Concat(diff.Tasks)
             .Concat(diff.Conclusions)
             .Concat(diff.Runbooks)
@@ -2662,6 +2841,32 @@ public sealed class CtxApplicationService : ICtxApplicationService
             selectedTask is null ? Array.Empty<Ctx.Domain.Task>() : new[] { selectedTask });
     }
 
+    private static (IReadOnlyList<OperationalRunbook> Selected, IReadOnlyList<OperationalRunbook> Available) BuildPacketRunbookSelection(
+        WorkingContext context,
+        IReadOnlyList<OperationalRunbook> runbooks,
+        ContextPacket packet,
+        string purpose,
+        string? goalId,
+        string? taskId)
+    {
+        var packetGoalIds = packet.GoalIds.Select(id => id.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var packetTaskIds = packet.TaskIds.Select(id => id.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var selectedGoals = context.Goals
+            .Where(goal => packetGoalIds.Contains(goal.Id.Value))
+            .ToArray();
+        var selectedTasks = context.Tasks
+            .Where(task => packetTaskIds.Contains(task.Id.Value))
+            .ToArray();
+
+        return OperationalRunbookSelection.Select(
+            runbooks,
+            purpose,
+            goalId,
+            taskId,
+            selectedGoals,
+            selectedTasks);
+    }
+
     private static IReadOnlyList<RunbookSuggestion> BuildRunbookSuggestions(IReadOnlyList<OperationalRunbook> runbooks)
         => runbooks.Select(runbook => new RunbookSuggestion(
             runbook.Id.Value,
@@ -2801,7 +3006,11 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 "Update or follow the related runbook before retrying the procedure."
             };
 
-    private static IReadOnlyList<string> BuildPlanningGuidance(WorkingContext context, NextWorkSummary next, ContextPacket packet)
+    private static IReadOnlyList<string> BuildPlanningGuidance(
+        WorkingContext context,
+        NextWorkSummary next,
+        ContextPacket packet,
+        IReadOnlyList<RunbookSuggestion> effectiveRunbookSuggestions)
     {
         var guidance = new List<string>();
 
@@ -2819,9 +3028,9 @@ public sealed class CtxApplicationService : ICtxApplicationService
             guidance.Add("Working context is dirty; run ctx closeout before creating a durable commit.");
         }
 
-        if (next.RunbookSuggestions.Count > 0)
+        if (effectiveRunbookSuggestions.Count > 0)
         {
-            guidance.Add($"Review {next.RunbookSuggestions.Count} runbook suggestion(s) before execution.");
+            guidance.Add($"Review {effectiveRunbookSuggestions.Count} effective runbook suggestion(s) from this planning packet before execution.");
         }
 
         guidance.Add($"Use context packet {packet.Id.Value} as the compact planning anchor for this turn.");
@@ -2855,12 +3064,13 @@ public sealed class CtxApplicationService : ICtxApplicationService
         var decisions = DiffCloseoutEntities(previousWorkingContext?.Decisions ?? Array.Empty<Decision>(), current.Decisions, item => item.Id.Value, item => $"{item.Title} [{item.State}]");
         var hypotheses = DiffCloseoutEntities(previousWorkingContext?.Hypotheses ?? Array.Empty<Hypothesis>(), current.Hypotheses, item => item.Id.Value, item => $"{item.Statement} [{item.State}]");
         var evidence = DiffCloseoutEntities(previousWorkingContext?.Evidence ?? Array.Empty<Evidence>(), current.Evidence, item => item.Id.Value, item => $"{item.Title} [{item.Kind}]");
+        var epics = DiffCloseoutEntities(previousWorkingContext?.Epics ?? Array.Empty<Epic>(), current.Epics ?? Array.Empty<Epic>(), item => item.Id.Value, item => $"{item.Title} [{item.State}]");
         var tasks = DiffCloseoutEntities(previousWorkingContext?.Tasks ?? Array.Empty<Ctx.Domain.Task>(), current.Tasks, item => item.Id.Value, item => $"{item.Title} [{item.State}]");
         var conclusions = DiffCloseoutEntities(previousWorkingContext?.Conclusions ?? Array.Empty<Conclusion>(), current.Conclusions, item => item.Id.Value, item => $"{item.Summary} [{item.State}]");
         var runbooks = DiffCloseoutEntities(previousSnapshot?.Runbooks ?? Array.Empty<OperationalRunbook>(), currentSnapshot.Runbooks, item => item.Id.Value, item => $"{item.Title} [{item.Kind}]");
         var triggers = DiffCloseoutEntities(previousSnapshot?.Triggers ?? Array.Empty<CognitiveTrigger>(), currentSnapshot.Triggers, item => item.Id.Value, item => $"{item.Kind}:{item.Summary}");
-        var summary = $"decisions:{decisions.Count} hypotheses:{hypotheses.Count} evidence:{evidence.Count} tasks:{tasks.Count} conclusions:{conclusions.Count} runbooks:{runbooks.Count} triggers:{triggers.Count}";
-        return new ContextDiff(previousWorkingContext?.HeadCommitId, current.HeadCommitId, decisions, hypotheses, evidence, tasks, conclusions, runbooks, triggers, Array.Empty<CognitiveConflict>(), summary);
+        var summary = $"decisions:{decisions.Count} hypotheses:{hypotheses.Count} evidence:{evidence.Count} epics:{epics.Count} tasks:{tasks.Count} conclusions:{conclusions.Count} runbooks:{runbooks.Count} triggers:{triggers.Count}";
+        return new ContextDiff(previousWorkingContext?.HeadCommitId, current.HeadCommitId, decisions, hypotheses, evidence, tasks, conclusions, runbooks, triggers, Array.Empty<CognitiveConflict>(), summary, epics);
     }
 
     private static IReadOnlyList<ContextDiffChange> DiffCloseoutEntities<T>(
@@ -2939,7 +3149,18 @@ public sealed class CtxApplicationService : ICtxApplicationService
 
     private static (string Operation, string Label, string Purpose) NormalizePreflightOperation(string operation)
     {
-        var normalized = operation.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(operation))
+        {
+            throw new InvalidOperationException("Preflight operation is required.");
+        }
+
+        var trimmed = operation.Trim();
+        var normalized = NormalizeOperationalToken(trimmed);
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            throw new InvalidOperationException($"Unsupported preflight operation '{operation}'. Use an operation token with at least one letter or number.");
+        }
+
         return normalized switch
         {
             "git-closeout" or "git" or "git-commit" or "closeout" => ("git-closeout", "Git closeout", "git-commit git-push closeout"),
@@ -2947,8 +3168,25 @@ public sealed class CtxApplicationService : ICtxApplicationService
             "viewer-validation" or "viewer" => ("viewer-validation", "Viewer validation", "viewer local validation refresh"),
             "public-release" or "release-cut" or "github-release" or "release" => ("public-release", "Public release", "release-cut github-release public-publish release-announcement release-flyer"),
             "recover-index-lock" or "index-lock" or "lock-recovery" => ("recover-index-lock", "Index.lock recovery", "index.lock lock recovery git closeout"),
-            _ => throw new InvalidOperationException($"Unsupported preflight operation '{operation}'. Use git-closeout, publish-local, viewer-validation, public-release, or recover-index-lock.")
+            _ => (normalized, HumanizeOperationLabel(trimmed, normalized), $"{trimmed} {normalized} {normalized.Replace('-', ' ')}")
         };
+    }
+
+    private static string HumanizeOperationLabel(string rawOperation, string normalizedOperation)
+    {
+        var words = Regex.Split(rawOperation.Trim(), @"[^a-zA-Z0-9]+")
+            .Where(word => !string.IsNullOrWhiteSpace(word))
+            .ToArray();
+
+        if (words.Length == 0)
+        {
+            words = normalizedOperation.Split('-', StringSplitOptions.RemoveEmptyEntries);
+        }
+
+        return string.Join(' ', words.Select(word =>
+            word.Length == 0
+                ? word
+                : char.ToUpperInvariant(word[0]) + word[1..].ToLowerInvariant()));
     }
 
     private static (IReadOnlyList<Goal> Goals, IReadOnlyList<Ctx.Domain.Task> Tasks, string Scope) ResolvePreflightScope(WorkingContext context, string? goalId, string? taskId)
@@ -3023,11 +3261,17 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 break;
             case "public-release":
                 guidance.Add("Before sharing or closing the release, produce the bilingual announcement and flyer, or record an explicit omission decision with the reason.");
+                guidance.Add("Before tagging or publishing, verify every console-referenced installed path exists in the packaged layout, including `docs/CLI_COMMANDS.md`, `docs/CTX_VIEWER_GUIDE.md`, `docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md`, `prompts/CTX_HELPER_PROMPT.md`, and `prompts/CTX_AGENT_PROMPT.md`.");
+                guidance.Add("If `ctx helper`, install docs, or release notes tell the operator to read a file from the installed CLI/package, stop publication unless that file is copied by the portable bundle and install scripts.");
                 guidance.Add("Run `ctx preflight --operation github-release` after publishing the GitHub Release so the post-release announcement/flyer runbook is surfaced deliberately.");
                 break;
             case "recover-index-lock":
                 guidance.Add("Check for live Git processes first and only remove orphaned locks.");
                 guidance.Add("Return to `ctx preflight --operation git-closeout` once the lock condition is gone.");
+                break;
+            default:
+                guidance.Add("This is a custom operation. CTX selected runbooks dynamically from operation triggers, task scope, goal scope, and global guardrails.");
+                guidance.Add("If this operation recurs, create or attach a compact runbook with the same operation token as a trigger.");
                 break;
         }
 
@@ -3044,18 +3288,11 @@ public sealed class CtxApplicationService : ICtxApplicationService
             return selection;
         }
 
-        var requiredTitles = new[]
-        {
-            "Public release cut",
-            "Release bilingual announcement and flyer"
-        };
-
-        var required = requiredTitles
-            .Select(title => runbooks.FirstOrDefault(runbook =>
+        var required = runbooks
+            .Where(runbook =>
                 runbook.State == LifecycleState.Active
-                && runbook.Title.Equals(title, StringComparison.OrdinalIgnoreCase)))
-            .Where(runbook => runbook is not null)
-            .Select(runbook => runbook!)
+                && (OperationalRunbookSelection.IsPublicReleaseRunbook(runbook)
+                    || OperationalRunbookSelection.IsReleaseAnnouncementRunbook(runbook)))
             .ToArray();
 
         if (required.Length == 0)
@@ -3152,19 +3389,21 @@ public sealed class CtxApplicationService : ICtxApplicationService
             ? NodeId("Project", context.Project.Id.Value)
             : context.Goals.Any(item => item.Id.Value.Equals(nodeId, StringComparison.OrdinalIgnoreCase))
                 ? NodeId("Goal", nodeId)
-                : context.Tasks.Any(item => item.Id.Value.Equals(nodeId, StringComparison.OrdinalIgnoreCase))
-                    ? NodeId("Task", nodeId)
-                    : context.Hypotheses.Any(item => item.Id.Value.Equals(nodeId, StringComparison.OrdinalIgnoreCase))
-                        ? NodeId("Hypothesis", nodeId)
-                        : context.Decisions.Any(item => item.Id.Value.Equals(nodeId, StringComparison.OrdinalIgnoreCase))
-                            ? NodeId("Decision", nodeId)
-                            : context.Evidence.Any(item => item.Id.Value.Equals(nodeId, StringComparison.OrdinalIgnoreCase))
-                                ? NodeId("Evidence", nodeId)
-                                : context.Conclusions.Any(item => item.Id.Value.Equals(nodeId, StringComparison.OrdinalIgnoreCase))
-                                    ? NodeId("Conclusion", nodeId)
-                                    : context.Runs.Any(item => item.Id.Value.Equals(nodeId, StringComparison.OrdinalIgnoreCase))
-                                        ? NodeId("Run", nodeId)
-                                        : NodeId("ContextPacket", nodeId);
+                : (context.Epics ?? Array.Empty<Epic>()).Any(item => item.Id.Value.Equals(nodeId, StringComparison.OrdinalIgnoreCase))
+                    ? NodeId("Epic", nodeId)
+                    : context.Tasks.Any(item => item.Id.Value.Equals(nodeId, StringComparison.OrdinalIgnoreCase))
+                        ? NodeId("Task", nodeId)
+                        : context.Hypotheses.Any(item => item.Id.Value.Equals(nodeId, StringComparison.OrdinalIgnoreCase))
+                            ? NodeId("Hypothesis", nodeId)
+                            : context.Decisions.Any(item => item.Id.Value.Equals(nodeId, StringComparison.OrdinalIgnoreCase))
+                                ? NodeId("Decision", nodeId)
+                                : context.Evidence.Any(item => item.Id.Value.Equals(nodeId, StringComparison.OrdinalIgnoreCase))
+                                    ? NodeId("Evidence", nodeId)
+                                    : context.Conclusions.Any(item => item.Id.Value.Equals(nodeId, StringComparison.OrdinalIgnoreCase))
+                                        ? NodeId("Conclusion", nodeId)
+                                        : context.Runs.Any(item => item.Id.Value.Equals(nodeId, StringComparison.OrdinalIgnoreCase))
+                                            ? NodeId("Run", nodeId)
+                                            : NodeId("ContextPacket", nodeId);
     }
 
     private static string ResolveOutputPath(string repositoryPath, string outputPath)
@@ -3257,6 +3496,37 @@ public sealed class CtxApplicationService : ICtxApplicationService
             else
             {
                 edges.Add(Edge(NodeId("Project", project.Id.Value), NodeId("Goal", goal.Id.Value), "contains"));
+            }
+        }
+
+        foreach (var epic in context.Epics ?? Array.Empty<Epic>())
+        {
+            nodes.Add(new CognitiveGraphNode(
+                NodeId("Epic", epic.Id.Value),
+                "Epic",
+                epic.Title,
+                epic.State.ToString(),
+                WithTraceMetadata(
+                    new Dictionary<string, string>
+                    {
+                        ["description"] = epic.Description,
+                        ["promotedTaskCount"] = epic.PromotedTaskIds.Count.ToString(CultureInfo.InvariantCulture)
+                    },
+                    epic.Trace)));
+
+            if (epic.GoalIds.Count == 0)
+            {
+                edges.Add(Edge(NodeId("Project", project.Id.Value), NodeId("Epic", epic.Id.Value), "plans"));
+            }
+
+            foreach (var goalId in epic.GoalIds)
+            {
+                edges.Add(Edge(NodeId("Goal", goalId.Value), NodeId("Epic", epic.Id.Value), "plans"));
+            }
+
+            foreach (var taskId in epic.PromotedTaskIds)
+            {
+                edges.Add(Edge(NodeId("Epic", epic.Id.Value), NodeId("Task", taskId.Value), "promoted-to"));
             }
         }
 
@@ -4307,6 +4577,244 @@ public sealed class CtxApplicationService : ICtxApplicationService
             _ => entityType.Trim()
         };
 
+    private static GapPlanningCandidate[] BuildGapPlanningCandidates(WorkingContext context)
+    {
+        var tasksById = context.Tasks.ToDictionary(item => item.Id.Value, StringComparer.OrdinalIgnoreCase);
+        var goalsById = context.Goals.ToDictionary(item => item.Id.Value, StringComparer.OrdinalIgnoreCase);
+        var acceptedConclusionTaskIds = context.Conclusions
+            .Where(item => item.State == ConclusionState.Accepted)
+            .SelectMany(item => item.TaskIds)
+            .Select(item => item.Value)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var hypothesisGaps = context.Hypotheses
+            .Where(hypothesis => hypothesis.State is HypothesisState.Proposed or HypothesisState.UnderEvaluation)
+            .Select(hypothesis =>
+            {
+                var relatedTasks = hypothesis.TaskIds
+                    .Select(id => tasksById.TryGetValue(id.Value, out var task) ? task : null)
+                    .Where(task => task is not null)
+                    .Cast<Ctx.Domain.Task>()
+                    .ToArray();
+
+                var hasOnlyClosedTasks = relatedTasks.Length > 0 && relatedTasks.All(task => task.State == TaskExecutionState.Done);
+                if (!hasOnlyClosedTasks)
+                {
+                    return null;
+                }
+
+                if (relatedTasks.Any(task => acceptedConclusionTaskIds.Contains(task.Id.Value)))
+                {
+                    return null;
+                }
+
+                var goalPriorityScore = relatedTasks
+                    .Select(task => task.GoalId?.Value)
+                    .Where(id => id is not null && goalsById.ContainsKey(id))
+                    .Select(id => NormalizeGoalPriority(goalsById[id!].Priority, context.Goals))
+                    .DefaultIfEmpty(0.50m)
+                    .Max();
+
+                var score = Math.Round(
+                    (hypothesis.Score * 0.70m)
+                    + (goalPriorityScore * 0.20m)
+                    + 0.10m,
+                    4,
+                    MidpointRounding.AwayFromZero);
+
+                return new GapPlanningCandidate(
+                    "Gap",
+                    hypothesis.Statement,
+                    "Hypothesis",
+                    hypothesis.Id.Value,
+                    "Actionable",
+                    score,
+                    "The hypothesis is still active, its related task thread is closed, and no accepted conclusion closes that thread.",
+                    "Open a task from this gap",
+                    BuildSuggestedTaskTitle(hypothesis.Statement),
+                    BuildPlanningReferences(
+                        new PlanningReference("Hypothesis", hypothesis.Id.Value),
+                        relatedTasks.Select(task => new PlanningReference("Task", task.Id.Value))));
+            })
+            .Where(candidate => candidate is not null)
+            .Cast<GapPlanningCandidate>();
+
+        var blockedTaskGaps = context.Tasks
+            .Where(task => task.State == TaskExecutionState.Blocked)
+            .Select(task =>
+            {
+                var goalPriorityScore = task.GoalId is not null && goalsById.TryGetValue(task.GoalId.Value.Value, out var goal)
+                    ? NormalizeGoalPriority(goal.Priority, context.Goals)
+                    : 0.50m;
+                var score = Math.Round(
+                    (goalPriorityScore * 0.45m)
+                    + (IsFuturePlanningTask(task) ? 0.20m : 0.35m)
+                    + (task.HypothesisIds.Count > 0 ? 0.20m : 0.10m),
+                    4,
+                    MidpointRounding.AwayFromZero);
+                var state = IsFuturePlanningTask(task) ? "Deferred" : "Blocked";
+
+                return new GapPlanningCandidate(
+                    "Gap",
+                    task.Title,
+                    "Task",
+                    task.Id.Value,
+                    state,
+                    score,
+                    state == "Deferred"
+                        ? "This is parked future planning material and should stay out of ctx next until activated."
+                        : "This blocked task is visible as unresolved work, but it is not executable as the next step.",
+                    state == "Deferred" ? "Keep parked for roadmap review" : "Open or identify an unblocker task",
+                    state == "Deferred" ? null : $"Unblock {task.Title}",
+                    BuildPlanningReferences(new PlanningReference("Task", task.Id.Value), Array.Empty<PlanningReference>()));
+            });
+
+        return hypothesisGaps
+            .Concat(blockedTaskGaps)
+            .OrderByDescending(candidate => candidate.Score)
+            .ThenBy(candidate => candidate.Title, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private static RoadmapLane[] BuildRoadmapLanes(WorkingContext context, IReadOnlyList<GapPlanningCandidate> gaps)
+    {
+        var readyToPromote = gaps
+            .Where(gap => string.Equals(gap.State, "Actionable", StringComparison.OrdinalIgnoreCase))
+            .Select(gap => new RoadmapItem(
+                "RoadmapItem",
+                gap.SourceType,
+                gap.SourceId,
+                gap.SuggestedTaskTitle ?? gap.Title,
+                "Ready",
+                gap.Score,
+                "Promote to task",
+                gap.References))
+            .ToArray();
+
+        var blockedWork = gaps
+            .Where(gap => string.Equals(gap.State, "Blocked", StringComparison.OrdinalIgnoreCase))
+            .Select(gap => new RoadmapItem(
+                "RoadmapItem",
+                gap.SourceType,
+                gap.SourceId,
+                gap.Title,
+                "Blocked",
+                gap.Score,
+                gap.RecommendedAction,
+                gap.References))
+            .ToArray();
+
+        var realEpics = (context.Epics ?? Array.Empty<Epic>())
+            .Where(epic => epic.State is EpicState.Parked or EpicState.Active)
+            .Select(epic => new RoadmapItem(
+                "Epic",
+                "Epic",
+                epic.Id.Value,
+                epic.Title,
+                epic.State.ToString(),
+                epic.State == EpicState.Active ? 0.65m : 0.55m,
+                epic.State == EpicState.Active ? "Continue promotion into executable tasks" : "Keep parked until activated into executable tasks",
+                BuildPlanningReferences(
+                    new PlanningReference("Epic", epic.Id.Value),
+                    epic.GoalIds.Select(id => new PlanningReference("Goal", id.Value))
+                        .Concat(epic.PromotedTaskIds.Select(id => new PlanningReference("Task", id.Value))))))
+            .ToArray();
+
+        var parkedIdeas = context.Tasks
+            .Where(task => task.State == TaskExecutionState.Blocked && IsFuturePlanningTask(task))
+            .Select(task => new RoadmapItem(
+                "Epic",
+                "Task",
+                task.Id.Value,
+                task.Title,
+                "Parked",
+                0.50m,
+                "Keep parked until activated into executable tasks",
+                BuildPlanningReferences(new PlanningReference("Task", task.Id.Value), Array.Empty<PlanningReference>())))
+            .Concat(realEpics)
+            .OrderByDescending(item => item.Score)
+            .ThenBy(item => item.Title, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return new[]
+            {
+                new RoadmapLane("Ready to promote", readyToPromote),
+                new RoadmapLane("Blocked work", blockedWork),
+                new RoadmapLane("Parked ideas", parkedIdeas)
+            }
+            .Where(lane => lane.Items.Count > 0)
+            .ToArray();
+    }
+
+    private static IReadOnlyList<string> BuildGapsGuidance(IReadOnlyList<GapPlanningCandidate> candidates)
+    {
+        if (candidates.Count == 0)
+        {
+            return new[]
+            {
+                "No read-only gap candidates were found.",
+                "Use ctx next for executable work, or record future planning material as evidence, hypothesis, decision, or a parked task."
+            };
+        }
+
+        return new[]
+        {
+            "Review gap candidates before opening new tasks.",
+            "Only promote a gap when the suggested task is specific, testable, and not a duplicate.",
+            "Deferred items are roadmap material and should not be treated as immediate execution."
+        };
+    }
+
+    private static IReadOnlyList<string> BuildRoadmapGuidance(IReadOnlyList<RoadmapLane> lanes)
+    {
+        if (lanes.Count == 0)
+        {
+            return new[]
+            {
+                "No roadmap material was found.",
+                "Use ctx gaps to inspect actionable missing work, or record future ideas with ctx epic add before expecting them in roadmap output."
+            };
+        }
+
+        return new[]
+        {
+            "Use ctx roadmap for planning review, not immediate execution.",
+            "Use ctx next when you want the next executable task.",
+            "Promote roadmap items explicitly with ctx epic promote or a focused task add; this command is read-only."
+        };
+    }
+
+    private static string BuildSuggestedTaskTitle(string statement)
+    {
+        var normalized = Regex.Replace(statement.Trim(), @"\s+", " ");
+        if (normalized.Length <= 80)
+        {
+            return normalized;
+        }
+
+        return normalized[..77] + "...";
+    }
+
+    private static bool IsFuturePlanningTask(Ctx.Domain.Task task)
+    {
+        var text = $"{task.Title} {task.Description}";
+        return text.Contains("future", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("epic", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("roadmap", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("parked", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("deferred", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static IReadOnlyList<PlanningReference> BuildPlanningReferences(
+        PlanningReference primary,
+        IEnumerable<PlanningReference> additional)
+    {
+        return new[] { primary }
+            .Concat(additional)
+            .DistinctBy(reference => $"{reference.EntityType}:{reference.EntityId}", StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
     private static IReadOnlyList<NextWorkCandidate> BuildNextWorkCandidates(WorkingContext context)
     {
         var goalsById = context.Goals.ToDictionary(item => item.Id.Value, StringComparer.OrdinalIgnoreCase);
@@ -4319,7 +4827,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var taskCandidates = context.Tasks
-            .Where(task => task.State != TaskExecutionState.Done)
+            .Where(task => task.State is TaskExecutionState.Ready or TaskExecutionState.InProgress or TaskExecutionState.Draft)
             .Select(task =>
             {
                 var stateScore = task.State switch
@@ -4327,7 +4835,6 @@ public sealed class CtxApplicationService : ICtxApplicationService
                     TaskExecutionState.InProgress => 1.00m,
                     TaskExecutionState.Ready => 0.80m,
                     TaskExecutionState.Draft => 0.35m,
-                    TaskExecutionState.Blocked => 0.15m,
                     _ => 0.10m
                 };
 
@@ -4565,7 +5072,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
         }
 
         var selectionMode = candidates.FirstOrDefault()?.CandidateType ?? "None";
-        var guidance = BuildNextWorkGuidance(selectionMode, openTaskCount, gapCandidateCount, gapExcludedByNonClosedTasks, gapExcludedByAcceptedConclusions);
+        var guidance = BuildNextWorkGuidance(selectionMode, openTaskCount, blockedTaskCount, gapCandidateCount, gapExcludedByNonClosedTasks, gapExcludedByAcceptedConclusions);
 
         return new NextWorkDiagnostics(
             selectionMode,
@@ -4585,6 +5092,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
     private static IReadOnlyList<string> BuildNextWorkGuidance(
         string selectionMode,
         int openTaskCount,
+        int blockedTaskCount,
         int gapCandidateCount,
         int gapExcludedByNonClosedTasks,
         int gapExcludedByAcceptedConclusions)
@@ -4620,6 +5128,11 @@ public sealed class CtxApplicationService : ICtxApplicationService
         if (openTaskCount == 0)
         {
             guidance.Add("No open tasks remain in the current workspace.");
+        }
+        else if (openTaskCount == blockedTaskCount)
+        {
+            guidance.Add("Only blocked tasks remain, so ctx next has no executable recommendation.");
+            guidance.Add("Use `ctx gaps` or `ctx roadmap` to review blocked and parked planning material.");
         }
         else
         {

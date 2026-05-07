@@ -20,6 +20,15 @@ public record Goal(
     Traceability Trace,
     IReadOnlyList<TaskId> TaskIds) : CognitiveEntity<GoalId>(Id, Trace);
 
+public record Epic(
+    EpicId Id,
+    string Title,
+    string Description,
+    EpicState State,
+    Traceability Trace,
+    IReadOnlyList<GoalId> GoalIds,
+    IReadOnlyList<TaskId> PromotedTaskIds) : CognitiveEntity<EpicId>(Id, Trace);
+
 public record Task(
     TaskId Id,
     GoalId? GoalId,
@@ -198,7 +207,8 @@ public record ContextGraph(
     IReadOnlyList<Decision> Decisions,
     IReadOnlyList<Evidence> Evidence,
     IReadOnlyList<Conclusion> Conclusions,
-    IReadOnlyList<Run> Runs);
+    IReadOnlyList<Run> Runs,
+    IReadOnlyList<Epic>? Epics = null);
 
 public record WorkingContext(
     WorkingContextId Id,
@@ -214,7 +224,8 @@ public record WorkingContext(
     IReadOnlyList<Evidence> Evidence,
     IReadOnlyList<Conclusion> Conclusions,
     IReadOnlyList<Run> Runs,
-    Traceability Trace) : CognitiveEntity<WorkingContextId>(Id, Trace)
+    Traceability Trace,
+    IReadOnlyList<Epic>? Epics = null) : CognitiveEntity<WorkingContextId>(Id, Trace)
 {
     public ContextGraph ToGraph() => new(
         Project,
@@ -224,7 +235,8 @@ public record WorkingContext(
         Decisions,
         Evidence,
         Conclusions,
-        Runs);
+        Runs,
+        Epics ?? Array.Empty<Epic>());
 }
 
 [method: JsonConstructor]
@@ -264,7 +276,8 @@ public record ContextDiff(
     IReadOnlyList<ContextDiffChange> Runbooks,
     IReadOnlyList<ContextDiffChange> Triggers,
     IReadOnlyList<CognitiveConflict> Conflicts,
-    string Summary)
+    string Summary,
+    IReadOnlyList<ContextDiffChange>? Epics = null)
 {
     public ContextDiff(
         ContextCommitId? fromCommitId,
@@ -507,7 +520,7 @@ public static class DomainConstants
 {
     public const string RepositoryFolderName = ".ctx";
     public const string CurrentRepositoryVersion = "1.0";
-    public const string ProductVersion = "1.0.12";
+    public const string ProductVersion = "1.0.13"; // CTX_RELEASE_VERSION
 }
 
 public static class HypothesisScoring

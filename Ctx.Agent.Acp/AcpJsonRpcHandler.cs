@@ -218,11 +218,11 @@ public sealed class AcpJsonRpcHandler
             });
         }
 
-        foreach (var runbook in planning.RunbookSuggestions.Take(3))
+        foreach (var runbook in planning.RunbookSuggestions)
         {
             entries.Add(new
             {
-                content = $"Runbook: {runbook.Title}",
+                content = $"Runbook: {runbook.Title}. Check Preconditions, follow applicable Do steps, verify with Verify, and stop at EscalationBoundary if a failure signal appears.",
                 priority = "medium",
                 status = "pending"
             });

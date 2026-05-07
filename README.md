@@ -259,7 +259,7 @@ The strongest demos are not graph demos. They are continuity demos.
 - Tiene un valor inusualmente alto para generar inputs estructurados de entrenamiento porque el camino de razonamiento queda preservado en lugar de ser reconstruido a posteriori.
 - Esto no es solo otra herramienta de IA. Es parte de la capa de infraestructura que necesitara la proxima generacion de workflows con agentes.
 
-Current version: `1.0.12`
+Current version: `1.0.13`
 
 ## Install
 
@@ -581,6 +581,7 @@ Documentation:
 - `docs/COMMERCIAL_AND_GOVERNANCE_PHILOSOPHY.md`
 - `docs/COGNITIVE_GRAPH_AND_LINEAGE.md`
 - `docs/WORK_MODEL_AND_PRIORITIZATION.md`
+- `docs/ROADMAP_AND_GAPS_DESIGN.md`
 - `docs/OPERATIONAL_RUNBOOKS.md`
 - `docs/CTX_VIEWER_GUIDE.md`
 - `docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md`
@@ -600,8 +601,10 @@ Viewer:
 - Load a `.ctx` repository path to inspect branches, timeline lanes, commits and graph traces over time
 - If no repository path is stored or entered, the viewer first uses `CTX_VIEWER_DEFAULT_REPOSITORY_PATH` or `Viewer__DefaultRepositoryPath` when configured, and otherwise falls back to the current project git root
 - Default branch is `main` unless the browser already remembers a newer repository or branch selection
-- `Auto-refresh` starts enabled by default unless the browser already remembers that you turned it off, and the viewer remembers that preference across reloads
-- Use `Refresh` for manual reloads or keep `Auto-refresh` enabled for periodic sync
+- `Browse...` opens the local folder picker first and then validates whether the selected folder or a direct child contains `.ctx`
+- Browser-only directory APIs expose handles or relative paths, not reliable absolute OS paths; the local Viewer backend owns the native picker when a real repository path is needed
+- Live sync runs automatically after a repository is loaded and pauses if a background reload fails
+- The top bar exposes compact MCP `Start` / `Stop` controls for the selected repository and a release bell for public version drift
 - History mode now uses a branch-first SourceTree-like explorer with a branch list, date ordering, grouped commit sections, and richer commit detail on click
 - History mode now exposes `Author`, `Model` and `Commit` as separate columns so model provenance is visible directly in commit rows
 - History rows now surface the primary `Goal` and a compact `Goal -> Task -> Hypothesis -> Decision/Conclusion` path so each commit reads like a cognitive line instead of a flat entity summary
@@ -753,6 +756,7 @@ Use this index as the navigable entrypoint into the public repository documentat
 | [Hypothesis Scoring](docs/HYPOTHESIS_SCORING.md) | Confidence, evidence, validation cost, and ranking |
 | [Hypothesis Branch Semantics](docs/HYPOTHESIS_BRANCH_SEMANTICS.md) | Branch-like hypothesis lifecycle and relations |
 | [Work Model and Prioritization](docs/WORK_MODEL_AND_PRIORITIZATION.md) | Issue/gap/task taxonomy and prioritization model |
+| [Roadmap and Gaps Design](docs/ROADMAP_AND_GAPS_DESIGN.md) | Executable next work, unresolved gaps, roadmap lanes, and parked epics |
 
 ### Viewer, Bootstrap, And Demos
 
@@ -770,8 +774,9 @@ Use this index as the navigable entrypoint into the public repository documentat
 
 | Document | Use it for |
 |---|---|
-| [Release 1.0.12](docs/RELEASE_1_0_12.md) | Current stable public release notes |
-| [Release 1.0.11](docs/RELEASE_1_0_11.md) | Previous release notes |
+| [Release 1.0.13](docs/RELEASE_1_0_13.md) | Current release notes |
+| [Release 1.0.12](docs/RELEASE_1_0_12.md) | Previous stable public release notes |
+| [Release 1.0.11](docs/RELEASE_1_0_11.md) | Earlier release notes |
 | [Changelog](CHANGELOG.md) | Product change history |
 | [Installer and Distribution](docs/INSTALLER_AND_DISTRIBUTION.md) | Packaging, portable archives, and distribution outputs |
 | [Distribution Assets](distribution/README.md) | Distribution folder structure and manifests |

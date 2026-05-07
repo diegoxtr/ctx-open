@@ -19,6 +19,14 @@ public enum TaskExecutionState
     Done = 4
 }
 
+public enum EpicState
+{
+    Parked = 0,
+    Active = 1,
+    Completed = 2,
+    Archived = 3
+}
+
 public enum DecisionState
 {
     Proposed = 0,

@@ -25,12 +25,20 @@ Recommended order:
 8. [BOOTSTRAP_COGNITIVE_INDEXING.md](BOOTSTRAP_COGNITIVE_INDEXING.md)
 9. [BOOTSTRAP_TEST_DEVELOPMENT.md](BOOTSTRAP_TEST_DEVELOPMENT.md)
 10. [HYPOTHESIS_BRANCH_SEMANTICS.md](HYPOTHESIS_BRANCH_SEMANTICS.md)
-11. [CTX_MCP_AGENT_SETUP.md](CTX_MCP_AGENT_SETUP.md)
-12. [MCP_SERVER_PROPOSAL.md](MCP_SERVER_PROPOSAL.md)
+11. [ROADMAP_AND_GAPS_DESIGN.md](ROADMAP_AND_GAPS_DESIGN.md)
+12. [CTX_MCP_AGENT_SETUP.md](CTX_MCP_AGENT_SETUP.md)
+13. [CTX_MCP_TOOL_PARITY.md](CTX_MCP_TOOL_PARITY.md)
+14. [INSTALLER_AND_DISTRIBUTION.md](INSTALLER_AND_DISTRIBUTION.md)
 
 ## Documents by category
 
 ## Product and scope
+
+- [PROJECT_PHILOSOPHY.md](PROJECT_PHILOSOPHY.md)
+  Product philosophy, local-first principles, openness, and governance boundaries.
+
+- [COMMERCIAL_AND_GOVERNANCE_PHILOSOPHY.md](COMMERCIAL_AND_GOVERNANCE_PHILOSOPHY.md)
+  Commercial and governance posture for CTX usage, derivatives, and service boundaries.
 
 - [V1_PLAN.md](V1_PLAN.md)
   Summarizes objective, scope, phases, backlog, and V1 path.
@@ -38,11 +46,23 @@ Recommended order:
 - [V1_FUNCTIONAL_SPEC.md](V1_FUNCTIONAL_SPEC.md)
   Defines modules, requirements, acceptance criteria, and V1 definition of done.
 
-- [RELEASE_1_0_12.md](RELEASE_1_0_12.md)
-  Summarizes the current stable release baseline.
+- [RELEASE_1_0_13.md](RELEASE_1_0_13.md)
+  Summarizes the current release baseline.
 
-- [RELEASE_1_0_11.md](RELEASE_1_0_11.md)
+- [RELEASE_1_0_12.md](RELEASE_1_0_12.md)
   Previous stable release notes.
+
+- [RELEASE_1_0_3.md](RELEASE_1_0_3.md)
+  Previous stable release notes.
+
+- [RELEASE_1_0_2.md](RELEASE_1_0_2.md)
+  Previous stable release notes.
+
+- [RELEASE_1_0_1.md](RELEASE_1_0_1.md)
+  Previous stable release notes.
+
+- [RELEASE_1_0_0.md](RELEASE_1_0_0.md)
+  Initial stable release notes.
 
 ## Architecture and design
 
@@ -67,8 +87,14 @@ Recommended order:
 - [COGNITIVE_TRIGGERS.md](COGNITIVE_TRIGGERS.md)
   Persistent origin model for cognitive lines, compact trigger summaries, and packet integration.
 
+- [HYPOTHESIS_SCORING.md](HYPOTHESIS_SCORING.md)
+  Scoring model for hypothesis confidence, evidence, validation cost, and prioritization.
+
 - [WORK_MODEL_AND_PRIORITIZATION.md](WORK_MODEL_AND_PRIORITIZATION.md)
   Canonical taxonomy for issue/gap/task/subtask/duplicate/blocker and proximity-based prioritization.
+
+- [ROADMAP_AND_GAPS_DESIGN.md](ROADMAP_AND_GAPS_DESIGN.md)
+  Current split between executable `ctx next`, read-only unresolved gaps, read-only roadmap suggestions, and parked epics.
 
 - [OPERATIONAL_RUNBOOKS.md](OPERATIONAL_RUNBOOKS.md)
   Compact design for recurring operational knowledge, packet injection, and overflow handling.
@@ -103,22 +129,51 @@ Recommended order:
   How to interpret the viewer, its timeline, branches, and panels.
 
 - [LOCAL_CTX_INSTALLATION.md](LOCAL_CTX_INSTALLATION.md)
-  Canonical local publish/install flow for `C:\ctx`, `ctx`, and `ctx-viewer`.
-
-- [INSTALLER_AND_DISTRIBUTION.md](INSTALLER_AND_DISTRIBUTION.md)
-  Packaging model, portable archives, and distribution output policy.
+  Canonical local publish/install flow for `C:\ctx`, `ctx`, `ctx-mcp`, `ctx-agent-acp`, and `ctx-viewer`.
 
 - [CTX_MCP_AGENT_SETUP.md](CTX_MCP_AGENT_SETUP.md)
-  MCP server setup examples for MCP-capable agents and IDE clients.
+  Step-by-step setup for connecting MCP-capable agents to the local CTX MCP server.
 
-- [MCP_LOCAL_QUICKSTART.md](MCP_LOCAL_QUICKSTART.md)
-  Short setup path for connecting local MCP-capable agents to CTX.
+- [VS_CODE_MCP_VIDEO_GUIDE.md](VS_CODE_MCP_VIDEO_GUIDE.md)
+  Recording-ready script, storyboard, JSON snippets, and smoke test for connecting VS Code / Copilot Chat to the local CTX MCP server.
+
+- [CTX_MCP_TOOL_PARITY.md](CTX_MCP_TOOL_PARITY.md)
+  CLI-to-MCP parity matrix for shipped tools, deferred surfaces, and validation coverage.
+
+- [CTX_AGENT_CLIENT_PROTOCOL_DESIGN.md](CTX_AGENT_CLIENT_PROTOCOL_DESIGN.md)
+  Design draft for a CTX agent-session layer and ACP-style adapter.
 
 - [ACP_LOCAL_CONNECTION_GUIDE.md](ACP_LOCAL_CONNECTION_GUIDE.md)
   Local `ctx-agent-acp` connection guide with command, JSON-RPC messages, and read-only test flow.
 
 - [MCP_SERVER_PROPOSAL.md](MCP_SERVER_PROPOSAL.md)
-  Architecture and operating model for the local stdio MCP server.
+  Architecture and phased roadmap for the CTX MCP server.
+
+- [INSTALLER_AND_DISTRIBUTION.md](INSTALLER_AND_DISTRIBUTION.md)
+  Packaging model, portable archives, and distribution output policy.
+
+- [USE_CTX_TO_BUILD_CTX.md](USE_CTX_TO_BUILD_CTX.md)
+  Self-hosting workflow for using CTX to build and evolve CTX itself.
+
+- [CTX_AUTONOMOUS_OPERATION_PROTOCOL.md](CTX_AUTONOMOUS_OPERATION_PROTOCOL.md)
+  Autonomous operation protocol for CTX-first planning, execution, validation, and closeout.
+
+## Demo and talk material
+
+- [LIVE_DEMO.md](LIVE_DEMO.md)
+  Public live demo surfaces, Codespaces expectations, static pages, local MCP setup, and validation paths.
+
+- [live-demo/index.html](live-demo/index.html)
+  Static public landing page for CTX 1.0.13.
+
+- [live-demo/mcp-local.html](live-demo/mcp-local.html)
+  Static local MCP setup page with copy-ready client snippets.
+
+- [live-demo/talk-unju.html](live-demo/talk-unju.html)
+  Public UNJu talk deck for CTX 1.0.13.
+
+- [live-demo/notes.html](live-demo/notes.html)
+  Demo notes and validation flow for the public static site.
 
 ## Operation prompts
 
@@ -171,6 +226,9 @@ Recommended order:
 - [build-distribution.ps1](../scripts/build-distribution.ps1)
   Builds cross-platform portable CTX bundles from `distribution/targets.json`.
 
+- [update-release-version.ps1](../scripts/update-release-version.ps1)
+  Updates public release version surfaces before rebuilding artifacts.
+
 ## Recommended reading by profile
 
 ### Developer
@@ -213,9 +271,12 @@ Currently documented:
 - formal thread reconstruction
 - cognitive triggers
 - local install and distribution
-- local MCP server setup
+- MCP server setup and operating flow
+- Agent client protocol design
 - bootstrap regression development
 - hypothesis branch-like semantics
+- release handoff notes
+- demo and talk material
 
 ## Useful future docs
 
