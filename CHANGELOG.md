@@ -18,6 +18,7 @@ All notable changes to CTX will be documented in this file.
 - `ctx plan` now exposes one authoritative `runbookSuggestions` list, with task-attached runbooks promoted ahead of generic matches.
 - `ctx preflight --operation <operation>` now supports arbitrary operation tokens.
 - Viewer Browse now opens the local folder picker before scanning and documents the browser path boundary.
+- Public MCP setup now includes Gemini CLI and Devin configuration examples.
 
 ### Fixed
 

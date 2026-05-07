@@ -139,6 +139,41 @@ command = "C:\\ctx\\bin\\ctx-mcp.cmd"
 args = ["--repo", "C:\\path\\to\\ctx-repo", "--mode", "read-only"]
 ```
 
+### Gemini CLI
+
+Gemini CLI reads MCP servers from `settings.json`. Use `.gemini/settings.json` for a project-local setup, or your user Gemini settings file for a global setup:
+
+```json
+{
+  "mcpServers": {
+    "ctx": {
+      "type": "stdio",
+      "command": "C:\\ctx\\bin\\ctx-mcp.cmd",
+      "args": ["--repo", "C:\\path\\to\\ctx-repo", "--mode", "read-only"],
+      "env": {},
+      "tools": ["*"]
+    }
+  }
+}
+```
+
+Gemini also supports `gemini mcp add`; use the JSON form above when you want the repository path and mode to be explicit in versioned project setup.
+
+### Devin
+
+Devin can connect to MCP servers, but the runtime boundary matters. A cloud Devin session cannot start `C:\ctx\bin\ctx-mcp.cmd` on your private laptop. Use this STDIO shape only in an environment where Devin can execute the CTX launcher and access the target repository:
+
+```json
+{
+  "transport": "STDIO",
+  "command": "C:\\ctx\\bin\\ctx-mcp.cmd",
+  "args": ["--repo", "C:\\path\\to\\ctx-repo", "--mode", "read-only"],
+  "env_variables": {}
+}
+```
+
+If Devin is running remotely, expose CTX through an approved reachable environment instead of pointing Devin at a local private path.
+
 ## 6. Restart And Smoke Test
 
 Restart the agent or IDE after changing MCP configuration.

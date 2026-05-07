@@ -388,6 +388,53 @@ const session = await client.createSession({
 });
 ```
 
+### Gemini CLI
+
+Gemini CLI uses `mcpServers` in `settings.json`. Use a project-local `.gemini/settings.json` when the CTX repository should carry its own MCP setup, or the user-level Gemini settings file when you want CTX available across workspaces:
+
+```json
+{
+  "mcpServers": {
+    "ctx": {
+      "type": "stdio",
+      "command": "C:\\ctx\\bin\\ctx-mcp.cmd",
+      "args": [
+        "--repo",
+        "C:\\path\\to\\ctx-repo",
+        "--mode",
+        "read-only"
+      ],
+      "env": {},
+      "tools": ["*"]
+    }
+  }
+}
+```
+
+Gemini CLI also provides `gemini mcp add` for managing MCP servers. Keep the JSON form above in docs because it makes the CTX repo path, transport, and read-only/write mode visible.
+
+### Devin
+
+Devin supports MCP server configuration, including STDIO custom tools, but CTX is local-first. A Devin cloud session cannot execute `C:\ctx\bin\ctx-mcp.cmd` on a private workstation unless the session is running in an environment that has that launcher and repository mounted.
+
+Use this shape only when Devin can run the command in its own reachable execution environment:
+
+```json
+{
+  "transport": "STDIO",
+  "command": "C:\\ctx\\bin\\ctx-mcp.cmd",
+  "args": [
+    "--repo",
+    "C:\\path\\to\\ctx-repo",
+    "--mode",
+    "read-only"
+  ],
+  "env_variables": {}
+}
+```
+
+For cloud Devin sessions, prefer a reachable, approved CTX MCP deployment boundary instead of hardcoding local private paths. Validate the command or endpoint before expecting Devin to list CTX tools.
+
 ### DeepSeek
 
 DeepSeek is a model/provider, not a single canonical local MCP client. The practical setup is:
@@ -462,6 +509,8 @@ Reference points for client-specific formats:
 - VS Code MCP configuration reference: `https://code.visualstudio.com/docs/copilot/reference/mcp-configuration`
 - GitHub Copilot CLI MCP setup: `https://docs.github.com/copilot/how-tos/copilot-cli/customize-copilot/add-mcp-servers`
 - GitHub Copilot SDK MCP setup: `https://docs.github.com/copilot/how-tos/copilot-sdk/use-copilot-sdk/mcp-servers`
+- Gemini CLI MCP server configuration: `https://google-gemini.github.io/gemini-cli/docs/tools/mcp-server.html`
+- Devin MCP server and marketplace configuration: `https://docs.devin.ai/work-with-devin/devin-mcp`
 
 ### Codex Local Configuration
 
