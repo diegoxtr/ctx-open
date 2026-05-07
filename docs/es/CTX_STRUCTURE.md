@@ -3,18 +3,18 @@ Si un modelo de lenguaje y su agente pierden el contexto, esta es la herramienta
 
 Este documento describe la estructura de almacenamiento local de CTX.
 
-La carpeta `.ctx/` es el repositorio cognitivo persistido en disco. Contiene la configuraciÃ³n, el estado activo, el historial reproducible y los artefactos operativos generados por el sistema.
+La carpeta `.ctx/` es el repositorio cognitivo persistido en disco. Contiene la configuración, el estado activo, el historial reproducible y los artefactos operativos generados por el sistema.
 
 ## Objetivo
 
-La estructura de `.ctx/` estÃ¡ diseÃ±ada para:
+La estructura de `.ctx/` está diseñada para:
 
 - persistir razonamiento estructurado, no conversaciones crudas
 - permitir reproducibilidad de commits cognitivos
 - separar estado de trabajo de snapshots inmutables
 - soportar branching, diff y merge
-- registrar ejecuciones, packets y mÃ©tricas
-- facilitar export, import, backup y auditorÃ­a
+- registrar ejecuciones, packets y métricas
+- facilitar export, import, backup y auditoría
 
 ## Vista General
 
@@ -39,13 +39,13 @@ Estructura objetivo:
   logs/
 ```
 
-No todas las carpetas tienen que contener archivos desde el primer momento. Algunas se pueblan sÃ³lo cuando ciertos flujos son ejecutados.
+No todas las carpetas tienen que contener archivos desde el primer momento. Algunas se pueblan sólo cuando ciertos flujos son ejecutados.
 
 ## Archivos Base
 
 ### `version.json`
 
-Describe la versiÃ³n del formato de repositorio.
+Describe la versión del formato de repositorio.
 
 Responsabilidad:
 - compatibilidad del repositorio
@@ -62,13 +62,13 @@ Ejemplo:
 
 ### `config.json`
 
-Contiene la configuraciÃ³n general del repositorio.
+Contiene la configuración general del repositorio.
 
 Responsabilidad:
 - provider por defecto
 - providers disponibles
-- lÃ­mite de tokens por packet
-- activaciÃ³n de tracking de mÃ©tricas
+- límite de tokens por packet
+- activación de tracking de métricas
 
 Ejemplo:
 
@@ -102,7 +102,7 @@ Responsabilidad:
 - identidad del proyecto
 - branch por defecto
 - estado del proyecto
-- traceabilidad de creaciÃ³n
+- traceabilidad de creación
 
 Ejemplo:
 
@@ -130,7 +130,7 @@ Ejemplo:
 
 ### `HEAD`
 
-Apunta al branch actual y al Ãºltimo commit conocido.
+Apunta al branch actual y al último commit conocido.
 
 Formato actual:
 
@@ -140,10 +140,10 @@ main:676790c259864667940b503e6c7e5008
 
 Responsabilidad:
 - branch actualmente checked out
-- referencia rÃ¡pida al commit actual
+- referencia rápida al commit actual
 
 Regla:
-- si no hay commit todavÃ­a, el valor de commit puede ser `null` a nivel lÃ³gico
+- si no hay commit todavía, el valor de commit puede ser `null` a nivel lógico
 
 ## Directorios
 
@@ -167,7 +167,7 @@ Responsabilidad:
 - registrar punteros de branches
 - soportar `branch`, `checkout` y `merge`
 
-RelaciÃ³n con CLI:
+Relación con CLI:
 - `ctx branch`
 - `ctx checkout`
 - `ctx merge`
@@ -181,9 +181,9 @@ Responsabilidad:
 - base para `log`, `diff`, `merge`, `export`
 
 Invariante:
-- un commit no debe mutar despuÃ©s de persistido
+- un commit no debe mutar después de persistido
 
-RelaciÃ³n con CLI:
+Relación con CLI:
 - `ctx commit`
 - `ctx log`
 - `ctx diff`
@@ -197,11 +197,11 @@ Archivo actual observado:
 
 Responsabilidad:
 - snapshot navegable del estado de dominio actual
-- apoyo a inspecciÃ³n y futuras optimizaciones
+- apoyo a inspección y futuras optimizaciones
 
 Notas:
-- hoy convive con `working/` como representaciÃ³n Ãºtil del estado operativo
-- puede evolucionar hacia una proyecciÃ³n mÃ¡s especializada del dominio
+- hoy convive con `working/` como representación útil del estado operativo
+- puede evolucionar hacia una proyección más especializada del dominio
 
 ### `working/`
 
@@ -215,7 +215,7 @@ Responsabilidad:
 - artefactos agregados pero no necesariamente committeados
 - base para `status`, `context`, `run` y `commit`
 
-RelaciÃ³n con CLI:
+Relación con CLI:
 - `ctx status`
 - `ctx goal add`
 - `ctx task add`
@@ -239,7 +239,7 @@ Responsabilidad:
 
 Notas:
 - en esta base actual, el staging refleja el snapshot persistido por el motor de commit
-- es una base razonable para introducir staging mÃ¡s fino en versiones futuras
+- es una base razonable para introducir staging más fino en versiones futuras
 
 ### `runs/`
 
@@ -247,16 +247,16 @@ Contiene ejecuciones de IA persistidas.
 
 Responsabilidad:
 - registrar `Run`
-- conservar outputs estructurados por ejecuciÃ³n
-- servir inspecciÃ³n operativa y anÃ¡lisis posterior
+- conservar outputs estructurados por ejecución
+- servir inspección operativa y análisis posterior
 
-RelaciÃ³n con CLI:
+Relación con CLI:
 - `ctx run`
 - `ctx run list`
 - `ctx run show`
 
 Notas:
-- puede estar vacÃ­o si todavÃ­a no se ejecutÃ³ ninguna corrida
+- puede estar vacío si todavía no se ejecutó ninguna corrida
 
 ### `packets/`
 
@@ -264,31 +264,31 @@ Contiene `ContextPacket` generados por `ContextBuilder`.
 
 Responsabilidad:
 - persistir el contexto optimizado enviado a providers
-- auditar quÃ© informaciÃ³n fue priorizada en una ejecuciÃ³n
+- auditar qué información fue priorizada en una ejecución
 
-RelaciÃ³n con CLI:
+Relación con CLI:
 - `ctx context`
 - `ctx packet list`
 - `ctx packet show`
 
 Notas:
-- puede estar vacÃ­o si aÃºn no se construyeron packets o runs
+- puede estar vacío si aún no se construyeron packets o runs
 
 ### `index/`
 
-Directorio reservado para optimizaciÃ³n de bÃºsqueda y acceso.
+Directorio reservado para optimización de búsqueda y acceso.
 
 Estado actual:
 - contiene un `README.txt` placeholder
 
 Responsabilidad:
-- soporte a Ã­ndices futuros
-- aceleraciÃ³n de consulta local
-- materializaciÃ³n secundaria del repositorio
+- soporte a índices futuros
+- aceleración de consulta local
+- materialización secundaria del repositorio
 
 ### `metrics/`
 
-Contiene mÃ©tricas operativas y econÃ³micas.
+Contiene métricas operativas y económicas.
 
 Archivo actual:
 - `metrics/usage.json`
@@ -313,49 +313,49 @@ Responsabilidad:
 - costo acumulado
 - tokens
 - redundancia evitada
-- tiempo total de ejecuciÃ³n
+- tiempo total de ejecución
 
-RelaciÃ³n con CLI:
+Relación con CLI:
 - `ctx metrics show`
 
 ### `providers/`
 
-Directorio reservado para metadatos, cachÃ©s o futuras proyecciones especÃ­ficas por provider.
+Directorio reservado para metadatos, cachés o futuras proyecciones específicas por provider.
 
 Estado actual:
 - contiene un `README.txt` placeholder
 
 Responsabilidad:
-- desacoplar concerns de integraciÃ³n por proveedor
+- desacoplar concerns de integración por proveedor
 - permitir extensiones sin contaminar el estado de dominio principal
 
 ### `logs/`
 
-Directorio reservado para diagnÃ³sticos y registros operativos.
+Directorio reservado para diagnósticos y registros operativos.
 
 Estado actual:
 - contiene un `README.txt` placeholder
 
 Responsabilidad:
 - soporte a troubleshooting
-- logging de operaciÃ³n local
-- posible auditorÃ­a tÃ©cnica
+- logging de operación local
+- posible auditoría técnica
 
-## RelaciÃ³n Conceptual Entre Directorios
+## Relación Conceptual Entre Directorios
 
 Resumen operativo:
 
 - `working/` = estado mutable actual
 - `staging/` = snapshot listo o alineado para commit
 - `commits/` = historial inmutable
-- `branches/` + `HEAD` = navegaciÃ³n y referencia actual
-- `runs/` + `packets/` = interacciÃ³n con IA
+- `branches/` + `HEAD` = navegación y referencia actual
+- `runs/` + `packets/` = interacción con IA
 - `metrics/` = observabilidad de costo y rendimiento
-- `graph/` = proyecciÃ³n del estado cognitivo
+- `graph/` = proyección del estado cognitivo
 
-## Flujo TÃ­pico de Escritura
+## Flujo Típico de Escritura
 
-### 1. InicializaciÃ³n
+### 1. Inicialización
 
 `ctx init` crea:
 - `version.json`
@@ -401,11 +401,11 @@ Estas reglas deben mantenerse para preservar integridad:
 - los IDs referenciados entre entidades deben existir
 - `metrics/usage.json` debe seguir siendo acumulativo y consistente
 - si un repositorio versiona `.ctx/` dentro de Git, conviene decidir explicitamente si `metrics/usage.json` pertenece al historial cognitivo o solo a telemetria operativa local
-- `config.json` debe reflejar providers vÃ¡lidos y reconocidos por la aplicaciÃ³n
+- `config.json` debe reflejar providers válidos y reconocidos por la aplicación
 
-## QuÃ© Puede Estar VacÃ­o
+## Qué Puede Estar Vacío
 
-Es normal que estas carpetas no tengan contenido Ãºtil al principio:
+Es normal que estas carpetas no tengan contenido útil al principio:
 
 - `runs/`
 - `packets/`
@@ -415,9 +415,9 @@ Es normal que estas carpetas no tengan contenido Ãºtil al principio:
 
 No es un error. Depende del flujo ejecutado y del nivel de madurez del repositorio.
 
-## QuÃ© No Debe Guardarse Como Fuente Primaria
+## Qué No Debe Guardarse Como Fuente Primaria
 
-Por diseÃ±o, `.ctx/` no debe usar como fuente principal:
+Por diseño, `.ctx/` no debe usar como fuente principal:
 
 - logs de chat crudos
 - conversaciones completas sin estructura
@@ -430,4 +430,3 @@ La fuente primaria siempre debe ser el conjunto de entidades estructuradas del d
 - [CLI_COMMANDS.md](../CLI_COMMANDS.md)
 - [INSTALLATION_AND_USAGE_GUIDE.md](../INSTALLATION_AND_USAGE_GUIDE.md)
 - [V1_FUNCTIONAL_SPEC.md](../V1_FUNCTIONAL_SPEC.md)
-

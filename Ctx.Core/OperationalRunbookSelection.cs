@@ -42,56 +42,50 @@ public static class OperationalRunbookSelection
             .Select(item => new
             {
                 item.Runbook,
+                item.TaskMatch,
                 Score =
                     (item.TaskMatch ? 100 : 0) +
                     (item.GoalMatch ? 70 : 0) +
-                    (item.TriggerMatch ? 40 : 0) +
+                    (item.TriggerMatch ? 120 : 0) +
                     (item.Runbook.Kind == OperationalRunbookKind.Guardrail ? 20 : 0) +
                     (item.Runbook.Kind == OperationalRunbookKind.Troubleshooting && !item.HasFailureSignal ? -100 : 0)
             })
             .Where(item => item.Score >= 0)
             .OrderByDescending(item => item.Score)
             .ThenBy(item => item.Runbook.Title, StringComparer.OrdinalIgnoreCase)
-            .Select(item => item.Runbook)
             .ToList();
 
-        var selected = PromoteMandatoryRunbooks(normalizedPurpose, matches.Take(2).ToArray(), matches);
+        var taskAttached = matches
+            .Where(item => item.TaskMatch)
+            .Select(item => item.Runbook)
+            .ToArray();
+        var fallbackCount = Math.Max(0, 2 - taskAttached.Length);
+        var selected = taskAttached
+            .Concat(matches
+                .Where(item => !item.TaskMatch)
+                .Take(fallbackCount)
+                .Select(item => item.Runbook))
+            .DistinctBy(runbook => runbook.Id.Value, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
         var selectedIds = selected.Select(runbook => runbook.Id.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var available = matches
+            .Select(item => item.Runbook)
             .Where(runbook => !selectedIds.Contains(runbook.Id.Value))
             .Take(3)
             .ToArray();
         return (selected, available);
     }
 
-    private static IReadOnlyList<OperationalRunbook> PromoteMandatoryRunbooks(
-        string normalizedPurpose,
-        IReadOnlyList<OperationalRunbook> selected,
-        IReadOnlyList<OperationalRunbook> matches)
-    {
-        if (!IsReleaseContext(normalizedPurpose))
-        {
-            return selected;
-        }
+    public static bool IsPublicReleaseRunbook(OperationalRunbook runbook)
+        => HasTrigger(runbook, "release-cut")
+            || HasTrigger(runbook, "public-publish")
+            || runbook.Title.Equals("Public release cut", StringComparison.OrdinalIgnoreCase);
 
-        var mandatory = matches
-            .Where(runbook => runbook.Title.Equals("Release bilingual announcement and flyer", StringComparison.OrdinalIgnoreCase))
-            .ToArray();
+    public static bool IsReleaseAnnouncementRunbook(OperationalRunbook runbook)
+        => HasTrigger(runbook, "release-announcement")
+            || HasTrigger(runbook, "release-flyer")
+            || runbook.Title.Equals("Release bilingual announcement and flyer", StringComparison.OrdinalIgnoreCase);
 
-        if (mandatory.Length == 0)
-        {
-            return selected;
-        }
-
-        return selected
-            .Concat(mandatory)
-            .DistinctBy(runbook => runbook.Id.Value, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-    }
-
-    private static bool IsReleaseContext(string normalizedPurpose)
-        => normalizedPurpose.Contains("release", StringComparison.OrdinalIgnoreCase)
-            || normalizedPurpose.Contains("github-release", StringComparison.OrdinalIgnoreCase)
-            || normalizedPurpose.Contains("release-announcement", StringComparison.OrdinalIgnoreCase)
-            || normalizedPurpose.Contains("release-flyer", StringComparison.OrdinalIgnoreCase);
+    private static bool HasTrigger(OperationalRunbook runbook, string trigger)
+        => runbook.Triggers.Any(item => item.Equals(trigger, StringComparison.OrdinalIgnoreCase));
 }

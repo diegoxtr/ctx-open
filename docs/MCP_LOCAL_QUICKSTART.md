@@ -4,17 +4,15 @@ This guide is the short public setup path for running the CTX MCP server on your
 
 GitHub Pages is static. It cannot run CTX or inspect your local `.ctx` repository. The MCP server runs locally through your MCP-capable agent or IDE.
 
-Current public release: CTX 1.0.12.
-
 ## 1. Install CTX
 
 Install CTX from the latest release, then identify the install root for your platform.
 
-| Platform | Default install root | MCP launcher | ACP launcher |
-|---|---|---|---|
-| Windows | `C:\ctx` | `C:\ctx\bin\ctx-mcp.cmd` | `C:\ctx\bin\ctx-agent-acp.cmd` |
-| Linux | `$HOME/.local/share/ctx` | `$HOME/.local/share/ctx/bin/ctx-mcp` | `$HOME/.local/share/ctx/bin/ctx-agent-acp` |
-| macOS | `$HOME/.local/share/ctx` | `$HOME/.local/share/ctx/bin/ctx-mcp` | `$HOME/.local/share/ctx/bin/ctx-agent-acp` |
+| Platform | Default install root | MCP launcher |
+|---|---|---|
+| Windows | `C:\ctx` | `C:\ctx\bin\ctx-mcp.cmd` |
+| Linux | `/home/you/.local/share/ctx` | `/home/you/.local/share/ctx/bin/ctx-mcp` |
+| macOS | `/Users/you/.local/share/ctx` | `/Users/you/.local/share/ctx/bin/ctx-mcp` |
 
 ## 2. Choose The Repository
 
@@ -27,8 +25,10 @@ C:\path\to\ctx-repo
 ```
 
 ```bash
-$HOME/sources/ctx-repo
+/home/you/sources/ctx-repo
 ```
+
+Replace `you` with your real local user name. MCP JSON values should use concrete absolute paths; many clients do not expand `$HOME` inside JSON.
 
 Prefer one MCP server entry per repository. Do not use one server to silently switch between unrelated repos.
 
@@ -38,7 +38,6 @@ Windows:
 
 ```powershell
 Test-Path C:\ctx\bin\ctx-mcp.cmd
-Test-Path C:\ctx\bin\ctx-agent-acp.cmd
 Test-Path C:\ctx\mcp\Ctx.Mcp.exe
 ```
 
@@ -46,7 +45,6 @@ Linux/macOS:
 
 ```bash
 test -x "$HOME/.local/share/ctx/bin/ctx-mcp"
-test -x "$HOME/.local/share/ctx/bin/ctx-agent-acp"
 test -x "$HOME/.local/share/ctx/mcp/Ctx.Mcp"
 ```
 
@@ -54,12 +52,15 @@ test -x "$HOME/.local/share/ctx/mcp/Ctx.Mcp"
 
 Most MCP clients use a JSON block like this.
 
+Keep `type` explicit for local stdio startup. Keep `tools: ["*"]` in clients that support tool allowlists so every CTX MCP tool, including `ctx_plan`, is exposed.
+
 Windows:
 
 ```json
 {
   "mcpServers": {
     "ctx": {
+      "type": "stdio",
       "command": "C:\\ctx\\bin\\ctx-mcp.cmd",
       "args": ["--repo", "C:\\path\\to\\ctx-repo", "--mode", "read-only"],
       "env": {},
@@ -75,14 +76,17 @@ Linux/macOS:
 {
   "mcpServers": {
     "ctx": {
-      "command": "$HOME/.local/share/ctx/bin/ctx-mcp",
-      "args": ["--repo", "$HOME/sources/ctx-repo", "--mode", "read-only"],
+      "type": "stdio",
+      "command": "/home/you/.local/share/ctx/bin/ctx-mcp",
+      "args": ["--repo", "/home/you/sources/ctx-repo", "--mode", "read-only"],
       "env": {},
       "tools": ["*"]
     }
   }
 }
 ```
+
+For macOS, use `/Users/you/.local/share/ctx/bin/ctx-mcp` and `/Users/you/sources/ctx-repo`.
 
 Use `--mode write` only when you intentionally want the agent to create or update CTX artifacts.
 
@@ -114,12 +118,16 @@ VS Code uses `servers` instead of `mcpServers`:
 {
   "servers": {
     "ctx": {
+      "type": "stdio",
       "command": "C:\\ctx\\bin\\ctx-mcp.cmd",
-      "args": ["--repo", "C:\\path\\to\\ctx-repo", "--mode", "read-only"]
+      "args": ["--repo", "C:\\path\\to\\ctx-repo", "--mode", "read-only"],
+      "env": {}
     }
   }
 }
 ```
+
+For a recording-ready walkthrough with narration, shot list, smoke test, and troubleshooting flow, see [VS_CODE_MCP_VIDEO_GUIDE.md](VS_CODE_MCP_VIDEO_GUIDE.md).
 
 ### Codex
 
@@ -131,39 +139,31 @@ command = "C:\\ctx\\bin\\ctx-mcp.cmd"
 args = ["--repo", "C:\\path\\to\\ctx-repo", "--mode", "read-only"]
 ```
 
-## 6. ACP Adapter
-
-MCP is the main tool-rich agent integration path. CTX 1.0.12 also ships `ctx-agent-acp` for clients that want an ACP-style session protocol.
-
-Windows:
-
-```powershell
-C:\ctx\bin\ctx-agent-acp.cmd --repo C:\path\to\ctx-repo
-```
-
-Linux/macOS:
-
-```bash
-"$HOME/.local/share/ctx/bin/ctx-agent-acp" --repo "$HOME/sources/ctx-repo"
-```
-
-ACP is read-only in the current public release. Use `ACP_LOCAL_CONNECTION_GUIDE.md` for the JSON-RPC message flow.
-
-## 7. Restart And Smoke Test
+## 6. Restart And Smoke Test
 
 Restart the agent or IDE after changing MCP configuration.
 
 Ask the agent:
 
 ```text
-Use the ctx MCP server. Call ctx_plan with purpose "mcp-local-smoke-test". Report branch, dirty state, recommended task, context packet id, runbook suggestions, and guidance.
+Use the ctx MCP server. Call ctx_plan with purpose "quickstart-smoke-test". Report the repository branch, dirty state, recommended task, context packet id, and runbook suggestions.
+```
+
+For real work, ask the agent to apply returned playbooks:
+
+```text
+Use the ctx MCP server before acting.
+Call ctx_plan with the active task or current purpose.
+Read data.runbookSuggestions.
+For every returned runbook, check Preconditions, follow applicable Do steps, validate with Verify, and stop at EscalationBoundary if a failure signal appears.
+Do not infer playbooks from chat memory; use the runbookSuggestions returned by CTX.
 ```
 
 Expected:
 
 - the agent can see the `ctx` MCP server
-- `ctx_plan` returns branch, dirty state, next work, context, runbooks, and guidance
-- lower-level `ctx_status` and `ctx_audit` can be used afterward for focused diagnostics
+- `ctx_plan` returns repository state, a next-step recommendation, focused context, runbook suggestions, and guidance
+- the agent can call follow-up tools such as `ctx_status` or `ctx_audit` when narrower validation is needed
 
 ## Troubleshooting
 

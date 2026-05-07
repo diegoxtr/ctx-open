@@ -27,18 +27,20 @@ La pantalla esta dividida en tres zonas principales.
 Elementos:
 
 - `Repository`
+- boton `Browse...`
 - `Branch`
 - boton `Load`
-- boton `Refresh`
-- toggle `Auto-refresh`
+- control `MCP Server`
+- campana de release
 
 Que hace cada uno:
 
 - `Repository`: es la ruta local donde existe una carpeta `.ctx/`
+- `Browse...`: abre primero el selector local de carpetas; despues de elegir una carpeta, el Viewer valida si esa carpeta o un hijo directo contiene `.ctx/`
 - `Branch`: es la rama cognitiva que queres inspeccionar
 - `Load`: carga el repositorio y refresca toda la vista
-- `Refresh`: vuelve a leer el repositorio actual sin recargar la pagina
-- `Auto-refresh`: vuelve a cargar automaticamente la vista cada pocos segundos
+- `MCP Server`: muestra el estado MCP local y expone controles `Start` / `Stop` para el repositorio seleccionado
+- campana de release: revisa la ultima GitHub Release publica de CTX y avisa cuando el `productVersion` instalado queda atras
 
 Comportamiento por defecto actual:
 
@@ -46,11 +48,11 @@ Comportamiento por defecto actual:
 - si no existe una ruta configurada, el viewer resuelve la raiz por defecto desde el `.git` mas cercano del proyecto
 - en este repositorio self-host esa raiz de fallback resuelve a `<repo-root>`
 - la branch cognitiva por defecto es `main`
-- `Auto-refresh` arranca activado por defecto salvo que el navegador ya recuerde que lo apagaste
 - despues recuerda el ultimo `Repository` y la ultima `Branch` usados en el navegador
-- tambien recuerda la preferencia de `Auto-refresh`
+- la sincronizacion en vivo corre automaticamente despues de cargar un repositorio y se pausa si falla una recarga en segundo plano
 - los paneles laterales se pueden redimensionar con los divisores verticales y esa anchura se guarda por modo (`History`, `Split`, `Graph`)
 - los paneles laterales tambien se pueden colapsar en rails compactos desde los divisores verticales y ese estado se guarda por modo
+- las APIs de directorio del navegador no entregan una ruta absoluta confiable del sistema como `C:\path\to\ctx-repo`; el backend local del Viewer controla el selector nativo y la validacion del repositorio
 
 Ejemplo:
 
@@ -96,7 +98,7 @@ Cada item muestra:
 Debajo del titulo tambien aparecen:
 
 - `Last loaded`: cuando se cargo por ultima vez la vista
-- `Auto-refresh off` o `Auto-refresh on`: estado actual de frescura del viewer
+- estado de sincronizacion en vivo: frescura actual del viewer
 
 Interpretacion:
 

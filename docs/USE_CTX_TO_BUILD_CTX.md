@@ -1,4 +1,4 @@
-# Use CTX to Build CTX
+﻿# Use CTX to Build CTX
 If a language model and its agent lose context, this is the tool you need.
 
 ## Goal
@@ -28,11 +28,10 @@ Use CTX as the official cognitive repository for the evolution of the product it
 ### 1. Open the cycle
 
 ```powershell
-ctx
-ctx next
+ctx status
+ctx graph summary
+ctx log
 ```
-
-Use `ctx status`, `ctx audit`, `ctx graph summary`, or `ctx log` only when the current state needs deeper inspection before acting.
 
 ### 2. Create an iteration goal
 
@@ -82,13 +81,12 @@ ctx commit -m "<block result>"
 
 If the operator or model only receives `continua`, it should:
 
-1. re-read `ctx`
-2. if needed, deepen with `ctx status`, `ctx audit`, `ctx graph summary`, or `ctx log`
-3. choose the dominant active goal
-4. select the most blocking or highest-value task
-5. produce real evidence
-6. record a conclusion
-7. close a cognitive commit
+1. re-read `ctx status`, `ctx graph summary`, and `ctx log`
+2. choose the dominant active goal
+3. select the most blocking or highest-value task
+4. produce real evidence
+5. record a conclusion
+6. close a cognitive commit
 
 Do not wait for manual direction if the CTX repository already makes the next step clear.
 
@@ -119,7 +117,7 @@ Do not wait for manual direction if the CTX repository already makes the next st
 
 Use a specific CTX repository for product development:
 
-- `<repo-root>`
+- `C:\ctx\workspace\ctx-self-host`
 
 ## Expected outcome
 

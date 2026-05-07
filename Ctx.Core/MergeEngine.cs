@@ -13,6 +13,7 @@ public sealed class MergeEngine : IMergeEngine
         var conflicts = new List<CognitiveConflict>();
 
         conflicts.AddRange(FindConflicts(currentWorking.Tasks, sourceWorking.Tasks, item => item.Id.Value, item => $"{item.Title} [{item.State}]"));
+        conflicts.AddRange(FindConflicts(currentWorking.Epics ?? Array.Empty<Epic>(), sourceWorking.Epics ?? Array.Empty<Epic>(), item => item.Id.Value, item => $"{item.Title} [{item.State}]"));
         conflicts.AddRange(FindConflicts(currentWorking.Hypotheses, sourceWorking.Hypotheses, item => item.Id.Value, item => $"{item.Statement} [{item.State}]"));
         conflicts.AddRange(FindConflicts(currentWorking.Decisions, sourceWorking.Decisions, item => item.Id.Value, item => $"{item.Title} [{item.State}]"));
         conflicts.AddRange(FindConflicts(currentWorking.Evidence, sourceWorking.Evidence, item => item.Id.Value, item => $"{item.Title} [{item.Kind}]"));
@@ -24,6 +25,7 @@ public sealed class MergeEngine : IMergeEngine
         {
             Dirty = true,
             Goals = MergeById(currentWorking.Goals, sourceWorking.Goals, item => item.Id.Value),
+            Epics = MergeById(currentWorking.Epics ?? Array.Empty<Epic>(), sourceWorking.Epics ?? Array.Empty<Epic>(), item => item.Id.Value),
             Tasks = MergeById(currentWorking.Tasks, sourceWorking.Tasks, item => item.Id.Value),
             Hypotheses = MergeById(currentWorking.Hypotheses, sourceWorking.Hypotheses, item => item.Id.Value),
             Decisions = MergeById(currentWorking.Decisions, sourceWorking.Decisions, item => item.Id.Value),

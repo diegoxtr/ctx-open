@@ -52,6 +52,22 @@ public static class CtxReadTools
         string? repo = null)
         => service.NextAsync(guard.Resolve(repo), cancellationToken);
 
+    [McpServerTool(Name = "ctx_gaps", ReadOnly = true, Destructive = false), Description("Build a read-only CTX gaps summary for unresolved planning gaps, blocked work, and deferred candidates.")]
+    public static Task<CommandResult> GapsAsync(
+        ICtxApplicationService service,
+        RepositoryGuard guard,
+        CancellationToken cancellationToken,
+        string? repo = null)
+        => service.GapsAsync(guard.Resolve(repo), cancellationToken);
+
+    [McpServerTool(Name = "ctx_roadmap", ReadOnly = true, Destructive = false), Description("Build a read-only CTX roadmap view for future planning lanes and parked work.")]
+    public static Task<CommandResult> RoadmapAsync(
+        ICtxApplicationService service,
+        RepositoryGuard guard,
+        CancellationToken cancellationToken,
+        string? repo = null)
+        => service.RoadmapAsync(guard.Resolve(repo), cancellationToken);
+
     [McpServerTool(Name = "ctx_plan", ReadOnly = true, Destructive = false), Description("Build a compact CTX planning packet with status, next recommendation, context, runbooks, and guidance.")]
     public static Task<CommandResult> PlanAsync(
         ICtxApplicationService service,
@@ -106,7 +122,7 @@ public static class CtxReadTools
         ICtxApplicationService service,
         RepositoryGuard guard,
         CancellationToken cancellationToken,
-        [Description("Operation name, for example git-closeout or recover-index-lock.")] string operation,
+        [Description("Operation name, for example git-closeout, recover-index-lock, or a custom runbook trigger such as docs-freeze.")] string operation,
         string? goalId = null,
         string? taskId = null,
         string? repo = null)
@@ -117,7 +133,7 @@ public static class CtxReadTools
         ICtxApplicationService service,
         RepositoryGuard guard,
         CancellationToken cancellationToken,
-        [Description("Optional operation filter, for example git-closeout or publish-local.")] string? operation = null,
+        [Description("Optional operation filter, for example git-closeout, publish-local, or a custom runbook trigger.")] string? operation = null,
         [Description("Minimum occurrences before an issue is promoted to runbook-review guidance.")] int threshold = 2,
         string? repo = null)
         => service.OperationalReviewAsync(guard.Resolve(repo), operation, threshold, cancellationToken);
@@ -182,7 +198,7 @@ public static class CtxReadTools
         string? repo = null)
         => service.GraphLineageAsync(guard.Resolve(repo), focusType, focusId, format, outputPath, cancellationToken);
 
-    [McpServerTool(Name = "ctx_artifact_list", ReadOnly = true, Destructive = false), Description("List CTX artifacts by type: goal, task, hypothesis, evidence, decision, or conclusion.")]
+    [McpServerTool(Name = "ctx_artifact_list", ReadOnly = true, Destructive = false), Description("List CTX artifacts by type: goal, epic, task, hypothesis, evidence, decision, or conclusion.")]
     public static Task<CommandResult> ArtifactListAsync(
         ICtxApplicationService service,
         RepositoryGuard guard,
@@ -208,6 +224,14 @@ public static class CtxReadTools
     [McpServerTool(Name = "ctx_goal_show", ReadOnly = true, Destructive = false), Description("Show one CTX goal.")]
     public static Task<CommandResult> GoalShowAsync(ICtxApplicationService service, RepositoryGuard guard, CancellationToken cancellationToken, string goalId, string? repo = null)
         => service.ShowArtifactAsync(guard.Resolve(repo), "goal", goalId, cancellationToken);
+
+    [McpServerTool(Name = "ctx_epic_list", ReadOnly = true, Destructive = false), Description("List CTX epics.")]
+    public static Task<CommandResult> EpicListAsync(ICtxApplicationService service, RepositoryGuard guard, CancellationToken cancellationToken, string? repo = null)
+        => service.ListArtifactsAsync(guard.Resolve(repo), "epic", cancellationToken);
+
+    [McpServerTool(Name = "ctx_epic_show", ReadOnly = true, Destructive = false), Description("Show one CTX epic.")]
+    public static Task<CommandResult> EpicShowAsync(ICtxApplicationService service, RepositoryGuard guard, CancellationToken cancellationToken, string epicId, string? repo = null)
+        => service.ShowArtifactAsync(guard.Resolve(repo), "epic", epicId, cancellationToken);
 
     [McpServerTool(Name = "ctx_task_list", ReadOnly = true, Destructive = false), Description("List CTX tasks.")]
     public static Task<CommandResult> TaskListAsync(ICtxApplicationService service, RepositoryGuard guard, CancellationToken cancellationToken, string? repo = null)

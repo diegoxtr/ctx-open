@@ -7,6 +7,9 @@ public record CommandResult(bool Success, string Message, object? Data = null);
 public record InitRepositoryRequest(string ProjectName, string Description, string Branch, string CreatedBy);
 public record AddGoalRequest(string Title, string Description, int Priority, string? ParentGoalId, string CreatedBy);
 public record UpdateGoalRequest(string GoalId, string? Title, string? Description, int? Priority, string? State, string UpdatedBy);
+public record AddEpicRequest(string Title, string Description, IReadOnlyList<string> GoalIds, string CreatedBy);
+public record UpdateEpicRequest(string EpicId, string? Title, string? Description, string? State, IReadOnlyList<string>? GoalIds, string UpdatedBy);
+public record PromoteEpicRequest(string EpicId, string TaskTitle, string? TaskDescription, string? GoalId, string CreatedBy);
 public record OpenWorkLineRequest(string ParentGoalId, string Title, string Description, int? Priority, string? TaskTitle, string? TaskDescription, string CreatedBy);
 public record AddOperationalRunbookRequest(
     string Title,
@@ -100,6 +103,7 @@ public record StatusSummary(
     string? Head,
     bool Dirty,
     int Goals,
+    int Epics,
     int Tasks,
     int Hypotheses,
     int Decisions,
@@ -126,6 +130,42 @@ public record NextWorkSummary(
     NextWorkDiagnostics Diagnostics,
     IReadOnlyList<RunbookSuggestion> RunbookSuggestions,
     IReadOnlyList<string> AdditionalRunbooksAvailable);
+public record PlanningReference(string EntityType, string EntityId);
+public record GapPlanningCandidate(
+    string CandidateType,
+    string Title,
+    string SourceType,
+    string SourceId,
+    string State,
+    decimal Score,
+    string Rationale,
+    string RecommendedAction,
+    string? SuggestedTaskTitle,
+    IReadOnlyList<PlanningReference> References);
+public record GapsSummary(
+    int CandidateCount,
+    int ActionableCount,
+    int BlockedCount,
+    int DeferredCount,
+    IReadOnlyList<GapPlanningCandidate> Candidates,
+    IReadOnlyList<string> Guidance);
+public record RoadmapItem(
+    string CandidateType,
+    string SourceType,
+    string SourceId,
+    string Title,
+    string State,
+    decimal Score,
+    string RecommendedAction,
+    IReadOnlyList<PlanningReference> References);
+public record RoadmapLane(string Lane, IReadOnlyList<RoadmapItem> Items);
+public record RoadmapSummary(
+    int LaneCount,
+    int ItemCount,
+    int ReadyToPromoteCount,
+    int ParkedCount,
+    IReadOnlyList<RoadmapLane> Lanes,
+    IReadOnlyList<string> Guidance);
 public record PlanningSummary(
     string Branch,
     string? HeadCommitId,

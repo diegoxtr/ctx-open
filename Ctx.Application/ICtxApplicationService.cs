@@ -10,6 +10,9 @@ public interface ICtxApplicationService
     System.Threading.Tasks.Task<CommandResult> OperationalReviewAsync(string repositoryPath, string? operation, int threshold, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddGoalAsync(string repositoryPath, AddGoalRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> UpdateGoalAsync(string repositoryPath, UpdateGoalRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> AddEpicAsync(string repositoryPath, AddEpicRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> UpdateEpicAsync(string repositoryPath, UpdateEpicRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> PromoteEpicAsync(string repositoryPath, PromoteEpicRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> OpenWorkLineAsync(string repositoryPath, OpenWorkLineRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddOperationalRunbookAsync(string repositoryPath, AddOperationalRunbookRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AttachOperationalRunbookAsync(string repositoryPath, AttachOperationalRunbookRequest request, CancellationToken cancellationToken);
@@ -24,6 +27,8 @@ public interface ICtxApplicationService
     System.Threading.Tasks.Task<CommandResult> SupersedeHypothesisAsync(string repositoryPath, SupersedeHypothesisRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> RankHypothesesAsync(string repositoryPath, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> NextAsync(string repositoryPath, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> GapsAsync(string repositoryPath, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> RoadmapAsync(string repositoryPath, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> PlanAsync(string repositoryPath, string purpose, string? goalId, string? taskId, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddDecisionAsync(string repositoryPath, AddDecisionRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> UpdateDecisionAsync(string repositoryPath, UpdateDecisionRequest request, CancellationToken cancellationToken);

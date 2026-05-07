@@ -2,6 +2,35 @@
 
 All notable changes to CTX will be documented in this file.
 
+## [1.0.13] - 2026-05-07
+
+### Added
+
+- First-class epics plus `ctx epic add/update/promote/list/show` for future planning that stays out of `ctx next` until promoted.
+- `ctx gaps` and `ctx roadmap` for read-only planning gaps, blocked work, deferred ideas, and parked epics.
+- MCP parity for epics and updated CLI-to-MCP parity documentation.
+- VS Code MCP video guide and public release-version update helper.
+- Viewer MCP `Start` / `Stop` controls, release bell, graph zoom, progressive rendering, footer summaries, and parked-epic rail navigation.
+
+### Changed
+
+- `ctx next` now keeps blocked tasks out of executable recommendations while preserving them through gaps and roadmap surfaces.
+- `ctx plan` now exposes one authoritative `runbookSuggestions` list, with task-attached runbooks promoted ahead of generic matches.
+- `ctx preflight --operation <operation>` now supports arbitrary operation tokens.
+- Viewer Browse now opens the local folder picker before scanning and documents the browser path boundary.
+
+### Fixed
+
+- Dense Viewer graphs no longer restart rendering endlessly after completion or node selection.
+- Parked epic cards now hydrate History pages when needed and scroll to the origin commit.
+- Public docs now include the MCP parity, roadmap/gaps, VS Code MCP guide, and live-demo references they link to.
+- Live-demo screenshot paths and archived Spanish release links now resolve locally.
+- Portable distribution bundles now include the documented launchers before install.
+
+### Validation
+
+- Release branch validation must confirm `ctx version` reports `1.0.13`, tests pass, local Markdown/HTML links resolve, JSON snippets parse, static pages target `v1.0.13`, and no private `.ctx` state or private paths are staged.
+
 ## [1.0.12] - 2026-04-30
 
 ### Added

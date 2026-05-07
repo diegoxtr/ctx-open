@@ -23,6 +23,8 @@ Solution projects:
 - `Ctx.Providers`
 - `Ctx.Infrastructure`
 - `Ctx.Cli`
+- `Ctx.Viewer`
+- `Ctx.Mcp`
 - `Ctx.Tests`
 
 Main rule:
@@ -34,11 +36,13 @@ Main rule:
 - providers implement LLM integrations
 - infrastructure wires dependencies
 - CLI exposes the interface
+- viewer exposes local timeline/graph inspection
+- MCP exposes CTX to MCP-capable agents over local stdio
 
 ## Layer map
 
 ```text
-CLI
+CLI / Viewer / MCP
   -> Application
     -> Core
       -> Domain
@@ -56,6 +60,8 @@ Conceptual view:
 - `Ctx.Providers` implements interchangeable providers
 - `Ctx.Infrastructure` composes concrete implementations
 - `Ctx.Cli` consumes `ICtxApplicationService`
+- `Ctx.Viewer` consumes the same persisted `.ctx` model for local inspection APIs and static UI
+- `Ctx.Mcp` consumes `ICtxApplicationService` through MCP tools
 
 ## 1. Domain layer
 
@@ -166,13 +172,40 @@ Responsibility:
 Note:
 - CLI contains minimal business logic
 
-## 8. Tests
+## 8. Viewer layer
+
+Responsibility:
+- serve the local timeline and cognitive graph UI
+- expose local HTTP APIs for repository overview, graph snapshots, history paging, runbooks, origins, and MCP health
+- keep graph/history rendering separate from CTX domain mutation logic
+
+Note:
+- viewer is an inspector, not an editor
+- local installs run from `C:\ctx\viewer` and display `local-version` in the header
+
+## 9. MCP layer
+
+Responsibility:
+- expose CTX tools to MCP-capable agents over stdio
+- reuse `ICtxApplicationService` instead of duplicating CLI/domain logic
+- run `read-only` by default and require `--mode write` for mutation tools
+- enforce repository boundary checks for configured roots
+
+Main tools:
+- status, audit, next, context, graph summary/show, thread reconstruct, preflight, check, closeout
+- version, doctor, log, diff, graph export/lineage, typed artifact list/show, hypothesis rank, runbook list/show, and trigger list/show
+- read-only bootstrap map for provisional cognitive indexing demos
+- write-mode init, goal, line, task, hypothesis, evidence, decision, conclusion, runbook, trigger, bootstrap apply, and commit operations
+
+## 10. Tests
 
 Tests cover:
 
 - core engines
 - critical use cases
 - portability, doctor, export/import, CLI summaries
+- MCP read-only/write-mode guardrails
+- viewer history and graph behavior where covered by unit tests
 
 ## End-to-end flows (summary)
 
@@ -189,6 +222,7 @@ Tests cover:
 - local filesystem persistence for simplicity and portability
 - JSON as primary format
 - CLI-first interface for automation
+- MCP as an adapter over the same application service, not a parallel product core
 - provider abstraction for portability
 - specialized engines in Core to keep logic focused
 
@@ -200,6 +234,8 @@ Tests cover:
 - no guided conflict resolution
 - no background processing
 - limited concurrency control
+- MCP has no HTTP transport or remote auth model yet
+- MCP branch/checkout/merge, import/export, provider run, packet, metrics, and usage telemetry tools are intentionally deferred
 
 ## Related references
 
@@ -207,4 +243,3 @@ Tests cover:
 - [CTX_STRUCTURE.md](CTX_STRUCTURE.md)
 - [CLI_COMMANDS.md](CLI_COMMANDS.md)
 - [V1_FUNCTIONAL_SPEC.md](V1_FUNCTIONAL_SPEC.md)
-

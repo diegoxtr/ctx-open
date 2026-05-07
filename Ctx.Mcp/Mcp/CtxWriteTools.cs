@@ -55,6 +55,54 @@ public static class CtxWriteTools
             new UpdateGoalRequest(goalId, title, description, priority, state, updatedBy),
             cancellationToken);
 
+    [McpServerTool(Name = "ctx_epic_add", ReadOnly = false, Destructive = false), Description("Add a CTX epic. Requires ctx-mcp --mode write.")]
+    public static Task<CommandResult> AddEpicAsync(
+        ICtxApplicationService service,
+        RepositoryGuard guard,
+        CancellationToken cancellationToken,
+        [Description("Epic title.")] string title,
+        string description = "",
+        string[]? goalIds = null,
+        string createdBy = "mcp-agent",
+        string? repo = null)
+        => service.AddEpicAsync(
+            guard.ResolveWritable(repo),
+            new AddEpicRequest(title, description, Normalize(goalIds), createdBy),
+            cancellationToken);
+
+    [McpServerTool(Name = "ctx_epic_update", ReadOnly = false, Destructive = false), Description("Update a CTX epic. Requires ctx-mcp --mode write.")]
+    public static Task<CommandResult> UpdateEpicAsync(
+        ICtxApplicationService service,
+        RepositoryGuard guard,
+        CancellationToken cancellationToken,
+        string epicId,
+        string? title = null,
+        string? description = null,
+        string? state = null,
+        string[]? goalIds = null,
+        string updatedBy = "mcp-agent",
+        string? repo = null)
+        => service.UpdateEpicAsync(
+            guard.ResolveWritable(repo),
+            new UpdateEpicRequest(epicId, title, description, state, goalIds is null ? null : Normalize(goalIds), updatedBy),
+            cancellationToken);
+
+    [McpServerTool(Name = "ctx_epic_promote", ReadOnly = false, Destructive = false), Description("Promote a CTX epic into an executable task. Requires ctx-mcp --mode write.")]
+    public static Task<CommandResult> PromoteEpicAsync(
+        ICtxApplicationService service,
+        RepositoryGuard guard,
+        CancellationToken cancellationToken,
+        string epicId,
+        string taskTitle,
+        string? taskDescription = null,
+        string? goalId = null,
+        string createdBy = "mcp-agent",
+        string? repo = null)
+        => service.PromoteEpicAsync(
+            guard.ResolveWritable(repo),
+            new PromoteEpicRequest(epicId, taskTitle, taskDescription, goalId, createdBy),
+            cancellationToken);
+
     [McpServerTool(Name = "ctx_line_open", ReadOnly = false, Destructive = false), Description("Open a tactical CTX work line under an existing parent goal. Requires ctx-mcp --mode write.")]
     public static Task<CommandResult> OpenLineAsync(
         ICtxApplicationService service,

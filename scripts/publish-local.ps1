@@ -14,6 +14,8 @@ $binPath = Join-Path $InstallRoot "bin"
 $mcpPath = Join-Path $InstallRoot "mcp"
 $acpPath = Join-Path $InstallRoot "acp"
 $viewerPath = Join-Path $InstallRoot "viewer"
+$promptsPath = Join-Path $InstallRoot "prompts"
+$docsPath = Join-Path $InstallRoot "docs"
 $installedViewerExe = Join-Path $viewerPath "Ctx.Viewer.exe"
 $restartInstalledViewer = $false
 
@@ -47,15 +49,31 @@ if (Test-Path $acpPath) {
     Remove-Item -Recurse -Force $acpPath
 }
 
+if (Test-Path $promptsPath) {
+    Remove-Item -Recurse -Force $promptsPath
+}
+
+if (Test-Path $docsPath) {
+    Remove-Item -Recurse -Force $docsPath
+}
+
 New-Item -ItemType Directory -Path $binPath -Force | Out-Null
 New-Item -ItemType Directory -Path $mcpPath -Force | Out-Null
 New-Item -ItemType Directory -Path $acpPath -Force | Out-Null
 New-Item -ItemType Directory -Path $viewerPath -Force | Out-Null
+New-Item -ItemType Directory -Path $promptsPath -Force | Out-Null
+New-Item -ItemType Directory -Path $docsPath -Force | Out-Null
 
 dotnet publish $cliProject -c Release -o $binPath
 dotnet publish $mcpProject -c Release -o $mcpPath
 dotnet publish $acpProject -c Release -o $acpPath
 dotnet publish $viewerProject -c Release -o $viewerPath
+
+Copy-Item (Join-Path $repoRoot "prompts\CTX_HELPER_PROMPT.md") (Join-Path $promptsPath "CTX_HELPER_PROMPT.md") -Force
+Copy-Item (Join-Path $repoRoot "prompts\CTX_AGENT_PROMPT.md") (Join-Path $promptsPath "CTX_AGENT_PROMPT.md") -Force
+Copy-Item (Join-Path $repoRoot "docs\CTX_VIEWER_GUIDE.md") (Join-Path $docsPath "CTX_VIEWER_GUIDE.md") -Force
+Copy-Item (Join-Path $repoRoot "docs\CLI_COMMANDS.md") (Join-Path $docsPath "CLI_COMMANDS.md") -Force
+Copy-Item (Join-Path $repoRoot "docs\CTX_AUTONOMOUS_OPERATION_PROTOCOL.md") (Join-Path $docsPath "CTX_AUTONOMOUS_OPERATION_PROTOCOL.md") -Force
 
 $cliLauncher = @"
 @echo off
@@ -109,6 +127,8 @@ Write-Host "CLI path: $binPath"
 Write-Host "MCP path: $mcpPath"
 Write-Host "ACP path: $acpPath"
 Write-Host "Viewer path: $viewerPath"
+Write-Host "Prompt path: $promptsPath"
+Write-Host "Docs path: $docsPath"
 Write-Host "Use 'ctx version' after opening a new shell."
 Write-Host "Use 'ctx-mcp --repo <path>' to launch the local MCP server over stdio."
 Write-Host "Use 'ctx-agent-acp --repo <path>' to launch the local ACP adapter over stdio."

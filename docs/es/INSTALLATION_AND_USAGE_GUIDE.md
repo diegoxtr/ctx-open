@@ -1,4 +1,4 @@
-# CTX - Guia de Instalacion y Uso
+﻿# CTX - Guia de Instalacion y Uso
 Si un modelo de lenguaje y su agente pierden el contexto, esta es la herramienta que necesitas.
 
 ## 1. Objetivo
@@ -77,61 +77,17 @@ Resultado esperado:
 La CLI puede ejecutarse directamente con:
 
 ```powershell
-dotnet run --project .\Ctx.Cli --
+dotnet run --project .\Ctx.Cli -- status
 ```
 
 Si todavia no existe un repositorio cognitivo en la carpeta actual, el comando que debe correrse primero es `init`.
 
-## 7. Primera decision: repo CTX existente vs proyecto nuevo
-
-Antes de hacer cualquier otra cosa, definir si el repositorio:
-
-- ya es un repositorio CTX existente con `.ctx/`
-- o si todavia es un proyecto nuevo que necesita inicializacion cognitiva
-
-### Repositorio CTX existente
-
-```powershell
-ctx
-ctx next
-```
-
-Regla state-driven:
-
-- si `ctx` dice que hay cambios cognitivos pendientes:
-  - correr `ctx closeout`
-- si `ctx` dice que hay trabajo abierto:
-  - correr `ctx next`
-- si `ctx` dice que el repo esta en un boundary durable:
-  - correr `ctx commit -m "<durable result>"`
-- si `ctx` dice que no hay trabajo abierto:
-  - correr `ctx next` y revisar gaps o estado de cierre
-
-Usar `ctx status` y `ctx audit` solo cuando haga falta inspeccion mas profunda antes de actuar.
-
-### Proyecto nuevo
-
-```powershell
-ctx init --name "<project>"
-```
-
-Despues:
-
-- si ya existe material fuente, usar bootstrap:
-
-```powershell
-ctx bootstrap map --from <path>
-ctx bootstrap apply --from <path>
-```
-
-- si el trabajo es greenfield, crear goal, task e hypothesis manualmente.
-
-## 8. Crear un repositorio cognitivo
+## 7. Crear un repositorio cognitivo
 
 Ubicate en una carpeta de trabajo donde quieras iniciar CTX y ejecutar:
 
 ```powershell
-dotnet run --project <repo-root>\Ctx.Cli -- init --name "CTX-DEMO" --description "Primer repositorio cognitivo"
+ctx init --name "CTX-DEMO" --description "Primer repositorio cognitivo"
 ```
 
 Resultado esperado:
@@ -143,60 +99,60 @@ Resultado esperado:
 Verificar:
 
 ```powershell
-dotnet run --project <repo-root>\Ctx.Cli -- status
+ctx status
 ```
 
-## 9. Primer flujo de uso recomendado
+## 8. Primer flujo de uso recomendado
 
 ## Paso 1 - Crear un objetivo
 
 ```powershell
-dotnet run --project <repo-root>\Ctx.Cli -- goal add --title "Definir estrategia de prueba" --description "Preparar un piloto tecnico"
+ctx goal add --title "Definir estrategia de prueba" --description "Preparar un piloto tecnico"
 ```
 
 ## Paso 2 - Crear una tarea
 
 ```powershell
-dotnet run --project <repo-root>\Ctx.Cli -- task add --title "Evaluar flujo CLI" --description "Validar comandos principales"
+ctx task add --title "Evaluar flujo CLI" --description "Validar comandos principales"
 ```
 
 ## Paso 3 - Crear una hipotesis
 
 ```powershell
-dotnet run --project <repo-root>\Ctx.Cli -- hypo add --statement "El flujo estructurado mejora la trazabilidad" --rationale "El estado queda persistido en artefactos"
+ctx hypo add --statement "El flujo estructurado mejora la trazabilidad" --rationale "El estado queda persistido en artefactos"
 ```
 
 ## Paso 4 - Registrar evidencia
 
 ```powershell
-dotnet run --project <repo-root>\Ctx.Cli -- evidence add --title "Prueba inicial" --summary "La estructura permite retomar contexto" --source "evaluacion manual" --kind Observation --supports hypothesis:<hypothesisId>
+ctx evidence add --title "Prueba inicial" --summary "La estructura permite retomar contexto" --source "evaluacion manual" --kind Observation --supports hypothesis:<hypothesisId>
 ```
 
 ## Paso 5 - Registrar una decision
 
 ```powershell
-dotnet run --project <repo-root>\Ctx.Cli -- decision add --title "Usar CTX en piloto" --rationale "La trazabilidad es suficiente para un piloto" --state Accepted --hypotheses <hypothesisId> --evidence <evidenceId>
+ctx decision add --title "Usar CTX en piloto" --rationale "La trazabilidad es suficiente para un piloto" --state Accepted --hypotheses <hypothesisId> --evidence <evidenceId>
 ```
 
 ## Paso 6 - Registrar una conclusion
 
 ```powershell
-dotnet run --project <repo-root>\Ctx.Cli -- conclusion add --summary "Se aprueba el uso en piloto interno" --state Accepted --decisions <decisionId> --evidence <evidenceId>
+ctx conclusion add --summary "Se aprueba el uso en piloto interno" --state Accepted --decisions <decisionId> --evidence <evidenceId>
 ```
 
 ## Paso 7 - Ejecutar una corrida
 
 ```powershell
-dotnet run --project <repo-root>\Ctx.Cli -- run --provider openai --purpose "Revisar riesgos del piloto"
+ctx run --provider openai --purpose "Revisar riesgos del piloto"
 ```
 
 ## Paso 8 - Generar commit cognitivo
 
 ```powershell
-dotnet run --project <repo-root>\Ctx.Cli -- commit -m "primer flujo completo de uso"
+ctx commit -m "primer flujo completo de uso"
 ```
 
-## 10. Comandos utiles
+## 9. Comandos utiles
 
 ## Estado y navegacion
 
@@ -234,7 +190,7 @@ dotnet run --project .\Ctx.Cli -- checkout feature-x
 dotnet run --project .\Ctx.Cli -- merge main
 ```
 
-## 11. Estructura local generada
+## 10. Estructura local generada
 
 Al inicializar un repositorio, CTX crea:
 
@@ -254,7 +210,7 @@ Al inicializar un repositorio, CTX crea:
 - `.ctx/providers/`
 - `.ctx/logs/`
 
-## 12. Recomendaciones de uso
+## 11. Recomendaciones de uso
 
 - trabajar cada caso de prueba en una carpeta separada;
 - hacer commits cognitivos con mensajes claros;
@@ -263,7 +219,7 @@ Al inicializar un repositorio, CTX crea:
 - revisar `metrics show` al final de cada escenario;
 - si aparecen conflictos cognitivos, no ignorarlos: revisar el merge antes de continuar.
 
-## 13. Problemas comunes
+## 12. Problemas comunes
 
 ## Problema: no compila
 
@@ -294,7 +250,7 @@ Interpretacion:
 - el sistema detecto divergencia sobre el mismo artefacto cognitivo;
 - revisar los artefactos antes de consolidar el resultado.
 
-## 14. Criterio de uso correcto
+## 13. Criterio de uso correcto
 
 Se considera que el usuario pudo operar CTX correctamente si:
 
@@ -304,7 +260,7 @@ Se considera que el usuario pudo operar CTX correctamente si:
 - pudo crear al menos un commit cognitivo;
 - pudo inspeccionar resultados desde la CLI.
 
-## 15. Siguiente lectura recomendada
+## 14. Siguiente lectura recomendada
 
 Para continuar:
 

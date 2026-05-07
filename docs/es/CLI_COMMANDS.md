@@ -147,6 +147,9 @@ Tipos actuales:
 
 Reglas importantes:
 - prioriza tasks abiertas cuando existen
+- no recomienda tasks `Blocked` como siguiente trabajo ejecutable
+- mantiene las tasks `Blocked` visibles en el diagnostico para que no se pierdan
+- si solo quedan tasks bloqueadas, no devuelve recomendacion ejecutable y apunta a `ctx gaps` / `ctx roadmap`
 - puede promover gaps desde hypotheses fuertes cuando no hay tasks abiertas
 - solo hypotheses en estado `Proposed` o `UnderEvaluation` son elegibles como `Gap`
 - hypotheses ya cerradas por conclusions aceptadas no deberian volver a salir como siguiente paso
@@ -162,20 +165,73 @@ Factores actuales para tasks:
 dotnet run --project .\Ctx.Cli -- next
 ```
 
+### `ctx gaps`
+
+Construye una lista read-only de gaps de planificacion y trabajo no resuelto.
+
+Usarlo cuando:
+- `ctx next` no tiene una task ejecutable clara
+- hay trabajo `Blocked` que debe revisarse sin tratarlo como accion inmediata
+- una hypothesis activa podria justificar trabajo nuevo
+- una idea futura debe quedar visible sin contaminar `ctx next`
+
+Devuelve:
+- conteos de candidatos
+- conteos actionable / blocked / deferred
+- source type y source id
+- rationale
+- recommended action
+- suggested task title opcional
+- references
+- guidance
+
+Reglas importantes:
+- es read-only; no crea tasks
+- `Blocked` significa "no ejecutar ahora"
+- blocked y deferred quedan visibles para revision
+- una promocion a task debe hacerse explicitamente
+
+```powershell
+dotnet run --project .\Ctx.Cli -- gaps
+```
+
+### `ctx roadmap`
+
+Construye una vista read-only de roadmap desde material de planificacion CTX.
+
+Usarlo cuando:
+- queres revisar ideas futuras sin que compitan en `ctx next`
+- queres ver epics o future tasks estacionadas
+- queres separar gaps accionables, trabajo bloqueado e ideas parked
+
+Lanes actuales:
+- `Ready to promote`
+- `Blocked work`
+- `Parked ideas`
+
+Reglas importantes:
+- es read-only; no promueve ni crea trabajo
+- `Parked ideas` puede contener placeholders tipo epic
+- `ctx next` es para ejecucion; `ctx roadmap` es para revision de planificacion
+
+```powershell
+dotnet run --project .\Ctx.Cli -- roadmap
+```
+
 ### `ctx plan`
 
-Construye un paquete compacto de planificacion para el proximo turno de trabajo.
+Construye un packet compacto de planificacion para el siguiente turno de trabajo.
 
 Equivalente MCP: `ctx_plan`.
 
-Es la superficie recomendada para iniciar un agente porque combina las lecturas habituales en una sola respuesta, en vez de requerir llamadas separadas a `ctx status`, `ctx next`, `ctx context` e inspeccion de runbooks.
+Es la superficie recomendada para agentes porque junta estado del repo, `ctx next`, contexto focalizado, runbook suggestions y guidance en una sola respuesta.
 
-Devuelve:
-- branch, head y estado dirty del repositorio
-- recomendacion y diagnosticos de `ctx next`
-- paquete de contexto enfocado
-- sugerencias de runbooks aplicables
-- guia corta de planificacion
+Contrato de runbooks:
+
+- en `ctx plan`, `data.runbookSuggestions` es la lista autoritativa de playbooks para el turno
+- `data.next.runbookSuggestions` espeja esa misma lista efectiva por compatibilidad
+- la lista efectiva se selecciona desde el packet contextual focalizado, por lo que task attachments, triggers explicitos, scope de goal y guardrails globales se resuelven de forma consistente
+- el agente debe leer esa lista antes de actuar y no inferir playbooks desde memoria de chat, titulos o costumbre
 
 Opciones:
 - `--purpose <text>`
@@ -183,7 +239,8 @@ Opciones:
 - `--task <taskId>`
 
 ```powershell
-dotnet run --project .\Ctx.Cli -- plan --purpose "Plan MCP planning surface"
+dotnet run --project .\Ctx.Cli -- plan --purpose "Planificar siguiente bloque"
+dotnet run --project .\Ctx.Cli -- plan --task <taskId> --purpose "Continuar esta task"
 ```
 
 ### `ctx check`
@@ -263,30 +320,6 @@ dotnet run --project .\Ctx.Cli -- preflight --operation publish-local --task <ta
 dotnet run --project .\Ctx.Cli -- preflight --operation github-release
 ```
 
-### `ctx operational review`
-
-Revisa triggers operativos repetidos y propone mejoras de runbooks cuando una recurrencia alcanza el umbral configurado.
-
-Opciones:
-- `--operation <operation>` opcional para filtrar por procedimiento
-- `--threshold <number>` opcional, minimo efectivo `2`
-
-Devuelve:
-- fingerprints de problemas repetidos
-- cantidad de ocurrencias
-- triggers vinculados
-- runbooks relacionados
-- sugerencias concretas para mejorar precondiciones, failure signals, verificaciones o limites de escalamiento
-
-Uso tipico:
-- antes de reintentar una operacion que ya fallo varias veces
-- despues de que `ctx preflight` indique problemas repetidos
-- antes de cerrar una release o publish con incidentes operativos recientes
-
-```powershell
-dotnet run --project .\Ctx.Cli -- operational review --operation publish-local --threshold 2
-```
-
 ### `ctx runbook add`
 
 Agrega un `OperationalRunbook` compacto para procedimientos recurrentes, troubleshooting, politicas o guardrails.
@@ -313,6 +346,32 @@ Reglas de diseño:
 
 ```powershell
 dotnet run --project .\Ctx.Cli -- runbook add --title "Local publish" --kind Procedure --trigger publish-local --when "Use when refreshing the installed local viewer" --precondition "No installed CTX binary is locked" --do "Run scripts/publish-local.ps1" --verify "Viewer responds locally" --signal "Failed to copy Ctx.Viewer.exe" --escalate "Stop retrying publish if binaries remain locked" --reference "scripts/publish-local.ps1"
+```
+
+### `ctx runbook attach <runbookId>`
+
+Vincula un `OperationalRunbook` existente a uno o mas goals o tasks.
+
+Opciones:
+- `--goal <goalId>` repetible
+- `--task <taskId>` repetible
+
+Usalo cuando un procedimiento recurrente debe entrar como contexto obligatorio para una tarea concreta. Un runbook vinculado por task aparece en `ctx plan`, `ctx context` y `ctx check` aunque el texto del prompt no mencione el trigger.
+
+```powershell
+dotnet run --project .\Ctx.Cli -- runbook attach <runbookId> --task <taskId>
+```
+
+### `ctx runbook detach <runbookId>`
+
+Quita la vinculacion de un `OperationalRunbook` con uno o mas goals o tasks sin borrar el runbook.
+
+Opciones:
+- `--goal <goalId>` repetible
+- `--task <taskId>` repetible
+
+```powershell
+dotnet run --project .\Ctx.Cli -- runbook detach <runbookId> --task <taskId>
 ```
 
 ### `ctx runbook list`

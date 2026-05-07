@@ -10,15 +10,11 @@ Goal: `Make a viewer gap visible and close it with evidence`.
 ### Stage 0: inspect current state
 
 ```powershell
-ctx
-ctx next
-```
-
-If the helper output is not enough to choose safely, deepen inspection with:
-
-```powershell
 ctx status
+ctx graph summary
+ctx log
 ctx audit
+ctx next
 ```
 
 What this produces in `.ctx`:

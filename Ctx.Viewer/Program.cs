@@ -4,6 +4,7 @@ using Ctx.Domain;
 using Ctx.Infrastructure;
 using Ctx.Persistence;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using System.Text.Json;
 
 var viewerProjectRoot = ResolveViewerProjectRoot();
@@ -23,6 +24,12 @@ var commitRepository = new FileSystemCommitRepository(jsonSerializer);
 var branchRepository = new FileSystemBranchRepository(jsonSerializer);
 var operationalRunbookRepository = new FileSystemOperationalRunbookRepository(jsonSerializer);
 var cognitiveTriggerRepository = new FileSystemCognitiveTriggerRepository(jsonSerializer);
+var mcpSupervisor = new McpProcessSupervisor();
+var releaseStatusClient = new HttpClient
+{
+    Timeout = TimeSpan.FromSeconds(5)
+};
+releaseStatusClient.DefaultRequestHeaders.UserAgent.ParseAdd("CTX-Viewer");
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
@@ -44,7 +51,43 @@ app.MapGet("/api/browse-directory", async () =>
     return Results.Json(new { path = selectedPath, cancelled = false });
 });
 
-app.MapGet("/api/mcp-status", () => Results.Json(GetLocalMcpStatus()));
+app.MapGet("/api/repository-candidates", (string? path, bool? selectedOnly) =>
+{
+    var roots = selectedOnly.GetValueOrDefault(false)
+        ? BuildSelectedRepositoryCandidateRoots(path)
+        : BuildRepositoryCandidateRoots(path);
+    var repositories = FindRepositoryCandidates(roots);
+    return Results.Json(new
+    {
+        roots,
+        repositories
+    });
+});
+
+app.MapGet("/api/mcp-status", (string? path, bool? ensure) =>
+{
+    var repositoryPath = ResolveRepositoryPath(path);
+    return Results.Json(GetLocalMcpStatus(repositoryPath, ensure.GetValueOrDefault(false), mcpSupervisor));
+});
+
+app.MapPost("/api/mcp-start", (string? path) =>
+{
+    var repositoryPath = ResolveRepositoryPath(path);
+    return Results.Json(GetLocalMcpStatus(repositoryPath, ensureRunning: true, mcpSupervisor));
+});
+
+app.MapPost("/api/mcp-stop", (string? path) =>
+{
+    var repositoryPath = ResolveRepositoryPath(path);
+    mcpSupervisor.Stop(repositoryPath);
+    var stoppedProcessCount = StopLocalMcpProcesses();
+    return Results.Json(GetLocalMcpStatus(repositoryPath, ensureRunning: false, mcpSupervisor, stoppedProcessCount));
+});
+
+app.MapGet("/api/release-status", async (CancellationToken cancellationToken) =>
+{
+    return Results.Json(await GetReleaseStatusAsync(releaseStatusClient, cancellationToken));
+});
 
 app.MapGet("/api/overview", async (string? path, string? branch, int? historyLimit, string? historyCursor, string? timelineScope, CancellationToken cancellationToken) =>
 {
@@ -311,6 +354,35 @@ app.MapGet("/api/commit", async (string id, string? path, CancellationToken canc
     }
 });
 
+app.MapGet("/api/entity-origin-commit", async (string type, string id, string? path, CancellationToken cancellationToken) =>
+{
+    try
+    {
+        var repositoryPath = ResolveRepositoryPath(path);
+        if (!await workingRepository.ExistsAsync(repositoryPath, cancellationToken))
+        {
+            return Results.NotFound(new { message = $"No .ctx repository found at '{repositoryPath}'." });
+        }
+
+        var origin = await FindEntityOriginCommitAsync(repositoryPath, type, id, commitRepository, cancellationToken);
+        return origin is null
+            ? Results.NotFound(new { message = $"{type} '{id}' does not have a visible origin commit." })
+            : Results.Json(new
+            {
+                entityType = NormalizeEntityOriginType(type),
+                entityId = id,
+                commitId = origin.Id.Value,
+                branch = origin.Branch,
+                message = origin.Message,
+                createdAtUtc = origin.CreatedAtUtc
+            });
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+});
+
 app.MapGet("/api/playbook", async (string? path, string? goalId, string? taskId, string? purpose, CancellationToken cancellationToken) =>
 {
     var repositoryPath = ResolveRepositoryPath(path);
@@ -339,10 +411,12 @@ app.MapGet("/api/playbook", async (string? path, string? goalId, string? taskId,
         .Where(task => packet.TaskIds.Contains(task.Id))
         .ToArray();
     var selection = OperationalRunbookSelection.Select(runbooks, effectivePurpose, goalId, taskId, selectedGoals, selectedTasks);
+    var operationalReviewResult = await runtime.ApplicationService.OperationalReviewAsync(repositoryPath, effectivePurpose, 2, cancellationToken);
 
     return Results.Json(new
     {
         purpose = effectivePurpose,
+        operationalReview = operationalReviewResult.Success ? operationalReviewResult.Data : null,
         selected = selection.Selected.Select(runbook => new
         {
             id = runbook.Id.Value,
@@ -443,6 +517,176 @@ app.Run();
 
 static string ResolveRepositoryPath(string? path)
     => string.IsNullOrWhiteSpace(path) ? ResolveDefaultRepositoryRoot() : Path.GetFullPath(path);
+
+static IReadOnlyList<string> BuildSelectedRepositoryCandidateRoots(string? path)
+{
+    if (string.IsNullOrWhiteSpace(path))
+    {
+        return [];
+    }
+
+    try
+    {
+        var fullPath = Path.GetFullPath(path);
+        return Directory.Exists(fullPath) ? [fullPath] : [];
+    }
+    catch
+    {
+        return [];
+    }
+}
+
+static IReadOnlyList<string> BuildRepositoryCandidateRoots(string? path)
+{
+    var roots = new List<string>();
+    AddRoot(path);
+    AddRoot(ResolveDefaultRepositoryRoot());
+
+    var currentDirectory = Directory.GetCurrentDirectory();
+    AddRoot(currentDirectory);
+    AddRoot(Directory.GetParent(currentDirectory)?.FullName);
+
+    if (OperatingSystem.IsWindows())
+    {
+        AddRoot(@"C:\sources");
+        AddRoot(@"D:\sources");
+    }
+
+    var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+    AddRoot(Path.Combine(userProfile, "source", "repos"));
+    AddRoot(Path.Combine(userProfile, "sources"));
+    AddRoot(Path.Combine(userProfile, "repos"));
+
+    return roots;
+
+    void AddRoot(string? candidate)
+    {
+        if (string.IsNullOrWhiteSpace(candidate))
+        {
+            return;
+        }
+
+        try
+        {
+            var fullPath = Path.GetFullPath(candidate);
+            if (File.Exists(fullPath))
+            {
+                fullPath = Path.GetDirectoryName(fullPath) ?? fullPath;
+            }
+
+            if (Directory.Exists(Path.Combine(fullPath, ".ctx")))
+            {
+                roots.Add(fullPath);
+            }
+
+            var parent = Directory.GetParent(fullPath)?.FullName;
+            if (!string.IsNullOrWhiteSpace(parent))
+            {
+                roots.Add(parent);
+            }
+
+            if (Directory.Exists(fullPath))
+            {
+                roots.Add(fullPath);
+            }
+        }
+        catch
+        {
+            // Candidate roots are best-effort; unavailable drives or malformed paths are ignored.
+        }
+    }
+}
+
+static IReadOnlyList<object> FindRepositoryCandidates(IReadOnlyList<string> roots)
+{
+    var startedAt = Stopwatch.StartNew();
+    var normalizedRoots = roots
+        .Where(Directory.Exists)
+        .Select(path => Path.GetFullPath(path))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .Take(12)
+        .ToArray();
+    var repositories = new Dictionary<string, (string Name, string Path)>(StringComparer.OrdinalIgnoreCase);
+
+    foreach (var root in normalizedRoots)
+    {
+        foreach (var repositoryPath in EnumerateRepositoryCandidates(root))
+        {
+            if (repositories.Count >= 80 || startedAt.ElapsedMilliseconds > 850)
+            {
+                break;
+            }
+
+            var name = Path.GetFileName(repositoryPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+            repositories.TryAdd(repositoryPath, (
+                string.IsNullOrWhiteSpace(name) ? repositoryPath : name,
+                repositoryPath));
+        }
+
+        if (repositories.Count >= 80 || startedAt.ElapsedMilliseconds > 850)
+        {
+            break;
+        }
+    }
+
+    return repositories.Values
+        .OrderBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
+        .Select(item => new { name = item.Name, path = item.Path })
+        .ToArray();
+}
+
+static IEnumerable<string> EnumerateRepositoryCandidates(string root)
+{
+    var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    foreach (var candidate in EnumerateCandidatePaths(root))
+    {
+        string fullPath;
+        try
+        {
+            fullPath = Path.GetFullPath(candidate);
+        }
+        catch
+        {
+            continue;
+        }
+
+        if (!visited.Add(fullPath) || IsIgnoredRepositoryBrowserPath(fullPath))
+        {
+            continue;
+        }
+
+        if (Directory.Exists(Path.Combine(fullPath, ".ctx")))
+        {
+            yield return fullPath;
+        }
+    }
+}
+
+static IEnumerable<string> EnumerateCandidatePaths(string root)
+{
+    yield return root;
+
+    IEnumerable<string> children;
+    try
+    {
+        children = Directory.EnumerateDirectories(root);
+    }
+    catch
+    {
+        yield break;
+    }
+
+    foreach (var child in children.Take(250))
+    {
+        yield return child;
+    }
+}
+
+static bool IsIgnoredRepositoryBrowserPath(string path)
+{
+    var name = Path.GetFileName(path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+    return name is ".git" or "bin" or "obj" or "node_modules" or ".vs" or ".idea" or ".vscode";
+}
 
 static async Task<string?> ResolveCommitReferenceAsync(
     string repositoryPath,
@@ -597,7 +841,7 @@ static string ResolveDefaultRepositoryRoot()
     return currentDirectory;
 }
 
-static object GetLocalMcpStatus()
+static object GetLocalMcpStatus(string repositoryPath, bool ensureRunning, McpProcessSupervisor supervisor, int? stoppedProcessCount = null)
 {
     var installRoot = Environment.GetEnvironmentVariable("CTX_INSTALL_ROOT");
     if (string.IsNullOrWhiteSpace(installRoot))
@@ -611,8 +855,11 @@ static object GetLocalMcpStatus()
     var executablePath = Path.Combine(installRoot, "mcp", OperatingSystem.IsWindows() ? "Ctx.Mcp.exe" : "Ctx.Mcp");
     var launcherExists = File.Exists(launcherPath);
     var executableExists = File.Exists(executablePath);
+    var supervisorStatus = ensureRunning && executableExists
+        ? supervisor.EnsureRunning(executablePath, repositoryPath)
+        : supervisor.GetStatus(repositoryPath);
     var runningProcessCount = CountMcpProcesses();
-    var healthy = launcherExists && executableExists && runningProcessCount > 0;
+    var healthy = launcherExists && executableExists && (runningProcessCount > 0 || supervisorStatus.Running);
 
     return new
     {
@@ -621,8 +868,15 @@ static object GetLocalMcpStatus()
         launcherExists,
         executableExists,
         runningProcessCount,
+        repositoryProcessCount = supervisorStatus.Running ? 1 : 0,
+        ownedProcessId = supervisorStatus.Running ? supervisorStatus.ProcessId : null,
+        ownedRepositoryPath = supervisorStatus.RepositoryPath,
+        startedByViewer = supervisorStatus.Running,
+        startupError = supervisorStatus.Error,
+        stoppedProcessCount,
         launcherPath,
         executablePath,
+        repositoryPath,
         checkedAtUtc = DateTimeOffset.UtcNow
     };
 }
@@ -649,6 +903,158 @@ static int CountMcpProcesses()
         return 0;
     }
 }
+
+static int StopLocalMcpProcesses()
+{
+    var stoppedCount = 0;
+    try
+    {
+        foreach (var process in Process.GetProcesses())
+        {
+            try
+            {
+                if (!process.ProcessName.Contains("Ctx.Mcp", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                process.Kill(entireProcessTree: true);
+                process.WaitForExit(3000);
+                stoppedCount++;
+            }
+            catch
+            {
+                // Best-effort local control; status polling will report any process that remains.
+            }
+            finally
+            {
+                process.Dispose();
+            }
+        }
+    }
+    catch
+    {
+        return stoppedCount;
+    }
+
+    return stoppedCount;
+}
+
+static async Task<object> GetReleaseStatusAsync(HttpClient httpClient, CancellationToken cancellationToken)
+{
+    var owner = Environment.GetEnvironmentVariable("CTX_RELEASE_OWNER");
+    if (string.IsNullOrWhiteSpace(owner))
+    {
+        owner = "diegoxtr";
+    }
+
+    var repository = Environment.GetEnvironmentVariable("CTX_RELEASE_REPOSITORY");
+    if (string.IsNullOrWhiteSpace(repository))
+    {
+        repository = "ctx-open";
+    }
+
+    var currentVersion = DomainConstants.ProductVersion;
+    var latestReleaseApiUrl = $"https://api.github.com/repos/{owner.Trim()}/{repository.Trim()}/releases/latest";
+
+    try
+    {
+        using var response = await httpClient.GetAsync(latestReleaseApiUrl, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            return new
+            {
+                status = "unavailable",
+                currentVersion,
+                currentTag = $"v{currentVersion}",
+                latestVersion = (string?)null,
+                latestTag = (string?)null,
+                latestReleaseUrl = $"https://github.com/{owner}/{repository}/releases",
+                updateAvailable = false,
+                error = $"GitHub returned {(int)response.StatusCode}.",
+                checkedAtUtc = DateTimeOffset.UtcNow
+            };
+        }
+
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+        var root = document.RootElement;
+        var latestTag = root.TryGetProperty("tag_name", out var tagElement)
+            ? tagElement.GetString()
+            : null;
+        var latestReleaseUrl = root.TryGetProperty("html_url", out var urlElement)
+            ? urlElement.GetString()
+            : null;
+        var latestVersion = NormalizeReleaseVersion(latestTag);
+        var updateAvailable = CompareReleaseVersions(latestVersion, currentVersion) > 0;
+
+        return new
+        {
+            status = updateAvailable ? "update-available" : "current",
+            currentVersion,
+            currentTag = $"v{currentVersion}",
+            latestVersion,
+            latestTag,
+            latestReleaseUrl = latestReleaseUrl ?? $"https://github.com/{owner}/{repository}/releases",
+            updateAvailable,
+            error = (string?)null,
+            checkedAtUtc = DateTimeOffset.UtcNow
+        };
+    }
+    catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException or JsonException)
+    {
+        return new
+        {
+            status = "unavailable",
+            currentVersion,
+            currentTag = $"v{currentVersion}",
+            latestVersion = (string?)null,
+            latestTag = (string?)null,
+            latestReleaseUrl = $"https://github.com/{owner}/{repository}/releases",
+            updateAvailable = false,
+            error = exception.Message,
+            checkedAtUtc = DateTimeOffset.UtcNow
+        };
+    }
+}
+
+static string? NormalizeReleaseVersion(string? value)
+{
+    if (string.IsNullOrWhiteSpace(value))
+    {
+        return null;
+    }
+
+    var match = Regex.Match(value.Trim(), @"^v?(?<version>\d+(?:\.\d+){0,3})", RegexOptions.IgnoreCase);
+    return match.Success ? match.Groups["version"].Value : null;
+}
+
+static int CompareReleaseVersions(string? left, string? right)
+{
+    if (string.IsNullOrWhiteSpace(left) || string.IsNullOrWhiteSpace(right))
+    {
+        return 0;
+    }
+
+    var leftParts = left.Split('.').Select(ParseVersionPart).ToArray();
+    var rightParts = right.Split('.').Select(ParseVersionPart).ToArray();
+    var length = Math.Max(leftParts.Length, rightParts.Length);
+    for (var index = 0; index < length; index++)
+    {
+        var leftPart = index < leftParts.Length ? leftParts[index] : 0;
+        var rightPart = index < rightParts.Length ? rightParts[index] : 0;
+        var comparison = leftPart.CompareTo(rightPart);
+        if (comparison != 0)
+        {
+            return comparison;
+        }
+    }
+
+    return 0;
+}
+
+static int ParseVersionPart(string value)
+    => int.TryParse(value, out var parsed) ? parsed : 0;
 
 static string ResolveViewerProjectRoot()
 {
@@ -846,11 +1252,22 @@ static async Task<string?> TrySelectDirectoryOnWindowsAsync()
 {
     const string script = """
 Add-Type -AssemblyName System.Windows.Forms
+$owner = New-Object System.Windows.Forms.Form
+$owner.TopMost = $true
+$owner.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
+$owner.Width = 1
+$owner.Height = 1
+$owner.ShowInTaskbar = $false
+$owner.Opacity = 0
+$owner.Show()
+$owner.Activate()
 $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
 $dialog.ShowNewFolderButton = $false
-if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+if ($dialog.ShowDialog($owner) -eq [System.Windows.Forms.DialogResult]::OK) {
     $dialog.SelectedPath
 }
+$owner.Close()
+$owner.Dispose()
 """;
 
     var encodedScript = Convert.ToBase64String(System.Text.Encoding.Unicode.GetBytes(script));
@@ -940,6 +1357,82 @@ static string ComputeStableHash(string input)
     return Convert.ToHexString(bytes);
 }
 
+static async Task<ContextCommit?> FindEntityOriginCommitAsync(
+    string repositoryPath,
+    string type,
+    string id,
+    ICommitRepository commitRepository,
+    CancellationToken cancellationToken)
+{
+    var normalizedType = NormalizeEntityOriginType(type);
+    if (string.IsNullOrWhiteSpace(id))
+    {
+        throw new InvalidOperationException("Entity id is required.");
+    }
+
+    var headers = await ReadTimelineCommitHeadersAsync(repositoryPath, cancellationToken);
+    foreach (var header in headers.OrderBy(commit => commit.CreatedAtUtc).ThenBy(commit => commit.Id, StringComparer.OrdinalIgnoreCase))
+    {
+        var commitFile = Path.Combine(repositoryPath, ".ctx", "commits", $"{header.Id}.json");
+        if (await CommitDiffContainsEntityAsync(commitFile, id, cancellationToken))
+        {
+            return await commitRepository.LoadAsync(repositoryPath, new ContextCommitId(header.Id), cancellationToken);
+        }
+    }
+
+    return null;
+}
+
+static async Task<bool> CommitDiffContainsEntityAsync(
+    string commitFile,
+    string entityId,
+    CancellationToken cancellationToken)
+{
+    if (!File.Exists(commitFile))
+    {
+        return false;
+    }
+
+    using var reader = new StreamReader(commitFile);
+    while (!reader.EndOfStream)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var line = await reader.ReadLineAsync(cancellationToken);
+        if (line is null)
+        {
+            break;
+        }
+
+        if (line.Contains("\"snapshot\"", StringComparison.OrdinalIgnoreCase))
+        {
+            break;
+        }
+
+        if (TryReadJsonStringLineProperty(line, "entityId", out var diffEntityId)
+            && diffEntityId is not null
+            && diffEntityId.Equals(entityId, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static string NormalizeEntityOriginType(string type)
+    => type.Trim().ToLowerInvariant() switch
+    {
+        "epic" or "epics" => "Epic",
+        "task" or "tasks" => "Task",
+        "hypothesis" or "hypotheses" => "Hypothesis",
+        "decision" or "decisions" => "Decision",
+        "evidence" => "Evidence",
+        "conclusion" or "conclusions" => "Conclusion",
+        "runbook" or "runbooks" => "Runbook",
+        "trigger" or "triggers" => "Trigger",
+        _ => throw new InvalidOperationException($"Unsupported origin entity type '{type}'.")
+    };
+
 static ViewerCognitivePath BuildCognitivePath(ContextCommit commit)
 {
     var snapshot = commit.Snapshot?.WorkingContext;
@@ -953,10 +1446,12 @@ static ViewerCognitivePath BuildCognitivePath(ContextCommit commit)
     var hypothesesById = snapshot.Hypotheses.ToDictionary(hypothesis => hypothesis.Id.Value, StringComparer.OrdinalIgnoreCase);
     var decisionsById = snapshot.Decisions.ToDictionary(decision => decision.Id.Value, StringComparer.OrdinalIgnoreCase);
     var conclusionsById = snapshot.Conclusions.ToDictionary(conclusion => conclusion.Id.Value, StringComparer.OrdinalIgnoreCase);
+    var epicsById = (snapshot.Epics ?? Array.Empty<Epic>()).ToDictionary(epic => epic.Id.Value, StringComparer.OrdinalIgnoreCase);
 
     var rootGoalIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     var subGoalIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     var taskIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    var epicIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     var hypothesisIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     var decisionIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     var conclusionIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -970,6 +1465,25 @@ static ViewerCognitivePath BuildCognitivePath(ContextCommit commit)
 
         taskIds.Add(task.Id.Value);
         AddGoalHierarchy(rootGoalIds, subGoalIds, goalsById, task.GoalId);
+    }
+
+    foreach (var change in commit.Diff.Epics ?? Array.Empty<ContextDiffChange>())
+    {
+        if (!epicsById.TryGetValue(change.EntityId, out var epic))
+        {
+            continue;
+        }
+
+        epicIds.Add(epic.Id.Value);
+        foreach (var goalId in epic.GoalIds)
+        {
+            AddGoalHierarchy(rootGoalIds, subGoalIds, goalsById, goalId);
+        }
+
+        foreach (var taskId in epic.PromotedTaskIds)
+        {
+            AddTaskAndGoal(taskIds, rootGoalIds, subGoalIds, goalsById, tasksById, taskId);
+        }
     }
 
     foreach (var change in commit.Diff.Hypotheses)
@@ -1069,6 +1583,12 @@ static ViewerCognitivePath BuildCognitivePath(ContextCommit commit)
         .Cast<string>()
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .ToArray();
+    var epicTitles = epicIds
+        .Select(id => epicsById.TryGetValue(id, out var epic) ? epic.Title : null)
+        .Where(title => !string.IsNullOrWhiteSpace(title))
+        .Cast<string>()
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToArray();
     var hypothesisTitles = hypothesisIds
         .Select(id => hypothesesById.TryGetValue(id, out var hypothesis) ? hypothesis.Statement : null)
         .Where(title => !string.IsNullOrWhiteSpace(title))
@@ -1089,15 +1609,17 @@ static ViewerCognitivePath BuildCognitivePath(ContextCommit commit)
         .ToArray();
 
     return new ViewerCognitivePath(
-        rootGoalIds.Concat(subGoalIds).Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
+        rootGoalIds.ToArray(),
         subGoalIds.ToArray(),
         taskIds.ToArray(),
+        epicIds.ToArray(),
         hypothesisIds.ToArray(),
         decisionIds.ToArray(),
         conclusionIds.ToArray(),
         goalTitles,
         subGoalTitles,
         taskTitles,
+        epicTitles,
         hypothesisTitles,
         decisionTitles,
         conclusionSummaries);
@@ -1105,6 +1627,8 @@ static ViewerCognitivePath BuildCognitivePath(ContextCommit commit)
 
 static ViewerCognitivePath EmptyViewerCognitivePath()
     => new(
+        Array.Empty<string>(),
+        Array.Empty<string>(),
         Array.Empty<string>(),
         Array.Empty<string>(),
         Array.Empty<string>(),
@@ -1271,12 +1795,14 @@ internal record ViewerCognitivePath(
     IReadOnlyList<string> GoalIds,
     IReadOnlyList<string> SubGoalIds,
     IReadOnlyList<string> TaskIds,
+    IReadOnlyList<string> EpicIds,
     IReadOnlyList<string> HypothesisIds,
     IReadOnlyList<string> DecisionIds,
     IReadOnlyList<string> ConclusionIds,
     IReadOnlyList<string> GoalTitles,
     IReadOnlyList<string> SubGoalTitles,
     IReadOnlyList<string> TaskTitles,
+    IReadOnlyList<string> EpicTitles,
     IReadOnlyList<string> HypothesisTitles,
     IReadOnlyList<string> DecisionTitles,
     IReadOnlyList<string> ConclusionSummaries);
@@ -1292,3 +1818,112 @@ internal record ViewerTimelineHeaderPage(
     string? Cursor,
     string? NextCursor,
     bool HasMore);
+
+internal sealed class McpProcessSupervisor
+{
+    private readonly object _sync = new();
+    private Process? _process;
+    private string? _repositoryPath;
+    private string? _lastError;
+
+    public McpSupervisorStatus EnsureRunning(string executablePath, string repositoryPath)
+    {
+        lock (_sync)
+        {
+            var normalizedRepositoryPath = Path.GetFullPath(repositoryPath);
+            if (_process is not null && !_process.HasExited)
+            {
+                if (string.Equals(_repositoryPath, normalizedRepositoryPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    return new McpSupervisorStatus(true, _process.Id, _repositoryPath, _lastError);
+                }
+
+                StopOwnedProcess();
+            }
+
+            try
+            {
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = executablePath,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardInput = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                };
+                startInfo.ArgumentList.Add("--repo");
+                startInfo.ArgumentList.Add(normalizedRepositoryPath);
+
+                _process = Process.Start(startInfo);
+                _repositoryPath = normalizedRepositoryPath;
+                _lastError = _process is null ? "MCP process did not start." : null;
+            }
+            catch (Exception exception)
+            {
+                _process = null;
+                _repositoryPath = normalizedRepositoryPath;
+                _lastError = exception.Message;
+            }
+
+            return GetStatusCore(normalizedRepositoryPath);
+        }
+    }
+
+    public McpSupervisorStatus GetStatus(string repositoryPath)
+    {
+        lock (_sync)
+        {
+            return GetStatusCore(Path.GetFullPath(repositoryPath));
+        }
+    }
+
+    public McpSupervisorStatus Stop(string repositoryPath)
+    {
+        lock (_sync)
+        {
+            var normalizedRepositoryPath = Path.GetFullPath(repositoryPath);
+            if (_process is not null
+                && !_process.HasExited
+                && string.Equals(_repositoryPath, normalizedRepositoryPath, StringComparison.OrdinalIgnoreCase))
+            {
+                StopOwnedProcess();
+                _lastError = null;
+            }
+
+            return GetStatusCore(normalizedRepositoryPath);
+        }
+    }
+
+    private McpSupervisorStatus GetStatusCore(string repositoryPath)
+    {
+        var running = _process is not null
+            && !_process.HasExited
+            && string.Equals(_repositoryPath, repositoryPath, StringComparison.OrdinalIgnoreCase);
+        return new McpSupervisorStatus(running, running ? _process!.Id : null, _repositoryPath, _lastError);
+    }
+
+    private void StopOwnedProcess()
+    {
+        try
+        {
+            if (_process is not null && !_process.HasExited)
+            {
+                _process.Kill(entireProcessTree: true);
+                _process.WaitForExit(3000);
+            }
+        }
+        catch
+        {
+            // Best-effort cleanup; an external MCP process is never touched here.
+        }
+        finally
+        {
+            _process?.Dispose();
+            _process = null;
+            _repositoryPath = null;
+        }
+    }
+}
+
+internal sealed record McpSupervisorStatus(bool Running, int? ProcessId, string? RepositoryPath, string? Error);

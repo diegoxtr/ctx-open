@@ -13,6 +13,7 @@ The idea is simple:
 The model must advance based on:
 
 - goals
+- epics
 - tasks
 - hypotheses
 - evidence
@@ -60,9 +61,12 @@ Use:
 
 ```powershell
 ctx
+ctx status
+ctx audit
+ctx next
 ```
 
-Then follow the next command implied by the current CTX state. Use `ctx status`, `ctx audit`, `ctx graph summary`, or `ctx log` only when deeper inspection is actually needed before acting.
+Then continue from the current CTX state.
 
 ### New cognitive project
 
@@ -145,18 +149,14 @@ Explicit rules:
 Always start with:
 
 ```powershell
-ctx
+ctx status
+ctx graph summary
+ctx log
+ctx audit
 ctx next
 ```
 
 For a new project, initialize first and only then enter this inspection cycle.
-
-If the helper output is not enough to choose safely, deepen inspection with:
-
-```powershell
-ctx status
-ctx audit
-```
 
 If extra focus is needed:
 
@@ -235,6 +235,24 @@ Do not open a new task out of habit if CTX already has a sufficient open task.
 
 ## 3. Open context if structure is missing
 
+Before opening or changing structure for a large work block, release pass, repo sync, or agent handoff, the model must perform a self-inspection pass:
+
+```powershell
+ctx doctor
+ctx plan --task <taskId> --purpose "<current work>"
+ctx context --task <taskId> --purpose "<current work>"
+ctx evidence list
+ctx evidence show <evidenceId>
+ctx conclusion show <conclusionId>
+ctx goal show <goalId>
+```
+
+If the task is not known yet, run `ctx plan --purpose "<current work>"` first and use the IDs it returns. `ctx evidence list` is only an inventory step; the model must inspect exact evidence with `ctx evidence show <evidenceId>` before using it to justify a decision or conclusion.
+
+For `ctx plan`, `data.runbookSuggestions` is the effective playbook list for the turn.
+It is selected from the focused context packet and mirrored into `data.next.runbookSuggestions` for compatibility.
+Agents must use the top-level planning list instead of trying to reconcile separate plan and next playbook lists.
+
 If the next step does not exist in CTX, the model must create it.
 
 Minimum:
@@ -243,6 +261,19 @@ Minimum:
 ctx goal add --title "<goal>"
 ctx task add --title "<task>" --goal <goalId>
 ctx hypo add --statement "<hypothesis>" --task <taskId>
+```
+
+If the idea is valuable but not executable yet, do not create a blocked placeholder task. Use an epic:
+
+```powershell
+ctx epic add --title "<future capability>" --description "<why it matters>" --goal <goalId>
+ctx roadmap
+```
+
+Promote the epic only when there is a concrete next action:
+
+```powershell
+ctx epic promote <epicId> --task-title "<first executable task>"
 ```
 
 Do not start important work without:
@@ -381,21 +412,20 @@ git commit -m "..."
 git push origin main
 ```
 
-## How to choose what's next without user help
+## How to choose whatâ€™s next without user help
 
 If the user says `continue`, or even if the user adds no new instruction but CTX already allows continuation, use this algorithm:
 
-1. inspect `ctx`
-2. if needed, deepen with `ctx status`, `ctx audit`, `ctx log`, or `ctx graph summary`
-3. identify the most active or strategic goal
-4. choose an open or implied task that:
+1. inspect `ctx status`, `ctx log`, `ctx graph summary`, `ctx audit`
+2. identify the most active or strategic goal
+3. choose an open or implied task that:
    - increases product value
    - reduces friction
    - validates an important hypothesis
-5. verify that the task is already represented in CTX
-6. if not, create it
-7. execute the smallest block that produces real evidence
-8. close with evidence, conclusion, and cognitive commit
+4. verify that the task is already represented in CTX
+5. if not, create it
+6. execute the smallest block that produces real evidence
+7. close with evidence, conclusion, and cognitive commit
 
 ## When NOT to ask the user
 
@@ -460,7 +490,7 @@ If there are multiple options, prioritize:
 2. what validates a strong hypothesis
 3. what improves product usability
 4. what reduces repeated friction
-5. what improves CTX's ability to work on itself
+5. what improves CTXâ€™s ability to work on itself
 
 ## Final meta
 

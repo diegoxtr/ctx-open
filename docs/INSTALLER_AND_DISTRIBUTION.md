@@ -1,4 +1,4 @@
-# CTX Installer and Distribution Plan
+﻿# CTX Installer and Distribution Plan
 If a language model and its agent lose context, this is the tool you need.
 
 ## Objective
@@ -22,13 +22,13 @@ Include a standard prompt section that binds agents to the cognitive versioner w
 ### macOS
 
 - Installer: signed `.pkg` or `.dmg`.
-- Portable: tarball with `ctx`, `ctx-mcp`, and optional `ctx-viewer` launchers.
+- Portable: tarball with `ctx`, `ctx-mcp`, `ctx-agent-acp`, and optional `ctx-viewer` launchers.
 - Architectures: Apple Silicon and Intel.
 
 ### Linux
 
 - Installer: package formats (deb, rpm) plus tarball.
-- Portable: tarball with `ctx`, `ctx-mcp`, and optional `ctx-viewer` launchers.
+- Portable: tarball with `ctx`, `ctx-mcp`, `ctx-agent-acp`, and optional `ctx-viewer` launchers.
 - Architectures: x64 and ARM64.
 
 ## Packaging Strategy (Baseline)
@@ -104,13 +104,21 @@ Installed layout:
   bin/
     ctx
     ctx-mcp
+    ctx-agent-acp
     ctx-viewer
   mcp/
     Ctx.Mcp
+  acp/
+    Ctx.Agent.Acp
   viewer/
     Ctx.Viewer
   prompts/
+    CTX_HELPER_PROMPT.md
+    CTX_AGENT_PROMPT.md
   docs/
+    CLI_COMMANDS.md
+    CTX_VIEWER_GUIDE.md
+    CTX_AUTONOMOUS_OPERATION_PROTOCOL.md
   ctx-install.json
 ```
 
@@ -122,6 +130,7 @@ The installer output should include parseable path lines:
 CTX_INSTALL_ROOT=<install-root>
 CTX_BIN_PATH=<install-root>/bin
 CTX_MCP_PATH=<install-root>/mcp
+CTX_ACP_PATH=<install-root>/acp
 ```
 
 ## User Entry Point
@@ -138,7 +147,7 @@ Those entrypoints should:
 - resolve the latest published version and matching asset from GitHub Releases
 - use `distribution/version-manifest.json` only as repository/API configuration plus asset-name mapping
 - delegate the actual filesystem/bootstrap work to `scripts/install-ctx.ps1` or `scripts/install-ctx.sh`
-- expose `ctx` and `ctx-mcp` globally when possible
+- expose `ctx`, `ctx-mcp`, and `ctx-agent-acp` globally when possible
   Windows: `User` or `Machine` PATH
   Linux/macOS: symlink in `~/.local/bin` or `/usr/local/bin`
 
@@ -201,8 +210,10 @@ Recommended flow:
 ## Verification Checklist
 
 - Each build runs `ctx version` successfully.
-- The CLI, MCP, and viewer binaries are present in the installed layout.
-- The installer prints `CTX_INSTALL_ROOT`, `CTX_BIN_PATH`, and `CTX_MCP_PATH`.
+- The CLI, MCP, ACP, and viewer binaries are present in the installed layout.
+- Console-referenced documentation is present in the installed layout, including `docs/CLI_COMMANDS.md`, `docs/CTX_VIEWER_GUIDE.md`, `docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md`, `prompts/CTX_HELPER_PROMPT.md`, and `prompts/CTX_AGENT_PROMPT.md`.
+- If `ctx helper`, install docs, or release notes tell the operator to read a packaged file, release preflight must fail until the portable bundle and installer scripts copy that file.
+- The installer prints `CTX_INSTALL_ROOT`, `CTX_BIN_PATH`, `CTX_MCP_PATH`, and `CTX_ACP_PATH`.
 - The binary launches on each OS/arch.
 - The prompt fragment is shipped alongside the binary.
 - Portable archives are emitted under `artifacts/distribution/`.

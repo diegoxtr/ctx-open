@@ -228,11 +228,14 @@ Cuando mas de un runbook hace match, rankear en este orden:
 5. `Troubleshooting` solo cuando exista una senal real de falla
 6. prioridad manual estable o titulo como desempate final
 
+Todos los runbooks activos unidos a la tarea seleccionada entran al packet principal. El limite normal de `2` runbooks aplica solo para matches de fallback por goal, triggers y guardrails globales.
+
 ## Manejo de overflow
 
 Si hacen match mas runbooks que los permitidos por el packet:
 
-- inyectar los `2` mejores
+- inyectar todos los runbooks unidos explicitamente a la tarea
+- completar con los mejores matches restantes hasta el limite normal
 - dejar el resto fuera del cuerpo principal
 - exponerlos como `available runbooks`
 
@@ -257,6 +260,51 @@ Additional runbooks available: Recover index.lock
 
 Asi se preserva descubribilidad sin pagar todo el costo de contexto.
 
+## Contrato para agentes
+
+Los agentes deben tratar `runbookSuggestions` como la lista canonica de playbooks para el packet CTX actual.
+
+Usa esta regla en prompts, instrucciones MCP y adaptadores ACP:
+
+```text
+Read runbookSuggestions before acting.
+For every returned runbook:
+- check Preconditions
+- follow applicable Do steps
+- validate with Verify
+- stop at EscalationBoundary if a failure signal appears
+Do not infer playbooks from chat memory or titles.
+```
+
+Si `runbookSuggestions` esta vacio, el agente continua desde la tarea recomendada, el context packet y la guidance. Si no esta vacio, el agente debe mencionar que playbooks aplican antes de ejecutar trabajo.
+
+Para `ctx plan`, `data.runbookSuggestions` es la lista efectiva y autoritativa de playbooks del turno.
+Se selecciona desde el packet contextual focalizado y se espeja en `data.next.runbookSuggestions` por compatibilidad, asi el agente no tiene que reconciliar dos listas distintas.
+
+## Adjuntar y verificar un runbook de tarea
+
+Usa este flujo cuando un playbook debe acompanar siempre a una tarea especifica:
+
+```powershell
+ctx runbook list
+ctx runbook attach <runbookId> --task <taskId>
+ctx plan --task <taskId> --purpose "continue this task"
+ctx check --task <taskId>
+```
+
+La verificacion es intencionalmente simple: el `purpose` no incluye el trigger del runbook. Si el runbook aparece igual en `runbookSuggestions`, la relacion por tarea esta manejando la seleccion correctamente.
+
+Resultado esperado:
+
+- los matches directos por `TaskId` aparecen antes que goal, trigger y guardrails globales
+- todos los runbooks activos unidos directamente a la tarea aparecen en la lista principal de sugerencias
+- el mismo runbook puede seguir unido a su tarea original y tambien a una tarea nueva que reutiliza el procedimiento
+- detach elimina solo esa relacion; no borra el runbook
+
+```powershell
+ctx runbook detach <runbookId> --task <taskId>
+```
+
 ## Activacion por falla
 
 Algunos runbooks no deberian entrar nunca por defecto.
@@ -276,6 +324,30 @@ Para separar conocimiento operativo de trabajo cognitivo mutable, la direccion p
 Asi los runbooks quedan fuera de `working-context.json` pero siguen disponibles para construir packets.
 
 ## Primeros runbooks que CTX deberia traer
+
+## Ejemplo: pase de consistencia de documentacion
+
+`Documentation consistency pass` se usa cuando el operador dice "documenta todo", "deja todo coherente" o pide revisar todos los MD/TXT.
+
+Contrato operativo compacto:
+
+```text
+Operational Runbook
+- Documentation consistency pass
+  When: hay que alinear README, docs, prompts, ejemplos, release notes y referencias localizadas
+  Preconditions: CTX planificado; repo objetivo explicito; limite publico/privado claro
+  Do: inventariar .md/.txt; buscar comandos stale y paths privados; actualizar docs canonicos primero; alinear es/zh; actualizar notas de release y CHANGELOG cuando cambie el alcance de release
+  Verify: la documentacion de comandos lista la superficie CLI vigente; los idiomas no contradicen el canon; no quedan hard paths privados; ctx audit limpio
+  Escalate: detenerse antes de tocar publico si el pedido es privado-only; detenerse antes de publicar docs con paths privados o notas sensibles
+```
+
+Reglas:
+
+- partir de los docs canonicos en ingles y despues alinear espanol y chino
+- revisar obligatoriamente `README.md`, `docs/CLI_COMMANDS.md`, `docs/TECHNICAL_INDEX.md`, `docs/OPERATIONAL_RUNBOOKS.md`, `CHANGELOG.md` y el `docs/RELEASE_*.md` actual
+- escanear examples y prompts, pero no reescribirlos si no contradicen el contrato canonico
+- no afirmar MCP parity para comandos CLI-only hasta que existan las herramientas MCP
+- mantener futuro y bloqueados en `ctx gaps` / `ctx roadmap`, no como recomendacion ejecutable de `ctx next`
 
 - `Local publish`
 - `Git closeout`

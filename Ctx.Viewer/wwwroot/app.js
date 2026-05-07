@@ -1,6 +1,7 @@
 const repoForm = document.getElementById("repo-form");
 const repoPathInput = document.getElementById("repo-path");
 const browseRepoButton = document.getElementById("browse-repo-button");
+const repositoryBrowser = document.getElementById("repository-browser");
 const branchSelect = document.getElementById("branch-select");
 const refreshButton = document.getElementById("refresh-button");
 const autoRefreshToggle = document.getElementById("auto-refresh-toggle");
@@ -8,6 +9,11 @@ const workspaceTabsHost = document.getElementById("workspace-tabs");
 const workspaceTabAddButton = document.getElementById("workspace-tab-add");
 const topbarVersion = document.getElementById("topbar-version");
 const mcpStatus = document.getElementById("mcp-status");
+const mcpStartButton = document.getElementById("mcp-start-button");
+const mcpStopButton = document.getElementById("mcp-stop-button");
+const releaseBell = document.getElementById("release-bell");
+const historySummaryPanel = document.getElementById("history-summary-panel");
+const historySummaryToggle = document.getElementById("history-summary-toggle");
 const summaryCards = document.getElementById("summary-cards");
 const hypothesisRanking = document.getElementById("hypothesis-ranking");
 const hypothesisCount = document.getElementById("hypothesis-count");
@@ -22,10 +28,20 @@ const historySortSelect = document.getElementById("history-sort-select");
 const lastLoaded = document.getElementById("last-loaded");
 const freshnessStatus = document.getElementById("freshness-status");
 const commitList = document.getElementById("commit-list");
+const historyFooter = document.getElementById("history-footer");
 const graphCanvas = document.getElementById("graph-canvas");
 const graphCaption = document.getElementById("graph-caption");
 const graphFocusCaption = document.getElementById("graph-focus-caption");
 const graphNodeActions = document.getElementById("graph-node-actions");
+const graphZoomOutButton = document.getElementById("graph-zoom-out");
+const graphZoomResetButton = document.getElementById("graph-zoom-reset");
+const graphZoomInButton = document.getElementById("graph-zoom-in");
+const graphZoomFitButton = document.getElementById("graph-zoom-fit");
+const epicRail = document.getElementById("epic-rail");
+const graphFooterSummary = document.getElementById("graph-footer-summary");
+const graphFooterEpics = document.getElementById("graph-footer-epics");
+const appFooterRepository = document.getElementById("app-footer-repository");
+const appFooterSummary = document.getElementById("app-footer-summary");
 const primaryLineageToggle = document.getElementById("primary-lineage-toggle");
 const graphExpandActiveToggle = document.getElementById("graph-expand-active-toggle");
 const interpretationRelationsToggle = document.getElementById("interpretation-relations-toggle");
@@ -50,19 +66,21 @@ const viewModeButtons = Array.from(document.querySelectorAll(".view-mode-button"
 const viewModeCaption = document.getElementById("view-mode-caption");
 const commitFocusToggle = document.getElementById("commit-focus-toggle");
 
-const typeOrder = ["Project", "Goal", "Sub-goal", "Task", "Hypothesis", "Evidence", "Decision", "Conclusion", "Run", "ContextPacket"];
+const typeOrder = ["Project", "Goal", "Epic", "Sub-goal", "Task", "Hypothesis", "Evidence", "Decision", "Conclusion", "Run", "ContextPacket"];
 const lanePalette = ["#214a88", "#0f766e", "#8a3ffc", "#c2410c", "#0369a1", "#7c3aed", "#be123c"];
 const viewerModeKey = "ctx-viewer-mode";
 const graphPresetStorageKey = "ctx-viewer-graph-preset";
 const graphFocusModesStorageKey = "ctx-viewer-graph-focus-modes";
 const graphTaskFilterStorageKey = "ctx-viewer-graph-task-filters";
 const graphExpandActiveStorageKey = "ctx-viewer-graph-expand-active";
+const graphZoomStorageKey = "ctx-viewer-graph-zoom";
 const commitFocusStorageKey = "ctx-viewer-commit-focus";
 const primaryLineageStorageKey = "ctx-viewer-primary-lineage-only";
 const interpretationRelationsStorageKey = "ctx-viewer-interpretation-relations";
 const historyBranchFilterStorageKey = "ctx-viewer-history-branch-filters";
 const historyTimelineScopeStorageKey = "ctx-viewer-history-timeline-scope";
 const historySortStorageKey = "ctx-viewer-history-sort";
+const historySummaryCollapsedStorageKey = "ctx-viewer-history-summary-collapsed";
 const panelLayoutStorageKey = "ctx-viewer-panel-layout";
 const leftTabStorageKey = "ctx-viewer-left-tab";
 const detailTabStorageKey = "ctx-viewer-detail-tab";
@@ -87,9 +105,14 @@ let lastLoadedAt = null;
 let autoRefreshHandle = null;
 let workingContextSignalHandle = null;
 let mcpStatusHandle = null;
+let releaseStatusHandle = null;
+let latestMcpStatus = null;
+let mcpActionInFlight = false;
+let latestReleaseStatus = null;
 const autoRefreshIntervalMs = 5000;
 const workingContextSignalIntervalMs = 1000;
 const mcpStatusIntervalMs = 10000;
+const releaseStatusIntervalMs = 30 * 60 * 1000;
 const historyPageSize = 20;
 const historyAutoLoadMoreThreshold = 240;
 let overviewRequestSequence = 0;
@@ -118,6 +141,12 @@ let currentCommitFocusEnabled = loadStoredCommitFocus();
 let currentPrimaryLineageOnly = loadStoredPrimaryLineageOnly();
 let currentExpandActiveLines = loadStoredExpandActiveLines();
 let currentShowInterpretationRelations = loadStoredInterpretationRelations();
+let currentGraphZoom = loadStoredGraphZoom();
+let currentGraphStageSize = { width: 960, height: 720 };
+let graphRenderSequence = 0;
+let activeGraphRenderKey = null;
+let completedGraphRenderKey = null;
+let historyNavigationTargetCommitId = null;
 let currentLeftTab = loadStoredLeftTab();
 let currentDetailTab = loadStoredDetailTab();
 let transientGraphFocusSnapshot = null;
@@ -134,6 +163,10 @@ const graphPresets = {
     thinking: ["Draft", "Ready"],
     closed: ["Done"]
 };
+
+const graphProgressiveNodeBatchSize = 90;
+const graphProgressiveEdgeBatchSize = 180;
+const graphProgressiveThreshold = 700;
 
 for (const input of taskStateFilters) {
     input.addEventListener("change", () => {
@@ -160,6 +193,22 @@ for (const button of graphPresetButtons) {
     });
 }
 
+graphZoomOutButton?.addEventListener("click", () => {
+    setGraphZoom(currentGraphZoom - 0.1);
+});
+
+graphZoomResetButton?.addEventListener("click", () => {
+    setGraphZoom(1);
+});
+
+graphZoomInButton?.addEventListener("click", () => {
+    setGraphZoom(currentGraphZoom + 0.1);
+});
+
+graphZoomFitButton?.addEventListener("click", () => {
+    fitGraphZoomToCanvas();
+});
+
 repoForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     await openWorkspaceFromForm();
@@ -178,12 +227,26 @@ branchSelect.addEventListener("change", async () => {
     await loadOverview(branchSelect.value, { targetWorkspaceId: activeWorkspaceTabId });
 });
 
-refreshButton.addEventListener("click", async () => {
+refreshButton?.addEventListener("click", async () => {
     await loadOverview(branchSelect.value || undefined, { targetWorkspaceId: activeWorkspaceTabId });
 });
 
 browseRepoButton?.addEventListener("click", async () => {
     await browseForRepositoryDirectory();
+});
+
+document.addEventListener("click", (event) => {
+    if (!repositoryBrowser || repositoryBrowser.hidden) {
+        return;
+    }
+
+    if (repositoryBrowser.contains(event.target)
+        || browseRepoButton?.contains(event.target)
+        || repoPathInput?.contains(event.target)) {
+        return;
+    }
+
+    repositoryBrowser.hidden = true;
 });
 
 workspaceTabAddButton?.addEventListener("click", async () => {
@@ -208,7 +271,12 @@ historySortSelect.addEventListener("change", () => {
     }
 });
 
-autoRefreshToggle.addEventListener("change", () => {
+historySummaryToggle?.addEventListener("click", () => {
+    const nextCollapsed = !historySummaryPanel?.classList.contains("collapsed");
+    setHistorySummaryCollapsed(nextCollapsed);
+});
+
+autoRefreshToggle?.addEventListener("change", () => {
     persistAutoRefreshPreference();
     syncAutoRefresh();
     renderFreshnessStatus();
@@ -265,8 +333,11 @@ if (interpretationRelationsToggle) {
 window.addEventListener("load", async () => {
     applyViewMode(currentViewMode);
     restoreGraphFocusSelection();
+    setHistorySummaryCollapsed(loadHistorySummaryCollapsed(), { persist: false });
     historySortSelect.value = currentHistorySort;
-    autoRefreshToggle.checked = loadStoredAutoRefreshPreference();
+    if (autoRefreshToggle) {
+        autoRefreshToggle.checked = loadStoredAutoRefreshPreference();
+    }
     if (commitFocusToggle) {
         commitFocusToggle.checked = currentCommitFocusEnabled;
     }
@@ -287,6 +358,7 @@ window.addEventListener("load", async () => {
     const branch = params.get("branch");
     initializeWorkspaceTabs(path ?? loadStoredRepositoryPath() ?? "", branch ?? loadStoredBranch() ?? defaultBranchName);
     startMcpStatusSignal();
+    startReleaseStatusSignal();
     await switchWorkspaceTab(activeWorkspaceTabId, { forceReload: true });
 });
 
@@ -423,6 +495,7 @@ async function loadOverview(branch, options = {}) {
     persistRepositoryPath(overview.repositoryPath);
     persistBranchSelection(overview.selectedBranch);
     renderTopbarVersion(overview);
+    void refreshMcpStatus();
     viewerHint.textContent = `Loaded ${overview.repositoryPath}`;
     currentHypothesisRanking = await loadHypothesisRanking();
     if (requestSequence !== overviewRequestSequence) {
@@ -452,11 +525,26 @@ async function loadOverview(branch, options = {}) {
     const preferredNodeId = effectiveSelectedCommitId === preferredCommit ? effectiveSelectedNodeId : null;
     const preserveViewport = previousOverview && effectiveSelectedCommitId === preferredCommit;
 
-    await selectCommit(preferredCommit, {
-        preferredNodeId,
-        scrollSelectedNodeIntoView: false,
-        preserveViewport
-    });
+    const canReuseSelectedCommitGraph = Boolean(
+        options.backgroundRefresh
+        && preferredCommit !== null
+        && currentGraph
+        && currentGraphSurfaceKey === buildGraphSurfaceKey(preferredCommit)
+    );
+
+    if (canReuseSelectedCommitGraph) {
+        selectedCommitId = preferredCommit;
+        selectedNodeId = preferredNodeId;
+        renderCommits(currentOverview);
+        renderGraphFocusCaption(currentRenderedGraph);
+        renderGraphFooter(currentGraph, currentRenderedGraph);
+    } else {
+        await selectCommit(preferredCommit, {
+            preferredNodeId,
+            scrollSelectedNodeIntoView: false,
+            preserveViewport
+        });
+    }
     applyStartupWorkingContextFocus();
     syncAutoRefresh();
     syncWorkingContextSignal();
@@ -493,7 +581,14 @@ async function hydrateHistory(requestSequence, repositoryPath, branch) {
             return;
         }
 
-        currentOverview.timelineCommits = Array.isArray(payload.timelineCommits) ? payload.timelineCommits : [];
+        const hydratedTimelineCommits = Array.isArray(payload.timelineCommits) ? payload.timelineCommits : [];
+        const targetMaterializedCommitId = historyNavigationTargetCommitId ?? selectedCommitId;
+        const selectedMaterializedCommit = targetMaterializedCommitId
+            ? currentOverview.timelineCommits.find(commit => commit.id === targetMaterializedCommitId)
+            : null;
+        currentOverview.timelineCommits = selectedMaterializedCommit && !hydratedTimelineCommits.some(commit => commit.id === selectedMaterializedCommit.id)
+            ? [...hydratedTimelineCommits, selectedMaterializedCommit]
+            : hydratedTimelineCommits;
         currentOverview.timelinePage = payload.timelinePage ?? currentOverview.timelinePage;
         currentOverview.timelineScope = payload.timelineScope ?? currentOverview.timelineScope;
         currentOverview.historyPending = false;
@@ -553,16 +648,17 @@ async function hydrateGraphSummary(requestSequence, repositoryPath) {
 
 async function loadMoreHistory() {
     if (!currentOverview?.timelinePage?.hasMore || historyLoadMoreInFlight) {
-        return;
+        return false;
     }
 
     const repositoryPath = repoPathInput.value.trim();
     if (!repositoryPath) {
-        return;
+        return false;
     }
 
     historyLoadMoreInFlight = true;
     renderCommits(currentOverview);
+    let appendedCount = 0;
 
     try {
         const requestSequence = ++historyLoadRequestSequence;
@@ -578,17 +674,18 @@ async function loadMoreHistory() {
 
         const response = await fetch(`/api/history?${params.toString()}`, { cache: "no-store" });
         if (!response.ok) {
-            return;
+            return false;
         }
 
         const page = await response.json();
         if (requestSequence !== historyLoadRequestSequence) {
-            return;
+            return false;
         }
 
         const loadedCommits = Array.isArray(page.timelineCommits) ? page.timelineCommits : [];
         const existingCommitIds = new Set(currentOverview.timelineCommits.map(commit => commit.id));
         const appendedCommits = loadedCommits.filter(commit => !existingCommitIds.has(commit.id));
+        appendedCount = appendedCommits.length;
         currentOverview.timelineCommits = [...currentOverview.timelineCommits, ...appendedCommits];
         currentOverview.timelinePage = {
             ...(currentOverview.timelinePage ?? {}),
@@ -599,6 +696,7 @@ async function loadMoreHistory() {
         renderSummary(currentOverview);
         renderCommits(currentOverview);
         syncActiveWorkspaceFromGlobals();
+        return appendedCount > 0;
     } finally {
         historyLoadMoreInFlight = false;
         if (currentOverview) {
@@ -723,11 +821,76 @@ function startMcpStatusSignal() {
         return;
     }
 
+    mcpStartButton?.addEventListener("click", () => {
+        void controlMcpServer("start");
+    });
+    mcpStopButton?.addEventListener("click", () => {
+        void controlMcpServer("stop");
+    });
     void refreshMcpStatus();
     if (mcpStatusHandle) {
         window.clearInterval(mcpStatusHandle);
     }
     mcpStatusHandle = window.setInterval(refreshMcpStatus, mcpStatusIntervalMs);
+}
+
+function startReleaseStatusSignal() {
+    if (!releaseBell) {
+        return;
+    }
+
+    releaseBell.addEventListener("click", () => {
+        if (latestReleaseStatus?.updateAvailable && latestReleaseStatus.latestReleaseUrl) {
+            window.open(latestReleaseStatus.latestReleaseUrl, "_blank", "noopener");
+            return;
+        }
+
+        void refreshReleaseStatus();
+    });
+    void refreshReleaseStatus();
+    if (releaseStatusHandle) {
+        window.clearInterval(releaseStatusHandle);
+    }
+    releaseStatusHandle = window.setInterval(refreshReleaseStatus, releaseStatusIntervalMs);
+}
+
+async function refreshReleaseStatus() {
+    if (!releaseBell) {
+        return;
+    }
+
+    try {
+        const response = await fetch("/api/release-status", { cache: "no-store" });
+        if (!response.ok) {
+            renderReleaseStatus({ status: "unavailable" });
+            return;
+        }
+
+        renderReleaseStatus(await response.json());
+    } catch {
+        renderReleaseStatus({ status: "unavailable" });
+    }
+}
+
+function renderReleaseStatus(status) {
+    if (!releaseBell) {
+        return;
+    }
+
+    latestReleaseStatus = status;
+    const updateAvailable = Boolean(status?.updateAvailable);
+    const unavailable = status?.status === "unavailable";
+    releaseBell.classList.toggle("release-status-update", updateAvailable);
+    releaseBell.classList.toggle("release-status-current", !updateAvailable && !unavailable);
+    releaseBell.classList.toggle("release-status-unavailable", unavailable);
+    releaseBell.classList.toggle("release-status-unknown", false);
+    const title = updateAvailable
+        ? `New CTX release available: ${status.latestTag ?? status.latestVersion ?? "latest"}`
+        : unavailable
+            ? "Could not check CTX releases"
+            : `CTX is current (${status?.currentTag ?? status?.currentVersion ?? "installed"})`;
+    releaseBell.title = title;
+    releaseBell.setAttribute("aria-label", title);
 }
 
 async function refreshMcpStatus() {
@@ -736,7 +899,14 @@ async function refreshMcpStatus() {
     }
 
     try {
-        const response = await fetch("/api/mcp-status", { cache: "no-store" });
+        const params = new URLSearchParams();
+        const repositoryPath = repoPathInput?.value?.trim();
+        if (repositoryPath) {
+            params.set("path", repositoryPath);
+        }
+        params.set("ensure", "false");
+
+        const response = await fetch(`/api/mcp-status?${params.toString()}`, { cache: "no-store" });
         if (!response.ok) {
             renderMcpStatus({ healthy: false, status: "unavailable" });
             return;
@@ -753,16 +923,74 @@ function renderMcpStatus(status) {
         return;
     }
 
+    latestMcpStatus = status;
     const healthy = Boolean(status?.healthy);
+    const owned = Boolean(status?.startedByViewer);
     mcpStatus.classList.toggle("mcp-status-ok", healthy);
     mcpStatus.classList.toggle("mcp-status-error", !healthy);
     mcpStatus.classList.toggle("mcp-status-unknown", false);
+    mcpStatus.classList.toggle("mcp-status-external", healthy && !owned);
+    renderMcpActions(status);
     const runningProcessCount = Number.isFinite(status?.runningProcessCount) ? status.runningProcessCount : 0;
+    const repositoryProcessCount = Number.isFinite(status?.repositoryProcessCount) ? status.repositoryProcessCount : 0;
     const title = healthy
-        ? `MCP local OK (${runningProcessCount} process${runningProcessCount === 1 ? "" : "es"})`
+        ? `MCP local OK (${repositoryProcessCount || runningProcessCount} process${(repositoryProcessCount || runningProcessCount) === 1 ? "" : "es"})`
         : buildMcpStatusFailureTitle(status);
     mcpStatus.title = title;
     mcpStatus.setAttribute("aria-label", title);
+}
+
+function renderMcpActions(status) {
+    const healthy = Boolean(status?.healthy);
+    const executableExists = Boolean(status?.executableExists);
+    if (mcpStartButton) {
+        mcpStartButton.disabled = mcpActionInFlight || healthy || !executableExists;
+        mcpStartButton.hidden = healthy;
+        mcpStartButton.title = !executableExists
+            ? "Local MCP executable was not found"
+            : healthy
+                ? "MCP server is already running"
+            : "Start local MCP server";
+    }
+    if (mcpStopButton) {
+        mcpStopButton.disabled = mcpActionInFlight || !healthy;
+        mcpStopButton.hidden = !healthy;
+        mcpStopButton.title = healthy
+            ? "Stop local MCP server"
+            : "MCP server is not running";
+    }
+}
+
+async function controlMcpServer(action) {
+    if (mcpActionInFlight) {
+        return;
+    }
+
+    mcpActionInFlight = true;
+    renderMcpActions(latestMcpStatus);
+    try {
+        const params = new URLSearchParams();
+        const repositoryPath = repoPathInput?.value?.trim();
+        if (repositoryPath) {
+            params.set("path", repositoryPath);
+        }
+
+        const response = await fetch(`/api/mcp-${action}?${params.toString()}`, {
+            method: "POST",
+            cache: "no-store"
+        });
+        if (!response.ok) {
+            renderMcpStatus({ healthy: false, status: "unavailable" });
+            return;
+        }
+
+        renderMcpStatus(await response.json());
+    } catch {
+        renderMcpStatus({ healthy: false, status: "unavailable" });
+    } finally {
+        mcpActionInFlight = false;
+        renderMcpActions(latestMcpStatus);
+    }
 }
 
 function buildMcpStatusFailureTitle(status) {
@@ -886,6 +1114,7 @@ function createWorkspaceTabState(seed = {}) {
         historySort: seed.historySort ?? currentHistorySort,
         graphPreset: seed.graphPreset ?? currentGraphPreset,
         graphFocusModes: seed.graphFocusModes ?? Array.from(currentGraphFocusModes),
+        graphZoom: seed.graphZoom ?? currentGraphZoom,
         taskStateSelection: seed.taskStateSelection ?? captureTaskStateSelection(),
         leftTab: seed.leftTab ?? currentLeftTab,
         detailTab: seed.detailTab ?? currentDetailTab,
@@ -1041,6 +1270,130 @@ async function openWorkspaceFromForm() {
     await loadOverview(branch, { targetWorkspaceId: workspace.id });
 }
 
+async function toggleRepositoryBrowser() {
+    if (!repositoryBrowser) {
+        await browseForRepositoryDirectory();
+        return;
+    }
+
+    if (!repositoryBrowser.hidden) {
+        repositoryBrowser.hidden = true;
+        return;
+    }
+
+    await browseForRepositoryDirectory();
+}
+
+function renderRepositoryBrowserLoading() {
+    if (!repositoryBrowser) {
+        return;
+    }
+
+    repositoryBrowser.innerHTML = `
+        <div class="repository-browser-header">
+            <strong>Local repositories</strong>
+            <button type="button" class="repository-browser-close" aria-label="Close repository browser">x</button>
+        </div>
+        <div class="repository-browser-state">Scanning local folders...</div>
+    `;
+    repositoryBrowser.querySelector(".repository-browser-close")?.addEventListener("click", () => {
+        repositoryBrowser.hidden = true;
+    });
+}
+
+async function loadRepositoryBrowser() {
+    if (!repositoryBrowser) {
+        return;
+    }
+
+    try {
+        const params = new URLSearchParams();
+        const currentPath = repoPathInput.value.trim();
+        if (currentPath) {
+            params.set("path", currentPath);
+        }
+
+        const response = await fetch(`/api/repository-candidates?${params.toString()}`, { cache: "no-store" });
+        if (!response.ok) {
+            await browseForRepositoryDirectory();
+            return;
+        }
+
+        const payload = await response.json();
+        renderRepositoryBrowser(payload);
+    } catch (error) {
+        repositoryBrowser.innerHTML = `
+            <div class="repository-browser-header">
+                <strong>Local repositories</strong>
+                <button type="button" class="repository-browser-close" aria-label="Close repository browser">x</button>
+            </div>
+            <div class="repository-browser-state">Repository scan failed: ${escapeHtml(error?.message ?? String(error))}</div>
+        `;
+        repositoryBrowser.querySelector(".repository-browser-close")?.addEventListener("click", () => {
+            repositoryBrowser.hidden = true;
+        });
+    }
+}
+
+function renderRepositoryBrowser(payload) {
+    if (!repositoryBrowser) {
+        return;
+    }
+
+    const repositories = Array.isArray(payload?.repositories) ? payload.repositories : [];
+    const roots = Array.isArray(payload?.roots) ? payload.roots : [];
+    const message = payload?.message ? `<div class="repository-browser-state">${escapeHtml(payload.message)}</div>` : "";
+    const currentPath = repoPathInput.value.trim();
+    const currentPathButton = currentPath
+        ? `<button type="button" class="repository-browser-current" data-repository-path="${escapeAttribute(currentPath)}">Use current path</button>`
+        : "";
+    const rows = repositories.length > 0
+        ? repositories.map(repo => `
+            <button type="button" class="repository-browser-row" data-repository-path="${escapeAttribute(repo.path)}">
+                <strong>${escapeHtml(repo.name ?? repo.path)}</strong>
+                <span>${escapeHtml(repo.path)}</span>
+            </button>
+        `).join("")
+        : `<div class="repository-browser-state">No .ctx repositories found in the scanned roots. Paste a path and press Load.</div>`;
+    const rootsText = roots.length > 0
+        ? `Scanned ${roots.map(root => escapeHtml(root)).join(", ")}`
+        : "No scan roots available.";
+
+    repositoryBrowser.innerHTML = `
+        <div class="repository-browser-header">
+            <strong>Local repositories</strong>
+            <button type="button" class="repository-browser-close" aria-label="Close repository browser">x</button>
+        </div>
+        <div class="repository-browser-actions">
+            ${currentPathButton}
+            <button type="button" class="repository-browser-native">Native dialog</button>
+        </div>
+        ${message}
+        <div class="repository-browser-list">${rows}</div>
+        <div class="repository-browser-roots">${rootsText}</div>
+    `;
+
+    repositoryBrowser.querySelector(".repository-browser-close")?.addEventListener("click", () => {
+        repositoryBrowser.hidden = true;
+    });
+    repositoryBrowser.querySelector(".repository-browser-native")?.addEventListener("click", async () => {
+        repositoryBrowser.hidden = true;
+        await browseForRepositoryDirectory();
+    });
+    repositoryBrowser.querySelectorAll("[data-repository-path]").forEach(button => {
+        button.addEventListener("click", async () => {
+            const path = button.dataset.repositoryPath;
+            if (!path) {
+                return;
+            }
+
+            repoPathInput.value = path;
+            repositoryBrowser.hidden = true;
+            await openWorkspaceFromForm();
+        });
+    });
+}
+
 async function browseForRepositoryDirectory() {
     try {
         const response = await fetch("/api/browse-directory", { cache: "no-store" });
@@ -1056,10 +1409,55 @@ async function browseForRepositoryDirectory() {
             return;
         }
 
-        repoPathInput.value = payload.path;
-        await openWorkspaceFromForm();
+        await resolveSelectedRepositoryDirectory(payload.path);
     } catch (error) {
         viewerHint.textContent = `Browse directory failed: ${error?.message ?? error}`;
+    }
+}
+
+async function resolveSelectedRepositoryDirectory(selectedPath) {
+    if (!selectedPath) {
+        return;
+    }
+
+    viewerHint.textContent = `Checking selected folder ${selectedPath}...`;
+
+    try {
+        const params = new URLSearchParams({
+            path: selectedPath,
+            selectedOnly: "true"
+        });
+        const response = await fetch(`/api/repository-candidates?${params.toString()}`, { cache: "no-store" });
+        if (!response.ok) {
+            repoPathInput.value = selectedPath;
+            await openWorkspaceFromForm();
+            return;
+        }
+
+        const payload = await response.json();
+        const repositories = Array.isArray(payload?.repositories) ? payload.repositories : [];
+        const exact = repositories.find(repo => normalizeRepositoryPath(repo.path) === normalizeRepositoryPath(selectedPath));
+        if (exact) {
+            repoPathInput.value = exact.path;
+            await openWorkspaceFromForm();
+            return;
+        }
+
+        if (repositories.length > 0 && repositoryBrowser) {
+            repositoryBrowser.hidden = false;
+            renderRepositoryBrowser({
+                ...payload,
+                selectedPath,
+                message: `Select a CTX repository inside ${selectedPath}.`
+            });
+            return;
+        }
+
+        repoPathInput.value = selectedPath;
+        viewerHint.textContent = `No .ctx repository found in ${selectedPath}.`;
+    } catch (error) {
+        repoPathInput.value = selectedPath;
+        viewerHint.textContent = `Selected folder check failed: ${error?.message ?? error}`;
     }
 }
 
@@ -1103,6 +1501,7 @@ function syncActiveWorkspaceFromGlobals() {
     workspace.historySort = currentHistorySort;
     workspace.graphPreset = currentGraphPreset;
     workspace.graphFocusModes = Array.from(currentGraphFocusModes);
+    workspace.graphZoom = currentGraphZoom;
     workspace.taskStateSelection = captureTaskStateSelection();
     workspace.leftTab = currentLeftTab;
     workspace.detailTab = currentDetailTab;
@@ -1139,6 +1538,8 @@ function applyWorkspaceState(workspace) {
     historySortSelect.value = currentHistorySort;
     currentGraphPreset = workspace.graphPreset ?? currentGraphPreset;
     currentGraphFocusModes = new Set(workspace.graphFocusModes ?? ["all"]);
+    currentGraphZoom = normalizeGraphZoom(workspace.graphZoom ?? loadStoredGraphZoom());
+    updateGraphZoomControls();
     applyTaskStateSelection(workspace.taskStateSelection ?? []);
     currentCommitFocusEnabled = workspace.commitFocusEnabled ?? currentCommitFocusEnabled;
     currentPrimaryLineageOnly = workspace.primaryLineageOnly ?? currentPrimaryLineageOnly;
@@ -1259,6 +1660,48 @@ function loadStoredInterpretationRelations() {
     return window.localStorage.getItem(interpretationRelationsStorageKey) === "true";
 }
 
+function loadStoredGraphZoom() {
+    const raw = window.localStorage.getItem(graphZoomStorageKey);
+    return normalizeGraphZoom(Number(raw) || 1);
+}
+
+function normalizeGraphZoom(value) {
+    return Math.max(0.25, Math.min(1.8, Number(value) || 1));
+}
+
+function persistGraphZoom() {
+    window.localStorage.setItem(graphZoomStorageKey, currentGraphZoom.toFixed(2));
+}
+
+function setGraphZoom(value, options = {}) {
+    currentGraphZoom = normalizeGraphZoom(value);
+    persistGraphZoom();
+    updateGraphZoomControls();
+    syncActiveWorkspaceFromGlobals();
+
+    if (currentGraph) {
+        renderGraph(currentGraph, { preserveViewport: options.preserveViewport ?? true });
+    }
+}
+
+function updateGraphZoomControls() {
+    if (graphZoomResetButton) {
+        graphZoomResetButton.textContent = `${Math.round(currentGraphZoom * 100)}%`;
+    }
+    if (graphZoomOutButton) {
+        graphZoomOutButton.disabled = currentGraphZoom <= 0.25;
+    }
+    if (graphZoomInButton) {
+        graphZoomInButton.disabled = currentGraphZoom >= 1.8;
+    }
+}
+
+function fitGraphZoomToCanvas() {
+    const availableWidth = Math.max(320, graphCanvas.clientWidth - 40);
+    const nextZoom = availableWidth / Math.max(1, currentGraphStageSize.width);
+    setGraphZoom(nextZoom, { preserveViewport: false });
+}
+
 function persistPrimaryLineageSelection() {
     window.localStorage.setItem(primaryLineageStorageKey, currentPrimaryLineageOnly ? "true" : "false");
 }
@@ -1276,7 +1719,32 @@ function persistCommitFocusSelection() {
 }
 
 function persistAutoRefreshPreference() {
-    window.localStorage.setItem(autoRefreshStorageKey, autoRefreshToggle.checked ? "true" : "false");
+    if (autoRefreshToggle) {
+        window.localStorage.setItem(autoRefreshStorageKey, autoRefreshToggle.checked ? "true" : "false");
+    }
+}
+
+function loadHistorySummaryCollapsed() {
+    return window.localStorage.getItem(historySummaryCollapsedStorageKey) === "true";
+}
+
+function setHistorySummaryCollapsed(collapsed, options = {}) {
+    const persist = options.persist ?? true;
+    historySummaryPanel?.classList.toggle("collapsed", collapsed);
+    if (summaryCards) {
+        summaryCards.hidden = collapsed;
+    }
+    if (historySummaryToggle) {
+        historySummaryToggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+        historySummaryToggle.title = collapsed ? "Show workspace summary" : "Hide workspace summary";
+        const icon = historySummaryToggle.querySelector(".history-summary-toggle-icon");
+        if (icon) {
+            icon.textContent = collapsed ? "Show" : "Hide";
+        }
+    }
+    if (persist) {
+        window.localStorage.setItem(historySummaryCollapsedStorageKey, collapsed ? "true" : "false");
+    }
 }
 
 function renderSummary(overview) {
@@ -1304,6 +1772,24 @@ function renderSummary(overview) {
         card.innerHTML = `<span class="card-label">${label}</span><span class="card-value">${value}</span>`;
         summaryCards.appendChild(card);
     }
+
+    renderAppFooter(overview);
+}
+
+function renderAppFooter(overview) {
+    if (!appFooterRepository || !appFooterSummary || !overview) {
+        return;
+    }
+
+    const repositoryPath = normalizeRepositoryPath(repoPathInput.value) || "configured default";
+    const branch = overview.selectedBranch ?? defaultBranchName;
+    const head = overview.headCommitId ? overview.headCommitId.slice(0, 8) : "working";
+    const timelineCount = overview.timelinePage?.totalCount ?? overview.timelineCommits?.length ?? 0;
+    const openTasks = overview.taskSummary?.open ?? 0;
+    const closedTasks = overview.taskSummary?.closed ?? 0;
+
+    appFooterRepository.textContent = `${repositoryPath} · ${branch} · ${head}`;
+    appFooterSummary.textContent = `${timelineCount} commits · ${openTasks} open tasks · ${closedTasks} closed tasks`;
 }
 
 function renderTasks(overview) {
@@ -1817,6 +2303,7 @@ function renderCommits(overview) {
     commitList.innerHTML = "";
     const commitTotal = overview.timelinePage?.totalCount ?? overview.timelineCommits.length;
     commitCount.textContent = overview.historyPending && commitTotal === 0 ? "…" : `${commitTotal}`;
+    renderHistoryFooter(overview);
     if (overview.historyPending && (!Array.isArray(overview.timelineCommits) || overview.timelineCommits.length === 0)) {
         renderHistoryLoadingShell(overview);
         return;
@@ -1841,12 +2328,40 @@ function renderCommits(overview) {
 
     if (currentViewMode === "history") {
         renderBranchFirstHistory(overview, orderedBranches, groupedCommits, lanes, laneCount);
+        attachHistoryLoadMoreOnScroll(commitList);
         restoreHistoryPanelScroll(historyScrollSnapshot);
         return;
     }
 
     renderCompactHistoryNavigator(overview, orderedBranches, groupedCommits, lanes, laneCount);
+    attachHistoryLoadMoreOnScroll(commitList);
     restoreHistoryPanelScroll(historyScrollSnapshot);
+}
+
+function renderHistoryFooter(overview) {
+    if (!historyFooter || !overview) {
+        return;
+    }
+
+    const totalCount = overview.timelinePage?.totalCount ?? overview.timelineCommits.length;
+    const loadedCount = overview.timelineCommits.length;
+    const visibleBranches = resolveVisibleHistoryBranches(overview).length;
+    const totalBranches = overview.branches.length;
+    const branchScope = overview.timelineScope === "all"
+        ? `${visibleBranches}/${totalBranches} branches`
+        : `current branch: ${overview.selectedBranch ?? defaultBranchName}`;
+    const loadState = overview.historyPending
+        ? "loading"
+        : overview.timelinePage?.hasMore
+        ? "partial"
+        : "complete";
+
+    historyFooter.innerHTML = `
+        <span><strong>${escapeHtml(String(loadedCount))}</strong> loaded</span>
+        <span><strong>${escapeHtml(String(totalCount))}</strong> total</span>
+        <span>${escapeHtml(branchScope)}</span>
+        <span>${escapeHtml(loadState)}</span>
+    `;
 }
 
 function renderHistoryLoadingShell(overview) {
@@ -1869,6 +2384,7 @@ function renderHistoryLoadingShell(overview) {
 
 function captureHistoryPanelScroll() {
     return {
+        list: captureElementScroll("#commit-list"),
         branchList: captureElementScroll(".history-branch-list"),
         rows: captureElementScroll(".history-rows"),
         compactRows: captureElementScroll(".history-compact-rows")
@@ -1876,7 +2392,7 @@ function captureHistoryPanelScroll() {
 }
 
 function captureElementScroll(selector) {
-    const element = commitList.querySelector(selector);
+    const element = selector === "#commit-list" ? commitList : commitList.querySelector(selector);
     if (!element) {
         return null;
     }
@@ -1892,6 +2408,7 @@ function restoreHistoryPanelScroll(snapshot) {
         return;
     }
 
+    restoreElementScroll("#commit-list", snapshot.list);
     restoreElementScroll(".history-branch-list", snapshot.branchList);
     restoreElementScroll(".history-rows", snapshot.rows);
     restoreElementScroll(".history-compact-rows", snapshot.compactRows);
@@ -1902,7 +2419,7 @@ function restoreElementScroll(selector, snapshot) {
         return;
     }
 
-    const element = commitList.querySelector(selector);
+    const element = selector === "#commit-list" ? commitList : commitList.querySelector(selector);
     if (!element) {
         return;
     }
@@ -2111,7 +2628,7 @@ function attachHistoryLoadMoreOnScroll(container) {
         return;
     }
 
-    container.addEventListener("scroll", () => {
+    container.onscroll = () => {
         if (!currentOverview?.timelinePage?.hasMore || historyLoadMoreInFlight) {
             return;
         }
@@ -2120,7 +2637,7 @@ function attachHistoryLoadMoreOnScroll(container) {
         if (remaining <= historyAutoLoadMoreThreshold) {
             void loadMoreHistory();
         }
-    });
+    };
 }
 
 function renderWorkingHistoryRow(laneCount, compact = false) {
@@ -2201,6 +2718,7 @@ function renderHistoryCommitRow(commit, overview, lanes, laneCount, compact = fa
         : `<span class="commit-summary">No cognitive path captured for this commit.</span>`;
     const item = document.createElement("button");
     item.type = "button";
+    item.dataset.historyCommitId = commit.id;
     item.className = `history-row ${compact ? "history-row-compact" : ""} ${branchState} ${selectedCommitId === commit.id ? "active" : ""}`;
     item.innerHTML = compact
         ? `
@@ -2431,6 +2949,7 @@ async function selectCommit(commitId, options = {}) {
     const preferredNodeId = options.preferredNodeId ?? null;
     const scrollSelectedNodeIntoView = options.scrollSelectedNodeIntoView ?? false;
     const preserveViewport = options.preserveViewport ?? false;
+    const forceGraphRender = options.forceGraphRender ?? false;
 
     if (commitId !== null && transientGraphFocusSnapshot) {
         restoreGraphFocus(transientGraphFocusSnapshot);
@@ -2508,7 +3027,7 @@ async function selectCommit(commitId, options = {}) {
         graphCaption.textContent = "Working context";
     }
 
-    renderGraph(currentGraph, { preserveViewport });
+    renderGraph(currentGraph, { preserveViewport, forceRender: forceGraphRender });
     renderTasks(currentOverview);
     await loadOriginDetail();
     await loadPlaybookDetail();
@@ -2517,6 +3036,10 @@ async function selectCommit(commitId, options = {}) {
         renderSelectedNodeDetail(selectedNodeId, { scrollIntoView: scrollSelectedNodeIntoView });
     } else {
         nodeDetail.textContent = "Click a node.";
+    }
+
+    if (commitId && options.scrollHistoryIntoView) {
+        scrollHistoryCommitIntoView(commitId, { attempts: 6 });
     }
 
     syncWorkingContextSignal();
@@ -2543,18 +3066,414 @@ function resetGraphViewport() {
     graphCanvas.scrollTop = 0;
 }
 
-function renderGraph(graph, options = {}) {
+function resolveEpicRailGraph(fallbackGraph) {
+    return currentGraph ?? currentRenderedGraph ?? fallbackGraph ?? { nodes: [], edges: [] };
+}
+
+function resolveGraphEpics(graph) {
+    const sourceGraph = resolveEpicRailGraph(graph);
+    return (sourceGraph?.nodes ?? [])
+        .filter(node => node.type === "Epic")
+        .sort((left, right) => {
+            const leftState = normalizeGraphNodeState(left.state);
+            const rightState = normalizeGraphNodeState(right.state);
+            if (leftState !== rightState) {
+                return leftState.localeCompare(rightState, undefined, { sensitivity: "base" });
+            }
+
+            return left.label.localeCompare(right.label, undefined, { sensitivity: "base" });
+        });
+}
+
+function renderGraphFooter(graph, filteredGraph = currentRenderedGraph, options = {}) {
+    if (!graphFooterSummary || !graphFooterEpics) {
+        return;
+    }
+
+    if (!graph && !filteredGraph) {
+        graphFooterSummary.textContent = "No graph loaded.";
+        graphFooterEpics.textContent = "No parked epics.";
+        return;
+    }
+
+    const visibleNodes = filteredGraph?.nodes?.length ?? 0;
+    const visibleRelations = options.visibleRelationCount ?? filteredGraph?.edges?.length ?? 0;
+    const totalNodes = graph?.nodes?.length ?? visibleNodes;
+    const totalRelations = graph?.edges?.length ?? visibleRelations;
+    const zoomPercent = Math.round(currentGraphZoom * 100);
+    graphFooterSummary.textContent = `Visible ${visibleNodes}/${totalNodes} nodes, ${visibleRelations}/${totalRelations} relations, zoom ${zoomPercent}%.`;
+
+    const epics = resolveGraphEpics(graph);
+    graphFooterEpics.textContent = epics.length === 0
+        ? "No parked epics."
+        : `${epics.length} parked epic${epics.length === 1 ? "" : "s"} available.`;
+}
+
+function shouldRenderGraphProgressively(graph) {
+    const nodeCount = graph?.nodes?.length ?? 0;
+    const edgeCount = graph?.edges?.length ?? 0;
+    return nodeCount + edgeCount >= graphProgressiveThreshold;
+}
+
+function nextGraphRenderFrame() {
+    return new Promise(resolve => window.requestAnimationFrame(() => resolve()));
+}
+
+function assertGraphRenderCurrent(renderId) {
+    return renderId === graphRenderSequence;
+}
+
+function renderGraphProgressStatus(message) {
+    let status = graphCanvas.querySelector("[data-graph-render-status]");
+    if (!status) {
+        status = document.createElement("div");
+        status.className = "graph-render-status";
+        status.setAttribute("data-graph-render-status", "true");
+        graphCanvas.prepend(status);
+    }
+
+    status.textContent = message;
+}
+
+function clearGraphProgressStatus() {
+    graphCanvas.querySelector("[data-graph-render-status]")?.remove();
+}
+
+function buildGraphRenderKey(graph, filteredGraph) {
+    const checkedStates = taskStateFilters
+        .filter(input => input.checked)
+        .map(input => input.dataset.taskFilter)
+        .sort()
+        .join("|");
+    const focusModes = Array.from(currentGraphFocusModes).sort().join("|");
+    const graphIdentity = graph?.metadata?.commitId
+        ?? graph?.metadata?.headCommitId
+        ?? currentGraphSurfaceKey
+        ?? `${graph?.nodes?.length ?? 0}:${graph?.edges?.length ?? 0}`;
+
+    return [
+        normalizeRepositoryPath(repoPathInput.value),
+        graphIdentity,
+        selectedCommitId ?? "working",
+        currentCommitFocusEnabled ? "focus:on" : "focus:off",
+        currentPrimaryLineageOnly ? "primary:on" : "primary:off",
+        currentExpandActiveLines ? "active:on" : "active:off",
+        currentShowInterpretationRelations ? "relations:on" : "relations:off",
+        focusModes,
+        checkedStates,
+        currentGraphZoom.toFixed(2),
+        filteredGraph?.nodes?.length ?? 0,
+        filteredGraph?.edges?.length ?? 0
+    ].join("::");
+}
+
+function renderEpicRail(graph) {
+    if (!epicRail) {
+        return;
+    }
+
+    const epics = resolveGraphEpics(graph);
+
+    if (epics.length === 0) {
+        epicRail.hidden = true;
+        epicRail.innerHTML = "";
+        return;
+    }
+
+    epicRail.hidden = false;
+    const cards = epics.map(epic => {
+        const state = normalizeGraphNodeState(epic.state) || "Parked";
+        const isActive = selectedNodeId === epic.id;
+        return `
+            <button type="button" class="epic-rail-card ${isActive ? "active" : ""}" data-epic-node-id="${escapeHtml(epic.id)}">
+                <span class="epic-rail-card-kind">Epic</span>
+                <strong>${escapeHtml(epic.label)}</strong>
+                <span class="epic-rail-card-state">${escapeHtml(state)}</span>
+                <span class="epic-rail-card-origin">Open origin commit</span>
+            </button>
+        `;
+    }).join("");
+
+    epicRail.innerHTML = `
+        <div class="epic-rail-header">
+            <div>
+                <span class="epic-rail-eyebrow">Planning layer</span>
+                <h3>Parked Epics</h3>
+            </div>
+            <span class="epic-rail-count">${epics.length}</span>
+        </div>
+        <div class="epic-rail-list">${cards}</div>
+    `;
+
+    epicRail.querySelectorAll("[data-epic-node-id]").forEach(button => {
+        button.addEventListener("click", () => {
+            const nodeId = button.getAttribute("data-epic-node-id");
+            if (nodeId) {
+                void focusEpicFromRail(nodeId);
+            }
+        });
+    });
+}
+
+async function focusEpicFromRail(nodeId) {
+    if (!nodeId) {
+        return;
+    }
+
+    const epicId = nodeId.replace(/^Epic:/, "");
+    const originCommitId = await findOriginCommitForEntity("epic", epicId);
+    if (originCommitId) {
+        historyNavigationTargetCommitId = originCommitId;
+        viewerHint.textContent = `Opening epic origin commit ${originCommitId.slice(0, 8)}...`;
+        const loadedThroughHistory = await loadHistoryUntilCommit(originCommitId, { maxPages: 80 });
+        if (!loadedThroughHistory) {
+            await materializeHistoryCommit(originCommitId);
+        }
+        ensureHistoryCommitVisible(originCommitId);
+        await selectCommit(originCommitId, {
+            preserveViewport: false,
+            preferredNodeId: nodeId,
+            scrollSelectedNodeIntoView: true,
+            scrollHistoryIntoView: true,
+            forceGraphRender: true
+        });
+        scrollHistoryCommitIntoView(originCommitId, { immediate: true, attempts: 8 });
+        viewerHint.textContent = `Opened epic origin commit ${originCommitId.slice(0, 8)}`;
+        return;
+    }
+
+    if (currentRenderedGraph?.nodes?.some(node => node.id === nodeId)) {
+        await showNode(nodeId, { scrollIntoView: true });
+        return;
+    }
+
+    selectedNodeId = nodeId;
+    renderEpicRail(currentGraph);
+    renderSelectedNodeDetail(nodeId);
+    void loadOriginDetail();
+    void loadPlaybookDetail();
+    syncActiveWorkspaceFromGlobals();
+}
+
+async function loadHistoryUntilCommit(commitId, options = {}) {
+    if (!commitId || historyContainsCommit(commitId)) {
+        return historyContainsCommit(commitId);
+    }
+
+    const maxPages = options.maxPages ?? 50;
+    let loadedPages = 0;
+
+    while (!historyContainsCommit(commitId)
+        && currentOverview?.timelinePage?.hasMore
+        && loadedPages < maxPages) {
+        loadedPages += 1;
+        viewerHint.textContent = `Loading History page ${loadedPages} for commit ${commitId.slice(0, 8)}...`;
+
+        const advanced = await loadMoreHistory();
+        await yieldToBrowser();
+
+        if (!advanced) {
+            break;
+        }
+    }
+
+    return historyContainsCommit(commitId);
+}
+
+function yieldToBrowser() {
+    return new Promise(resolve => window.setTimeout(resolve, 0));
+}
+
+async function findOriginCommitForEntity(type, entityId) {
+    if (!type || !entityId) {
+        return null;
+    }
+
+    const repositoryPath = repoPathInput.value.trim();
+    if (!repositoryPath) {
+        return null;
+    }
+
+    const params = new URLSearchParams({ path: repositoryPath });
+    params.set("type", type);
+    params.set("id", entityId);
+
+    try {
+        const response = await fetch(`/api/entity-origin-commit?${params.toString()}`, { cache: "no-store" });
+        if (!response.ok) {
+            return null;
+        }
+
+        const payload = await response.json();
+        return payload?.commitId ?? null;
+    } catch {
+        return null;
+    }
+}
+
+async function materializeHistoryCommit(commitId) {
+    if (!commitId || !currentOverview || historyContainsCommit(commitId)) {
+        return historyContainsCommit(commitId);
+    }
+
+    const commit = await loadTimelineCommitById(commitId);
+    if (!commit) {
+        return false;
+    }
+
+    currentOverview.timelineCommits = [
+        ...currentOverview.timelineCommits.filter(item => item.id !== commit.id),
+        commit
+    ];
+    currentOverview.timelinePage = {
+        ...(currentOverview.timelinePage ?? {}),
+        loadedCount: currentOverview.timelineCommits.length,
+        totalCount: Math.max(currentOverview.timelinePage?.totalCount ?? 0, currentOverview.timelineCommits.length)
+    };
+
+    renderSummary(currentOverview);
+    renderCommits(currentOverview);
+    syncActiveWorkspaceFromGlobals();
+    return true;
+}
+
+async function loadTimelineCommitById(commitId) {
+    const response = await fetch(`/api/commit?id=${encodeURIComponent(commitId)}&path=${encodeURIComponent(repoPathInput.value)}`, { cache: "no-store" });
+    if (!response.ok) {
+        return null;
+    }
+
+    const detail = await response.json();
+    return {
+        id: detail.id,
+        branch: detail.branch,
+        author: detail.author,
+        modelName: detail.modelName,
+        modelVersion: detail.modelVersion,
+        message: detail.message,
+        createdAtUtc: detail.createdAtUtc,
+        snapshotHash: detail.snapshotHash,
+        summary: detail.diff?.summary ?? detail.changedEntitySummary ?? "No entity changes",
+        changedEntityCount: detail.changedEntityCount,
+        changedEntitySummary: detail.changedEntitySummary,
+        parentIds: Array.isArray(detail.parentIds) ? detail.parentIds : [],
+        headBranches: [],
+        cognitivePath: detail.cognitivePath
+    };
+}
+
+function historyContainsCommit(commitId) {
+    return Array.isArray(currentOverview?.timelineCommits)
+        && currentOverview.timelineCommits.some(commit => commit.id === commitId);
+}
+
+function ensureHistoryCommitVisible(commitId) {
+    const commit = currentOverview?.timelineCommits?.find(item => item.id === commitId);
+    if (!commit) {
+        return;
+    }
+
+    if (currentOverview.timelineScope === "all" && currentHistoryBranchFilters.size > 0 && !currentHistoryBranchFilters.has(commit.branch)) {
+        currentHistoryBranchFilters.add(commit.branch);
+        persistHistoryBranchFilters();
+    }
+}
+
+function scrollHistoryCommitIntoView(commitId, options = {}) {
+    const attempts = options.attempts ?? 0;
+    const run = () => {
+        const selector = `[data-history-commit-id="${cssEscape(commitId)}"]`;
+        const row = commitList?.querySelector(selector);
+        if (!row) {
+            if (attempts > 0) {
+                window.setTimeout(() => scrollHistoryCommitIntoView(commitId, { ...options, attempts: attempts - 1 }), 80);
+            }
+            return;
+        }
+
+        const container = resolveHistoryScrollContainer(row);
+        const rowRect = row.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        const targetTop = container.scrollTop + rowRect.top - containerRect.top - Math.max(24, container.clientHeight * 0.22);
+
+        container.scrollTo({
+            top: Math.max(0, targetTop),
+            left: 0,
+            behavior: options.immediate ? "auto" : "smooth"
+        });
+
+        row.classList.add("history-row-jump-target");
+        window.setTimeout(() => row.classList.remove("history-row-jump-target"), 1800);
+    };
+
+    if (options.immediate) {
+        run();
+        return;
+    }
+
+    window.requestAnimationFrame(run);
+}
+
+function resolveHistoryScrollContainer(row) {
+    for (let element = row.parentElement; element && element !== commitList.parentElement; element = element.parentElement) {
+        if (element === commitList) {
+            return element;
+        }
+
+        const style = window.getComputedStyle(element);
+        const canScroll = element.scrollHeight > element.clientHeight
+            && /(auto|scroll)/i.test(style.overflowY);
+        if (canScroll) {
+            return element;
+        }
+    }
+
+    return commitList;
+}
+
+function cssEscape(value) {
+    if (window.CSS?.escape) {
+        return window.CSS.escape(value);
+    }
+
+    return String(value).replace(/["\\]/g, "\\$&");
+}
+
+async function renderGraph(graph, options = {}) {
     const preserveViewport = options.preserveViewport ?? false;
+    const forceRender = options.forceRender ?? false;
     const viewportSnapshot = preserveViewport ? captureGraphViewport() : null;
     const scopedGraph = currentCommitFocusEnabled && currentCommitFocus
         ? filterGraphByCommitFocus(graph, currentCommitFocus)
         : graph;
     const filteredGraph = filterGraphByTaskState(scopedGraph);
+    const progressiveRender = shouldRenderGraphProgressively(filteredGraph);
+    const renderKey = buildGraphRenderKey(graph, filteredGraph);
+    const hasRenderedGraphDom = Boolean(graphCanvas.querySelector(".graph-stage-viewport, .detail-empty"));
+    if (!forceRender && (renderKey === activeGraphRenderKey || (renderKey === completedGraphRenderKey && hasRenderedGraphDom))) {
+        renderGraphFooter(graph, filteredGraph);
+        return;
+    }
+
+    const renderId = ++graphRenderSequence;
+    activeGraphRenderKey = renderKey;
     currentRenderedGraph = filteredGraph;
     graphCanvas.innerHTML = "";
+    renderEpicRail(graph);
+    updateGraphZoomControls();
     renderGraphFocusCaption(filteredGraph);
     renderGraphNodeActions();
     renderInterpretationDetail();
+    if (progressiveRender) {
+        renderGraphProgressStatus(`Preparing ${filteredGraph.nodes.length} nodes and ${filteredGraph.edges.length} relations...`);
+        await nextGraphRenderFrame();
+        if (!assertGraphRenderCurrent(renderId)) {
+            if (activeGraphRenderKey === renderKey) {
+                activeGraphRenderKey = null;
+            }
+            return;
+        }
+    }
 
     if (filteredGraph.nodes.length === 0) {
         const manualStates = taskStateFilters
@@ -2574,7 +3493,12 @@ function renderGraph(graph, options = {}) {
         }
 
         graphCanvas.innerHTML = `<p class="detail-empty">No graph nodes match the selected task states.${hint ? ` ${hint}` : ""}</p>`;
+        renderEpicRail(graph);
+        renderGraphFooter(graph, filteredGraph);
         clearGraphNodeActions();
+        clearGraphProgressStatus();
+        activeGraphRenderKey = null;
+        completedGraphRenderKey = renderKey;
         if (preserveViewport) {
             restoreGraphViewport(viewportSnapshot);
         } else {
@@ -2583,9 +3507,13 @@ function renderGraph(graph, options = {}) {
         return;
     }
 
+    const stageViewport = document.createElement("div");
+    stageViewport.className = "graph-stage-viewport";
+    graphCanvas.appendChild(stageViewport);
+
     const stage = document.createElement("div");
     stage.className = "graph-stage";
-    graphCanvas.appendChild(stage);
+    stageViewport.appendChild(stage);
 
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.classList.add("graph-svg");
@@ -2628,6 +3556,7 @@ function renderGraph(graph, options = {}) {
     const positions = new Map();
     const columnGap = 182;
     const nodeVerticalGap = 2;
+    const commitEvidenceLaneOffset = -58;
     const topLaneBaseY = 72;
     const topLaneFloorY = 38;
     let columnIndex = 0;
@@ -2647,13 +3576,15 @@ function renderGraph(graph, options = {}) {
         stage.appendChild(column);
         let columnY = 88;
 
-        nodes.forEach((node) => {
+        let nodeIndex = 0;
+        for (const node of nodes) {
             const y = columnY;
             const inlineBadge = buildGraphNodeBadge(node);
             const displayType = node.type === "Goal" && subGoalIds.has(node.id) ? "Sub-goal" : node.type;
 
             const card = document.createElement("button");
             const commitFocusClass = currentCommitFocus ? "commit-focus" : "";
+            const nodeTypeClass = `graph-node-type-${normalizeRelationshipClass(node.type)}`;
             const commitChangedClass = currentCommitFocus?.changedIds.has(node.id) ? "commit-changed" : "";
             const commitToneClass = resolveCommitFocusNodeToneClass(currentCommitFocus, node.id);
             const commitRoleClass = resolveCommitFocusRoleClass(currentCommitFocus, node.id, subGoalIds);
@@ -2663,9 +3594,16 @@ function renderGraph(graph, options = {}) {
                 ? "graph-node-new"
                 : "";
             const relatedHint = buildCommitFocusNodeHint(currentCommitFocus, node.id);
-            card.className = `graph-node ${commitFocusClass} ${commitChangedClass} ${commitToneClass} ${commitRoleClass} ${retainedNodeClass} ${newNodeClass} ${selectedNodeId === node.id ? "active" : ""} ${nodePathClass}`;
+            card.className = `graph-node ${nodeTypeClass} ${commitFocusClass} ${commitChangedClass} ${commitToneClass} ${commitRoleClass} ${retainedNodeClass} ${newNodeClass} ${selectedNodeId === node.id ? "active" : ""} ${nodePathClass}`;
+            card.dataset.graphNodeId = node.id;
             card.style.left = `${columnIndex * columnGap + 10}px`;
-            card.style.top = `${y}px`;
+            let renderedY = y;
+            if (currentCommitFocus && node.type === "Evidence" && commitToneClass === "commit-secondary") {
+                renderedY = Math.max(42, y + commitEvidenceLaneOffset - nodeIndex * 8);
+                card.classList.add("commit-support-evidence");
+            }
+
+            card.style.top = `${renderedY}px`;
             if (newNodeClass) {
                 card.style.borderColor = "#63a98c";
                 card.style.background = "linear-gradient(180deg, #ffffff 0%, #f5fcf8 100%)";
@@ -2685,14 +3623,26 @@ function renderGraph(graph, options = {}) {
             const cardHeight = card.offsetHeight || 56;
             positions.set(node.id, {
                 x: columnIndex * columnGap + 10,
-                y,
+                y: renderedY,
                 width: 160,
                 height: cardHeight,
-                centerY: y + cardHeight / 2,
+                centerY: renderedY + cardHeight / 2,
                 columnIndex
             });
             columnY += cardHeight + nodeVerticalGap;
-        });
+            nodeIndex += 1;
+
+            if (progressiveRender && positions.size % graphProgressiveNodeBatchSize === 0) {
+                renderGraphProgressStatus(`Rendering graph nodes ${positions.size}/${filteredGraph.nodes.length}...`);
+                await nextGraphRenderFrame();
+                if (!assertGraphRenderCurrent(renderId)) {
+                    if (activeGraphRenderKey === renderKey) {
+                        activeGraphRenderKey = null;
+                    }
+                    return;
+                }
+            }
+        }
 
         maxColumnBottom = Math.max(maxColumnBottom, columnY);
 
@@ -2712,15 +3662,31 @@ function renderGraph(graph, options = {}) {
     const stageHeight = Math.max(720, maxColumnBottom + 90);
     stage.style.width = `${stageWidth}px`;
     stage.style.height = `${stageHeight}px`;
+    stage.style.transform = `scale(${currentGraphZoom})`;
+    stageViewport.style.width = `${Math.ceil(stageWidth * currentGraphZoom)}px`;
+    stageViewport.style.height = `${Math.ceil(stageHeight * currentGraphZoom)}px`;
+    currentGraphStageSize = { width: stageWidth, height: stageHeight };
     svg.setAttribute("viewBox", `0 0 ${stageWidth} ${stageHeight}`);
     const visibleEdges = filteredGraph.edges.filter(edge => currentShowInterpretationRelations || !isSecondaryRelationEdge(edge));
+    renderGraphFooter(graph, filteredGraph, { visibleRelationCount: visibleEdges.length });
+    if (progressiveRender) {
+        renderGraphProgressStatus(`Drawing ${visibleEdges.length} visible relations...`);
+        await nextGraphRenderFrame();
+        if (!assertGraphRenderCurrent(renderId)) {
+            if (activeGraphRenderKey === renderKey) {
+                activeGraphRenderKey = null;
+            }
+            return;
+        }
+    }
     const edgePlans = buildGraphEdgePlans(visibleEdges, positions, { topLaneBaseY, topLaneFloorY });
 
-    visibleEdges.forEach((edge, edgeIndex) => {
+    for (let edgeIndex = 0; edgeIndex < visibleEdges.length; edgeIndex += 1) {
+        const edge = visibleEdges[edgeIndex];
         const from = positions.get(edge.from);
         const to = positions.get(edge.to);
         if (!from || !to) {
-            return;
+            continue;
         }
 
         const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
@@ -2732,7 +3698,10 @@ function renderGraph(graph, options = {}) {
         line.setAttribute("stroke-width", "2");
         line.setAttribute("stroke-linecap", "round");
         line.setAttribute("stroke-linejoin", "round");
+        line.dataset.edgeFrom = edge.from;
+        line.dataset.edgeTo = edge.to;
         line.classList.add("graph-edge");
+        line.classList.add(`graph-edge-${normalizeRelationshipClass(edge.relationship)}`);
 
         const edgeKey = `${edge.from}->${edge.to}`;
         if (selectedPathState.hasSelection) {
@@ -2750,19 +3719,36 @@ function renderGraph(graph, options = {}) {
         if (currentCommitFocus?.nodeIds?.has(edge.from) && currentCommitFocus?.nodeIds?.has(edge.to)) {
             line.classList.add("commit-path");
         }
-        if (currentCommitFocus?.primaryIds?.has(edge.from) && currentCommitFocus?.primaryIds?.has(edge.to)) {
+        if (isCommitPrimaryLineageEdge(edge, currentCommitFocus)) {
             line.classList.add("commit-primary");
         } else if (currentCommitFocus?.nodeIds?.has(edge.from) && currentCommitFocus?.nodeIds?.has(edge.to)) {
             line.classList.add("commit-secondary");
         }
-        if (currentCommitFocus?.changedIds?.has(edge.from) && currentCommitFocus?.changedIds?.has(edge.to)) {
+        if (isCommitPrimaryLineageEdge(edge, currentCommitFocus) && currentCommitFocus?.changedIds?.has(edge.from) && currentCommitFocus?.changedIds?.has(edge.to)) {
             line.classList.add("commit-path-changed");
         }
+        if (isSecondaryCommitSupportEdge(edge)) {
+            line.classList.add("graph-edge-secondary-support");
+        }
         if (isSecondaryRelationEdge(edge)) {
-            line.classList.add("graph-edge-interpretation", `graph-edge-${edge.relationship}`);
+            line.classList.add("graph-edge-interpretation", `graph-edge-${normalizeRelationshipClass(edge.relationship)}`);
         }
         svg.appendChild(line);
-    });
+        if (progressiveRender && (edgeIndex + 1) % graphProgressiveEdgeBatchSize === 0) {
+            renderGraphProgressStatus(`Drawing graph relations ${edgeIndex + 1}/${visibleEdges.length}...`);
+            await nextGraphRenderFrame();
+            if (!assertGraphRenderCurrent(renderId)) {
+                if (activeGraphRenderKey === renderKey) {
+                    activeGraphRenderKey = null;
+                }
+                return;
+            }
+        }
+    }
+
+    clearGraphProgressStatus();
+    activeGraphRenderKey = null;
+    completedGraphRenderKey = renderKey;
 
     if (preserveViewport) {
         restoreGraphViewport(viewportSnapshot);
@@ -2899,6 +3885,46 @@ function buildSelectedNodePathClass(pathState, nodeId) {
     }
 
     return "path-dimmed";
+}
+
+function applyGraphNodeSelection(nodeId) {
+    const graph = currentRenderedGraph;
+    if (!graph || (nodeId && !graph.nodes?.some(node => node.id === nodeId))) {
+        return false;
+    }
+
+    const selectedPathState = buildSelectedPathState(graph, nodeId);
+    graphCanvas.querySelectorAll(".graph-node[data-graph-node-id]").forEach((card) => {
+        const cardNodeId = card.dataset.graphNodeId;
+        card.classList.toggle("active", cardNodeId === nodeId);
+        card.classList.remove("path-shared", "path-outgoing", "path-incoming", "path-dimmed");
+        const nodePathClass = buildSelectedNodePathClass(selectedPathState, cardNodeId);
+        if (nodePathClass) {
+            card.classList.add(nodePathClass);
+        }
+    });
+
+    graphCanvas.querySelectorAll(".graph-edge[data-edge-from][data-edge-to]").forEach((line) => {
+        const edgeKey = `${line.dataset.edgeFrom}->${line.dataset.edgeTo}`;
+        line.classList.remove("selected-shared", "selected-outgoing", "selected-incoming", "edge-dimmed");
+
+        if (!selectedPathState.hasSelection) {
+            return;
+        }
+
+        if (selectedPathState.sharedEdges.has(edgeKey)) {
+            line.classList.add("selected-shared");
+        } else if (selectedPathState.outgoingEdges.has(edgeKey)) {
+            line.classList.add("selected-outgoing");
+        } else if (selectedPathState.incomingEdges.has(edgeKey)) {
+            line.classList.add("selected-incoming");
+        } else {
+            line.classList.add("edge-dimmed");
+        }
+    });
+
+    renderEpicRail(currentGraph);
+    return true;
 }
 
 function filterGraphBySelectedCommitLineage(graph, selectedId) {
@@ -3110,18 +4136,27 @@ function renderSelectedNodeDetail(nodeId, options = {}) {
         return;
     }
 
-    const node = graph.nodes.find(item => item.id === nodeId);
+    const visibleNode = graph.nodes.find(item => item.id === nodeId);
+    const fallbackGraph = currentGraph && currentGraph !== graph ? currentGraph : null;
+    const node = visibleNode ?? fallbackGraph?.nodes?.find(item => item.id === nodeId);
     if (!node) {
         nodeDetail.textContent = "Selected node is no longer visible with the current filters.";
         return;
     }
 
-    const incoming = graph.edges.filter(edge => edge.to === nodeId);
-    const outgoing = graph.edges.filter(edge => edge.from === nodeId);
+    const detailGraph = visibleNode ? graph : fallbackGraph;
+    const incoming = detailGraph.edges.filter(edge => edge.to === nodeId);
+    const outgoing = detailGraph.edges.filter(edge => edge.from === nodeId);
     const connectedNodeIds = [...new Set([...incoming.map(edge => edge.from), ...outgoing.map(edge => edge.to)])];
-    const connectedNodes = graph.nodes.filter(nodeItem => connectedNodeIds.includes(nodeItem.id));
+    const connectedNodes = detailGraph.nodes.filter(nodeItem => connectedNodeIds.includes(nodeItem.id));
 
-    nodeDetail.textContent = JSON.stringify({ node, incoming, outgoing, connectedNodes }, null, 2);
+    nodeDetail.textContent = JSON.stringify({
+        node,
+        visibleInCurrentGraph: Boolean(visibleNode),
+        incoming,
+        outgoing,
+        connectedNodes
+    }, null, 2);
 
     if (scrollIntoView) {
         const activeNode = graphCanvas.querySelector(".graph-node.active");
@@ -3132,7 +4167,9 @@ function renderSelectedNodeDetail(nodeId, options = {}) {
 async function showNode(nodeId, options = {}) {
     await ensureAllGraphExpansion(nodeId);
     selectedNodeId = nodeId;
-    renderGraph(currentGraph, { preserveViewport: true });
+    if (!applyGraphNodeSelection(nodeId)) {
+        void renderGraph(currentGraph, { preserveViewport: true });
+    }
     renderGraphNodeActions();
     if (currentOverview) {
         renderTasks(currentOverview);
@@ -3151,7 +4188,9 @@ function clearGraphSelection() {
 
     selectedNodeId = null;
     acknowledgeNewNodes();
-    renderGraph(currentGraph, { preserveViewport: true });
+    if (!applyGraphNodeSelection(null)) {
+        void renderGraph(currentGraph, { preserveViewport: true });
+    }
     clearGraphNodeActions();
     if (currentOverview) {
         renderTasks(currentOverview);
@@ -3201,6 +4240,9 @@ function resetViewer(message) {
     currentOverview = null;
     currentGraph = null;
     currentRenderedGraph = null;
+    activeGraphRenderKey = null;
+    completedGraphRenderKey = null;
+    graphRenderSequence += 1;
     currentGraphDemandMode = "full";
     expandedAllGraphNodeIds = new Set();
     currentHypothesisRanking = [];
@@ -3219,9 +4261,11 @@ function resetViewer(message) {
     taskActiveList.innerHTML = "";
     taskClosedList.innerHTML = "";
     lastLoaded.textContent = "Not loaded yet";
-    freshnessStatus.textContent = "Auto-refresh off";
+    freshnessStatus.textContent = "Live sync waiting";
     commitList.innerHTML = "";
     graphCanvas.innerHTML = "";
+    renderEpicRail({ nodes: [], edges: [] });
+    renderGraphFooter(null, null);
     graphCaption.textContent = "No repository loaded";
     graphFocusCaption.textContent = "Showing all task states.";
     clearGraphNodeActions();
@@ -3384,6 +4428,13 @@ function filterGraphByTaskState(graph) {
                     visibleIds.add(node.id);
                 }
             } else if (directGoalIds.has(node.id)) {
+                visibleIds.add(node.id);
+            }
+            continue;
+        }
+
+        if (node.type === "Epic") {
+            if (hasSelectedAssociation) {
                 visibleIds.add(node.id);
             }
             continue;
@@ -3916,7 +4967,7 @@ function shouldIncludeCommitFocusNeighbor(currentNode, neighborNode, edge) {
         return false;
     }
 
-    if (isDirectEvidenceConclusionSupportEdge(edge)) {
+    if (isSecondaryCommitSupportEdge(edge)) {
         return false;
     }
 
@@ -3949,6 +5000,7 @@ function collectPathNodeIds(cognitivePath, ids = new Set(), options = {}) {
     const goalIds = Array.isArray(path.goalIds) ? path.goalIds : [];
     const subGoalIds = Array.isArray(path.subGoalIds) ? path.subGoalIds : [];
     const taskIds = Array.isArray(path.taskIds) ? path.taskIds : [];
+    const epicIds = Array.isArray(path.epicIds) ? path.epicIds : [];
     const hypothesisIds = Array.isArray(path.hypothesisIds) ? path.hypothesisIds : [];
     const decisionIds = Array.isArray(path.decisionIds) ? path.decisionIds : [];
     const conclusionIds = Array.isArray(path.conclusionIds) ? path.conclusionIds : [];
@@ -3962,13 +5014,16 @@ function collectPathNodeIds(cognitivePath, ids = new Set(), options = {}) {
         if (taskIds[0]) {
             pushPathNodeId(output, `Task:${taskIds[0]}`);
         }
+        if (epicIds[0]) {
+            pushPathNodeId(output, `Epic:${epicIds[0]}`);
+        }
         if (hypothesisIds[0]) {
             pushPathNodeId(output, `Hypothesis:${hypothesisIds[0]}`);
         }
         if (decisionIds[0]) {
             pushPathNodeId(output, `Decision:${decisionIds[0]}`);
         }
-        if (!decisionIds[0] && conclusionIds[0]) {
+        if (conclusionIds[0]) {
             pushPathNodeId(output, `Conclusion:${conclusionIds[0]}`);
         }
         return output;
@@ -3978,6 +5033,7 @@ function collectPathNodeIds(cognitivePath, ids = new Set(), options = {}) {
         ["Goal", goalIds],
         ["Goal", subGoalIds],
         ["Task", taskIds],
+        ["Epic", epicIds],
         ["Hypothesis", hypothesisIds],
         ["Decision", decisionIds],
         ["Conclusion", conclusionIds]
@@ -4531,7 +5587,7 @@ function renderGraphFocusCaption(filteredGraph) {
 }
 
 function syncAutoRefresh() {
-    if (!autoRefreshToggle.checked || !repoPathInput.value.trim()) {
+    if (!repoPathInput.value.trim()) {
         stopAutoRefresh();
         return;
     }
@@ -4545,11 +5601,11 @@ function syncAutoRefresh() {
         }
 
         try {
-            await loadOverview(branchSelect.value || undefined);
+            await loadOverview(branchSelect.value || undefined, { backgroundRefresh: true, targetWorkspaceId: activeWorkspaceTabId });
         } catch (error) {
-            viewerHint.textContent = `Auto-refresh failed: ${error?.message ?? error}`;
+            viewerHint.textContent = `Live sync failed: ${error?.message ?? error}`;
             stopAutoRefresh();
-            renderFreshnessStatus("Auto-refresh paused after failure");
+            renderFreshnessStatus("Live sync paused after failure");
         }
     }, autoRefreshIntervalMs);
 }
@@ -4900,23 +5956,24 @@ function renderFreshnessStatus(overrideText) {
         return;
     }
 
-    if (!autoRefreshToggle.checked) {
-        freshnessStatus.textContent = "Auto-refresh off";
-        return;
-    }
-
     const loadedText = lastLoadedAt
-        ? `Auto-refresh on (${Math.round(autoRefreshIntervalMs / 1000)}s) · last sync ${lastLoadedAt.toLocaleTimeString()}`
-        : `Auto-refresh on (${Math.round(autoRefreshIntervalMs / 1000)}s)`;
+        ? `Live sync ${Math.round(autoRefreshIntervalMs / 1000)}s - last sync ${lastLoadedAt.toLocaleTimeString()}`
+        : `Live sync ${Math.round(autoRefreshIntervalMs / 1000)}s`;
     freshnessStatus.textContent = loadedText;
 }
 
 function escapeHtml(value) {
     value ??= "";
-    return value
+    return String(value)
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;");
+}
+
+function escapeAttribute(value) {
+    return escapeHtml(value)
+        .replaceAll("\"", "&quot;")
+        .replaceAll("'", "&#39;");
 }
 
 function formatDateTime(value) {
@@ -5292,9 +6349,14 @@ function findNearestNodeIdByType(graph, startNodeId, nodeType) {
 function renderPlaybookDetail(payload) {
     const selected = Array.isArray(payload?.selected) ? payload.selected : [];
     const available = Array.isArray(payload?.available) ? payload.available : [];
+    const repeatedIssues = Array.isArray(payload?.operationalReview?.repeatedIssues)
+        ? payload.operationalReview.repeatedIssues
+        : [];
+    const recurrenceHtml = renderOperationalRecurrenceNotice(repeatedIssues);
 
     if (selected.length === 0) {
         playbookDetail.innerHTML = `
+            ${recurrenceHtml}
             <p class="detail-empty">No operational runbooks match the current focus.</p>
             ${available.length > 0 ? `
                 <details class="detail-disclosure runbook-available">
@@ -5308,6 +6370,7 @@ function renderPlaybookDetail(payload) {
     }
 
     playbookDetail.innerHTML = `
+        ${recurrenceHtml}
         <div class="runbook-stack">
             ${selected.map(runbook => `
                 <article class="runbook-card">
@@ -5346,6 +6409,36 @@ function renderPlaybookDetail(payload) {
                     ${available.map(runbook => `<li>${escapeHtml(runbook.title)} <span class="detail-count">${escapeHtml(runbook.kind)}</span></li>`).join("")}
                 </ul>
             </details>` : ""}
+    `;
+}
+
+function renderOperationalRecurrenceNotice(repeatedIssues) {
+    if (!Array.isArray(repeatedIssues) || repeatedIssues.length === 0) {
+        return "";
+    }
+
+    return `
+        <div class="operational-recurrence">
+            <div class="operational-recurrence-header">
+                <strong>Repeated issue</strong>
+                <span class="detail-count">${repeatedIssues.length}</span>
+            </div>
+            ${repeatedIssues.slice(0, 3).map(issue => `
+                <div class="operational-recurrence-item">
+                    <div>${escapeHtml(issue.summary ?? "Operational issue repeated")}</div>
+                    <div class="runbook-meta">
+                        <div class="runbook-meta-row">
+                            <span class="runbook-meta-row-label">Count</span>
+                            <div>${escapeHtml(String(issue.occurrenceCount ?? 0))}</div>
+                        </div>
+                        <div class="runbook-meta-row">
+                            <span class="runbook-meta-row-label">Action</span>
+                            <div>${escapeHtml(issue.recommendation ?? "Update the related runbook before retrying.")}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join("")}
+        </div>
     `;
 }
 
@@ -5415,12 +6508,57 @@ function isDirectEvidenceConclusionSupportEdge(edge) {
         && String(edge.relationship ?? "").toLowerCase() === "supports";
 }
 
+function isTaskOrGoalClosureEdge(edge) {
+    const relationship = String(edge?.relationship ?? "").toLowerCase();
+    if (relationship !== "resolved-by") {
+        return false;
+    }
+
+    return (edge?.from?.startsWith("Task:") || edge?.from?.startsWith("Goal:"))
+        && edge?.to?.startsWith("Conclusion:");
+}
+
+function isEvidenceDecisionSupportEdge(edge) {
+    return edge?.from?.startsWith("Evidence:")
+        && edge?.to?.startsWith("Decision:")
+        && String(edge.relationship ?? "").toLowerCase() === "supports";
+}
+
+function isTaskEvidenceSupportEdge(edge) {
+    return edge?.from?.startsWith("Task:")
+        && edge?.to?.startsWith("Evidence:")
+        && String(edge.relationship ?? "").toLowerCase() === "supported-by";
+}
+
+function isSecondaryCommitSupportEdge(edge) {
+    return isDirectEvidenceConclusionSupportEdge(edge)
+        || isEvidenceDecisionSupportEdge(edge)
+        || isTaskEvidenceSupportEdge(edge)
+        || isTaskOrGoalClosureEdge(edge);
+}
+
 function isSecondaryRelationEdge(edge) {
-    return isInterpretationRelationEdge(edge) || isDirectEvidenceConclusionSupportEdge(edge);
+    return isInterpretationRelationEdge(edge) || isSecondaryCommitSupportEdge(edge);
 }
 
 function shouldUseEdgeForPrimaryTraversal(edge) {
     return !isSecondaryRelationEdge(edge);
+}
+
+function isCommitPrimaryLineageEdge(edge, commitFocus) {
+    if (!commitFocus?.primaryIds?.has(edge?.from) || !commitFocus?.primaryIds?.has(edge?.to)) {
+        return false;
+    }
+
+    return !isSecondaryCommitSupportEdge(edge);
+}
+
+function normalizeRelationshipClass(relationship) {
+    return String(relationship ?? "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "") || "secondary";
 }
 
 function renderInterpretationDetail() {

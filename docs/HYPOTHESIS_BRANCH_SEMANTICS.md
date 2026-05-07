@@ -229,4 +229,3 @@ Recommended order:
 3. render minimal inspection surfaces in the viewer
 4. validate on contradiction-heavy regression cases
 5. only then consider whether any part should map to repository branching
-
