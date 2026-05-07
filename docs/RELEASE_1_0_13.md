@@ -44,6 +44,7 @@ The release keeps the agent start path simple: install CTX, connect an MCP-capab
 - Viewer Browse opens the local folder picker first and validates `.ctx` only after the operator selects a folder.
 - Viewer docs now state the browser security boundary clearly: browser directory APIs expose handles or relative paths, while the local backend owns real repository-path loading.
 - The public landing and MCP setup pages now target CTX 1.0.13.
+- The public MCP setup page now includes Gemini CLI and Devin configuration examples, with a clear Devin runtime-boundary warning.
 - Release preflight now checks the packaging contract for console-referenced files: if `ctx helper`, install docs, or release notes point to an installed file, the portable bundle and install scripts must ship it.
 
 ## Fixed

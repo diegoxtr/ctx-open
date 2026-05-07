@@ -144,6 +144,18 @@
           <pre><code id="codex-snippet"></code></pre>
           <button type="button" class="button copy-button" data-copy-target="codex-snippet">Copy Codex TOML</button>
         </article>
+        <article class="agent-card">
+          <h3>Gemini CLI</h3>
+          <p>Save this in <code>.gemini/settings.json</code> for project scope, or in your user Gemini settings file.</p>
+          <pre><code id="gemini-snippet"></code></pre>
+          <button type="button" class="button copy-button" data-copy-target="gemini-snippet">Copy Gemini JSON</button>
+        </article>
+        <article class="agent-card">
+          <h3>Devin</h3>
+          <p>Use STDIO only in an environment where Devin can run the CTX launcher. Devin cloud cannot start a server on your private laptop path.</p>
+          <pre><code id="devin-snippet"></code></pre>
+          <button type="button" class="button copy-button" data-copy-target="devin-snippet">Copy Devin STDIO JSON</button>
+        </article>
       </div>
     </section>
   </main>
@@ -217,6 +229,13 @@
       document.getElementById("claude-smoke-snippet").textContent = `Use the ctx MCP server. Call ctx_plan with purpose "claude-smoke-test". Report the repository branch, dirty state, recommended task, context packet id, and runbook suggestions.`;
       document.getElementById("vscode-snippet").textContent = jsonConfig(command, repoPath, mode, "servers");
       document.getElementById("codex-snippet").textContent = `[mcp_servers.ctx]\ncommand = "${command.replaceAll("\\", "\\\\")}"\nargs = ["--repo", "${repoPath.replaceAll("\\", "\\\\")}", "--mode", "${mode}"]`;
+      document.getElementById("gemini-snippet").textContent = jsonConfig(command, repoPath, mode);
+      document.getElementById("devin-snippet").textContent = JSON.stringify({
+        transport: "STDIO",
+        command,
+        args: ["--repo", repoPath, "--mode", mode],
+        env_variables: {}
+      }, null, 2);
     }
 
     document.querySelectorAll(".platform-button").forEach(button => {
