@@ -3261,7 +3261,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 break;
             case "public-release":
                 guidance.Add("Before sharing or closing the release, produce the bilingual announcement and flyer, or record an explicit omission decision with the reason.");
-                guidance.Add("Before tagging or publishing, verify every console-referenced installed path exists in the packaged layout, including `docs/CLI_COMMANDS.md`, `docs/CTX_VIEWER_GUIDE.md`, `docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md`, `prompts/CTX_HELPER_PROMPT.md`, and `prompts/CTX_AGENT_PROMPT.md`.");
+                guidance.Add("Before tagging or publishing, verify the full public `docs/` tree is copied and every console-referenced installed path exists in the packaged layout, including `docs/TECHNICAL_INDEX.md`, `docs/CLI_COMMANDS.md`, `docs/CTX_VIEWER_GUIDE.md`, `docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md`, `prompts/CTX_HELPER_PROMPT.md`, and `prompts/CTX_AGENT_PROMPT.md`.");
                 guidance.Add("If `ctx helper`, install docs, or release notes tell the operator to read a file from the installed CLI/package, stop publication unless that file is copied by the portable bundle and install scripts.");
                 guidance.Add("Run `ctx preflight --operation github-release` after publishing the GitHub Release so the post-release announcement/flyer runbook is surfaced deliberately.");
                 break;

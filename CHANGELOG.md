@@ -2,6 +2,12 @@
 
 All notable changes to CTX will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- Distribution packaging now carries the full public `docs/` tree and `ctx --help` points to the installed `docs/TECHNICAL_INDEX.md` documentation index.
+
 ## [1.0.13] - 2026-05-07
 
 ### Added

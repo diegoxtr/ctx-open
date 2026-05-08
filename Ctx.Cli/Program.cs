@@ -639,6 +639,7 @@ static string BuildHelpText(string repositoryPath)
     var projectRoot = ResolveProjectRoot(repositoryPath, AppContext.BaseDirectory);
     var projectContext = BuildProjectContextText(projectRoot);
     var cliCommandsDoc = Path.Combine(projectRoot, "docs", "CLI_COMMANDS.md");
+    var technicalIndexDoc = Path.Combine(projectRoot, "docs", "TECHNICAL_INDEX.md");
     var helpState = BuildHelpState(repositoryPath, projectRoot);
     var branchLine = !string.IsNullOrWhiteSpace(helpState.Branch) ? $"  Branch: {helpState.Branch}" : string.Empty;
     var dirtyLine = helpState.Dirty.HasValue ? $"  Dirty: {helpState.Dirty.Value}" : string.Empty;
@@ -714,6 +715,9 @@ MCP Agent Surface:
 
 Full Command Reference:
   {{cliCommandsDoc}}
+
+Installed Documentation Index:
+  {{technicalIndexDoc}}
 
 Branch-like hypothesis reminder:
   Hypothesis branch semantics live inside hypothesis lineage first.
