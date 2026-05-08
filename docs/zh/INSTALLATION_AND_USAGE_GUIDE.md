@@ -246,8 +246,11 @@ dotnet run --project .\Ctx.Cli -- metrics show
 - `bin/`
 - `prompts/CTX_HELPER_PROMPT.md`
 - `prompts/CTX_AGENT_PROMPT.md`
+- `docs/TECHNICAL_INDEX.md`
+- `docs/CLI_COMMANDS.md`
 - `docs/CTX_VIEWER_GUIDE.md`
 - `docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md`
+- 完整的公共 `docs/` 文档树
 - `ctx-install.json`
 
 ## 13. 使用建议

@@ -71,9 +71,7 @@ dotnet publish $viewerProject -c Release -o $viewerPath
 
 Copy-Item (Join-Path $repoRoot "prompts\CTX_HELPER_PROMPT.md") (Join-Path $promptsPath "CTX_HELPER_PROMPT.md") -Force
 Copy-Item (Join-Path $repoRoot "prompts\CTX_AGENT_PROMPT.md") (Join-Path $promptsPath "CTX_AGENT_PROMPT.md") -Force
-Copy-Item (Join-Path $repoRoot "docs\CTX_VIEWER_GUIDE.md") (Join-Path $docsPath "CTX_VIEWER_GUIDE.md") -Force
-Copy-Item (Join-Path $repoRoot "docs\CLI_COMMANDS.md") (Join-Path $docsPath "CLI_COMMANDS.md") -Force
-Copy-Item (Join-Path $repoRoot "docs\CTX_AUTONOMOUS_OPERATION_PROTOCOL.md") (Join-Path $docsPath "CTX_AUTONOMOUS_OPERATION_PROTOCOL.md") -Force
+Copy-Item (Join-Path $repoRoot "docs\*") $docsPath -Recurse -Force
 
 $cliLauncher = @"
 @echo off

@@ -24,8 +24,10 @@ $viewerProject = Join-Path $repoRoot "Ctx.Viewer\Ctx.Viewer.csproj"
 $agentLinkPrompt = Join-Path $repoRoot "distribution\agent-link\CTX_AGENT_LINK_PROMPT.txt"
 $helperPrompt = Join-Path $repoRoot "prompts\CTX_HELPER_PROMPT.md"
 $installManifest = Join-Path $repoRoot "distribution\install-manifest.json"
+$docsSource = Join-Path $repoRoot "docs"
 $viewerGuide = Join-Path $repoRoot "docs\CTX_VIEWER_GUIDE.md"
 $cliCommands = Join-Path $repoRoot "docs\CLI_COMMANDS.md"
+$technicalIndex = Join-Path $repoRoot "docs\TECHNICAL_INDEX.md"
 $agentPrompt = Join-Path $repoRoot "prompts\CTX_AGENT_PROMPT.md"
 $autonomousProtocol = Join-Path $repoRoot "docs\CTX_AUTONOMOUS_OPERATION_PROTOCOL.md"
 
@@ -49,6 +51,10 @@ foreach ($requiredDoc in @($viewerGuide, $cliCommands, $agentPrompt, $autonomous
     if (-not (Test-Path $requiredDoc)) {
         throw "Required helper asset not found: $requiredDoc"
     }
+}
+
+if (-not (Test-Path $technicalIndex)) {
+    throw "Documentation index not found: $technicalIndex"
 }
 
 if (-not (Test-Path $mcpProject)) {
@@ -151,10 +157,8 @@ foreach ($target in $targets) {
     Copy-Item $agentLinkPrompt (Join-Path $metaOut "CTX_AGENT_LINK_PROMPT.txt")
     Copy-Item $helperPrompt (Join-Path $promptOut "CTX_HELPER_PROMPT.md")
     Copy-Item $installManifest (Join-Path $metaOut "install-manifest.json")
-    Copy-Item $viewerGuide (Join-Path $docsOut "CTX_VIEWER_GUIDE.md")
-    Copy-Item $cliCommands (Join-Path $docsOut "CLI_COMMANDS.md")
+    Copy-Item (Join-Path $docsSource "*") $docsOut -Recurse -Force
     Copy-Item $agentPrompt (Join-Path $promptOut "CTX_AGENT_PROMPT.md")
-    Copy-Item $autonomousProtocol (Join-Path $docsOut "CTX_AUTONOMOUS_OPERATION_PROTOCOL.md")
     $target | ConvertTo-Json -Depth 4 | Set-Content -Path (Join-Path $metaOut "target.json") -Encoding ASCII
 
     Write-PortableLaunchers `

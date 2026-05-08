@@ -132,11 +132,15 @@ Expected installed layout:
     CTX_HELPER_PROMPT.md
     CTX_AGENT_PROMPT.md
   docs/
+    TECHNICAL_INDEX.md
     CLI_COMMANDS.md
     CTX_VIEWER_GUIDE.md
     CTX_AUTONOMOUS_OPERATION_PROTOCOL.md
+    ...
   ctx-install.json
 ```
+
+The installed `docs/` folder contains the full public documentation tree. Use `docs/TECHNICAL_INDEX.md` as the local documentation entry point after install.
 
 Portable/source overrides remain available if needed:
 
@@ -364,15 +368,18 @@ An installed CTX root also carries:
 - `acp/`
 - `prompts/CTX_HELPER_PROMPT.md`
 - `prompts/CTX_AGENT_PROMPT.md`
+- `docs/TECHNICAL_INDEX.md`
 - `docs/CLI_COMMANDS.md`
 - `docs/CTX_VIEWER_GUIDE.md`
 - `docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md`
+- the rest of the public `docs/` tree
 - `ctx-install.json`
 
 Release packaging rule:
 
 - any file referenced by `ctx helper`, install instructions, or console-facing release notes must exist in the installed layout
 - if a command tells the operator to read a CLI reference, the package must include `docs/CLI_COMMANDS.md`
+- if the helper points to the installed documentation index, the package must include `docs/TECHNICAL_INDEX.md`
 - release preflight should stop publication when console-referenced files are missing from the portable bundle or installer copy steps
 
 ## 13. Usage recommendations

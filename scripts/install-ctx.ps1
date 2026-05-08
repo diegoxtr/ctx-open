@@ -106,20 +106,19 @@ function Copy-ContextDocs {
         [string]$PromptsTargetPath
     )
 
-    $docMappings = @(
-        @{ Source = Join-Path $SourceRoot "docs\CTX_VIEWER_GUIDE.md"; Target = Join-Path $DocsTargetPath "CTX_VIEWER_GUIDE.md" },
-        @{ Source = Join-Path $SourceRoot "docs\CLI_COMMANDS.md"; Target = Join-Path $DocsTargetPath "CLI_COMMANDS.md" },
-        @{ Source = Join-Path $SourceRoot "docs\CTX_AUTONOMOUS_OPERATION_PROTOCOL.md"; Target = Join-Path $DocsTargetPath "CTX_AUTONOMOUS_OPERATION_PROTOCOL.md" },
-        @{ Source = Join-Path $SourceRoot "prompts\CTX_AGENT_PROMPT.md"; Target = Join-Path $PromptsTargetPath "CTX_AGENT_PROMPT.md" }
-    )
-
-    foreach ($mapping in $docMappings) {
-        if (-not (Test-Path $mapping.Source)) {
-            throw "Required context asset not found: $($mapping.Source)"
-        }
-
-        Copy-Item $mapping.Source $mapping.Target -Force
+    $docsSource = Join-Path $SourceRoot "docs"
+    if (-not (Test-Path $docsSource)) {
+        throw "Docs folder not found: $docsSource"
     }
+
+    Copy-Item (Join-Path $docsSource "*") $DocsTargetPath -Recurse -Force
+
+    $agentPromptSource = Join-Path $SourceRoot "prompts\CTX_AGENT_PROMPT.md"
+    if (-not (Test-Path $agentPromptSource)) {
+        throw "Required context asset not found: $agentPromptSource"
+    }
+
+    Copy-Item $agentPromptSource (Join-Path $PromptsTargetPath "CTX_AGENT_PROMPT.md") -Force
 }
 
 function Write-WindowsLaunchers {
@@ -351,16 +350,8 @@ function Install-FromPortable {
         Copy-Item (Join-Path $extractRoot "prompts\CTX_AGENT_PROMPT.md") (Join-Path $Prompts "CTX_AGENT_PROMPT.md") -Force
     }
 
-    if (Test-Path (Join-Path $extractRoot "docs\CTX_VIEWER_GUIDE.md")) {
-        Copy-Item (Join-Path $extractRoot "docs\CTX_VIEWER_GUIDE.md") (Join-Path $Docs "CTX_VIEWER_GUIDE.md") -Force
-    }
-
-    if (Test-Path (Join-Path $extractRoot "docs\CLI_COMMANDS.md")) {
-        Copy-Item (Join-Path $extractRoot "docs\CLI_COMMANDS.md") (Join-Path $Docs "CLI_COMMANDS.md") -Force
-    }
-
-    if (Test-Path (Join-Path $extractRoot "docs\CTX_AUTONOMOUS_OPERATION_PROTOCOL.md")) {
-        Copy-Item (Join-Path $extractRoot "docs\CTX_AUTONOMOUS_OPERATION_PROTOCOL.md") (Join-Path $Docs "CTX_AUTONOMOUS_OPERATION_PROTOCOL.md") -Force
+    if (Test-Path (Join-Path $extractRoot "docs")) {
+        Copy-Item (Join-Path $extractRoot "docs\*") $Docs -Recurse -Force
     }
 
     return $extractRoot
@@ -396,7 +387,7 @@ function Test-InstallLayout {
         throw "Installed viewer executable not found: $viewerExe"
     }
 
-    foreach ($requiredDoc in @("CTX_VIEWER_GUIDE.md", "CLI_COMMANDS.md", "CTX_AUTONOMOUS_OPERATION_PROTOCOL.md")) {
+    foreach ($requiredDoc in @("CTX_VIEWER_GUIDE.md", "CLI_COMMANDS.md", "CTX_AUTONOMOUS_OPERATION_PROTOCOL.md", "TECHNICAL_INDEX.md")) {
         $docPath = Join-Path (Split-Path -Parent $Bin) "docs\$requiredDoc"
         if (-not (Test-Path $docPath)) {
             throw "Installed console-referenced documentation not found: $docPath"

@@ -116,11 +116,15 @@ Installed layout:
     CTX_HELPER_PROMPT.md
     CTX_AGENT_PROMPT.md
   docs/
+    TECHNICAL_INDEX.md
     CLI_COMMANDS.md
     CTX_VIEWER_GUIDE.md
     CTX_AUTONOMOUS_OPERATION_PROTOCOL.md
+    ...
   ctx-install.json
 ```
+
+The portable bundle and install scripts copy the full public `docs/` tree into the installed `docs/` folder. `TECHNICAL_INDEX.md` is the installed documentation entry point, while `CLI_COMMANDS.md`, `CTX_VIEWER_GUIDE.md`, and `CTX_AUTONOMOUS_OPERATION_PROTOCOL.md` remain the console-facing files that `ctx helper` points to directly.
 
 On Windows the launchers use `.cmd` wrappers and executable names include `.exe`.
 
@@ -211,7 +215,8 @@ Recommended flow:
 
 - Each build runs `ctx version` successfully.
 - The CLI, MCP, ACP, and viewer binaries are present in the installed layout.
-- Console-referenced documentation is present in the installed layout, including `docs/CLI_COMMANDS.md`, `docs/CTX_VIEWER_GUIDE.md`, `docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md`, `prompts/CTX_HELPER_PROMPT.md`, and `prompts/CTX_AGENT_PROMPT.md`.
+- The full public `docs/` tree is present in the installed layout, including `docs/TECHNICAL_INDEX.md`, `docs/CLI_COMMANDS.md`, `docs/CTX_VIEWER_GUIDE.md`, and `docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md`.
+- Console-referenced prompt assets are present in the installed layout, including `prompts/CTX_HELPER_PROMPT.md` and `prompts/CTX_AGENT_PROMPT.md`.
 - If `ctx helper`, install docs, or release notes tell the operator to read a packaged file, release preflight must fail until the portable bundle and installer scripts copy that file.
 - The installer prints `CTX_INSTALL_ROOT`, `CTX_BIN_PATH`, `CTX_MCP_PATH`, and `CTX_ACP_PATH`.
 - The binary launches on each OS/arch.

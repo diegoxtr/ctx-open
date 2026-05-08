@@ -143,9 +143,7 @@ install_from_source() {
 
   cp "$effective_repo/prompts/CTX_HELPER_PROMPT.md" "$PROMPTS_PATH/CTX_HELPER_PROMPT.md"
   cp "$effective_repo/prompts/CTX_AGENT_PROMPT.md" "$PROMPTS_PATH/CTX_AGENT_PROMPT.md"
-  cp "$effective_repo/docs/CTX_VIEWER_GUIDE.md" "$DOCS_PATH/CTX_VIEWER_GUIDE.md"
-  cp "$effective_repo/docs/CLI_COMMANDS.md" "$DOCS_PATH/CLI_COMMANDS.md"
-  cp "$effective_repo/docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md" "$DOCS_PATH/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md"
+  cp -R "$effective_repo/docs/." "$DOCS_PATH/"
   printf '%s' "$effective_repo"
 }
 
@@ -194,22 +192,10 @@ install_from_portable() {
     cp "$REPO_ROOT/prompts/CTX_AGENT_PROMPT.md" "$PROMPTS_PATH/CTX_AGENT_PROMPT.md"
   fi
 
-  if [[ -f "$extract_root/docs/CTX_VIEWER_GUIDE.md" ]]; then
-    cp "$extract_root/docs/CTX_VIEWER_GUIDE.md" "$DOCS_PATH/CTX_VIEWER_GUIDE.md"
+  if [[ -d "$extract_root/docs" ]]; then
+    cp -R "$extract_root/docs/." "$DOCS_PATH/"
   else
-    cp "$REPO_ROOT/docs/CTX_VIEWER_GUIDE.md" "$DOCS_PATH/CTX_VIEWER_GUIDE.md"
-  fi
-
-  if [[ -f "$extract_root/docs/CLI_COMMANDS.md" ]]; then
-    cp "$extract_root/docs/CLI_COMMANDS.md" "$DOCS_PATH/CLI_COMMANDS.md"
-  else
-    cp "$REPO_ROOT/docs/CLI_COMMANDS.md" "$DOCS_PATH/CLI_COMMANDS.md"
-  fi
-
-  if [[ -f "$extract_root/docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md" ]]; then
-    cp "$extract_root/docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md" "$DOCS_PATH/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md"
-  else
-    cp "$REPO_ROOT/docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md" "$DOCS_PATH/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md"
+    cp -R "$REPO_ROOT/docs/." "$DOCS_PATH/"
   fi
 
   printf '%s' "$extract_root"
@@ -254,7 +240,7 @@ validate_install_layout() {
     exit 1
   fi
 
-  for required_doc in CTX_VIEWER_GUIDE.md CLI_COMMANDS.md CTX_AUTONOMOUS_OPERATION_PROTOCOL.md; do
+  for required_doc in CTX_VIEWER_GUIDE.md CLI_COMMANDS.md CTX_AUTONOMOUS_OPERATION_PROTOCOL.md TECHNICAL_INDEX.md; do
     if [[ ! -f "$DOCS_PATH/$required_doc" ]]; then
       echo "Installed console-referenced documentation not found: $DOCS_PATH/$required_doc" >&2
       exit 1
