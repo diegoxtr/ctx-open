@@ -415,7 +415,7 @@ Gemini CLI also provides `gemini mcp add` for managing MCP servers. Keep the JSO
 
 ### Devin
 
-Devin supports MCP server configuration, including STDIO custom tools, but CTX is local-first. A Devin cloud session cannot execute `C:\ctx\bin\ctx-mcp.cmd` on a private workstation unless the session is running in an environment that has that launcher and repository mounted.
+Devin supports MCP server configuration, including STDIO custom tools, but CTX is local-first. A Devin cloud session cannot execute `C:\ctx\bin\ctx-mcp.cmd` on a local workstation unless the session is running in an environment that has that launcher and repository mounted.
 
 Use this shape only when Devin can run the command in its own reachable execution environment:
 
@@ -433,7 +433,7 @@ Use this shape only when Devin can run the command in its own reachable executio
 }
 ```
 
-For cloud Devin sessions, prefer a reachable, approved CTX MCP deployment boundary instead of hardcoding local private paths. Validate the command or endpoint before expecting Devin to list CTX tools.
+For cloud Devin sessions, prefer a reachable, approved CTX MCP deployment boundary instead of hardcoding local machine paths. Validate the command or endpoint before expecting Devin to list CTX tools.
 
 ### DeepSeek
 
@@ -1043,7 +1043,7 @@ Expected:
 
 ### Test 5: Validate write mode on a disposable repository
 
-Use a temporary repository first, not the private root workspace:
+Use a temporary repository first, not a production root workspace:
 
 ```powershell
 mkdir C:\path\to\ctx-repo\tmp\mcp-write-smoke

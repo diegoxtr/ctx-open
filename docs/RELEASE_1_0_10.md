@@ -52,4 +52,4 @@ CTX 1.0.10 prepares the public line for local MCP-capable agents, improves CTX V
 - `node --check Ctx.Viewer\wwwroot\app.js` passes when Node is available.
 - PowerShell and Bash install scripts parse.
 - `git ls-files .ctx` is empty for the public repository root.
-- `git status --short` does not include private `.ctx` state.
+- `git status --short` does not include local `.ctx` state.

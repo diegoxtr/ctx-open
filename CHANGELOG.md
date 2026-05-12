@@ -11,7 +11,7 @@ All notable changes to CTX will be documented in this file.
 - `ctx update` and alias `ctx -update` for a read-only GitHub Release check against the latest public `ctx-open` release.
 - Viewer native module entrypoint plus focused API, storage, workspace, history, and utility modules.
 - Viewer contract tests for Compare Graph behavior, selectable diff nodes, graph scrolling, zoom, cognitive diff summaries, and module boundaries.
-- Public sync inventory for the post-1.0.13 private-to-public release pass.
+- Public release inventory for the post-1.0.13 release pass.
 
 ### Changed
 
@@ -20,7 +20,7 @@ All notable changes to CTX will be documented in this file.
 
 ### Validation
 
-- Release branch validation must confirm `ctx version` reports `1.0.15`, `ctx update` is read-only, tests pass, Viewer module assets load, Compare Graph remains inspectable, and no private `.ctx` state or private paths are staged.
+- Release branch validation must confirm `ctx version` reports `1.0.15`, `ctx update` is read-only, tests pass, Viewer module assets load, Compare Graph remains inspectable, and no local `.ctx` state or machine-specific paths are staged.
 
 ## [1.0.14] - 2026-05-12
 
@@ -36,7 +36,7 @@ All notable changes to CTX will be documented in this file.
 
 ### Validation
 
-- Release branch validation must confirm `ctx version` reports `1.0.14`, tests pass, local Markdown/HTML links resolve, JSON snippets parse, static pages target `v1.0.14`, and no private `.ctx` state or private paths are staged.
+- Release branch validation must confirm `ctx version` reports `1.0.14`, tests pass, local Markdown/HTML links resolve, JSON snippets parse, static pages target `v1.0.14`, and no local `.ctx` state or machine-specific paths are staged.
 
 ## [1.0.13] - 2026-05-07
 
@@ -66,7 +66,7 @@ All notable changes to CTX will be documented in this file.
 
 ### Validation
 
-- Release branch validation must confirm `ctx version` reports `1.0.13`, tests pass, local Markdown/HTML links resolve, JSON snippets parse, static pages target `v1.0.13`, and no private `.ctx` state or private paths are staged.
+- Release branch validation must confirm `ctx version` reports `1.0.13`, tests pass, local Markdown/HTML links resolve, JSON snippets parse, static pages target `v1.0.13`, and no local `.ctx` state or machine-specific paths are staged.
 
 ## [1.0.12] - 2026-04-30
 
@@ -113,7 +113,7 @@ All notable changes to CTX will be documented in this file.
 
 ### Validation
 
-- Release branch validation must confirm `ctx version` reports `1.0.11`, `Ctx.Mcp` builds, unit tests pass, install scripts parse, and no private `.ctx` state is staged.
+- Release branch validation must confirm `ctx version` reports `1.0.11`, `Ctx.Mcp` builds, unit tests pass, install scripts parse, and no local `.ctx` state is staged.
 
 ## [1.0.10] - 2026-04-27
 
@@ -144,7 +144,7 @@ All notable changes to CTX will be documented in this file.
 
 ### Validation
 
-- Release branch validation must confirm `ctx version` reports `1.0.10`, `Ctx.Mcp` builds, unit tests pass, install scripts parse, and no private `.ctx` state is staged.
+- Release branch validation must confirm `ctx version` reports `1.0.10`, `Ctx.Mcp` builds, unit tests pass, install scripts parse, and no local `.ctx` state is staged.
 
 ## [1.0.9] - 2026-04-22
 
@@ -200,7 +200,7 @@ All notable changes to CTX will be documented in this file.
 
 - The domain model, CLI, and viewer now support branch-like hypothesis semantics through hypothesis lifecycle state, role, lineage grouping, inter-hypothesis relations, and evidence sharing.
 - The viewer now exposes an `Interpretations` detail surface plus an optional `Show interpretation relations` overlay so competing hypotheses can stay visible without overwhelming the main trace graph.
-- The public helper prompt and examples now explicitly preserve the private/public boundary while keeping all published examples sanitized and replayable.
+- The public helper prompt and examples now explicitly preserve the publication boundary while keeping all published examples sanitized and replayable.
 
 ### Notes
 
@@ -235,7 +235,7 @@ All notable changes to CTX will be documented in this file.
 ### Changed
 
 - The viewer now auto-selects the primary commit-focus node so opening a historical commit immediately highlights the cognitive lineage without an extra graph click.
-- The public viewer surface is aligned again with the private workspace UI, including state badges and commit-focus behavior parity.
+- The public viewer surface is aligned again with the current workspace UI, including state badges and commit-focus behavior parity.
 - The Codespaces bootstrap no longer depends on Python to resolve the pinned SDK and is easier to recover in live-demo sessions.
 
 ### Fixed

@@ -180,7 +180,7 @@ The permission model should be stricter than simple read/write:
 - `release`: version bump, packaging, release notes, publish
 - `public-sync`: any operation touching `ctx-public` or `ctx-open`
 
-Default prototype mode should be `read-only`. The adapter must never infer public-sync permission from private work.
+Default prototype mode should be `read-only`. The adapter must never infer publication permission from local work.
 
 ## Phases
 

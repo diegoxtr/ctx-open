@@ -161,7 +161,7 @@ Gemini also supports `gemini mcp add`; use the JSON form above when you want the
 
 ### Devin
 
-Devin can connect to MCP servers, but the runtime boundary matters. A cloud Devin session cannot start `C:\ctx\bin\ctx-mcp.cmd` on your private laptop. Use this STDIO shape only in an environment where Devin can execute the CTX launcher and access the target repository:
+Devin can connect to MCP servers, but the runtime boundary matters. A cloud Devin session cannot start `C:\ctx\bin\ctx-mcp.cmd` on your local laptop. Use this STDIO shape only in an environment where Devin can execute the CTX launcher and access the target repository:
 
 ```json
 {
@@ -172,7 +172,7 @@ Devin can connect to MCP servers, but the runtime boundary matters. A cloud Devi
 }
 ```
 
-If Devin is running remotely, expose CTX through an approved reachable environment instead of pointing Devin at a local private path.
+If Devin is running remotely, expose CTX through an approved reachable environment instead of pointing Devin at a local machine path.
 
 ## 6. Restart And Smoke Test
 

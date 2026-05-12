@@ -50,7 +50,7 @@ Recommended order:
   Summarizes the current release baseline.
 
 - [RELEASE_1_0_15_INVENTORY.md](RELEASE_1_0_15_INVENTORY.md)
-  Records the public include/exclude pass from the post-1.0.13 internal release inventory.
+  Records the public include/exclude pass from the post-1.0.13 release inventory.
 
 - [RELEASE_1_0_14.md](RELEASE_1_0_14.md)
   Previous stable release notes.
@@ -187,7 +187,7 @@ Recommended order:
 ## Operation prompts
 
 - [CTX_HELPER_PROMPT.md](../prompts/CTX_HELPER_PROMPT.md)
-  Installed helper/bootstrap prompt that re-anchors agents and operators on the active repo, core docs, viewer, and private/public boundary before work starts.
+  Installed helper/bootstrap prompt that re-anchors agents and operators on the active repo, core docs, viewer, and publication boundary before work starts.
 
 - [CTX_BASE_PROMPT.md](../prompts/CTX_BASE_PROMPT.md)
   Base template for operating CTX with new tools (objective, scope, adaptation).

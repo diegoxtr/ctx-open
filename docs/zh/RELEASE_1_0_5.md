@@ -17,4 +17,4 @@
 - 安装器现在会从 GitHub Releases 解析最新已发布版本与匹配的便携资产，而不是依赖仓库中硬编码版本字符串作为公开更新的唯一真相源。
 - CLI helper 现在从 `prompts/CTX_HELPER_PROMPT.md` 动态加载项目上下文 prompt，使操作员与代理在规划前重新锚定到当前 repo 或 install root。
 - distribution 打包现在会将 helper prompt 与规范 CTX 文档复制进安装 bundle，使安装后的环境自带运行指导。
-- 公共文档现在描述 release branch strategy 和 public-safe 安装器流程，同时不泄露 private workspace 路径或临时 live-demo URL。
+- 公共文档现在描述 release branch strategy 和 public-safe 安装器流程，同时不泄露机器特定 workspace 路径或临时 live-demo URL。

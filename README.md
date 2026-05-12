@@ -775,7 +775,7 @@ Use this index as the navigable entrypoint into the public repository documentat
 | Document | Use it for |
 |---|---|
 | [Release 1.0.15](docs/RELEASE_1_0_15.md) | Current release notes |
-| [Release 1.0.15 Inventory](docs/RELEASE_1_0_15_INVENTORY.md) | Public sync include/exclude inventory for the post-1.0.13 release pass |
+| [Release 1.0.15 Inventory](docs/RELEASE_1_0_15_INVENTORY.md) | Public include/exclude inventory for the post-1.0.13 release pass |
 | [Release 1.0.14](docs/RELEASE_1_0_14.md) | Previous stable public release notes |
 | [Release 1.0.12](docs/RELEASE_1_0_12.md) | Earlier release notes |
 | [Release 1.0.11](docs/RELEASE_1_0_11.md) | Earlier release notes |

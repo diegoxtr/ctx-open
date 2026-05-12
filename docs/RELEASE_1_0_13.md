@@ -54,7 +54,7 @@ The release keeps the agent start path simple: install CTX, connect an MCP-capab
 - Viewer node selection updates detail panels and path highlighting without triggering a full graph redraw.
 - Viewer Browse no longer performs a repository scan before the user selects a local folder.
 - Public README references now include the MCP parity and roadmap/gaps documents they point to.
-- Public technical index now points to public live-demo and UNJu talk pages instead of private slide-source files.
+- Public technical index now points to public live-demo and UNJu talk pages instead of unpublished slide-source files.
 - Static live-demo image paths now resolve against the shipped public screenshot assets.
 - Portable distribution bundles now include the documented `ctx`, `ctx-mcp`, `ctx-agent-acp`, and optional `ctx-viewer` launchers instead of relying only on post-install wrapper generation.
 - Published install flows now include `docs/CLI_COMMANDS.md` in the installed docs set so `ctx helper` does not point operators at a missing CLI reference.
