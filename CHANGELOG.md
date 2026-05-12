@@ -18,9 +18,13 @@ All notable changes to CTX will be documented in this file.
 - CLI command coverage now tracks `update`.
 - English, Spanish, and Chinese command references document `ctx update`.
 
+### Fixed
+
+- Public GitHub Pages landing now ships `docs.html` and uses deployed screenshot asset paths.
+
 ### Validation
 
-- Release branch validation must confirm `ctx version` reports `1.0.15`, `ctx update` is read-only, tests pass, Viewer module assets load, Compare Graph remains inspectable, and no local `.ctx` state or machine-specific paths are staged.
+- Release branch validation must confirm `ctx version` reports `1.0.15`, `ctx update` is read-only, tests pass, Viewer module assets load, Compare Graph remains inspectable, GitHub Pages screenshot assets resolve, and no local `.ctx` state or machine-specific paths are staged.
 
 ## [1.0.14] - 2026-05-12
 

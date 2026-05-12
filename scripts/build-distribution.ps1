@@ -25,6 +25,7 @@ $agentLinkPrompt = Join-Path $repoRoot "distribution\agent-link\CTX_AGENT_LINK_P
 $helperPrompt = Join-Path $repoRoot "prompts\CTX_HELPER_PROMPT.md"
 $installManifest = Join-Path $repoRoot "distribution\install-manifest.json"
 $docsSource = Join-Path $repoRoot "docs"
+$screenshotSource = Join-Path $repoRoot "assets\screenshots"
 $viewerGuide = Join-Path $repoRoot "docs\CTX_VIEWER_GUIDE.md"
 $cliCommands = Join-Path $repoRoot "docs\CLI_COMMANDS.md"
 $technicalIndex = Join-Path $repoRoot "docs\TECHNICAL_INDEX.md"
@@ -50,6 +51,13 @@ if (-not (Test-Path $installManifest)) {
 foreach ($requiredDoc in @($viewerGuide, $cliCommands, $agentPrompt, $autonomousProtocol)) {
     if (-not (Test-Path $requiredDoc)) {
         throw "Required helper asset not found: $requiredDoc"
+    }
+}
+
+foreach ($requiredScreenshot in @("ctx-viewer-working-context.jpg", "ctx-viewer-commit-thread.jpg")) {
+    $screenshotPath = Join-Path $screenshotSource $requiredScreenshot
+    if (-not (Test-Path $screenshotPath)) {
+        throw "Required live demo screenshot not found: $screenshotPath"
     }
 }
 
@@ -160,6 +168,10 @@ foreach ($target in $targets) {
     Copy-Item $helperPrompt (Join-Path $promptOut "CTX_HELPER_PROMPT.md")
     Copy-Item $installManifest (Join-Path $metaOut "install-manifest.json")
     Copy-Item (Join-Path $docsSource "*") $docsOut -Recurse -Force
+    $liveDemoAssetsOut = Join-Path $docsOut "live-demo\assets"
+    New-Item -ItemType Directory -Path $liveDemoAssetsOut -Force | Out-Null
+    Copy-Item (Join-Path $screenshotSource "ctx-viewer-working-context.jpg") $liveDemoAssetsOut -Force
+    Copy-Item (Join-Path $screenshotSource "ctx-viewer-commit-thread.jpg") $liveDemoAssetsOut -Force
     Copy-Item $agentPrompt (Join-Path $promptOut "CTX_AGENT_PROMPT.md")
     $target | ConvertTo-Json -Depth 4 | Set-Content -Path (Join-Path $metaOut "target.json") -Encoding ASCII
 

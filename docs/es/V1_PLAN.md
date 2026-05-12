@@ -329,7 +329,7 @@ El piloto debe responder:
 - si el costo de uso operativo es aceptable;
 - si el CLI es suficiente;
 - si la estructura de artefactos agrega valor real;
-- si conviene avanzar a una V1 publica restringida o a una beta privada.
+- si conviene avanzar a una V1 publica restringida o a una beta cerrada.
 
 ## 14. Riesgos principales
 
