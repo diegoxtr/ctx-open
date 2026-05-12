@@ -918,6 +918,29 @@ body {
     min-width: 9.5rem;
 }
 
+.graph-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+}
+
+.graph-surface-back {
+    border: 1px solid #bfd2ef;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #214a88;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 800;
+    padding: 0.34rem 0.72rem;
+}
+
+.graph-surface-back:hover {
+    background: #eaf3ff;
+}
+
 .graph-toolbar-stack {
     display: grid;
     gap: 0.55rem;
@@ -1755,6 +1778,51 @@ body {
     align-items: flex-start;
 }
 
+.history-diff-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-top: 0.35rem;
+}
+
+.history-diff-button,
+.history-diff-base {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.45rem;
+    border-radius: 999px;
+    padding: 0.18rem 0.48rem;
+    font: inherit;
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.history-diff-button {
+    border: 1px solid #bfd2ef;
+    background: #fff;
+    color: #214a88;
+    cursor: pointer;
+}
+
+.history-diff-button:hover {
+    border-color: #214a88;
+    background: #f2f7ff;
+}
+
+.history-diff-button.primary {
+    background: #214a88;
+    border-color: #214a88;
+    color: #fff;
+}
+
+.history-diff-base {
+    background: #e3f6ee;
+    color: #0f6b45;
+}
+
 .history-change-count {
     font-size: 1rem;
     font-weight: 700;
@@ -2188,13 +2256,17 @@ body {
 
 .graph-canvas {
     min-height: 0;
-    flex: 1 1 auto;
+    flex: 0 1 clamp(360px, 56dvh, 760px);
+    height: clamp(360px, 56dvh, 760px);
+    max-height: calc(100dvh - 280px);
     overflow: auto;
+    resize: vertical;
     position: relative;
     border-radius: 14px;
     background: radial-gradient(circle at top, #fbfcff, #eef3fb);
     border: 1px solid #dbe6f7;
     padding: 1rem;
+    scrollbar-gutter: stable both-edges;
 }
 
 .graph-render-status {
@@ -2744,6 +2816,321 @@ body {
 .detail-card-value {
     font-weight: 700;
     word-break: break-word;
+}
+
+.detail-action-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin: 0 0 0.75rem;
+}
+
+.detail-pill.active {
+    background: #214a88;
+    border-color: #214a88;
+    color: #fff;
+}
+
+.diff-view-switch {
+    margin-bottom: 0.85rem;
+}
+
+.diff-summary-strip {
+    display: grid;
+    gap: 0.55rem;
+    margin: 0 0 0.85rem;
+}
+
+.diff-summary-states {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+    gap: 0.4rem;
+}
+
+.diff-summary-card {
+    display: grid;
+    gap: 0.12rem;
+    min-height: 3.1rem;
+    border: 1px solid #d7e4f6;
+    border-radius: 8px;
+    background: #fff;
+    padding: 0.42rem 0.5rem;
+}
+
+.diff-summary-card span {
+    color: #5d7195;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.diff-summary-card strong {
+    color: #17325b;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.diff-summary-card.diff-state-added {
+    border-color: #9ad0b6;
+    background: #f1fbf6;
+}
+
+.diff-summary-card.diff-state-changed {
+    border-color: #f0cf86;
+    background: #fffbeb;
+}
+
+.diff-summary-card.diff-state-removed {
+    border-color: #f3b4b4;
+    background: #fff5f5;
+}
+
+.diff-summary-card.diff-state-conflict {
+    border-color: #c4a4f4;
+    background: #faf5ff;
+}
+
+.diff-summary-entities {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.32rem;
+}
+
+.diff-summary-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.35rem;
+    border: 1px solid #d4e1f3;
+    border-radius: 999px;
+    background: #fff;
+    color: #38557e;
+    padding: 0.14rem 0.45rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+}
+
+.detail-compare-panel {
+    border: 1px solid #c8d8f1;
+    background: #f7fbff;
+    border-radius: 10px;
+    padding: 0.75rem;
+    margin: 0 0 0.9rem;
+}
+
+.detail-compare-header {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.7rem;
+}
+
+.detail-compare-header h4 {
+    margin: 0;
+    font-size: 0.92rem;
+}
+
+.detail-compare-header p {
+    margin: 0.2rem 0 0;
+    color: #5d7195;
+    font-size: 0.82rem;
+}
+
+.detail-compare-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.diff-graph-view[hidden],
+.diff-list-view[hidden] {
+    display: none;
+}
+
+.diff-graph-handoff {
+    display: grid;
+    gap: 0.18rem;
+    margin-bottom: 0.6rem;
+    color: #38557e;
+    font-size: 0.78rem;
+}
+
+.diff-graph-handoff strong {
+    color: #17325b;
+    font-size: 0.84rem;
+}
+
+.diff-graph-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0.2rem 0 0.7rem;
+}
+
+.diff-legend-item {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.45rem;
+    border-radius: 999px;
+    padding: 0.18rem 0.55rem;
+    border: 1px solid #d4e1f3;
+    background: #fff;
+    color: #38557e;
+    font-size: 0.7rem;
+    font-weight: 800;
+}
+
+.diff-graph-canvas {
+    overflow: auto;
+    min-height: 300px;
+    max-height: 58vh;
+    border: 1px solid #d8e5f6;
+    border-radius: 10px;
+    background: #fbfdff;
+    padding: 0.75rem;
+}
+
+.graph-canvas-diff .diff-graph-canvas {
+    min-height: 100%;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+    overflow: visible;
+}
+
+.graph-canvas-diff .diff-graph-stage {
+    min-width: 920px;
+    min-height: 620px;
+}
+
+.diff-graph-stage {
+    position: relative;
+    min-width: 620px;
+    min-height: 260px;
+    transform-origin: top left;
+}
+
+.diff-graph-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.diff-graph-edge {
+    fill: none;
+    stroke: #9bb0ce;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+}
+
+.diff-graph-column {
+    position: absolute;
+    top: 0;
+    width: 164px;
+}
+
+.diff-graph-column h4 {
+    margin: 0;
+    color: #4f6688;
+    font-size: 0.76rem;
+    font-weight: 900;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.diff-graph-node {
+    position: absolute;
+    display: grid;
+    gap: 0.18rem;
+    width: 164px;
+    min-height: 72px;
+    padding: 0.48rem 0.58rem;
+    border: 1px solid #d5e2f4;
+    border-radius: 8px;
+    background: #fff;
+    color: #1f345c;
+    box-shadow: 0 5px 12px rgba(21, 40, 68, 0.07);
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+}
+
+.diff-graph-node:hover,
+.diff-graph-node.active {
+    box-shadow: 0 0 0 3px rgba(33, 74, 136, 0.16), 0 8px 18px rgba(21, 40, 68, 0.13);
+    transform: translateY(-1px);
+}
+
+.diff-graph-node.active {
+    outline: 2px solid #214a88;
+    outline-offset: 2px;
+}
+
+.diff-graph-node small {
+    color: #61789c;
+    font-size: 0.66rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.diff-graph-node strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #182d50;
+    font-size: 0.78rem;
+    line-height: 1.2;
+}
+
+.diff-graph-node span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #5d7195;
+    font-size: 0.68rem;
+    line-height: 1.2;
+}
+
+.diff-state-added {
+    border-color: #86c9ad;
+    background: #f0fbf5;
+    color: #0f6b45;
+    stroke: #159a67;
+}
+
+.diff-state-changed {
+    border-color: #e5c66d;
+    background: #fff9e8;
+    color: #825b09;
+    stroke: #d99a12;
+}
+
+.diff-state-removed {
+    border-color: #efaaa5;
+    background: #fff1f0;
+    color: #a32626;
+    stroke: #cf3f3f;
+    stroke-dasharray: 6 5;
+}
+
+.diff-state-unchanged {
+    border-color: #cad8eb;
+    background: #f7faff;
+    color: #4c6388;
+    stroke: #91a9ce;
+}
+
+.diff-state-conflict {
+    border-color: #c5a3f1;
+    background: #f7f0ff;
+    color: #6d28a8;
+    stroke: #7c3aed;
 }
 
 .detail-section {

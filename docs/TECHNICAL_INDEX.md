@@ -46,8 +46,17 @@ Recommended order:
 - [V1_FUNCTIONAL_SPEC.md](V1_FUNCTIONAL_SPEC.md)
   Defines modules, requirements, acceptance criteria, and V1 definition of done.
 
-- [RELEASE_1_0_13.md](RELEASE_1_0_13.md)
+- [RELEASE_1_0_15.md](RELEASE_1_0_15.md)
   Summarizes the current release baseline.
+
+- [RELEASE_1_0_15_INVENTORY.md](RELEASE_1_0_15_INVENTORY.md)
+  Records the public include/exclude pass from the post-1.0.13 internal release inventory.
+
+- [RELEASE_1_0_14.md](RELEASE_1_0_14.md)
+  Previous stable release notes.
+
+- [RELEASE_1_0_13.md](RELEASE_1_0_13.md)
+  Previous stable release notes.
 
 - [RELEASE_1_0_12.md](RELEASE_1_0_12.md)
   Previous stable release notes.
@@ -164,13 +173,13 @@ Recommended order:
   Public live demo surfaces, Codespaces expectations, static pages, local MCP setup, and validation paths.
 
 - [live-demo/index.html](live-demo/index.html)
-  Static public landing page for CTX 1.0.14.
+  Static public landing page for CTX 1.0.15.
 
 - [live-demo/mcp-local.html](live-demo/mcp-local.html)
   Static local MCP setup page with copy-ready client snippets.
 
 - [live-demo/talk-unju.html](live-demo/talk-unju.html)
-  Public UNJu talk deck for CTX 1.0.14.
+  Public UNJu talk deck for CTX 1.0.15.
 
 - [live-demo/notes.html](live-demo/notes.html)
   Demo notes and validation flow for the public static site.

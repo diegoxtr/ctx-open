@@ -134,7 +134,10 @@
         <section class="panel panel-center">
             <div class="panel-header graph-panel-header">
                 <div class="graph-title-block">
-                    <h2>Trace Graph</h2>
+                    <div class="graph-title-row">
+                        <h2 id="graph-title">Trace Graph</h2>
+                        <button id="graph-surface-back" type="button" class="graph-surface-back" hidden>Back to Trace Graph</button>
+                    </div>
                     <span id="graph-caption"></span>
                 </div>
                 <div class="graph-toolbar-stack">
@@ -222,6 +225,7 @@
             <h2>Details</h2>
             <div class="panel-rail-tabs panel-rail-tabs-right" aria-label="Collapsed right rail">
                 <button type="button" class="panel-rail-tab active" data-detail-rail-tab="details">Details</button>
+                <button type="button" class="panel-rail-tab" data-detail-rail-tab="diff">Diff</button>
                 <button type="button" class="panel-rail-tab" data-detail-rail-tab="interpretations">Interpretations</button>
                 <button type="button" class="panel-rail-tab" data-detail-rail-tab="origin">Origin</button>
                 <button type="button" class="panel-rail-tab" data-detail-rail-tab="playbook">Playbook</button>
@@ -229,6 +233,7 @@
             </div>
             <div class="detail-tab-bar" role="tablist" aria-label="Right rail tabs">
                 <button type="button" class="detail-tab-button active" data-detail-tab="details" role="tab" aria-selected="true">Details</button>
+                <button type="button" class="detail-tab-button" data-detail-tab="diff" role="tab" aria-selected="false">Diff</button>
                 <button type="button" class="detail-tab-button" data-detail-tab="interpretations" role="tab" aria-selected="false">Interpretations</button>
                 <button type="button" class="detail-tab-button" data-detail-tab="origin" role="tab" aria-selected="false">Origin</button>
                 <button type="button" class="detail-tab-button" data-detail-tab="playbook" role="tab" aria-selected="false">Playbook</button>
@@ -242,6 +247,12 @@
                 <section class="detail-subsection">
                     <h3>Node</h3>
                     <pre id="node-detail" class="detail-box">Click a node.</pre>
+                </section>
+            </section>
+            <section class="detail-tab-panel" data-detail-panel="diff" role="tabpanel" hidden>
+                <section class="detail-subsection">
+                    <h3>Cognitive Diff</h3>
+                    <div id="diff-detail" class="detail-surface">Choose a base commit in History, then compare another commit.</div>
                 </section>
             </section>
             <section class="detail-tab-panel" data-detail-panel="origin" role="tabpanel" hidden>
@@ -282,6 +293,6 @@
         <span id="app-footer-summary">Waiting for workspace data.</span>
     </footer>
 
-    <script src="/app.js"></script>
+    <script type="module" src="/app.mjs"></script>
 </body>
 </html>

@@ -121,6 +121,31 @@ dotnet run --project .\Ctx.Cli --
 dotnet run --project .\Ctx.Cli -- version
 ```
 
+### `ctx update`
+
+检查最新的公开 CTX GitHub Release，并与本地产品版本比较。该命令是只读的：它只报告是否有更新并返回 release URL，不会替换已安装文件。
+
+环境变量默认值：
+
+- `CTX_RELEASE_OWNER`，默认 `diegoxtr`
+- `CTX_RELEASE_REPOSITORY`，默认 `ctx-open`
+
+选项：
+
+- `--owner <github-owner>`
+- `--repo <github-repository>`
+- `--repository <github-repository>`
+
+别名：
+
+- `ctx -update`
+
+```powershell
+dotnet run --project .\Ctx.Cli -- update
+ctx update
+ctx -update
+```
+
 ### `ctx init`
 
 在当前目录初始化认知仓库。
@@ -211,7 +236,7 @@ dotnet run --project .\Ctx.Cli -- status
 
 - [CLI_COMMANDS.md](../CLI_COMMANDS.md)
 
-## CTX 1.0.14 planning commands
+## CTX 1.0.15 planning commands
 
 This public release adds the following planning surfaces. The English
 `docs/CLI_COMMANDS.md` file remains the canonical full reference, but these
@@ -271,7 +296,7 @@ MCP equivalents:
 
 ### `ctx preflight`
 
-Runs operational preflight guidance for a named operation. In CTX 1.0.14 the
+Runs operational preflight guidance for a named operation. In CTX 1.0.15 the
 operation token can be arbitrary when a matching runbook exists.
 
 ```powershell
