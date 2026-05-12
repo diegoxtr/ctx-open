@@ -162,6 +162,7 @@ endlocal
     $viewerLauncher = @"
 @echo off
 setlocal
+set "CTX_INSTALL_ROOT=$([System.IO.Path]::GetFullPath((Split-Path -Parent $Bin)))"
 pushd "$Viewer"
 "$Viewer\Ctx.Viewer.exe" --urls $ViewerEndpoint
 popd

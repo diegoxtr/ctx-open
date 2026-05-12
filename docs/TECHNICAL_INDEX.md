@@ -164,13 +164,13 @@ Recommended order:
   Public live demo surfaces, Codespaces expectations, static pages, local MCP setup, and validation paths.
 
 - [live-demo/index.html](live-demo/index.html)
-  Static public landing page for CTX 1.0.13.
+  Static public landing page for CTX 1.0.14.
 
 - [live-demo/mcp-local.html](live-demo/mcp-local.html)
   Static local MCP setup page with copy-ready client snippets.
 
 - [live-demo/talk-unju.html](live-demo/talk-unju.html)
-  Public UNJu talk deck for CTX 1.0.13.
+  Public UNJu talk deck for CTX 1.0.14.
 
 - [live-demo/notes.html](live-demo/notes.html)
   Demo notes and validation flow for the public static site.

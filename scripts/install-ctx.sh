@@ -81,6 +81,7 @@ EOF
   cat > "$BIN_PATH/ctx-viewer" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
+export CTX_INSTALL_ROOT="$INSTALL_ROOT"
 cd "$VIEWER_PATH"
 "$VIEWER_PATH/Ctx.Viewer" --urls "$VIEWER_URL"
 EOF

@@ -843,14 +843,7 @@ static string ResolveDefaultRepositoryRoot()
 
 static object GetLocalMcpStatus(string repositoryPath, bool ensureRunning, McpProcessSupervisor supervisor, int? stoppedProcessCount = null)
 {
-    var installRoot = Environment.GetEnvironmentVariable("CTX_INSTALL_ROOT");
-    if (string.IsNullOrWhiteSpace(installRoot))
-    {
-        installRoot = OperatingSystem.IsWindows()
-            ? @"C:\ctx"
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".ctx");
-    }
-
+    var installRoot = ResolveInstallRootForLocalTools();
     var launcherPath = Path.Combine(installRoot, "bin", OperatingSystem.IsWindows() ? "ctx-mcp.cmd" : "ctx-mcp");
     var executablePath = Path.Combine(installRoot, "mcp", OperatingSystem.IsWindows() ? "Ctx.Mcp.exe" : "Ctx.Mcp");
     var launcherExists = File.Exists(launcherPath);
@@ -879,6 +872,48 @@ static object GetLocalMcpStatus(string repositoryPath, bool ensureRunning, McpPr
         repositoryPath,
         checkedAtUtc = DateTimeOffset.UtcNow
     };
+}
+
+static string ResolveInstallRootForLocalTools()
+{
+    var configuredRoot = Environment.GetEnvironmentVariable("CTX_INSTALL_ROOT");
+    if (!string.IsNullOrWhiteSpace(configuredRoot))
+    {
+        return Path.GetFullPath(configuredRoot);
+    }
+
+    var inferredRoot = TryInferInstallRootFromViewerPath();
+    if (!string.IsNullOrWhiteSpace(inferredRoot))
+    {
+        return inferredRoot;
+    }
+
+    return OperatingSystem.IsWindows()
+        ? @"C:\ctx"
+        : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "share", "ctx");
+}
+
+static string? TryInferInstallRootFromViewerPath()
+{
+    try
+    {
+        var viewerDirectory = new DirectoryInfo(AppContext.BaseDirectory);
+        var installRoot = viewerDirectory.Parent;
+        if (installRoot is null)
+        {
+            return null;
+        }
+
+        var launcherPath = Path.Combine(installRoot.FullName, "bin", OperatingSystem.IsWindows() ? "ctx-mcp.cmd" : "ctx-mcp");
+        var executablePath = Path.Combine(installRoot.FullName, "mcp", OperatingSystem.IsWindows() ? "Ctx.Mcp.exe" : "Ctx.Mcp");
+        return File.Exists(launcherPath) && File.Exists(executablePath)
+            ? installRoot.FullName
+            : null;
+    }
+    catch
+    {
+        return null;
+    }
 }
 
 static int CountMcpProcesses()

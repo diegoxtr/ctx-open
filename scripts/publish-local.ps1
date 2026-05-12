@@ -100,6 +100,7 @@ Set-Content -Path (Join-Path $binPath "ctx-agent-acp.cmd") -Value $acpLauncher -
 $viewerLauncher = @"
 @echo off
 setlocal
+set "CTX_INSTALL_ROOT=$InstallRoot"
 start "" "$ViewerUrl/"
 pushd "$viewerPath"
 "$viewerPath\Ctx.Viewer.exe" --urls $ViewerUrl
