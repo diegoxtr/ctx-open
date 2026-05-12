@@ -29,4 +29,4 @@ CTX 1.0.10 prepara la linea publica para agentes compatibles con MCP, mejora la 
 - `dotnet test Ctx.Tests\Ctx.Tests.csproj --no-restore` pasa.
 - `Ctx.Mcp` compila y queda disponible mediante `ctx-mcp`.
 - Los scripts de instalacion de PowerShell y Bash parsean correctamente.
-- El repositorio publico no incluye estado `.ctx` privado.
+- El repositorio publico no incluye estado `.ctx` local.

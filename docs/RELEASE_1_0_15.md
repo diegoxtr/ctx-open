@@ -30,7 +30,11 @@ Inventory trace: `docs/RELEASE_1_0_15_INVENTORY.md` records the public include/e
 - The CLI command coverage catalog now tracks `update`.
 - English, Spanish, and Chinese command references document `ctx update`.
 - Viewer Compare Graph remains the explicit surface for cognitive commit comparison, with zoom, selectable diff nodes, concise summaries, and a Back to Trace Graph path.
-- Release documentation now includes a public inventory so the post-1.0.13 pass is auditable without exposing local CTX state.
+- Release documentation now includes a public inventory so the post-1.0.13 pass is auditable without exposing workspace state.
+
+## Fixed
+
+- GitHub Pages release landing now ships `docs.html` and uses deployed screenshot asset paths under `./assets/`.
 
 ## Validation Checklist
 
@@ -40,5 +44,7 @@ Inventory trace: `docs/RELEASE_1_0_15_INVENTORY.md` records the public include/e
 - `dotnet test Ctx.Tests\Ctx.Tests.csproj --no-restore` passes.
 - Viewer serves `/app.mjs` and the `/js/viewer-*.mjs` modules.
 - Viewer Compare Graph still opens from History comparison controls and node clicks populate the Details panel.
+- GitHub Pages artifact includes `index.html`, `docs.html`, `notes.html`, `mcp-local.html`, `talk-unju.html`, `styles.css`, and both Viewer screenshot assets.
+- Landing screenshot paths resolve to `./assets/ctx-viewer-working-context.jpg` and `./assets/ctx-viewer-commit-thread.jpg`.
 - Public repository root has no `.ctx` state staged.
 - Machine-specific paths are absent from public docs and source.

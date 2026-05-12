@@ -2,7 +2,7 @@
 
 Source inventory: release draft, reviewed before public release preparation.
 
-Scope rule: promote shipped items into public code, docs, changelog, release notes, and packaged documentation. Keep local CTX state, unpublished planning notes, and machine-specific paths out of the public repository.
+Scope rule: promote shipped items into public code, docs, changelog, release notes, and packaged documentation. Keep workspace state, unpublished planning notes, and machine-specific paths out of the public repository.
 
 ## Inventory Matrix
 

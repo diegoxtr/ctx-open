@@ -39,6 +39,7 @@ jobs:
           rm -rf site
           mkdir -p site/assets
           cp docs/live-demo/index.html site/index.html
+          cp docs/live-demo/docs.html site/docs.html
           cp docs/live-demo/notes.html site/notes.html
           cp docs/live-demo/mcp-local.html site/mcp-local.html
           cp docs/live-demo/talk-unju.html site/talk-unju.html

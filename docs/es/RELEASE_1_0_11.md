@@ -26,4 +26,4 @@ CTX 1.0.11 es un patch publico de documentacion y alineacion de release despues 
 - `dotnet build Ctx.sln --no-restore` pasa.
 - `dotnet test Ctx.Tests\Ctx.Tests.csproj --no-restore` pasa.
 - `Ctx.Mcp` compila como parte de la solucion.
-- El repo publico no incluye estado privado `.ctx`.
+- El repo publico no incluye estado local `.ctx`.

@@ -4,6 +4,8 @@ CTX is the standard Cognitive Version Control System for AI: a CLI for structure
 If your models and tools lose context, this is the tool you need.
 
 CTX turns reasoning into versioned cognitive artifacts.
+It's a Git-cognitive.
+This saves a lot of tokens in information reporting.
 
 Conceptually, CTX introduces a new innovation layer in AI: a persistent cognitive layer for agent work.
 Instead of letting daily agent activity disappear into transient chats, prompts, and short-lived runs, CTX preserves goals, tasks, hypotheses, evidence, decisions, conclusions, and cognitive commits as durable working state.
@@ -412,6 +414,8 @@ Commit-focused trace graph for a resolved reasoning thread:
 ![CTX Viewer commit thread](assets/screenshots/ctx-viewer-commit-thread.jpg)
 
 Small note: CTX Viewer also makes durable reasoning legible after snapshot, so a commit can still be inspected as a structured cognitive thread instead of a flat log entry.
+
+CTX Viewer can also compare cognitive commits from History. Mark one commit as `Base`, compare another row against it, and inspect the result as a Git-style Compare Graph with added, changed, removed, context, and conflict states.
 
 ## MCP Server
 

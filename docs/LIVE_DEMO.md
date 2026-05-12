@@ -22,6 +22,7 @@ The public screenshots should not be generic UI wallpaper. They should make thre
 
 - CTX Viewer can keep the active working line visible without flattening it into a backlog list.
 - CTX Viewer can inspect a durable commit as a structured reasoning thread, not just as a log row.
+- CTX Viewer can compare two cognitive commits from History and render the diff as a Git-style Compare Graph.
 - CTX Viewer can expose interpretation surfaces, evidence, and commit context side by side in the same session.
 
 The current canonical screenshots are:
@@ -126,6 +127,7 @@ Its job is:
 - link to the searchable documentation index
 - link to the local MCP setup page
 - identify the current public release as CTX 1.0.15
+- mention cognitive commit comparison through History and Compare Graph
 - show one or two screenshots
 
 Pages should not try to host the viewer directly.

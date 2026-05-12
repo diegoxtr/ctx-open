@@ -335,10 +335,10 @@ Contrato operativo compacto:
 Operational Runbook
 - Documentation consistency pass
   When: hay que alinear README, docs, prompts, ejemplos, release notes y referencias localizadas
-  Preconditions: CTX planificado; repo objetivo explicito; limite publico/privado claro
-  Do: inventariar .md/.txt; buscar comandos stale y paths privados; actualizar docs canonicos primero; alinear es/zh; actualizar notas de release y CHANGELOG cuando cambie el alcance de release
-  Verify: la documentacion de comandos lista la superficie CLI vigente; los idiomas no contradicen el canon; no quedan hard paths privados; ctx audit limpio
-  Escalate: detenerse antes de tocar publico si el pedido es privado-only; detenerse antes de publicar docs con paths privados o notas sensibles
+  Preconditions: CTX planificado; repo objetivo explicito; limite de publicacion claro
+  Do: inventariar .md/.txt; buscar comandos stale y paths locales; actualizar docs canonicos primero; alinear es/zh; actualizar notas de release y CHANGELOG cuando cambie el alcance de release
+  Verify: la documentacion de comandos lista la superficie CLI vigente; los idiomas no contradicen el canon; no quedan hard paths locales; ctx audit limpio
+  Escalate: detenerse antes de publicar si el pedido queda fuera del alcance; detenerse antes de publicar docs con paths locales o notas sensibles
 ```
 
 Reglas:
