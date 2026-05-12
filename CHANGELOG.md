@@ -4,9 +4,21 @@ All notable changes to CTX will be documented in this file.
 
 ## [Unreleased]
 
+## [1.0.14] - 2026-05-12
+
 ### Changed
 
 - Distribution packaging now carries the full public `docs/` tree and `ctx --help` points to the installed `docs/TECHNICAL_INDEX.md` documentation index.
+- Portable and installed Viewer launchers now declare `CTX_INSTALL_ROOT`, keeping packaged MCP discovery anchored to the active install layout.
+
+### Fixed
+
+- Packaged Viewer MCP detection now honors `CTX_INSTALL_ROOT` and can infer the portable install root from the bundled `viewer/`, `bin/`, and `mcp/` layout.
+- Packaged Viewer MCP controls can now find the bundled `ctx-mcp` launcher and `Ctx.Mcp` binary outside `C:\ctx`.
+
+### Validation
+
+- Release branch validation must confirm `ctx version` reports `1.0.14`, tests pass, local Markdown/HTML links resolve, JSON snippets parse, static pages target `v1.0.14`, and no private `.ctx` state or private paths are staged.
 
 ## [1.0.13] - 2026-05-07
 

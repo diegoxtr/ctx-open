@@ -123,7 +123,7 @@ Its job is:
 - link to the live demo URL
 - link to release downloads
 - link to the local MCP setup page
-- identify the current public release as CTX 1.0.13
+- identify the current public release as CTX 1.0.14
 - show one or two screenshots
 
 Pages should not try to host the viewer directly.

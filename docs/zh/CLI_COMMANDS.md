@@ -211,7 +211,7 @@ dotnet run --project .\Ctx.Cli -- status
 
 - [CLI_COMMANDS.md](../CLI_COMMANDS.md)
 
-## CTX 1.0.13 planning commands
+## CTX 1.0.14 planning commands
 
 This public release adds the following planning surfaces. The English
 `docs/CLI_COMMANDS.md` file remains the canonical full reference, but these
@@ -271,7 +271,7 @@ MCP equivalents:
 
 ### `ctx preflight`
 
-Runs operational preflight guidance for a named operation. In CTX 1.0.13 the
+Runs operational preflight guidance for a named operation. In CTX 1.0.14 the
 operation token can be arbitrary when a matching runbook exists.
 
 ```powershell

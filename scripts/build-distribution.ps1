@@ -98,6 +98,7 @@ function Write-PortableLaunchers {
 
         if ($IncludeViewerLauncher) {
             Set-Content -Path (Join-Path $binPath "ctx-viewer.cmd") -Value '@echo off
+set "CTX_INSTALL_ROOT=%~dp0.."
 "%~dp0..\viewer\Ctx.Viewer.exe" %*' -Encoding ASCII
         }
 
@@ -119,6 +120,7 @@ exec "$DIR/../acp/Ctx.Agent.Acp" "$@"' -Encoding ASCII
     if ($IncludeViewerLauncher) {
         Set-Content -Path (Join-Path $binPath "ctx-viewer") -Value '#!/usr/bin/env bash
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export CTX_INSTALL_ROOT="$(cd "$DIR/.." && pwd)"
 exec "$DIR/../viewer/Ctx.Viewer" "$@"' -Encoding ASCII
     }
 }
