@@ -9,6 +9,7 @@ CTX can expose a GitHub-native live demo by combining:
 Public demo entrypoints:
 
 - Landing: `https://diegoxtr.github.io/ctx-open/`
+- Documentation index: `https://diegoxtr.github.io/ctx-open/docs.html`
 - Demo notes: `https://diegoxtr.github.io/ctx-open/notes.html`
 - Local MCP setup: `https://diegoxtr.github.io/ctx-open/mcp-local.html`
 - UNJu talk deck: `https://diegoxtr.github.io/ctx-open/talk-unju.html`
@@ -122,6 +123,7 @@ Its job is:
 - explain the thesis briefly
 - link to the live demo URL
 - link to release downloads
+- link to the searchable documentation index
 - link to the local MCP setup page
 - identify the current public release as CTX 1.0.15
 - show one or two screenshots

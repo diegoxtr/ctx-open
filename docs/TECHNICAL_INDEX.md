@@ -175,6 +175,9 @@ Recommended order:
 - [live-demo/index.html](live-demo/index.html)
   Static public landing page for CTX 1.0.15.
 
+- [live-demo/docs.html](live-demo/docs.html)
+  Searchable HTML index over the public Markdown documentation.
+
 - [live-demo/mcp-local.html](live-demo/mcp-local.html)
   Static local MCP setup page with copy-ready client snippets.
 
