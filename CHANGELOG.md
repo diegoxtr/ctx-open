@@ -4,6 +4,24 @@ All notable changes to CTX will be documented in this file.
 
 ## [Unreleased]
 
+## [1.0.15] - 2026-05-12
+
+### Added
+
+- `ctx update` and alias `ctx -update` for a read-only GitHub Release check against the latest public `ctx-open` release.
+- Viewer native module entrypoint plus focused API, storage, workspace, history, and utility modules.
+- Viewer contract tests for Compare Graph behavior, selectable diff nodes, graph scrolling, zoom, cognitive diff summaries, and module boundaries.
+- Public sync inventory for the post-1.0.13 private-to-public release pass.
+
+### Changed
+
+- CLI command coverage now tracks `update`.
+- English, Spanish, and Chinese command references document `ctx update`.
+
+### Validation
+
+- Release branch validation must confirm `ctx version` reports `1.0.15`, `ctx update` is read-only, tests pass, Viewer module assets load, Compare Graph remains inspectable, and no private `.ctx` state or private paths are staged.
+
 ## [1.0.14] - 2026-05-12
 
 ### Changed

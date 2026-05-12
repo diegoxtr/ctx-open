@@ -1,3 +1,34 @@
+import {
+    apiGet,
+    apiPost
+} from "./js/viewer-api.mjs";
+import {
+    readStorageBoolean,
+    readStorageJson,
+    readStorageValue,
+    writeStorageBoolean,
+    writeStorageJson,
+    writeStorageValue
+} from "./js/viewer-storage.mjs";
+import {
+    createWorkspaceTabShellPayload,
+    createWorkspaceTabState,
+    deriveWorkspaceTabPathLabel,
+    deriveWorkspaceTabTitle
+} from "./js/viewer-workspaces.mjs";
+import {
+    appendHistoryPage,
+    applyHydratedHistory,
+    normalizeOverviewHistoryState
+} from "./js/viewer-history.mjs";
+import {
+    cssEscape,
+    escapeAttribute,
+    escapeHtml,
+    formatDateTime,
+    normalizeRepositoryPath
+} from "./js/viewer-utils.mjs";
+
 const repoForm = document.getElementById("repo-form");
 const repoPathInput = document.getElementById("repo-path");
 const browseRepoButton = document.getElementById("browse-repo-button");
@@ -30,9 +61,11 @@ const freshnessStatus = document.getElementById("freshness-status");
 const commitList = document.getElementById("commit-list");
 const historyFooter = document.getElementById("history-footer");
 const graphCanvas = document.getElementById("graph-canvas");
+const graphTitle = document.getElementById("graph-title");
 const graphCaption = document.getElementById("graph-caption");
 const graphFocusCaption = document.getElementById("graph-focus-caption");
 const graphNodeActions = document.getElementById("graph-node-actions");
+const graphSurfaceBackButton = document.getElementById("graph-surface-back");
 const graphZoomOutButton = document.getElementById("graph-zoom-out");
 const graphZoomResetButton = document.getElementById("graph-zoom-reset");
 const graphZoomInButton = document.getElementById("graph-zoom-in");
@@ -47,6 +80,7 @@ const graphExpandActiveToggle = document.getElementById("graph-expand-active-tog
 const interpretationRelationsToggle = document.getElementById("interpretation-relations-toggle");
 const commitDetail = document.getElementById("commit-detail");
 const nodeDetail = document.getElementById("node-detail");
+const diffDetail = document.getElementById("diff-detail");
 const interpretationDetail = document.getElementById("interpretation-detail");
 const originDetail = document.getElementById("origin-detail");
 const playbookDetail = document.getElementById("playbook-detail");
@@ -100,6 +134,11 @@ let currentGraph = null;
 let currentRenderedGraph = null;
 let currentHypothesisRanking = [];
 let selectedCommitId = null;
+let compareBaseCommit = null;
+let currentCommitComparison = null;
+let currentDiffViewMode = "list";
+let traceGraphDiffActive = false;
+let currentComparisonDiffGraph = null;
 let selectedNodeId = null;
 let lastLoadedAt = null;
 let autoRefreshHandle = null;
@@ -167,6 +206,7 @@ const graphPresets = {
 const graphProgressiveNodeBatchSize = 90;
 const graphProgressiveEdgeBatchSize = 180;
 const graphProgressiveThreshold = 700;
+const comparisonDiffGraphMaxItemsPerGroup = 60;
 
 for (const input of taskStateFilters) {
     input.addEventListener("change", () => {
@@ -207,6 +247,13 @@ graphZoomInButton?.addEventListener("click", () => {
 
 graphZoomFitButton?.addEventListener("click", () => {
     fitGraphZoomToCanvas();
+});
+
+graphSurfaceBackButton?.addEventListener("click", () => {
+    currentDiffViewMode = "list";
+    syncActiveWorkspaceFromGlobals();
+    renderDiffDetail();
+    restoreTraceGraphAfterDiff({ force: true });
 });
 
 repoForm.addEventListener("submit", async (event) => {
@@ -254,7 +301,7 @@ workspaceTabAddButton?.addEventListener("click", async () => {
     const workspace = createWorkspaceTabState({
         repositoryPath: "",
         branch: branchSelect.value || defaultBranchName
-    });
+    }, getWorkspaceTabDefaults());
     workspaceTabs.push(workspace);
     activeWorkspaceTabId = workspace.id;
     persistWorkspaceTabShell();
@@ -367,6 +414,14 @@ window.addEventListener("resize", () => {
 });
 
 graphCanvas?.addEventListener("click", (event) => {
+    const diffNode = event.target instanceof Element
+        ? event.target.closest(".diff-graph-node[data-diff-node-id]")
+        : null;
+    if (diffNode) {
+        showComparisonDiffNode(diffNode.dataset.diffNodeId);
+        return;
+    }
+
     if (!currentGraph) {
         return;
     }
@@ -447,7 +502,7 @@ async function loadOverview(branch, options = {}) {
     params.set("historyLimit", String(historyPageSize));
     params.set("timelineScope", currentHistoryTimelineScope);
 
-    const response = await fetch(`/api/overview?${params.toString()}`, { cache: "no-store" });
+    const response = await apiGet("/api/overview", params);
     if (requestSequence !== overviewRequestSequence) {
         return;
     }
@@ -461,7 +516,7 @@ async function loadOverview(branch, options = {}) {
         return;
     }
 
-    const overview = await response.json();
+    const overview = normalizeOverviewHistoryState(await response.json(), historyPageSize);
     if (requestSequence !== overviewRequestSequence) {
         return;
     }
@@ -565,7 +620,7 @@ async function hydrateHistory(requestSequence, repositoryPath, branch) {
         params.set("limit", String(historyPageSize));
         params.set("timelineScope", currentHistoryTimelineScope);
 
-        const response = await fetch(`/api/history?${params.toString()}`, { cache: "no-store" });
+        const response = await apiGet("/api/history", params);
         if (requestSequence !== overviewRequestSequence) {
             return;
         }
@@ -581,27 +636,8 @@ async function hydrateHistory(requestSequence, repositoryPath, branch) {
             return;
         }
 
-        const hydratedTimelineCommits = Array.isArray(payload.timelineCommits) ? payload.timelineCommits : [];
         const targetMaterializedCommitId = historyNavigationTargetCommitId ?? selectedCommitId;
-        const selectedMaterializedCommit = targetMaterializedCommitId
-            ? currentOverview.timelineCommits.find(commit => commit.id === targetMaterializedCommitId)
-            : null;
-        currentOverview.timelineCommits = selectedMaterializedCommit && !hydratedTimelineCommits.some(commit => commit.id === selectedMaterializedCommit.id)
-            ? [...hydratedTimelineCommits, selectedMaterializedCommit]
-            : hydratedTimelineCommits;
-        currentOverview.timelinePage = payload.timelinePage ?? currentOverview.timelinePage;
-        currentOverview.timelineScope = payload.timelineScope ?? currentOverview.timelineScope;
-        currentOverview.historyPending = false;
-
-        const branchTimelineCounts = payload.branchTimelineCounts ?? {};
-        if (Array.isArray(currentOverview.branches)) {
-            currentOverview.branches = currentOverview.branches.map(branchItem => ({
-                ...branchItem,
-                timelineCommitCount: Object.prototype.hasOwnProperty.call(branchTimelineCounts, branchItem.name)
-                    ? branchTimelineCounts[branchItem.name]
-                    : branchItem.timelineCommitCount
-            }));
-        }
+        currentOverview = applyHydratedHistory(currentOverview, payload, { targetMaterializedCommitId });
 
         renderSummary(currentOverview);
         renderCommits(currentOverview);
@@ -620,7 +656,7 @@ async function hydrateGraphSummary(requestSequence, repositoryPath) {
     }
 
     try {
-        const response = await fetch(`/api/graph-summary?path=${encodeURIComponent(repositoryPath)}`, { cache: "no-store" });
+        const response = await apiGet("/api/graph-summary", { path: repositoryPath });
         if (requestSequence !== overviewRequestSequence) {
             return;
         }
@@ -672,7 +708,7 @@ async function loadMoreHistory() {
         }
         params.set("timelineScope", currentHistoryTimelineScope);
 
-        const response = await fetch(`/api/history?${params.toString()}`, { cache: "no-store" });
+        const response = await apiGet("/api/history", params);
         if (!response.ok) {
             return false;
         }
@@ -682,16 +718,9 @@ async function loadMoreHistory() {
             return false;
         }
 
-        const loadedCommits = Array.isArray(page.timelineCommits) ? page.timelineCommits : [];
-        const existingCommitIds = new Set(currentOverview.timelineCommits.map(commit => commit.id));
-        const appendedCommits = loadedCommits.filter(commit => !existingCommitIds.has(commit.id));
-        appendedCount = appendedCommits.length;
-        currentOverview.timelineCommits = [...currentOverview.timelineCommits, ...appendedCommits];
-        currentOverview.timelinePage = {
-            ...(currentOverview.timelinePage ?? {}),
-            ...(page.timelinePage ?? {}),
-            loadedCount: currentOverview.timelineCommits.length
-        };
+        const result = appendHistoryPage(currentOverview, page);
+        currentOverview = result.overview;
+        appendedCount = result.appendedCount;
 
         renderSummary(currentOverview);
         renderCommits(currentOverview);
@@ -763,7 +792,7 @@ async function ensureAllGraphExpansion(nodeId) {
         focusNodeId: nodeId,
         depth: "2"
     });
-    const response = await fetch(`/api/graph?${params.toString()}`, { cache: "no-store" });
+    const response = await apiGet("/api/graph", params);
     if (!response.ok) {
         return;
     }
@@ -784,27 +813,6 @@ function applyStartupWorkingContextFocus() {
 
     pendingStartupWorkingFocus = false;
     applyWorkingContextFiltersTransient();
-}
-
-function normalizeOverviewHistoryState(overview) {
-    const timelineCommits = Array.isArray(overview?.timelineCommits)
-        ? overview.timelineCommits
-        : [];
-    const timelinePage = overview?.timelinePage ?? {};
-
-    return {
-        ...overview,
-        timelineCommits,
-        timelinePage: {
-            totalCount: Number.isFinite(timelinePage.totalCount) ? timelinePage.totalCount : timelineCommits.length,
-            loadedCount: Number.isFinite(timelinePage.loadedCount) ? timelinePage.loadedCount : timelineCommits.length,
-            limit: Number.isFinite(timelinePage.limit) ? timelinePage.limit : historyPageSize,
-            cursor: typeof timelinePage.cursor === "string" ? timelinePage.cursor : null,
-            nextCursor: typeof timelinePage.nextCursor === "string" ? timelinePage.nextCursor : null,
-            hasMore: Boolean(timelinePage.hasMore)
-        },
-        timelineScope: overview?.timelineScope === "all" ? "all" : "selected"
-    };
 }
 
 function renderTopbarVersion(overview) {
@@ -860,7 +868,7 @@ async function refreshReleaseStatus() {
     }
 
     try {
-        const response = await fetch("/api/release-status", { cache: "no-store" });
+        const response = await apiGet("/api/release-status");
         if (!response.ok) {
             renderReleaseStatus({ status: "unavailable" });
             return;
@@ -906,7 +914,7 @@ async function refreshMcpStatus() {
         }
         params.set("ensure", "false");
 
-        const response = await fetch(`/api/mcp-status?${params.toString()}`, { cache: "no-store" });
+        const response = await apiGet("/api/mcp-status", params);
         if (!response.ok) {
             renderMcpStatus({ healthy: false, status: "unavailable" });
             return;
@@ -975,10 +983,7 @@ async function controlMcpServer(action) {
             params.set("path", repositoryPath);
         }
 
-        const response = await fetch(`/api/mcp-${action}?${params.toString()}`, {
-            method: "POST",
-            cache: "no-store"
-        });
+        const response = await apiPost(`/api/mcp-${action}`, params);
         if (!response.ok) {
             renderMcpStatus({ healthy: false, status: "unavailable" });
             return;
@@ -1026,15 +1031,15 @@ function renderBranchSelect(overview) {
 }
 
 function loadStoredRepositoryPath() {
-    return window.localStorage.getItem(repositoryPathStorageKey);
+    return readStorageValue(repositoryPathStorageKey);
 }
 
 function persistRepositoryPath(path) {
-    window.localStorage.setItem(repositoryPathStorageKey, path);
+    writeStorageValue(repositoryPathStorageKey, path);
 }
 
 function loadStoredBranch() {
-    return window.localStorage.getItem(branchStorageKey);
+    return readStorageValue(branchStorageKey);
 }
 
 function persistBranchSelection(branch) {
@@ -1042,14 +1047,14 @@ function persistBranchSelection(branch) {
         return;
     }
 
-    window.localStorage.setItem(branchStorageKey, branch);
+    writeStorageValue(branchStorageKey, branch);
 }
 
 function initializeWorkspaceTabs(defaultRepositoryPath, defaultBranch) {
     const storedTabs = loadStoredWorkspaceTabs();
     if (storedTabs.length > 0) {
-        workspaceTabs = storedTabs.map(tab => createWorkspaceTabState(tab));
-        const storedActiveId = window.localStorage.getItem(activeWorkspaceTabStorageKey);
+        workspaceTabs = storedTabs.map(tab => createWorkspaceTabState(tab, getWorkspaceTabDefaults()));
+        const storedActiveId = readStorageValue(activeWorkspaceTabStorageKey);
         activeWorkspaceTabId = workspaceTabs.some(tab => tab.id === storedActiveId)
             ? storedActiveId
             : workspaceTabs[0].id;
@@ -1057,7 +1062,7 @@ function initializeWorkspaceTabs(defaultRepositoryPath, defaultBranch) {
         const workspace = createWorkspaceTabState({
             repositoryPath: defaultRepositoryPath,
             branch: defaultBranch || defaultBranchName
-        });
+        }, getWorkspaceTabDefaults());
         workspaceTabs = [workspace];
         activeWorkspaceTabId = workspace.id;
     }
@@ -1066,105 +1071,40 @@ function initializeWorkspaceTabs(defaultRepositoryPath, defaultBranch) {
 }
 
 function loadStoredWorkspaceTabs() {
-    const raw = window.localStorage.getItem(workspaceTabsStorageKey);
-    if (!raw) {
+    const parsed = readStorageJson(workspaceTabsStorageKey, []);
+    if (!Array.isArray(parsed)) {
         return [];
     }
 
-    try {
-        const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed)) {
-            return [];
-        }
-
-        return parsed.filter(item => item && typeof item === "object");
-    } catch {
-        return [];
-    }
+    return parsed.filter(item => item && typeof item === "object");
 }
 
 function persistWorkspaceTabShell() {
-    const payload = workspaceTabs.map(tab => ({
-        id: tab.id,
-        repositoryPath: tab.repositoryPath ?? "",
-        branch: tab.branch ?? defaultBranchName,
-        title: tab.title ?? deriveWorkspaceTabTitle(tab.repositoryPath)
-    }));
-    window.localStorage.setItem(workspaceTabsStorageKey, JSON.stringify(payload));
+    const payload = createWorkspaceTabShellPayload(workspaceTabs, defaultBranchName);
+    writeStorageJson(workspaceTabsStorageKey, payload);
     if (activeWorkspaceTabId) {
-        window.localStorage.setItem(activeWorkspaceTabStorageKey, activeWorkspaceTabId);
+        writeStorageValue(activeWorkspaceTabStorageKey, activeWorkspaceTabId);
     }
 }
 
-function createWorkspaceTabState(seed = {}) {
+function getWorkspaceTabDefaults() {
     return {
-        id: seed.id ?? createWorkspaceTabId(),
-        title: seed.title ?? deriveWorkspaceTabTitle(seed.repositoryPath),
-        repositoryPath: seed.repositoryPath ?? "",
-        branch: seed.branch ?? defaultBranchName,
-        overview: seed.overview ?? null,
-        graph: seed.graph ?? null,
-        renderedGraph: seed.renderedGraph ?? null,
-        hypothesisRanking: seed.hypothesisRanking ?? [],
-        selectedCommitId: seed.selectedCommitId ?? null,
-        selectedNodeId: seed.selectedNodeId ?? null,
-        lastLoadedAt: seed.lastLoadedAt ?? null,
-        historyBranchFilters: seed.historyBranchFilters ?? Array.from(currentHistoryBranchFilters),
-        historyTimelineScope: seed.historyTimelineScope ?? currentHistoryTimelineScope,
-        historySort: seed.historySort ?? currentHistorySort,
-        graphPreset: seed.graphPreset ?? currentGraphPreset,
-        graphFocusModes: seed.graphFocusModes ?? Array.from(currentGraphFocusModes),
-        graphZoom: seed.graphZoom ?? currentGraphZoom,
-        taskStateSelection: seed.taskStateSelection ?? captureTaskStateSelection(),
-        leftTab: seed.leftTab ?? currentLeftTab,
-        detailTab: seed.detailTab ?? currentDetailTab,
-        commitFocusEnabled: seed.commitFocusEnabled ?? currentCommitFocusEnabled,
-        primaryLineageOnly: seed.primaryLineageOnly ?? currentPrimaryLineageOnly,
-        expandActiveLines: seed.expandActiveLines ?? currentExpandActiveLines,
-        showInterpretationRelations: seed.showInterpretationRelations ?? currentShowInterpretationRelations,
-        currentCommitFocus: seed.currentCommitFocus ?? null,
-        currentGraphDemandMode: seed.currentGraphDemandMode ?? "full",
-        expandedAllGraphNodeIds: seed.expandedAllGraphNodeIds ?? [],
-        latestWorkingContextGraph: seed.latestWorkingContextGraph ?? null,
-        retainedWorkingContextGraph: seed.retainedWorkingContextGraph ?? null,
-        recentWorkingContextNewNodeIds: seed.recentWorkingContextNewNodeIds ?? [],
-        recentGraphNewNodeIds: seed.recentGraphNewNodeIds ?? [],
-        currentGraphSurfaceKey: seed.currentGraphSurfaceKey ?? null,
-        workingContextSignalFingerprint: seed.workingContextSignalFingerprint ?? null,
-        pendingStartupWorkingFocus: seed.pendingStartupWorkingFocus ?? true
+        branch: defaultBranchName,
+        diffViewMode: currentDiffViewMode,
+        historyBranchFilters: Array.from(currentHistoryBranchFilters),
+        historyTimelineScope: currentHistoryTimelineScope,
+        historySort: currentHistorySort,
+        graphPreset: currentGraphPreset,
+        graphFocusModes: Array.from(currentGraphFocusModes),
+        graphZoom: currentGraphZoom,
+        taskStateSelection: captureTaskStateSelection(),
+        leftTab: currentLeftTab,
+        detailTab: currentDetailTab,
+        commitFocusEnabled: currentCommitFocusEnabled,
+        primaryLineageOnly: currentPrimaryLineageOnly,
+        expandActiveLines: currentExpandActiveLines,
+        showInterpretationRelations: currentShowInterpretationRelations
     };
-}
-
-function createWorkspaceTabId() {
-    return `workspace-${Math.random().toString(36).slice(2, 10)}`;
-}
-
-function deriveWorkspaceTabTitle(path) {
-    const normalized = String(path ?? "").trim();
-    if (!normalized) {
-        return "New repo";
-    }
-
-    const segments = normalized.split(/[\\/]+/).filter(Boolean);
-    return segments[segments.length - 1] ?? normalized;
-}
-
-function deriveWorkspaceTabPathLabel(path) {
-    const normalized = String(path ?? "").trim();
-    if (!normalized) {
-        return "No repository loaded";
-    }
-
-    const segments = normalized.split(/[\\/]+/).filter(Boolean);
-    if (segments.length <= 3) {
-        return normalized;
-    }
-
-    return `...\\${segments.slice(-3).join("\\")}`;
-}
-
-function normalizeRepositoryPath(path) {
-    return String(path ?? "").trim().toLowerCase();
 }
 
 function getActiveWorkspace() {
@@ -1261,7 +1201,7 @@ async function openWorkspaceFromForm() {
     const workspace = createWorkspaceTabState({
         repositoryPath,
         branch
-    });
+    }, getWorkspaceTabDefaults());
     workspaceTabs.push(workspace);
     activeWorkspaceTabId = workspace.id;
     persistWorkspaceTabShell();
@@ -1281,7 +1221,9 @@ async function toggleRepositoryBrowser() {
         return;
     }
 
-    await browseForRepositoryDirectory();
+    repositoryBrowser.hidden = false;
+    renderRepositoryBrowserLoading();
+    await loadRepositoryBrowser();
 }
 
 function renderRepositoryBrowserLoading() {
@@ -1313,7 +1255,7 @@ async function loadRepositoryBrowser() {
             params.set("path", currentPath);
         }
 
-        const response = await fetch(`/api/repository-candidates?${params.toString()}`, { cache: "no-store" });
+        const response = await apiGet("/api/repository-candidates", params);
         if (!response.ok) {
             await browseForRepositoryDirectory();
             return;
@@ -1396,7 +1338,7 @@ function renderRepositoryBrowser(payload) {
 
 async function browseForRepositoryDirectory() {
     try {
-        const response = await fetch("/api/browse-directory", { cache: "no-store" });
+        const response = await apiGet("/api/browse-directory");
         if (!response.ok) {
             const error = await response.json().catch(() => null);
             viewerHint.textContent = error?.message ?? "Browse directory is not available.";
@@ -1427,7 +1369,7 @@ async function resolveSelectedRepositoryDirectory(selectedPath) {
             path: selectedPath,
             selectedOnly: "true"
         });
-        const response = await fetch(`/api/repository-candidates?${params.toString()}`, { cache: "no-store" });
+        const response = await apiGet("/api/repository-candidates", params);
         if (!response.ok) {
             repoPathInput.value = selectedPath;
             await openWorkspaceFromForm();
@@ -1494,6 +1436,11 @@ function syncActiveWorkspaceFromGlobals() {
     workspace.renderedGraph = currentRenderedGraph;
     workspace.hypothesisRanking = currentHypothesisRanking;
     workspace.selectedCommitId = selectedCommitId;
+    workspace.compareBaseCommit = compareBaseCommit;
+    workspace.currentCommitComparison = currentCommitComparison;
+    workspace.diffViewMode = currentDiffViewMode;
+    workspace.traceGraphDiffActive = traceGraphDiffActive;
+    workspace.currentComparisonDiffGraph = currentComparisonDiffGraph;
     workspace.selectedNodeId = selectedNodeId;
     workspace.lastLoadedAt = lastLoadedAt;
     workspace.historyBranchFilters = Array.from(currentHistoryBranchFilters);
@@ -1530,6 +1477,11 @@ function applyWorkspaceState(workspace) {
     currentRenderedGraph = workspace.renderedGraph ?? null;
     currentHypothesisRanking = workspace.hypothesisRanking ?? [];
     selectedCommitId = workspace.selectedCommitId ?? null;
+    compareBaseCommit = workspace.compareBaseCommit ?? null;
+    currentCommitComparison = workspace.currentCommitComparison ?? null;
+    currentDiffViewMode = workspace.diffViewMode === "graph" ? "graph" : "list";
+    traceGraphDiffActive = Boolean(workspace.traceGraphDiffActive && workspace.currentComparisonDiffGraph);
+    currentComparisonDiffGraph = workspace.currentComparisonDiffGraph ?? null;
     selectedNodeId = workspace.selectedNodeId ?? null;
     lastLoadedAt = workspace.lastLoadedAt ?? null;
     currentHistoryBranchFilters = new Set(workspace.historyBranchFilters ?? []);
@@ -1572,6 +1524,7 @@ function applyWorkspaceState(workspace) {
     updatePresetButtons();
     applyLeftTab(workspace.leftTab ?? "history");
     applyDetailTab(workspace.detailTab ?? "details");
+    renderDiffDetail();
 }
 
 async function switchWorkspaceTab(tabId, options = {}) {
@@ -1607,7 +1560,17 @@ async function switchWorkspaceTab(tabId, options = {}) {
     renderTasks(workspace.overview);
     renderCommits(workspace.overview);
 
-    if (selectedCommitId !== null) {
+    if (traceGraphDiffActive && currentComparisonDiffGraph) {
+        renderWorkingDetail();
+        renderComparisonDiffGraphInTrace(
+            currentComparisonDiffGraph.graph,
+            currentComparisonDiffGraph.fromCommitId,
+            currentComparisonDiffGraph.toCommitId,
+            { preserveViewport: false });
+        await loadOriginDetail();
+        await loadPlaybookDetail();
+        syncWorkingContextSignal();
+    } else if (selectedCommitId !== null) {
         await selectCommit(selectedCommitId, {
             preferredNodeId: selectedNodeId,
             scrollSelectedNodeIntoView: false,
@@ -1631,37 +1594,27 @@ async function switchWorkspaceTab(tabId, options = {}) {
 }
 
 function loadStoredAutoRefreshPreference() {
-    const storedValue = window.localStorage.getItem(autoRefreshStorageKey);
-    if (storedValue === null) {
-        return true;
-    }
-
-    return storedValue !== "false";
+    return readStorageBoolean(autoRefreshStorageKey, true);
 }
 
 function loadStoredCommitFocus() {
-    const storedValue = window.localStorage.getItem(commitFocusStorageKey);
-    if (storedValue === null) {
-        return true;
-    }
-
-    return storedValue !== "false";
+    return readStorageBoolean(commitFocusStorageKey, true);
 }
 
 function loadStoredPrimaryLineageOnly() {
-    return window.localStorage.getItem(primaryLineageStorageKey) === "true";
+    return readStorageBoolean(primaryLineageStorageKey);
 }
 
 function loadStoredExpandActiveLines() {
-    return window.localStorage.getItem(graphExpandActiveStorageKey) === "true";
+    return readStorageBoolean(graphExpandActiveStorageKey);
 }
 
 function loadStoredInterpretationRelations() {
-    return window.localStorage.getItem(interpretationRelationsStorageKey) === "true";
+    return readStorageBoolean(interpretationRelationsStorageKey);
 }
 
 function loadStoredGraphZoom() {
-    const raw = window.localStorage.getItem(graphZoomStorageKey);
+    const raw = readStorageValue(graphZoomStorageKey);
     return normalizeGraphZoom(Number(raw) || 1);
 }
 
@@ -1670,7 +1623,7 @@ function normalizeGraphZoom(value) {
 }
 
 function persistGraphZoom() {
-    window.localStorage.setItem(graphZoomStorageKey, currentGraphZoom.toFixed(2));
+    writeStorageValue(graphZoomStorageKey, currentGraphZoom.toFixed(2));
 }
 
 function setGraphZoom(value, options = {}) {
@@ -1679,9 +1632,49 @@ function setGraphZoom(value, options = {}) {
     updateGraphZoomControls();
     syncActiveWorkspaceFromGlobals();
 
-    if (currentGraph) {
+    if (applyGraphZoomToRenderedSurface()) {
+        return;
+    }
+
+    if (traceGraphDiffActive && currentComparisonDiffGraph) {
+        renderComparisonDiffGraphInTrace(
+            currentComparisonDiffGraph.graph,
+            currentComparisonDiffGraph.fromCommitId,
+            currentComparisonDiffGraph.toCommitId,
+            { preserveViewport: options.preserveViewport ?? true });
+    } else if (currentGraph) {
         renderGraph(currentGraph, { preserveViewport: options.preserveViewport ?? true });
     }
+}
+
+function applyGraphZoomToRenderedSurface() {
+    const stage = graphCanvas?.querySelector(".graph-stage");
+    const viewport = graphCanvas?.querySelector(".graph-stage-viewport");
+    if (stage && viewport) {
+        stage.style.transform = `scale(${currentGraphZoom})`;
+        viewport.style.width = `${Math.ceil(currentGraphStageSize.width * currentGraphZoom)}px`;
+        viewport.style.height = `${Math.ceil(currentGraphStageSize.height * currentGraphZoom)}px`;
+        renderGraphFooter(currentGraph, currentRenderedGraph);
+        return true;
+    }
+
+    const diffStage = graphCanvas?.querySelector(".diff-graph-stage");
+    const diffViewport = graphCanvas?.querySelector(".diff-graph-stage-viewport");
+    if (diffStage && diffViewport) {
+        const width = Number.parseFloat(diffStage.style.width) || currentGraphStageSize.width;
+        const height = Number.parseFloat(diffStage.style.height) || currentGraphStageSize.height;
+        diffStage.style.transform = `scale(${currentGraphZoom})`;
+        diffViewport.style.width = `${Math.ceil(width * currentGraphZoom)}px`;
+        diffViewport.style.height = `${Math.ceil(height * currentGraphZoom)}px`;
+        if (currentComparisonDiffGraph?.graph) {
+            renderGraphFooter(currentComparisonDiffGraph.graph, currentComparisonDiffGraph.graph, {
+                visibleRelationCount: currentComparisonDiffGraph.graph.edges.length
+            });
+        }
+        return true;
+    }
+
+    return false;
 }
 
 function updateGraphZoomControls() {
@@ -1703,29 +1696,29 @@ function fitGraphZoomToCanvas() {
 }
 
 function persistPrimaryLineageSelection() {
-    window.localStorage.setItem(primaryLineageStorageKey, currentPrimaryLineageOnly ? "true" : "false");
+    writeStorageBoolean(primaryLineageStorageKey, currentPrimaryLineageOnly);
 }
 
 function persistExpandActiveSelection() {
-    window.localStorage.setItem(graphExpandActiveStorageKey, currentExpandActiveLines ? "true" : "false");
+    writeStorageBoolean(graphExpandActiveStorageKey, currentExpandActiveLines);
 }
 
 function persistInterpretationRelationsSelection() {
-    window.localStorage.setItem(interpretationRelationsStorageKey, currentShowInterpretationRelations ? "true" : "false");
+    writeStorageBoolean(interpretationRelationsStorageKey, currentShowInterpretationRelations);
 }
 
 function persistCommitFocusSelection() {
-    window.localStorage.setItem(commitFocusStorageKey, currentCommitFocusEnabled ? "true" : "false");
+    writeStorageBoolean(commitFocusStorageKey, currentCommitFocusEnabled);
 }
 
 function persistAutoRefreshPreference() {
     if (autoRefreshToggle) {
-        window.localStorage.setItem(autoRefreshStorageKey, autoRefreshToggle.checked ? "true" : "false");
+        writeStorageBoolean(autoRefreshStorageKey, autoRefreshToggle.checked);
     }
 }
 
 function loadHistorySummaryCollapsed() {
-    return window.localStorage.getItem(historySummaryCollapsedStorageKey) === "true";
+    return readStorageBoolean(historySummaryCollapsedStorageKey);
 }
 
 function setHistorySummaryCollapsed(collapsed, options = {}) {
@@ -1743,7 +1736,7 @@ function setHistorySummaryCollapsed(collapsed, options = {}) {
         }
     }
     if (persist) {
-        window.localStorage.setItem(historySummaryCollapsedStorageKey, collapsed ? "true" : "false");
+        writeStorageBoolean(historySummaryCollapsedStorageKey, collapsed);
     }
 }
 
@@ -1865,7 +1858,7 @@ function applyViewMode(mode) {
     currentViewMode = mode;
     layout.dataset.viewMode = mode;
     viewModeCaption.textContent = viewModeDescriptions[mode];
-    window.localStorage.setItem(viewerModeKey, mode);
+    writeStorageValue(viewerModeKey, mode);
 
     for (const button of viewModeButtons) {
         button.classList.toggle("active", button.dataset.viewMode === mode);
@@ -1879,7 +1872,7 @@ function applyViewMode(mode) {
 }
 
 function loadStoredViewMode() {
-    const storedMode = window.localStorage.getItem(viewerModeKey);
+    const storedMode = readStorageValue(viewerModeKey);
     return viewModeDescriptions[storedMode] ? storedMode : "split";
 }
 
@@ -1891,28 +1884,23 @@ function persistGraphFocusSelection() {
     const selectedStates = taskStateFilters
         .filter(input => input.checked)
         .map(input => input.value);
-    window.localStorage.setItem(graphPresetStorageKey, currentGraphPreset);
-    window.localStorage.setItem(graphFocusModesStorageKey, JSON.stringify(Array.from(currentGraphFocusModes)));
-    window.localStorage.setItem(graphTaskFilterStorageKey, JSON.stringify(selectedStates));
+    writeStorageValue(graphPresetStorageKey, currentGraphPreset);
+    writeStorageJson(graphFocusModesStorageKey, Array.from(currentGraphFocusModes));
+    writeStorageJson(graphTaskFilterStorageKey, selectedStates);
 }
 
 function loadStoredPanelLayout() {
-    const raw = window.localStorage.getItem(panelLayoutStorageKey);
     const defaults = getDefaultPanelLayout();
-    if (!raw) {
+    const parsed = readStorageJson(panelLayoutStorageKey, null);
+    if (!parsed || typeof parsed !== "object") {
         return defaults;
     }
 
-    try {
-        const parsed = JSON.parse(raw);
-        return {
-            history: normalizePanelModeLayout(parsed.history, defaults.history),
-            split: normalizePanelModeLayout(parsed.split, defaults.split),
-            graph: normalizePanelModeLayout(parsed.graph, defaults.graph)
-        };
-    } catch {
-        return defaults;
-    }
+    return {
+        history: normalizePanelModeLayout(parsed.history, defaults.history),
+        split: normalizePanelModeLayout(parsed.split, defaults.split),
+        graph: normalizePanelModeLayout(parsed.graph, defaults.graph)
+    };
 }
 
 function normalizePanelModeLayout(value, fallback) {
@@ -1945,16 +1933,16 @@ function getPanelLayoutForMode(mode) {
 }
 
 function persistPanelLayout() {
-    window.localStorage.setItem(panelLayoutStorageKey, JSON.stringify(currentPanelLayout));
+    writeStorageJson(panelLayoutStorageKey, currentPanelLayout);
 }
 
 function loadStoredLeftTab() {
-    const stored = window.localStorage.getItem(leftTabStorageKey);
+    const stored = readStorageValue(leftTabStorageKey);
     return stored === "tasks" ? "tasks" : "history";
 }
 
 function persistLeftTab() {
-    window.localStorage.setItem(leftTabStorageKey, currentLeftTab);
+    writeStorageValue(leftTabStorageKey, currentLeftTab);
 }
 
 function applyLeftTab(tab) {
@@ -1982,16 +1970,16 @@ function applyLeftTab(tab) {
 }
 
 function loadStoredDetailTab() {
-    const stored = window.localStorage.getItem(detailTabStorageKey);
-    return stored === "origin" || stored === "playbook" || stored === "hypotheses" || stored === "interpretations" ? stored : "details";
+    const stored = readStorageValue(detailTabStorageKey);
+    return isKnownDetailTab(stored) ? stored : "details";
 }
 
 function persistDetailTab() {
-    window.localStorage.setItem(detailTabStorageKey, currentDetailTab);
+    writeStorageValue(detailTabStorageKey, currentDetailTab);
 }
 
 function applyDetailTab(tab) {
-    currentDetailTab = tab === "origin" || tab === "playbook" || tab === "hypotheses" || tab === "interpretations" ? tab : "details";
+    currentDetailTab = isKnownDetailTab(tab) ? tab : "details";
 
     for (const button of detailTabButtons) {
         const active = button.dataset.detailTab === currentDetailTab;
@@ -2012,6 +2000,15 @@ function applyDetailTab(tab) {
     }
 
     persistDetailTab();
+}
+
+function isKnownDetailTab(tab) {
+    return tab === "details"
+        || tab === "diff"
+        || tab === "origin"
+        || tab === "playbook"
+        || tab === "hypotheses"
+        || tab === "interpretations";
 }
 
 function applyPanelLayout() {
@@ -2238,7 +2235,7 @@ function syncPanelCollapseButtons() {
 function restoreGraphFocusSelection() {
     const storedStates = loadStoredTaskStateSelection();
     const storedFocusModes = loadStoredGraphFocusModes();
-    const storedPreset = window.localStorage.getItem(graphPresetStorageKey);
+    const storedPreset = readStorageValue(graphPresetStorageKey);
 
     currentGraphFocusModes = storedFocusModes.size > 0 ? storedFocusModes : new Set(["all"]);
 
@@ -2262,40 +2259,22 @@ function restoreGraphFocusSelection() {
 }
 
 function loadStoredGraphFocusModes() {
-    const raw = window.localStorage.getItem(graphFocusModesStorageKey);
-    if (!raw) {
+    const parsed = readStorageJson(graphFocusModesStorageKey, []);
+    if (!Array.isArray(parsed)) {
         return new Set(["all"]);
     }
 
-    try {
-        const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed)) {
-            return new Set(["all"]);
-        }
-
-        const validModes = parsed.filter(mode => mode === "all" || graphPresets[mode]);
-        return new Set(validModes.length > 0 ? validModes : ["all"]);
-    } catch {
-        return new Set(["all"]);
-    }
+    const validModes = parsed.filter(mode => mode === "all" || graphPresets[mode]);
+    return new Set(validModes.length > 0 ? validModes : ["all"]);
 }
 
 function loadStoredTaskStateSelection() {
-    const raw = window.localStorage.getItem(graphTaskFilterStorageKey);
-    if (!raw) {
+    const parsed = readStorageJson(graphTaskFilterStorageKey, []);
+    if (!Array.isArray(parsed)) {
         return [];
     }
 
-    try {
-        const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed)) {
-            return [];
-        }
-
-        return parsed.filter(state => taskStateFilters.some(input => input.value === state));
-    } catch {
-        return [];
-    }
+    return parsed.filter(state => taskStateFilters.some(input => input.value === state));
 }
 
 function renderCommits(overview) {
@@ -2716,8 +2695,10 @@ function renderHistoryCommitRow(commit, overview, lanes, laneCount, compact = fa
     const pathMarkup = pathMeta.segments.length > 0
         ? `<div class="history-cognitive-path">${pathMeta.segments.map(segment => `<span class="history-path-segment"><span class="history-path-label">${escapeHtml(segment.label)}</span><span class="history-path-value">${escapeHtml(segment.value)}</span></span>`).join("<span class=\"history-path-arrow\">&rarr;</span>")}</div>`
         : `<span class="commit-summary">No cognitive path captured for this commit.</span>`;
-    const item = document.createElement("button");
-    item.type = "button";
+    const diffActions = renderHistoryDiffActions(commit);
+    const item = document.createElement("div");
+    item.setAttribute("role", "button");
+    item.tabIndex = 0;
     item.dataset.historyCommitId = commit.id;
     item.className = `history-row ${compact ? "history-row-compact" : ""} ${branchState} ${selectedCommitId === commit.id ? "active" : ""}`;
     item.innerHTML = compact
@@ -2738,6 +2719,7 @@ function renderHistoryCommitRow(commit, overview, lanes, laneCount, compact = fa
                 ${pathMeta.goal ? `<span class="commit-summary compact-goal-line">Goal: ${escapeHtml(pathMeta.goal)}</span>` : ""}
                 <span class="commit-summary">${escapeHtml(commit.author ?? "unknown")} | ${escapeHtml(new Date(commit.createdAtUtc).toLocaleString())} | ${escapeHtml(commit.id.slice(0, 8))}</span>
                 <span class="history-author-meta">${escapeHtml(formatModelIdentity(commit.modelName, commit.modelVersion))}</span>
+                ${diffActions}
             </div>
             <div class="history-cell history-date-cell">
                 <span class="history-change-count">${escapeHtml(String(commit.changedEntityCount ?? 0))}</span>
@@ -2775,14 +2757,75 @@ function renderHistoryCommitRow(commit, overview, lanes, laneCount, compact = fa
             </div>
             <div class="history-cell history-id-cell">
                 <code>${escapeHtml(commit.id.slice(0, 8))}</code>
+                ${diffActions}
             </div>
         `;
-    item.onclick = () => selectCommit(commit.id);
+    item.addEventListener("click", () => selectCommit(commit.id));
+    item.addEventListener("keydown", event => {
+        if (event.target !== item || (event.key !== "Enter" && event.key !== " ")) {
+            return;
+        }
+
+        event.preventDefault();
+        void selectCommit(commit.id);
+    });
+
+    for (const button of item.querySelectorAll("[data-history-diff-action]")) {
+        button.addEventListener("click", event => {
+            event.stopPropagation();
+            handleHistoryDiffAction(button.dataset.historyDiffAction, commit);
+        });
+    }
     return item;
 }
 
+function renderHistoryDiffActions(commit) {
+    const baseId = compareBaseCommit?.id ?? null;
+    const isBase = baseId === commit.id;
+    const parentId = Array.isArray(commit.parentIds) && commit.parentIds.length > 0 ? commit.parentIds[0] : null;
+    const compareButton = baseId && !isBase
+        ? `<button type="button" class="history-diff-button primary" data-history-diff-action="compare">Compare</button>`
+        : "";
+    const parentButton = parentId
+        ? `<button type="button" class="history-diff-button" data-history-diff-action="parent">Parent</button>`
+        : "";
+    const baseControl = isBase
+        ? `<span class="history-diff-base">Base</span><button type="button" class="history-diff-button" data-history-diff-action="clear">Clear</button>`
+        : `<button type="button" class="history-diff-button" data-history-diff-action="base">Base</button>`;
+
+    return `
+        <div class="history-diff-actions" aria-label="Cognitive diff actions">
+            ${baseControl}
+            ${compareButton}
+            ${parentButton}
+        </div>`;
+}
+
+function handleHistoryDiffAction(action, commit) {
+    if (action === "base") {
+        setCommitComparisonBase(commit);
+        return;
+    }
+
+    if (action === "clear") {
+        clearCommitComparisonBase();
+        return;
+    }
+
+    if (action === "compare" && compareBaseCommit?.id && compareBaseCommit.id !== commit.id) {
+        void loadCommitComparison(compareBaseCommit.id, commit.id, { targetCommit: commit });
+        return;
+    }
+
+    if (action === "parent") {
+        const parentId = Array.isArray(commit.parentIds) && commit.parentIds.length > 0 ? commit.parentIds[0] : null;
+        if (parentId) {
+            void loadCommitComparison(parentId, commit.id, { targetCommit: commit });
+        }
+    }
+}
+
 function restoreHistoryBranchFilters(overview) {
-    const raw = window.localStorage.getItem(historyBranchFilterStorageKey);
     const branchNames = new Set(overview.branches.map(branch => branch.name));
     currentHistoryTimelineScope = overview.timelineScope === "all" ? "all" : "selected";
 
@@ -2792,42 +2835,33 @@ function restoreHistoryBranchFilters(overview) {
         return;
     }
 
-    if (!raw) {
-        currentHistoryBranchFilters = new Set(branchNames);
-        return;
-    }
-
-    try {
-        const parsed = JSON.parse(raw);
-        const filtered = Array.isArray(parsed)
-            ? parsed.filter(name => branchNames.has(name))
-            : [];
-        currentHistoryBranchFilters = new Set(filtered.length > 0 ? filtered : branchNames);
-    } catch {
-        currentHistoryBranchFilters = new Set(branchNames);
-    }
+    const parsed = readStorageJson(historyBranchFilterStorageKey, []);
+    const filtered = Array.isArray(parsed)
+        ? parsed.filter(name => branchNames.has(name))
+        : [];
+    currentHistoryBranchFilters = new Set(filtered.length > 0 ? filtered : branchNames);
 }
 
 function loadStoredHistorySort() {
-    const storedValue = window.localStorage.getItem(historySortStorageKey);
+    const storedValue = readStorageValue(historySortStorageKey);
     return storedValue === "oldest" ? "oldest" : "newest";
 }
 
 function loadStoredHistoryTimelineScope() {
-    const storedValue = window.localStorage.getItem(historyTimelineScopeStorageKey);
+    const storedValue = readStorageValue(historyTimelineScopeStorageKey);
     return storedValue === "all" ? "all" : "selected";
 }
 
 function persistHistorySort() {
-    window.localStorage.setItem(historySortStorageKey, currentHistorySort);
+    writeStorageValue(historySortStorageKey, currentHistorySort);
 }
 
 function persistHistoryTimelineScope() {
-    window.localStorage.setItem(historyTimelineScopeStorageKey, currentHistoryTimelineScope);
+    writeStorageValue(historyTimelineScopeStorageKey, currentHistoryTimelineScope);
 }
 
 function persistHistoryBranchFilters() {
-    window.localStorage.setItem(historyBranchFilterStorageKey, JSON.stringify(Array.from(currentHistoryBranchFilters)));
+    writeStorageJson(historyBranchFilterStorageKey, Array.from(currentHistoryBranchFilters));
 }
 
 function resolveVisibleHistoryBranches(overview) {
@@ -2911,7 +2945,7 @@ function toggleHistoryBranchFilter(branchName, overview) {
 
 async function loadHypothesisRanking() {
     const params = new URLSearchParams({ path: repoPathInput.value });
-    const response = await fetch(`/api/hypotheses/rank?${params.toString()}`, { cache: "no-store" });
+    const response = await apiGet("/api/hypotheses/rank", params);
     if (!response.ok) {
         return [];
     }
@@ -2965,7 +2999,7 @@ async function selectCommit(commitId, options = {}) {
 
     const params = buildGraphRequestParams(commitId);
 
-    const graphResponse = await fetch(`/api/graph?${params.toString()}`, { cache: "no-store" });
+    const graphResponse = await apiGet("/api/graph", params);
     if (requestSequence !== selectionRequestSequence) {
         return;
     }
@@ -3007,7 +3041,7 @@ async function selectCommit(commitId, options = {}) {
         : null;
 
     if (commitId) {
-        const detailResponse = await fetch(`/api/commit?id=${encodeURIComponent(commitId)}&path=${encodeURIComponent(repoPathInput.value)}`, { cache: "no-store" });
+        const detailResponse = await apiGet("/api/commit", { id: commitId, path: repoPathInput.value });
         if (requestSequence !== selectionRequestSequence) {
             return;
         }
@@ -3161,7 +3195,6 @@ function buildGraphRenderKey(graph, filteredGraph) {
         currentShowInterpretationRelations ? "relations:on" : "relations:off",
         focusModes,
         checkedStates,
-        currentGraphZoom.toFixed(2),
         filteredGraph?.nodes?.length ?? 0,
         filteredGraph?.edges?.length ?? 0
     ].join("::");
@@ -3299,7 +3332,7 @@ async function findOriginCommitForEntity(type, entityId) {
     params.set("id", entityId);
 
     try {
-        const response = await fetch(`/api/entity-origin-commit?${params.toString()}`, { cache: "no-store" });
+        const response = await apiGet("/api/entity-origin-commit", params);
         if (!response.ok) {
             return null;
         }
@@ -3338,7 +3371,7 @@ async function materializeHistoryCommit(commitId) {
 }
 
 async function loadTimelineCommitById(commitId) {
-    const response = await fetch(`/api/commit?id=${encodeURIComponent(commitId)}&path=${encodeURIComponent(repoPathInput.value)}`, { cache: "no-store" });
+    const response = await apiGet("/api/commit", { id: commitId, path: repoPathInput.value });
     if (!response.ok) {
         return null;
     }
@@ -3431,15 +3464,11 @@ function resolveHistoryScrollContainer(row) {
     return commitList;
 }
 
-function cssEscape(value) {
-    if (window.CSS?.escape) {
-        return window.CSS.escape(value);
-    }
-
-    return String(value).replace(/["\\]/g, "\\$&");
-}
-
 async function renderGraph(graph, options = {}) {
+    traceGraphDiffActive = false;
+    currentComparisonDiffGraph = null;
+    graphCanvas?.classList.remove("graph-canvas-diff");
+    updateGraphSurfaceChrome("trace");
     const preserveViewport = options.preserveViewport ?? false;
     const forceRender = options.forceRender ?? false;
     const viewportSnapshot = preserveViewport ? captureGraphViewport() : null;
@@ -5667,7 +5696,7 @@ async function pollWorkingContextSignal() {
             params.set("path", repoPathInput.value.trim());
         }
 
-        const response = await fetch(`/api/working-context/signal?${params.toString()}`, { cache: "no-store" });
+        const response = await apiGet("/api/working-context/signal", params);
         if (!response.ok) {
             return;
         }
@@ -5687,7 +5716,7 @@ async function pollWorkingContextSignal() {
             await refreshWorkingContextSignalState();
         }
     } catch {
-        // Ignore transient signal failures; manual/full refresh still exists.
+        // Ignore transient signal failures; full load/reload still exists.
     } finally {
         workingContextSignalRequestInFlight = false;
     }
@@ -5707,13 +5736,13 @@ async function refreshWorkingContextSignalState() {
     params.set("historyLimit", String(historyPageSize));
     params.set("timelineScope", currentHistoryTimelineScope);
 
-    const overviewResponse = await fetch(`/api/overview?${params.toString()}`, { cache: "no-store" });
+    const overviewResponse = await apiGet("/api/overview", params);
     if (!overviewResponse.ok) {
         return;
     }
 
     const overview = await overviewResponse.json();
-    const normalizedOverview = normalizeOverviewHistoryState(overview);
+    const normalizedOverview = normalizeOverviewHistoryState(overview, historyPageSize);
     const canReuseTimelineFromPrevious = Boolean(
         previousOverview
         && normalizeRepositoryPath(previousOverview.repositoryPath) === normalizeRepositoryPath(normalizedOverview.repositoryPath)
@@ -5742,8 +5771,10 @@ async function refreshWorkingContextSignalState() {
     persistRepositoryPath(normalizedOverview.repositoryPath);
     persistBranchSelection(normalizedOverview.selectedBranch);
     renderTopbarVersion(normalizedOverview);
+    currentHypothesisRanking = await loadHypothesisRanking();
 
     renderSummary(normalizedOverview);
+    renderHypothesisRanking(currentHypothesisRanking);
     renderTasks(normalizedOverview);
     renderCommits(normalizedOverview);
     void hydrateHistory(overviewRequestSequence, normalizedOverview.repositoryPath, normalizedOverview.selectedBranch);
@@ -5754,7 +5785,7 @@ async function refreshWorkingContextSignalState() {
     const previousNodeIds = new Set((latestWorkingContextGraph?.nodes ?? []).map(node => node.id));
     const previousSurfaceKey = currentGraphSurfaceKey;
     const nextSurfaceKey = buildGraphSurfaceKey(null);
-    const graphResponse = await fetch(`/api/graph?path=${encodeURIComponent(repositoryPath)}`, { cache: "no-store" });
+    const graphResponse = await apiGet("/api/graph", { path: repositoryPath });
     if (!graphResponse.ok) {
         return;
     }
@@ -5783,6 +5814,11 @@ async function refreshWorkingContextSignalState() {
     }
 
     currentGraph = buildWorkingContextDisplayGraph(latestWorkingContextGraph, retainedWorkingContextGraph);
+    if (traceGraphDiffActive && currentComparisonDiffGraph) {
+        syncActiveWorkspaceFromGlobals();
+        return;
+    }
+
     currentCommitFocus = null;
     const shouldClearStaleSelection = hadWorkingContextBaseline && recentWorkingContextNewNodeIds.size > 0;
     selectedNodeId = !shouldClearStaleSelection && selectedNodeId && currentGraph.nodes.some(node => node.id === selectedNodeId)
@@ -5962,29 +5998,6 @@ function renderFreshnessStatus(overrideText) {
     freshnessStatus.textContent = loadedText;
 }
 
-function escapeHtml(value) {
-    value ??= "";
-    return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;");
-}
-
-function escapeAttribute(value) {
-    return escapeHtml(value)
-        .replaceAll("\"", "&quot;")
-        .replaceAll("'", "&#39;");
-}
-
-function formatDateTime(value) {
-    if (!value) {
-        return "";
-    }
-
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString();
-}
-
 function buildLaneMap(overview) {
     const laneMap = new Map();
     overview.branches
@@ -6040,19 +6053,26 @@ function renderWorkingDetail() {
 
 function renderCommitDetail(detail) {
     const diff = detail.diff ?? {};
+    const parentIds = detail.parentIds ?? [];
     const totalChanges =
         (diff.decisions?.length ?? 0)
         + (diff.hypotheses?.length ?? 0)
         + (diff.evidence?.length ?? 0)
+        + (diff.epics?.length ?? 0)
         + (diff.tasks?.length ?? 0)
         + (diff.conclusions?.length ?? 0)
+        + (diff.runbooks?.length ?? 0)
+        + (diff.triggers?.length ?? 0)
         + (diff.conflicts?.length ?? 0);
     const sections = [
         ["Decisions", diff.decisions],
         ["Hypotheses", diff.hypotheses],
         ["Evidence", diff.evidence],
+        ["Epics", diff.epics],
         ["Tasks", diff.tasks],
         ["Conclusions", diff.conclusions],
+        ["Runbooks", diff.runbooks],
+        ["Triggers", diff.triggers],
         ["Conflicts", diff.conflicts]
     ];
     const pathMeta = buildCognitivePathMeta(detail.cognitivePath, currentCommitFocus);
@@ -6105,7 +6125,6 @@ function renderCommitDetail(detail) {
     `;
 
     const parentContainer = commitDetail.querySelector("#parent-pills");
-    const parentIds = detail.parentIds ?? [];
     if (parentIds.length === 0) {
         parentContainer.innerHTML = `<span class="detail-count">Root commit</span>`;
     } else {
@@ -6143,6 +6162,601 @@ function renderCommitDetail(detail) {
             });
         });
     }
+
+}
+
+function setCommitComparisonBase(commit) {
+    compareBaseCommit = {
+        id: commit.id,
+        message: commit.message ?? ""
+    };
+    currentCommitComparison = null;
+    syncActiveWorkspaceFromGlobals();
+    if (currentOverview) {
+        renderCommits(currentOverview);
+    }
+    renderDiffDetail();
+}
+
+function clearCommitComparisonBase() {
+    compareBaseCommit = null;
+    currentCommitComparison = null;
+    syncActiveWorkspaceFromGlobals();
+    if (currentOverview) {
+        renderCommits(currentOverview);
+    }
+    renderDiffDetail();
+}
+
+async function loadCommitComparison(fromCommitId, toCommitId, options = {}) {
+    if (!diffDetail) {
+        return;
+    }
+
+    currentCommitComparison = {
+        fromCommitId,
+        toCommitId,
+        fromMessage: compareBaseCommit?.id === fromCommitId ? compareBaseCommit.message : "",
+        toMessage: options.targetCommit?.message ?? "",
+        status: "loading",
+        comparison: null,
+        error: null
+    };
+    renderDiffDetail();
+    applyDetailTab("diff");
+    expandPanel("right");
+
+    try {
+        const params = new URLSearchParams({
+            from: fromCommitId,
+            to: toCommitId,
+            path: repoPathInput.value
+        });
+        const response = await apiGet("/api/diff", params);
+        if (!response.ok) {
+            throw new Error(`Comparison failed: ${response.status}`);
+        }
+
+        const comparison = await response.json();
+        currentCommitComparison = {
+            ...currentCommitComparison,
+            status: "ready",
+            comparison,
+            error: null
+        };
+        renderDiffDetail();
+        syncActiveWorkspaceFromGlobals();
+    } catch (error) {
+        currentCommitComparison = {
+            ...currentCommitComparison,
+            status: "error",
+            error: error.message ?? "Comparison failed."
+        };
+        renderDiffDetail();
+        syncActiveWorkspaceFromGlobals();
+    }
+}
+
+function renderDiffDetail() {
+    if (!diffDetail) {
+        return;
+    }
+
+    if (!compareBaseCommit && !currentCommitComparison) {
+        diffDetail.innerHTML = `<p class="detail-empty">Choose a base commit in History, then compare another commit.</p>`;
+        return;
+    }
+
+    if (!currentCommitComparison) {
+        diffDetail.innerHTML = `
+            <div class="detail-compare-panel">
+                <div class="detail-compare-header">
+                    <div>
+                        <h4>Base selected</h4>
+                        <p>${escapeHtml(compareBaseCommit.id.slice(0, 8))}${compareBaseCommit.message ? ` - ${escapeHtml(compareBaseCommit.message)}` : ""}</p>
+                    </div>
+                    <span class="detail-count">Waiting for target</span>
+                </div>
+                <p class="detail-empty">Use Compare on another History commit to inspect the cognitive diff.</p>
+            </div>`;
+        return;
+    }
+
+    if (currentCommitComparison.status === "loading") {
+        diffDetail.innerHTML = `
+            <div class="detail-compare-panel">
+                <div class="detail-compare-header">
+                    <div>
+                        <h4>Comparing</h4>
+                        <p>${escapeHtml(currentCommitComparison.fromCommitId.slice(0, 8))} -> ${escapeHtml(currentCommitComparison.toCommitId.slice(0, 8))}</p>
+                    </div>
+                    <span class="detail-count">Loading</span>
+                </div>
+            </div>`;
+        return;
+    }
+
+    if (currentCommitComparison.status === "error") {
+        diffDetail.innerHTML = `
+            <div class="detail-compare-panel">
+                <p class="detail-empty">${escapeHtml(currentCommitComparison.error ?? "Comparison failed.")}</p>
+            </div>`;
+        return;
+    }
+
+    renderCommitComparison(
+        diffDetail,
+        currentCommitComparison.comparison,
+        currentCommitComparison.fromCommitId,
+        currentCommitComparison.toCommitId,
+        currentCommitComparison);
+}
+
+function renderCommitComparison(panel, comparison, fromCommitId, toCommitId, metadata = {}) {
+    const diff = comparison?.diff ?? {};
+    const sections = [
+        ["Decisions", diff.decisions],
+        ["Hypotheses", diff.hypotheses],
+        ["Evidence", diff.evidence],
+        ["Epics", diff.epics],
+        ["Tasks", diff.tasks],
+        ["Conclusions", diff.conclusions],
+        ["Runbooks", diff.runbooks],
+        ["Triggers", diff.triggers],
+        ["Conflicts", diff.conflicts]
+    ];
+    const totalChanges = sections.reduce((total, [, items]) => total + (Array.isArray(items) ? items.length : 0), 0);
+    const summaryMetrics = buildComparisonSummaryMetrics(sections);
+    const diffGraph = buildComparisonDiffGraph(diff);
+
+    panel.innerHTML = `
+        <div class="detail-compare-panel">
+            <div class="detail-compare-header">
+                <div>
+                    <h4>Comparison</h4>
+                    <p>${escapeHtml(fromCommitId.slice(0, 8))}${metadata.fromMessage ? ` - ${escapeHtml(metadata.fromMessage)}` : ""}</p>
+                    <p>${escapeHtml(toCommitId.slice(0, 8))}${metadata.toMessage ? ` - ${escapeHtml(metadata.toMessage)}` : ""}</p>
+                </div>
+                <span class="detail-count">${escapeHtml(String(totalChanges))} changes</span>
+            </div>
+            ${renderComparisonSummaryStrip(summaryMetrics)}
+            <div class="detail-action-row diff-view-switch" aria-label="Diff view mode">
+                <button type="button" class="detail-pill ${currentDiffViewMode === "list" ? "active" : ""}" data-diff-view-mode="list">List</button>
+                <button type="button" class="detail-pill ${currentDiffViewMode === "graph" ? "active" : ""}" data-diff-view-mode="graph">Graph</button>
+            </div>
+            <div class="detail-grid detail-compare-grid">
+                <div class="detail-card">
+                    <span class="detail-card-label">Base</span>
+                    <span class="detail-card-value">${escapeHtml(fromCommitId.slice(0, 8))}</span>
+                </div>
+                <div class="detail-card">
+                    <span class="detail-card-label">Target</span>
+                    <span class="detail-card-value">${escapeHtml(toCommitId.slice(0, 8))}</span>
+                </div>
+                <div class="detail-card">
+                    <span class="detail-card-label">Summary</span>
+                    <span class="detail-card-value">${escapeHtml(comparison?.summary ?? diff.summary ?? "No diff summary")}</span>
+                </div>
+            </div>
+            <div class="diff-list-view" ${currentDiffViewMode === "graph" ? "hidden" : ""}>
+                ${sections.map(([label, items]) => renderDiffSection(label, items)).join("") || `<p class="detail-empty">No entity changes.</p>`}
+            </div>
+            <div class="diff-graph-view" ${currentDiffViewMode === "list" ? "hidden" : ""}>
+                ${renderComparisonDiffGraphSummary(diffGraph)}
+            </div>
+        </div>
+    `;
+
+    for (const button of panel.querySelectorAll("[data-diff-view-mode]")) {
+        button.addEventListener("click", () => {
+            currentDiffViewMode = button.dataset.diffViewMode === "graph" ? "graph" : "list";
+            syncActiveWorkspaceFromGlobals();
+            renderDiffDetail();
+            if (currentDiffViewMode === "graph") {
+                renderComparisonDiffGraphInTrace(diffGraph, fromCommitId, toCommitId);
+            } else {
+                restoreTraceGraphAfterDiff();
+            }
+        });
+    }
+
+    if (currentDiffViewMode === "graph") {
+        renderComparisonDiffGraphInTrace(diffGraph, fromCommitId, toCommitId);
+    }
+}
+
+function buildComparisonSummaryMetrics(sections) {
+    const stateCounts = new Map([
+        ["added", 0],
+        ["changed", 0],
+        ["removed", 0],
+        ["unchanged", 0],
+        ["conflict", 0]
+    ]);
+    const entityCounts = [];
+    let total = 0;
+
+    for (const [label, items] of sections) {
+        const list = Array.isArray(items) ? items : [];
+        if (list.length === 0) {
+            continue;
+        }
+
+        entityCounts.push([label, list.length]);
+        total += list.length;
+
+        for (const item of list) {
+            const state = label === "Conflicts"
+                ? "conflict"
+                : normalizeDiffChangeState(item?.changeType ?? item?.state);
+            stateCounts.set(state, (stateCounts.get(state) ?? 0) + 1);
+        }
+    }
+
+    return { total, stateCounts, entityCounts };
+}
+
+function renderComparisonSummaryStrip(metrics) {
+    const stateCards = [
+        ["total", "Total", metrics.total],
+        ["added", "Added", metrics.stateCounts.get("added") ?? 0],
+        ["changed", "Changed", metrics.stateCounts.get("changed") ?? 0],
+        ["removed", "Removed", metrics.stateCounts.get("removed") ?? 0],
+        ["unchanged", "Context", metrics.stateCounts.get("unchanged") ?? 0],
+        ["conflict", "Conflicts", metrics.stateCounts.get("conflict") ?? 0]
+    ];
+    const entityChips = metrics.entityCounts
+        .map(([label, count]) => `<span class="diff-summary-chip">${escapeHtml(label)} ${escapeHtml(String(count))}</span>`)
+        .join("");
+
+    return `
+        <div class="diff-summary-strip" aria-label="Cognitive diff summary">
+            <div class="diff-summary-states">
+                ${stateCards.map(([state, label, count]) => `
+                    <div class="diff-summary-card diff-state-${escapeHtml(state)}">
+                        <span>${escapeHtml(label)}</span>
+                        <strong>${escapeHtml(String(count))}</strong>
+                    </div>
+                `).join("")}
+            </div>
+            ${entityChips ? `<div class="diff-summary-entities">${entityChips}</div>` : ""}
+        </div>`;
+}
+
+function buildComparisonDiffGraph(diff) {
+    const groups = [
+        ["Tasks", "Task", diff.tasks],
+        ["Hypotheses", "Hypothesis", diff.hypotheses],
+        ["Evidence", "Evidence", diff.evidence],
+        ["Decisions", "Decision", diff.decisions],
+        ["Conclusions", "Conclusion", diff.conclusions],
+        ["Epics", "Epic", diff.epics],
+        ["Runbooks", "Runbook", diff.runbooks],
+        ["Triggers", "Trigger", diff.triggers],
+        ["Conflicts", "Conflict", diff.conflicts]
+    ];
+    const nodes = [];
+    const edges = [];
+    const stateCounts = new Map();
+    const rootId = "Diff:root";
+    nodes.push({
+        id: rootId,
+        type: "Diff",
+        label: "Comparison",
+        state: "summary",
+        summary: diff.summary ?? "Cognitive diff"
+    });
+
+    for (const [label, type, items] of groups) {
+        if (!Array.isArray(items) || items.length === 0) {
+            continue;
+        }
+
+        const groupId = `Group:${type}`;
+        nodes.push({
+            id: groupId,
+            type: "Group",
+            label,
+            state: "unchanged",
+            summary: `${items.length} ${label.toLowerCase()}`
+        });
+        edges.push({ from: rootId, to: groupId, state: "unchanged" });
+
+        const visibleItems = items.slice(0, comparisonDiffGraphMaxItemsPerGroup);
+        for (let index = 0; index < visibleItems.length; index += 1) {
+            const item = visibleItems[index];
+            const entityId = item?.entityId ?? item?.id ?? `${type}:${index}`;
+            const nodeId = String(entityId).includes(":") ? String(entityId) : `${type}:${entityId}`;
+            const changeState = type === "Conflict" ? "conflict" : normalizeDiffChangeState(item?.changeType ?? item?.state);
+            stateCounts.set(changeState, (stateCounts.get(changeState) ?? 0) + 1);
+            nodes.push({
+                id: `${nodeId}:${index}`,
+                type,
+                label: item?.title ?? item?.summary ?? String(entityId),
+                state: changeState,
+                summary: item?.summary ?? "",
+                entityId: String(entityId)
+            });
+            edges.push({ from: groupId, to: `${nodeId}:${index}`, state: changeState });
+        }
+
+        const hiddenCount = items.length - visibleItems.length;
+        if (hiddenCount > 0) {
+            const overflowId = `Overflow:${type}`;
+            const hiddenByState = items.slice(comparisonDiffGraphMaxItemsPerGroup).reduce((map, item) => {
+                const state = type === "Conflict" ? "conflict" : normalizeDiffChangeState(item?.changeType ?? item?.state);
+                map.set(state, (map.get(state) ?? 0) + 1);
+                stateCounts.set(state, (stateCounts.get(state) ?? 0) + 1);
+                return map;
+            }, new Map());
+            const summary = Array.from(hiddenByState.entries())
+                .map(([state, count]) => `${count} ${state}`)
+                .join(", ");
+            nodes.push({
+                id: overflowId,
+                type,
+                label: `${hiddenCount} more ${label.toLowerCase()}`,
+                state: type === "Conflict" ? "conflict" : "unchanged",
+                summary: summary || "Collapsed to keep the graph readable.",
+                entityId: "summary",
+                metadata: { overflowCount: hiddenCount }
+            });
+            edges.push({ from: groupId, to: overflowId, state: type === "Conflict" ? "conflict" : "unchanged" });
+        }
+    }
+
+    return {
+        nodes,
+        edges,
+        metadata: {
+            totalItems: groups.reduce((sum, [, , items]) => sum + (Array.isArray(items) ? items.length : 0), 0),
+            hiddenItems: groups.reduce((sum, [, , items]) => sum + Math.max(0, (Array.isArray(items) ? items.length : 0) - comparisonDiffGraphMaxItemsPerGroup), 0),
+            maxItemsPerGroup: comparisonDiffGraphMaxItemsPerGroup,
+            stateCounts: Object.fromEntries(stateCounts)
+        }
+    };
+}
+
+function normalizeDiffChangeState(value) {
+    const normalized = String(value ?? "").toLowerCase();
+    if (normalized.includes("add") || normalized.includes("new")) {
+        return "added";
+    }
+    if (normalized.includes("remove") || normalized.includes("delete")) {
+        return "removed";
+    }
+    if (normalized.includes("update") || normalized.includes("change") || normalized.includes("modify")) {
+        return "changed";
+    }
+    if (normalized.includes("conflict")) {
+        return "conflict";
+    }
+    if (normalized.includes("context") || normalized.includes("unchanged")) {
+        return "unchanged";
+    }
+
+    return "changed";
+}
+
+function renderComparisonDiffGraph(graph) {
+    if (!graph.nodes.some(node => node.id !== "Diff:root")) {
+        return `<p class="detail-empty">No graphable diff entities.</p>`;
+    }
+
+    const typeOrder = ["Diff", "Group", "Task", "Hypothesis", "Evidence", "Decision", "Conclusion", "Epic", "Runbook", "Trigger", "Conflict"];
+    const grouped = new Map(typeOrder.map(type => [type, []]));
+    for (const node of graph.nodes) {
+        if (!grouped.has(node.type)) {
+            grouped.set(node.type, []);
+        }
+        grouped.get(node.type).push(node);
+    }
+
+    const columnGap = 190;
+    const nodeGap = 16;
+    const cardWidth = 164;
+    const cardHeight = 72;
+    const positions = new Map();
+    let columnIndex = 0;
+    let maxRows = 1;
+    const nodeMarkup = [];
+
+    for (const [type, nodes] of grouped.entries()) {
+        if (nodes.length === 0) {
+            continue;
+        }
+
+        nodeMarkup.push(`<div class="diff-graph-column" style="left:${columnIndex * columnGap}px"><h4>${escapeHtml(type)}</h4></div>`);
+        nodes.forEach((node, index) => {
+            const x = columnIndex * columnGap;
+            const y = 42 + index * (cardHeight + nodeGap);
+            positions.set(node.id, { x, y, width: cardWidth, height: cardHeight, centerY: y + cardHeight / 2 });
+            const activeClass = selectedNodeId === node.id ? "active" : "";
+            nodeMarkup.push(`
+                <button type="button" class="diff-graph-node diff-state-${escapeHtml(node.state)} ${activeClass}" style="left:${x}px;top:${y}px" data-diff-node-id="${escapeHtml(node.id)}">
+                    <small>${escapeHtml(node.type)}${node.entityId ? ` ${escapeHtml(shortenDiffEntityId(node.entityId))}` : ""}</small>
+                    <strong>${escapeHtml(node.label)}</strong>
+                    ${node.summary ? `<span>${escapeHtml(node.summary)}</span>` : ""}
+                </button>`);
+        });
+        maxRows = Math.max(maxRows, nodes.length);
+        columnIndex += 1;
+    }
+
+    const width = Math.max(620, columnIndex * columnGap + cardWidth + 16);
+    const height = Math.max(260, 48 + maxRows * (cardHeight + nodeGap));
+    currentGraphStageSize = { width, height };
+    const scaledWidth = Math.ceil(width * currentGraphZoom);
+    const scaledHeight = Math.ceil(height * currentGraphZoom);
+    const edgeMarkup = graph.edges.map(edge => {
+        const from = positions.get(edge.from);
+        const to = positions.get(edge.to);
+        if (!from || !to) {
+            return "";
+        }
+
+        const startX = from.x + from.width;
+        const startY = from.centerY;
+        const endX = to.x;
+        const endY = to.centerY;
+        const midX = startX + Math.max(32, (endX - startX) / 2);
+        return `<path class="diff-graph-edge diff-state-${escapeHtml(edge.state)}" d="M ${startX} ${startY} C ${midX} ${startY}, ${midX} ${endY}, ${endX} ${endY}" />`;
+    }).join("");
+
+    return `
+        <div class="diff-graph-legend">
+            <span class="diff-legend-item diff-state-added">Added</span>
+            <span class="diff-legend-item diff-state-changed">Changed</span>
+            <span class="diff-legend-item diff-state-removed">Removed</span>
+            <span class="diff-legend-item diff-state-unchanged">Context</span>
+            <span class="diff-legend-item diff-state-conflict">Conflict</span>
+        </div>
+        <div class="diff-graph-canvas">
+            <div class="diff-graph-stage-viewport" style="width:${scaledWidth}px;height:${scaledHeight}px">
+                <div class="diff-graph-stage" style="width:${width}px;height:${height}px;transform:scale(${currentGraphZoom})">
+                    <svg class="diff-graph-svg" viewBox="0 0 ${width} ${height}" aria-hidden="true">${edgeMarkup}</svg>
+                    ${nodeMarkup.join("")}
+                </div>
+            </div>
+        </div>`;
+}
+
+function renderComparisonDiffGraphSummary(graph) {
+    const changedNodes = graph.nodes.filter(node => node.id !== "Diff:root" && node.type !== "Group");
+    const totalItems = graph.metadata?.totalItems ?? changedNodes.length;
+    const hiddenItems = graph.metadata?.hiddenItems ?? 0;
+    if (changedNodes.length === 0) {
+        return `<p class="detail-empty">No graphable diff entities.</p>`;
+    }
+
+    const counts = graph.metadata?.stateCounts
+        ? new Map(Object.entries(graph.metadata.stateCounts))
+        : changedNodes.reduce((map, node) => {
+        map.set(node.state, (map.get(node.state) ?? 0) + 1);
+        return map;
+    }, new Map());
+
+    return `
+        <div class="diff-graph-handoff">
+            <strong>Graph rendered in Compare Graph</strong>
+            <span>${escapeHtml(String(totalItems))} changed cognitive entities are represented on the main graph canvas until Back to Trace Graph is selected.${hiddenItems > 0 ? ` ${escapeHtml(String(hiddenItems))} are collapsed into summary nodes.` : ""}</span>
+        </div>
+        <div class="diff-graph-legend">
+            <span class="diff-legend-item diff-state-added">Added ${escapeHtml(String(counts.get("added") ?? 0))}</span>
+            <span class="diff-legend-item diff-state-changed">Changed ${escapeHtml(String(counts.get("changed") ?? 0))}</span>
+            <span class="diff-legend-item diff-state-removed">Removed ${escapeHtml(String(counts.get("removed") ?? 0))}</span>
+            <span class="diff-legend-item diff-state-unchanged">Context</span>
+            <span class="diff-legend-item diff-state-conflict">Conflict ${escapeHtml(String(counts.get("conflict") ?? 0))}</span>
+        </div>`;
+}
+
+function renderComparisonDiffGraphInTrace(graph, fromCommitId, toCommitId, options = {}) {
+    if (!graphCanvas) {
+        return;
+    }
+
+    const viewportSnapshot = options.preserveViewport ? captureGraphViewport() : null;
+    traceGraphDiffActive = true;
+    currentComparisonDiffGraph = { graph, fromCommitId, toCommitId };
+    graphRenderSequence += 1;
+    activeGraphRenderKey = null;
+    completedGraphRenderKey = null;
+    currentRenderedGraph = null;
+    selectedNodeId = null;
+    updateGraphSurfaceChrome("diff");
+    graphCanvas.innerHTML = renderComparisonDiffGraph(graph);
+    graphCanvas.classList.add("graph-canvas-diff");
+    if (graphCaption) {
+        graphCaption.textContent = `Diff graph ${fromCommitId.slice(0, 8)} -> ${toCommitId.slice(0, 8)}`;
+    }
+    if (graphFocusCaption) {
+        graphFocusCaption.textContent = "Git-style cognitive diff rendered from the selected History comparison.";
+    }
+    clearGraphNodeActions();
+    renderGraphFooter(graph, graph, { visibleRelationCount: graph.edges.length });
+    if (viewportSnapshot) {
+        restoreGraphViewport(viewportSnapshot);
+    } else {
+        resetGraphViewport();
+    }
+    syncActiveWorkspaceFromGlobals();
+}
+
+function restoreTraceGraphAfterDiff(options = {}) {
+    if (!traceGraphDiffActive && !options.force) {
+        return;
+    }
+
+    traceGraphDiffActive = false;
+    currentComparisonDiffGraph = null;
+    graphCanvas?.classList.remove("graph-canvas-diff");
+    updateGraphSurfaceChrome("trace");
+    if (currentGraph) {
+        void renderGraph(currentGraph, { forceRender: true });
+        syncActiveWorkspaceFromGlobals();
+        return;
+    }
+
+    graphCanvas.innerHTML = `<p class="detail-empty">No graph loaded.</p>`;
+    syncActiveWorkspaceFromGlobals();
+}
+
+function updateGraphSurfaceChrome(surface) {
+    const isDiff = surface === "diff";
+    if (graphTitle) {
+        graphTitle.textContent = isDiff ? "Compare Graph" : "Trace Graph";
+    }
+    if (graphSurfaceBackButton) {
+        graphSurfaceBackButton.hidden = !isDiff;
+    }
+}
+
+function showComparisonDiffNode(nodeId) {
+    if (!traceGraphDiffActive || !currentComparisonDiffGraph?.graph || !nodeId) {
+        return;
+    }
+
+    selectedNodeId = nodeId;
+    graphCanvas.querySelectorAll(".diff-graph-node.active").forEach(node => node.classList.remove("active"));
+    const activeNode = graphCanvas.querySelector(`.diff-graph-node[data-diff-node-id="${cssEscape(nodeId)}"]`);
+    activeNode?.classList.add("active");
+    renderComparisonDiffNodeDetail(nodeId);
+    applyDetailTab("details");
+    expandPanel("right");
+    syncActiveWorkspaceFromGlobals();
+}
+
+function renderComparisonDiffNodeDetail(nodeId) {
+    const graph = currentComparisonDiffGraph?.graph;
+    if (!graph) {
+        nodeDetail.textContent = "Click a node.";
+        return;
+    }
+
+    const node = graph.nodes.find(item => item.id === nodeId);
+    if (!node) {
+        nodeDetail.textContent = "Selected compare node is no longer visible.";
+        return;
+    }
+
+    const incoming = graph.edges.filter(edge => edge.to === nodeId);
+    const outgoing = graph.edges.filter(edge => edge.from === nodeId);
+    const connectedNodeIds = [...new Set([...incoming.map(edge => edge.from), ...outgoing.map(edge => edge.to)])];
+    const connectedNodes = graph.nodes.filter(item => connectedNodeIds.includes(item.id));
+
+    nodeDetail.textContent = JSON.stringify({
+        mode: "Compare Graph",
+        node,
+        incoming,
+        outgoing,
+        connectedNodes
+    }, null, 2);
+}
+
+function shortenDiffEntityId(value) {
+    const text = String(value ?? "");
+    const last = text.includes(":") ? text.split(":").pop() : text;
+    return last.length > 8 ? last.slice(0, 8) : last;
 }
 
 async function loadPlaybookDetail() {
@@ -6163,7 +6777,7 @@ async function loadPlaybookDetail() {
     params.set("purpose", focus.purpose);
 
     const requestSequence = ++playbookRequestSequence;
-    const response = await fetch(`/api/playbook?${params.toString()}`, { cache: "no-store" });
+    const response = await apiGet("/api/playbook", params);
     if (requestSequence !== playbookRequestSequence) {
         return;
     }
@@ -6199,7 +6813,7 @@ async function loadOriginDetail() {
     params.set("purpose", focus.purpose);
 
     const requestSequence = ++originRequestSequence;
-    const response = await fetch(`/api/origin?${params.toString()}`, { cache: "no-store" });
+    const response = await apiGet("/api/origin", params);
     if (requestSequence !== originRequestSequence) {
         return;
     }

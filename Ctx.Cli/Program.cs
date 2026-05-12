@@ -54,6 +54,8 @@ static async Task<CommandResult> DispatchAsync(IReadOnlyList<string> args, ICtxA
             version = Ctx.Domain.DomainConstants.ProductVersion,
             repositoryFormat = Ctx.Domain.DomainConstants.CurrentRepositoryVersion
         }),
+        "update" => await DispatchUpdateAsync(args, cancellationToken),
+        "-update" => await DispatchUpdateAsync(args, cancellationToken),
         "usage" when Match(args, "usage", "summary") => await DispatchUsageSummaryAsync(service, repositoryPath, cancellationToken),
         "usage" when Match(args, "usage", "coverage") => await DispatchUsageCoverageAsync(service, repositoryPath, cancellationToken),
         "next" => await service.NextAsync(repositoryPath, cancellationToken),
@@ -414,6 +416,44 @@ static async Task<CommandResult> DispatchAsync(IReadOnlyList<string> args, ICtxA
 static bool Match(IReadOnlyList<string> args, string first, string second)
     => args.Count >= 2 && args[0].Equals(first, StringComparison.OrdinalIgnoreCase) && args[1].Equals(second, StringComparison.OrdinalIgnoreCase);
 
+static async Task<CommandResult> DispatchUpdateAsync(IReadOnlyList<string> args, CancellationToken cancellationToken)
+{
+    using var httpClient = new HttpClient
+    {
+        Timeout = TimeSpan.FromSeconds(10)
+    };
+
+    var checker = new Ctx.Cli.ReleaseUpdateChecker(httpClient);
+    var status = await checker.CheckLatestAsync(
+        Ctx.Domain.DomainConstants.ProductVersion,
+        GetOption(args, "--owner"),
+        GetOption(args, "--repo", "--repository"),
+        cancellationToken);
+
+    var message = status.Status switch
+    {
+        "update-available" => $"CTX {status.LatestTag ?? status.LatestVersion} is available.",
+        "current" => $"CTX is current at {status.CurrentTag}.",
+        _ => "CTX release status is unavailable."
+    };
+
+    return new CommandResult(true, message, new
+    {
+        status = status.Status,
+        currentVersion = status.CurrentVersion,
+        currentTag = status.CurrentTag,
+        latestVersion = status.LatestVersion,
+        latestTag = status.LatestTag,
+        latestReleaseUrl = status.LatestReleaseUrl,
+        updateAvailable = status.UpdateAvailable,
+        error = status.Error,
+        checkedAtUtc = status.CheckedAtUtc,
+        installHint = status.UpdateAvailable
+            ? "Download the matching asset from latestReleaseUrl or run the platform install script against the published release."
+            : null
+    });
+}
+
 static bool HasOption(IReadOnlyList<string> args, params string[] names)
     => args.Any(arg => names.Contains(arg, StringComparer.OrdinalIgnoreCase));
 
@@ -684,6 +724,7 @@ State Machine:
 
 Core Commands:
   ctx status            inspect current cognitive state
+  ctx update            check the latest public CTX GitHub Release
   ctx audit             consistency check before continuing
   ctx next              CTX-prioritized next step
   ctx check             closure and runbook check for a task

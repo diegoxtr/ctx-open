@@ -7,6 +7,7 @@ public static class CommandCoverage
     private static readonly string[] KnownCommands =
     [
         "version",
+        "update",
         "doctor",
         "audit",
         "graph summary",

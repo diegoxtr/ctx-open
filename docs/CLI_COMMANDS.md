@@ -159,6 +159,31 @@ Shows product version and repository format version.
 dotnet run --project .\Ctx.Cli -- version
 ```
 
+### `ctx update`
+
+Checks the latest public CTX GitHub Release and compares it with the local product version. This command is read-only: it reports whether an update exists and points to the release URL, but it does not replace installed files.
+
+Environment defaults:
+
+- `CTX_RELEASE_OWNER`, default `diegoxtr`
+- `CTX_RELEASE_REPOSITORY`, default `ctx-open`
+
+Options:
+
+- `--owner <github-owner>`
+- `--repo <github-repository>`
+- `--repository <github-repository>`
+
+Aliases:
+
+- `ctx -update`
+
+```powershell
+dotnet run --project .\Ctx.Cli -- update
+ctx update
+ctx -update
+```
+
 ### `ctx init`
 
 Initializes a cognitive repository in the current folder.
