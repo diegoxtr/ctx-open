@@ -28,4 +28,4 @@ CTX 1.0.10 adds the local stdio MCP server line, improves CTX Viewer graph and h
 - `dotnet build Ctx.sln --no-restore` passes.
 - `dotnet test Ctx.Tests\Ctx.Tests.csproj --no-restore` passes.
 - `Ctx.Mcp` builds and is available through `ctx-mcp`.
-- The public repository does not include private `.ctx` state.
+- The public repository does not include local `.ctx` state.

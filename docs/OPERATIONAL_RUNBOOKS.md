@@ -344,7 +344,7 @@ When a CTX command reports a transient `working-context.json` access failure:
 4. run `ctx audit` after the retry if the command changed state
 5. only open a recovery block if the same lock persists after serial retry
 
-The private runbook `CTX write lock retry` captures this as compact operational guidance. The persistence layer also retries transient `IOException` and `UnauthorizedAccessException` cases around `working-context.json`, so brief viewer/agent/process overlap should not require manual recovery.
+The `CTX write lock retry` runbook captures this as compact operational guidance. The persistence layer also retries transient `IOException` and `UnauthorizedAccessException` cases around `working-context.json`, so brief viewer/agent/process overlap should not require manual recovery.
 
 ## Overflow handling
 
@@ -636,10 +636,10 @@ Compact operational contract:
 Operational Runbook
 - Documentation consistency pass
   When: documentation must be aligned across README, docs, prompts, examples, release notes, and localized references
-  Preconditions: CTX planning is anchored; the target repository is explicit; public/private boundary is clear
+  Preconditions: CTX planning is anchored; the target repository is explicit; publication boundary is clear
   Do: inventory all .md/.txt files; scan for stale command names and path leaks; update canonical docs first; align es/zh/localized references; update release notes and CHANGELOG when release scope changes
-  Verify: command docs list the shipped CLI surface; localized docs do not contradict canonical docs; relative paths or placeholders replace private hard paths; ctx audit is clean
-  Escalate: stop before touching the public repo if the operator requested private-only work; stop before publishing docs that contain private paths or sensitive notes
+  Verify: command docs list the shipped CLI surface; localized docs do not contradict canonical docs; relative paths or placeholders replace local hard paths; ctx audit is clean
+  Escalate: stop before touching the public repo if the operator requested local-only work; stop before publishing docs that contain machine-specific paths or sensitive notes
 ```
 
 Rules:

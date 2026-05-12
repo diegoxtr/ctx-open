@@ -12,9 +12,9 @@ Version:
 
 CTX 1.0.15 completes the public sync of the post-1.0.13 release inventory.
 
-The release focuses on two missing public surfaces from the internal release inventory: a read-only update check command and the newer Viewer cognitive commit comparison workflow.
+The release focuses on two release-inventory surfaces: a read-only update check command and the newer Viewer cognitive commit comparison workflow.
 
-Inventory trace: `docs/RELEASE_1_0_15_INVENTORY.md` records the public include/exclude pass from the internal release inventory.
+Inventory trace: `docs/RELEASE_1_0_15_INVENTORY.md` records the public include/exclude pass for this release.
 
 ## Added
 
@@ -30,7 +30,7 @@ Inventory trace: `docs/RELEASE_1_0_15_INVENTORY.md` records the public include/e
 - The CLI command coverage catalog now tracks `update`.
 - English, Spanish, and Chinese command references document `ctx update`.
 - Viewer Compare Graph remains the explicit surface for cognitive commit comparison, with zoom, selectable diff nodes, concise summaries, and a Back to Trace Graph path.
-- Release documentation now includes a public sync inventory so the post-1.0.13 private-to-public pass is auditable without exposing private CTX state.
+- Release documentation now includes a public inventory so the post-1.0.13 pass is auditable without exposing local CTX state.
 
 ## Validation Checklist
 
@@ -41,4 +41,4 @@ Inventory trace: `docs/RELEASE_1_0_15_INVENTORY.md` records the public include/e
 - Viewer serves `/app.mjs` and the `/js/viewer-*.mjs` modules.
 - Viewer Compare Graph still opens from History comparison controls and node clicks populate the Details panel.
 - Public repository root has no `.ctx` state staged.
-- Private repository paths are absent from public docs and source.
+- Machine-specific paths are absent from public docs and source.

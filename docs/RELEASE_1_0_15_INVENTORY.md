@@ -1,8 +1,8 @@
 # CTX 1.0.15 Public Sync Inventory
 
-Source inventory: internal next-release draft, reviewed before public release preparation.
+Source inventory: release draft, reviewed before public release preparation.
 
-Scope rule: promote public-safe shipped items into public code, docs, changelog, release notes, and packaged documentation. Keep private CTX state, internal analysis notes, and machine-specific paths out of the public repository.
+Scope rule: promote shipped items into public code, docs, changelog, release notes, and packaged documentation. Keep local CTX state, unpublished planning notes, and machine-specific paths out of the public repository.
 
 ## Inventory Matrix
 
@@ -42,10 +42,10 @@ Scope rule: promote public-safe shipped items into public code, docs, changelog,
 | Parked epics rail and origin navigation | Already public before 1.0.15 | Viewer release history |
 | Repository Browse behavior | Already public before 1.0.15 | README and Viewer docs |
 | Packaged helper/doc asset guardrail | Already public before 1.0.15 | installer and distribution docs |
-| Internal multilingual documentation audit notes | Excluded from 1.0.15 public release | internal release planning only |
-| Private self-hosting validation paths | Excluded from public release | replaced by placeholders or public demo paths |
-| Private `.ctx` state | Excluded from public release | verified by Git status and tracked-file scan |
-| Machine-specific private checkout paths | Excluded from public release | verified by text scan |
+| Unpublished multilingual documentation audit notes | Excluded from 1.0.15 public release | release planning only |
+| Local self-hosting validation paths | Excluded from public release | replaced by placeholders or public demo paths |
+| Local `.ctx` state | Excluded from public release | verified by Git status and tracked-file scan |
+| Machine-specific checkout paths | Excluded from public release | verified by text scan |
 
 ## Documentation Verification
 
@@ -72,5 +72,5 @@ Expected historical references:
 Release blockers:
 
 - Do not publish if `.ctx` state is staged.
-- Do not publish if private machine paths appear in current release docs or source.
+- Do not publish if machine-specific paths appear in current release docs or source.
 - Do not publish if `ctx version`, `ctx update`, build, or tests fail on the release branch.

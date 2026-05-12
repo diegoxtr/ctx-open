@@ -16,5 +16,5 @@ Highlights:
 - CTX now exposes `ctx bootstrap map` and `ctx bootstrap apply` publicly so agents can build provisional cognitive threads from articles and projects before promoting them into durable CTX work.
 - The public domain model and CLI now support branch-like hypothesis semantics, including branch state, branch role, lineage grouping, inter-hypothesis relations, merge/supersede flows, and evidence sharing.
 - The public viewer now includes an `Interpretations` detail tab and an optional `Show interpretation relations` overlay so competing hypotheses can stay visible without degrading the default trace graph.
-- The public repo now carries sanitized agriculture bootstrap example packs for `v1`, `v2`, `v3`, and `v4`, including plans and real-testing notes, while keeping private `.ctx` workspaces out of the published surface.
-- Public helper and technical docs are aligned with the private/public repo boundary so release operators and agents stay anchored on the intended public-safe workflow.
+- The public repo now carries sanitized agriculture bootstrap example packs for `v1`, `v2`, `v3`, and `v4`, including plans and real-testing notes, while keeping local `.ctx` workspaces out of the published surface.
+- Public helper and technical docs are aligned with the publication boundary so release operators and agents stay anchored on the intended public-safe workflow.

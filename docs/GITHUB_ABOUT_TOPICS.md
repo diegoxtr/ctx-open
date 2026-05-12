@@ -63,4 +63,4 @@ This file documents the public GitHub repository About metadata and the target t
 - Confirm every removed topic is absent from GitHub after the update.
 - GitHub allows no more than 20 repository topics; keep this list capped.
 - Review `mpc-control-context`; if `mpc` is a typo, rename it to `mcp-control-context` before applying the public update.
-- Do not add private paths, private repository names, tokens, local usernames, or unpublished release details.
+- Do not add machine-specific paths, unpublished repository names, tokens, local usernames, or unpublished release details.
