@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CTX Documentation</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="page docs-page">
+    <section class="hero docs-hero">
+      <p class="eyebrow">CTX 1.0.15 Documentation</p>
+      <h1>Public docs index.</h1>
+      <p class="lede">
+        Search the public CTX Markdown documentation from one HTML page.
+        Links open the rendered files in GitHub so the canonical source stays in the repository.
+      </p>
+      <div class="actions">
+        <a class="button primary" href="./index.html">Back to Landing</a>
+        <a class="button" href="https://github.com/diegoxtr/ctx-open/tree/main/docs">Open Docs Folder</a>
+        <a class="button ghost" href="https://github.com/diegoxtr/ctx-open">Open Repository</a>
+      </div>
+    </section>
+
+    <section class="docs-toolbar" aria-label="Documentation controls">
+      <label class="docs-search">
+        <span>Search</span>
+        <input id="doc-search" type="search" placeholder="Search title or path">
+      </label>
+      <div class="docs-filter" role="group" aria-label="Language filter">
+        <button class="button active" type="button" data-doc-filter="all">All</button>
+        <button class="button" type="button" data-doc-filter="en">English</button>
+        <button class="button" type="button" data-doc-filter="es">Spanish</button>
+        <button class="button" type="button" data-doc-filter="zh">Chinese</button>
+      </div>
+    </section>
+
+    <section class="docs-summary" aria-live="polite">
+      <span id="doc-count">Loading documentation...</span>
+      <span id="doc-source">Source: GitHub repository tree</span>
+    </section>
+
+    <section id="docs-groups" class="docs-groups" aria-label="Documentation files"></section>
+  </main>
+
+  <script>
+    const REPO_OWNER = "diegoxtr";
+    const REPO_NAME = "ctx-open";
+    const REPO_BRANCH = "main";
+    const treeUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/trees/${REPO_BRANCH}?recursive=1`;
+    const blobBase = `https://github.com/${REPO_OWNER}/${REPO_NAME}/blob/${REPO_BRANCH}/`;
+
+    const fallbackDocs = [
+      "README.md",
+      "CHANGELOG.md",
+      "docs/CLI_COMMANDS.md",
+      "docs/INSTALLATION_AND_USAGE_GUIDE.md",
+      "docs/CTX_MCP_AGENT_SETUP.md",
+      "docs/MCP_LOCAL_QUICKSTART.md",
+      "docs/ACP_LOCAL_CONNECTION_GUIDE.md",
+      "docs/CTX_VIEWER_GUIDE.md",
+      "docs/TECHNICAL_INDEX.md",
+      "docs/RELEASE_1_0_15.md",
+      "docs/RELEASE_1_0_15_INVENTORY.md",
+      "docs/es/CLI_COMMANDS.md",
+      "docs/zh/CLI_COMMANDS.md",
+      "prompts/CTX_AGENT_PROMPT.md",
+      "examples/README.md"
+    ];
+
+    const groupsEl = document.getElementById("docs-groups");
+    const searchEl = document.getElementById("doc-search");
+    const countEl = document.getElementById("doc-count");
+    const sourceEl = document.getElementById("doc-source");
+    const filterButtons = Array.from(document.querySelectorAll("[data-doc-filter]"));
+
+    let docs = [];
+    let activeFilter = "all";
+
+    function titleFromPath(path) {
+      const file = path.split("/").pop().replace(/\.md$/i, "");
+      return file
+        .replace(/^CTX_/, "CTX ")
+        .replace(/_/g, " ")
+        .replace(/-/g, " ")
+        .replace(/\b\w/g, (letter) => letter.toUpperCase());
+    }
+
+    function languageFor(path) {
+      if (path.startsWith("docs/es/") || path.startsWith("prompts/es/")) return "es";
+      if (path.startsWith("docs/zh/") || path.startsWith("prompts/zh/")) return "zh";
+      return "en";
+    }
+
+    function groupFor(path) {
+      if (path === "README.md" || path === "CHANGELOG.md" || !path.includes("/")) return "Repository Root";
+      if (path.startsWith("docs/es/archive/")) return "Spanish Archive";
+      if (path.startsWith("docs/es/")) return "Spanish Docs";
+      if (path.startsWith("docs/zh/")) return "Chinese Docs";
+      if (path.startsWith("docs/")) return "English Docs";
+      if (path.startsWith("examples/")) return "Examples";
+      if (path.startsWith("prompts/es/")) return "Spanish Prompts";
+      if (path.startsWith("prompts/zh/")) return "Chinese Prompts";
+      if (path.startsWith("prompts/")) return "Prompts";
+      if (path.startsWith("distribution/")) return "Distribution";
+      return "Other";
+    }
+
+    function normalizeDoc(path) {
+      return {
+        path,
+        title: titleFromPath(path),
+        group: groupFor(path),
+        language: languageFor(path),
+        href: blobBase + path
+      };
+    }
+
+    function getVisibleDocs() {
+      const query = searchEl.value.trim().toLowerCase();
+      return docs.filter((doc) => {
+        const matchesLanguage = activeFilter === "all" || doc.language === activeFilter;
+        const matchesQuery = !query ||
+          doc.title.toLowerCase().includes(query) ||
+          doc.path.toLowerCase().includes(query);
+        return matchesLanguage && matchesQuery;
+      });
+    }
+
+    function renderDocs() {
+      const visible = getVisibleDocs();
+      const grouped = new Map();
+
+      for (const doc of visible) {
+        if (!grouped.has(doc.group)) grouped.set(doc.group, []);
+        grouped.get(doc.group).push(doc);
+      }
+
+      groupsEl.replaceChildren();
+
+      for (const [group, items] of grouped.entries()) {
+        const section = document.createElement("section");
+        section.className = "docs-group";
+
+        const header = document.createElement("div");
+        header.className = "docs-group-header";
+
+        const title = document.createElement("h2");
+        title.textContent = group;
+
+        const count = document.createElement("span");
+        count.textContent = `${items.length} files`;
+
+        header.append(title, count);
+        section.append(header);
+
+        const list = document.createElement("div");
+        list.className = "docs-list";
+
+        for (const doc of items) {
+          const link = document.createElement("a");
+          link.className = "doc-row";
+          link.href = doc.href;
+
+          const name = document.createElement("strong");
+          name.textContent = doc.title;
+
+          const path = document.createElement("span");
+          path.textContent = doc.path;
+
+          link.append(name, path);
+          list.append(link);
+        }
+
+        section.append(list);
+        groupsEl.append(section);
+      }
+
+      if (visible.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "docs-empty";
+        empty.textContent = "No documentation files match the current filters.";
+        groupsEl.append(empty);
+      }
+
+      countEl.textContent = `${visible.length} of ${docs.length} Markdown files`;
+    }
+
+    async function loadDocs() {
+      try {
+        const response = await fetch(treeUrl, { headers: { "Accept": "application/vnd.github+json" } });
+        if (!response.ok) throw new Error(`GitHub tree request failed: ${response.status}`);
+        const data = await response.json();
+        docs = data.tree
+          .filter((item) => item.type === "blob" && item.path.endsWith(".md"))
+          .filter((item) => !item.path.includes("/bin/") && !item.path.includes("/obj/"))
+          .map((item) => normalizeDoc(item.path))
+          .sort((a, b) => a.group.localeCompare(b.group) || a.path.localeCompare(b.path));
+      } catch (error) {
+        docs = fallbackDocs.map(normalizeDoc);
+        sourceEl.textContent = "Source: fallback documentation list";
+      }
+
+      renderDocs();
+    }
+
+    searchEl.addEventListener("input", renderDocs);
+
+    for (const button of filterButtons) {
+      button.addEventListener("click", () => {
+        activeFilter = button.dataset.docFilter;
+        filterButtons.forEach((item) => item.classList.toggle("active", item === button));
+        renderDocs();
+      });
+    }
+
+    loadDocs();
+  </script>
+</body>
+</html>
