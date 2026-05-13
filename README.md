@@ -261,7 +261,7 @@ The strongest demos are not graph demos. They are continuity demos.
 - Tiene un valor inusualmente alto para generar inputs estructurados de entrenamiento porque el camino de razonamiento queda preservado en lugar de ser reconstruido a posteriori.
 - Esto no es solo otra herramienta de IA. Es parte de la capa de infraestructura que necesitara la proxima generacion de workflows con agentes.
 
-Current version: `1.0.17`
+Current version: `1.0.18`
 
 ## Install
 
@@ -416,6 +416,8 @@ Commit-focused trace graph for a resolved reasoning thread:
 Small note: CTX Viewer also makes durable reasoning legible after snapshot, so a commit can still be inspected as a structured cognitive thread instead of a flat log entry.
 
 CTX Viewer can also compare cognitive commits from History. Mark one commit as `Base`, compare another row against it, and inspect the result as a Git-style Compare Graph with added, changed, removed, context, and conflict states.
+
+CTX Viewer live sync now tracks a richer working-context signal, so changes to goals, epics, tasks, hypotheses, decisions, evidence, conclusions, and repository state can refresh the visible working surface.
 
 ## MCP Server
 
@@ -778,7 +780,8 @@ Use this index as the navigable entrypoint into the public repository documentat
 
 | Document | Use it for |
 |---|---|
-| [Release 1.0.17](docs/RELEASE_1_0_17.md) | Current release notes |
+| [Release 1.0.18](docs/RELEASE_1_0_18.md) | Current release notes |
+| [Release 1.0.17](docs/RELEASE_1_0_17.md) | Previous release notes |
 | [Release 1.0.16](docs/RELEASE_1_0_16.md) | Viewer Compare endpoint hotfix notes |
 | [Release 1.0.15](docs/RELEASE_1_0_15.md) | Previous release notes |
 | [Release 1.0.15 Inventory](docs/RELEASE_1_0_15_INVENTORY.md) | Public include/exclude inventory for the post-1.0.13 release pass |
