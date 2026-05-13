@@ -255,28 +255,52 @@ app.MapGet("/api/working-context/signal", async (string? path, CancellationToken
 
     var head = await workingRepository.LoadHeadAsync(repositoryPath, cancellationToken);
     var context = await workingRepository.LoadAsync(repositoryPath, cancellationToken);
-    var openTasks = context.Tasks
-        .Where(task => task.State is not TaskExecutionState.Done)
+    var tasks = context.Tasks
         .OrderBy(task => task.Id.Value, StringComparer.OrdinalIgnoreCase)
-        .Select(task => $"{task.Id.Value}:{task.State}:{task.GoalId?.Value ?? string.Empty}:{task.Title}")
+        .Select(task => $"{task.Id.Value}:{task.State}:{task.GoalId?.Value ?? string.Empty}:{task.Title}:{task.Description}:{string.Join(",", task.HypothesisIds.Select(id => id.Value).OrderBy(value => value, StringComparer.OrdinalIgnoreCase))}:{string.Join(",", task.DependsOnTaskIds.Select(id => id.Value).OrderBy(value => value, StringComparer.OrdinalIgnoreCase))}")
         .ToArray();
-    var activeGoals = context.Goals
+    var goals = context.Goals
         .OrderBy(goal => goal.Id.Value, StringComparer.OrdinalIgnoreCase)
-        .Select(goal => $"{goal.Id.Value}:{goal.Title}")
+        .Select(goal => $"{goal.Id.Value}:{goal.State}:{goal.ParentGoalId?.Value ?? string.Empty}:{goal.Priority}:{goal.Title}:{goal.Description}")
         .ToArray();
-    var openEvidence = context.Evidence
-        .Where(item => item.Supports.Any(link => link.EntityType == "Task" && openTasks.Any(task => task.StartsWith($"{link.EntityId}:", StringComparison.OrdinalIgnoreCase))))
+    var epics = (context.Epics ?? Array.Empty<Epic>())
+        .OrderBy(epic => epic.Id.Value, StringComparer.OrdinalIgnoreCase)
+        .Select(epic => $"{epic.Id.Value}:{epic.State}:{epic.Title}:{epic.Description}:{string.Join(",", epic.GoalIds.Select(id => id.Value).OrderBy(value => value, StringComparer.OrdinalIgnoreCase))}")
+        .ToArray();
+    var hypotheses = context.Hypotheses
         .OrderBy(item => item.Id.Value, StringComparer.OrdinalIgnoreCase)
-        .Select(item => $"{item.Id.Value}:{item.Title}")
+        .Select(item => $"{item.Id.Value}:{item.State}:{item.Confidence}:{item.Impact}:{item.EvidenceStrength}:{item.CostToValidate}:{string.Join(",", item.TaskIds.Select(id => id.Value).OrderBy(value => value, StringComparer.OrdinalIgnoreCase))}:{item.BranchState}:{item.BranchRole}:{item.LineageGroupId}:{item.Statement}:{item.Rationale}")
+        .ToArray();
+    var decisions = context.Decisions
+        .OrderBy(item => item.Id.Value, StringComparer.OrdinalIgnoreCase)
+        .Select(item => $"{item.Id.Value}:{item.State}:{item.Title}:{item.Rationale}:{string.Join(",", item.HypothesisIds.Select(id => id.Value).OrderBy(value => value, StringComparer.OrdinalIgnoreCase))}:{string.Join(",", item.EvidenceIds.Select(id => id.Value).OrderBy(value => value, StringComparer.OrdinalIgnoreCase))}")
+        .ToArray();
+    var evidence = context.Evidence
+        .OrderBy(item => item.Id.Value, StringComparer.OrdinalIgnoreCase)
+        .Select(item => $"{item.Id.Value}:{item.State}:{item.Kind}:{item.Confidence}:{item.Title}:{item.Summary}:{item.Source}:{string.Join(",", item.Supports.Select(link => $"{link.EntityType}:{link.EntityId}").OrderBy(value => value, StringComparer.OrdinalIgnoreCase))}")
+        .ToArray();
+    var conclusions = context.Conclusions
+        .OrderBy(item => item.Id.Value, StringComparer.OrdinalIgnoreCase)
+        .Select(item => $"{item.Id.Value}:{item.State}:{item.Summary}:{string.Join(",", item.DecisionIds.Select(id => id.Value).OrderBy(value => value, StringComparer.OrdinalIgnoreCase))}:{string.Join(",", item.EvidenceIds.Select(id => id.Value).OrderBy(value => value, StringComparer.OrdinalIgnoreCase))}:{string.Join(",", item.GoalIds.Select(id => id.Value).OrderBy(value => value, StringComparer.OrdinalIgnoreCase))}:{string.Join(",", item.TaskIds.Select(id => id.Value).OrderBy(value => value, StringComparer.OrdinalIgnoreCase))}")
         .ToArray();
     var fingerprintSource = string.Join("|", new[]
     {
         repositoryPath,
         head.Branch,
         head.CommitId?.Value ?? "working",
-        string.Join(";", openTasks),
-        string.Join(";", activeGoals),
-        string.Join(";", openEvidence)
+        context.Dirty.ToString(),
+        context.HeadCommitId?.Value ?? string.Empty,
+        context.Project.Id.Value,
+        context.Project.Name,
+        context.Project.Description,
+        context.Project.State.ToString(),
+        string.Join(";", goals),
+        string.Join(";", epics),
+        string.Join(";", tasks),
+        string.Join(";", hypotheses),
+        string.Join(";", decisions),
+        string.Join(";", evidence),
+        string.Join(";", conclusions)
     });
 
     return Results.Json(new
@@ -284,7 +308,7 @@ app.MapGet("/api/working-context/signal", async (string? path, CancellationToken
         repositoryPath,
         branch = head.Branch,
         headCommitId = head.CommitId?.Value,
-        openTaskCount = openTasks.Length,
+        openTaskCount = context.Tasks.Count(task => task.State is not TaskExecutionState.Done),
         fingerprint = ComputeStableHash(fingerprintSource)
     });
 });

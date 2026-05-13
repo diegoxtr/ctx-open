@@ -4,6 +4,17 @@ All notable changes to CTX will be documented in this file.
 
 ## [Unreleased]
 
+## [1.0.18] - 2026-05-13
+
+### Changed
+
+- Viewer live sync now fingerprints the full working cognitive state, including project metadata, dirty/head state, goals, epics, tasks, hypotheses, decisions, evidence, and conclusions.
+- Working-context refresh detection now updates when non-task cognitive entities change, so Viewer reloads stay aligned with the actual `.ctx` state.
+
+### Validation
+
+- Release branch validation must confirm `ctx version` reports `1.0.18`, Viewer `/api/working-context/signal` returns a stable fingerprint over the enriched cognitive state, tests pass, GitHub Pages assets resolve, and no local `.ctx` state or machine-specific paths are staged.
+
 ## [1.0.17] - 2026-05-13
 
 ### Fixed

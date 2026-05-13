@@ -32,6 +32,24 @@ public sealed class ViewerAppContractTests
     }
 
     [Fact]
+    public async Task WorkingContextSignal_FingerprintsFullCognitiveState()
+    {
+        var program = await ReadViewerProgramAsync();
+
+        Assert.Contains("app.MapGet(\"/api/working-context/signal\"", program);
+        Assert.Contains("context.Dirty.ToString()", program);
+        Assert.Contains("context.HeadCommitId?.Value", program);
+        Assert.Contains("context.Project.Id.Value", program);
+        Assert.Contains("context.Project.State.ToString()", program);
+        Assert.Contains("context.Epics", program);
+        Assert.Contains("context.Hypotheses", program);
+        Assert.Contains("context.Decisions", program);
+        Assert.Contains("context.Evidence", program);
+        Assert.Contains("context.Conclusions", program);
+        Assert.Contains("ComputeStableHash(fingerprintSource)", program);
+    }
+
+    [Fact]
     public async Task CompareGraph_CollapsesLargeDiffGroups()
     {
         var script = await ReadViewerAppScriptAsync();
