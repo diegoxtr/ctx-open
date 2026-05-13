@@ -16,6 +16,19 @@ public sealed class ViewerAppContractTests
     }
 
     [Fact]
+    public async Task CompareGraph_UsesMappedDiffEndpoint()
+    {
+        var script = await ReadViewerAppScriptAsync();
+        var program = await ReadViewerProgramAsync();
+
+        Assert.Contains("""apiGet("/api/diff", params)""", script);
+        Assert.Contains("app.MapGet(\"/api/diff\"", program);
+        Assert.Contains("DiffAsync(repositoryPath", program);
+        Assert.Contains("ResolveCommitReferenceAsync(repositoryPath, from", program);
+        Assert.Contains("ResolveCommitReferenceAsync(repositoryPath, to", program);
+    }
+
+    [Fact]
     public async Task CompareGraph_CollapsesLargeDiffGroups()
     {
         var script = await ReadViewerAppScriptAsync();
@@ -146,6 +159,9 @@ public sealed class ViewerAppContractTests
 
     private static Task<string> ReadViewerIndexAsync()
         => File.ReadAllTextAsync(FindRepositoryFile("Ctx.Viewer", "wwwroot", "index.html"));
+
+    private static Task<string> ReadViewerProgramAsync()
+        => File.ReadAllTextAsync(FindRepositoryFile("Ctx.Viewer", "Program.cs"));
 
     private static Task<string> ReadViewerStylesAsync()
         => File.ReadAllTextAsync(FindRepositoryFile("Ctx.Viewer", "wwwroot", "styles.css"));
