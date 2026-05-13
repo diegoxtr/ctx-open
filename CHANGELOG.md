@@ -4,6 +4,17 @@ All notable changes to CTX will be documented in this file.
 
 ## [Unreleased]
 
+## [1.0.16] - 2026-05-13
+
+### Fixed
+
+- Viewer Compare Graph now has the matching `/api/diff` backend endpoint, so History row comparisons no longer fail with `Comparison failed: 404`.
+- The Viewer diff endpoint resolves abbreviated commit ids before delegating to the cognitive diff service.
+
+### Validation
+
+- Release branch validation must confirm `ctx version` reports `1.0.16`, Viewer Compare Graph returns diff JSON from `/api/diff`, tests pass, GitHub Pages assets resolve, and no local `.ctx` state or machine-specific paths are staged.
+
 ## [1.0.15] - 2026-05-12
 
 ### Added
