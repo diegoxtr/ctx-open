@@ -354,6 +354,29 @@ app.MapGet("/api/commit", async (string id, string? path, CancellationToken canc
     }
 });
 
+app.MapGet("/api/diff", async (string? from, string? to, string? path, CancellationToken cancellationToken) =>
+{
+    try
+    {
+        var repositoryPath = ResolveRepositoryPath(path);
+        if (!await workingRepository.ExistsAsync(repositoryPath, cancellationToken))
+        {
+            return Results.NotFound(new { message = $"No .ctx repository found at '{repositoryPath}'." });
+        }
+
+        var resolvedFromCommitId = await ResolveCommitReferenceAsync(repositoryPath, from, commitRepository, branchRepository, cancellationToken);
+        var resolvedToCommitId = await ResolveCommitReferenceAsync(repositoryPath, to, commitRepository, branchRepository, cancellationToken);
+        var result = await runtime.ApplicationService.DiffAsync(repositoryPath, resolvedFromCommitId, resolvedToCommitId, cancellationToken);
+        return result.Success
+            ? Results.Json(result.Data)
+            : Results.BadRequest(new { message = result.Message });
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+});
+
 app.MapGet("/api/entity-origin-commit", async (string type, string id, string? path, CancellationToken cancellationToken) =>
 {
     try
