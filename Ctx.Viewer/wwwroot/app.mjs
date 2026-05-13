@@ -3108,6 +3108,7 @@ function resolveGraphEpics(graph) {
     const sourceGraph = resolveEpicRailGraph(graph);
     return (sourceGraph?.nodes ?? [])
         .filter(node => node.type === "Epic")
+        .filter(node => normalizeGraphNodeState(node.state).toLowerCase() === "parked")
         .sort((left, right) => {
             const leftState = normalizeGraphNodeState(left.state);
             const rightState = normalizeGraphNodeState(right.state);

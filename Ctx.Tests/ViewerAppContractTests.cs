@@ -111,6 +111,16 @@ public sealed class ViewerAppContractTests
     }
 
     [Fact]
+    public async Task ParkedEpicRail_OnlyShowsParkedEpics()
+    {
+        var script = await ReadViewerAppScriptAsync();
+
+        Assert.Contains("Parked Epics", script);
+        Assert.Contains("normalizeGraphNodeState(node.state).toLowerCase() === \"parked\"", script);
+        Assert.Contains("No parked epics.", script);
+    }
+
+    [Fact]
     public async Task GraphZoom_DoesNotForceFullGraphRerender()
     {
         var script = await ReadViewerAppScriptAsync();
