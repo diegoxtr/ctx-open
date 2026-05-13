@@ -16,16 +16,19 @@ public sealed class ViewerAppContractTests
     }
 
     [Fact]
-    public async Task CompareGraph_UsesMappedDiffEndpoint()
+    public async Task CompareGraph_UsesMappedDiffEndpointWithParentFastPath()
     {
         var script = await ReadViewerAppScriptAsync();
         var program = await ReadViewerProgramAsync();
 
         Assert.Contains("""apiGet("/api/diff", params)""", script);
         Assert.Contains("app.MapGet(\"/api/diff\"", program);
-        Assert.Contains("DiffAsync(repositoryPath", program);
+        Assert.Contains("workingRepository.ExistsAsync(repositoryPath", program);
         Assert.Contains("ResolveCommitReferenceAsync(repositoryPath, from", program);
         Assert.Contains("ResolveCommitReferenceAsync(repositoryPath, to", program);
+        Assert.Contains("targetCommit.ParentIds.Any", program);
+        Assert.Contains("targetCommit.Diff.Summary", program);
+        Assert.Contains("DiffAsync(repositoryPath", program);
     }
 
     [Fact]

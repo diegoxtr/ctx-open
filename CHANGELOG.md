@@ -4,6 +4,17 @@ All notable changes to CTX will be documented in this file.
 
 ## [Unreleased]
 
+## [1.0.17] - 2026-05-13
+
+### Fixed
+
+- Viewer Compare Graph now uses the preserved commit diff when comparing a cognitive commit directly with its parent, avoiding an unnecessary reconstructed diff path.
+- Viewer Compare Graph contract coverage now verifies the repository guard, parent-direct preserved diff path, and fallback diff path.
+
+### Validation
+
+- Release branch validation must confirm `ctx version` reports `1.0.17`, parent/child Viewer Compare Graph returns preserved diff JSON from `/api/diff`, tests pass, GitHub Pages assets resolve, and no local `.ctx` state or machine-specific paths are staged.
+
 ## [1.0.16] - 2026-05-13
 
 ### Fixed
