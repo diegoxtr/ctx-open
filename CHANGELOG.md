@@ -4,6 +4,16 @@ All notable changes to CTX will be documented in this file.
 
 ## [Unreleased]
 
+## [1.0.19] - 2026-05-13
+
+### Fixed
+
+- Viewer `Parked Epics` rail now filters to actual `Parked` epics instead of listing completed or active epics.
+
+### Validation
+
+- Release branch validation must confirm `ctx version` reports `1.0.19`, Viewer contract coverage verifies the parked-epic filter, tests pass, GitHub Pages assets resolve, and no local `.ctx` state or machine-specific paths are staged.
+
 ## [1.0.18] - 2026-05-13
 
 ### Changed
