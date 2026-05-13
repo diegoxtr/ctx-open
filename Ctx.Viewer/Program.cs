@@ -366,6 +366,20 @@ app.MapGet("/api/diff", async (string? from, string? to, string? path, Cancellat
 
         var resolvedFromCommitId = await ResolveCommitReferenceAsync(repositoryPath, from, commitRepository, branchRepository, cancellationToken);
         var resolvedToCommitId = await ResolveCommitReferenceAsync(repositoryPath, to, commitRepository, branchRepository, cancellationToken);
+        if (!string.IsNullOrWhiteSpace(resolvedFromCommitId) && !string.IsNullOrWhiteSpace(resolvedToCommitId))
+        {
+            var targetCommit = await commitRepository.LoadAsync(repositoryPath, new ContextCommitId(resolvedToCommitId), cancellationToken);
+            if (targetCommit is not null
+                && targetCommit.ParentIds.Any(parent => parent.Value.Equals(resolvedFromCommitId, StringComparison.OrdinalIgnoreCase)))
+            {
+                return Results.Json(new
+                {
+                    summary = targetCommit.Diff.Summary,
+                    diff = targetCommit.Diff
+                });
+            }
+        }
+
         var result = await runtime.ApplicationService.DiffAsync(repositoryPath, resolvedFromCommitId, resolvedToCommitId, cancellationToken);
         return result.Success
             ? Results.Json(result.Data)

@@ -126,7 +126,7 @@ Its job is:
 - link to release downloads
 - link to the searchable documentation index
 - link to the local MCP setup page
-- identify the current public release as CTX 1.0.16
+- identify the current public release as CTX 1.0.17
 - mention cognitive commit comparison through History and Compare Graph
 - show one or two screenshots
 
