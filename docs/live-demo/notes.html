@@ -7,43 +7,59 @@
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <main class="page">
+  <a class="skip-link" href="#content" data-i18n="skip.content">Skip to content</a>
+  <div class="announcement">
+    <span data-i18n="banner">CTX gives agents durable cognitive continuity across sessions, models, and tools.</span>
+  </div>
+
+  <header class="topbar">
+    <a class="brand" href="./index.html" aria-label="CTX documentation home" data-i18n-aria="brand.home">
+      <span class="brand-mark" aria-hidden="true">CTX</span>
+      <span class="brand-name">CTX</span>
+    </a>
+    <div class="top-actions">
+      <nav class="topnav" aria-label="Primary navigation">
+        <a href="./index.html#start" data-i18n="nav.start">Start</a>
+        <a href="./index.html#install" data-i18n="nav.install">Install</a>
+        <a href="./index.html#agent-loop" data-i18n="nav.agentLoop">Agent loop</a>
+        <a href="./mcp-local.html" data-i18n="nav.mcp">MCP</a>
+        <a href="./index.html#viewer" data-i18n="nav.viewer">Viewer</a>
+        <a href="https://github.com/diegoxtr/ctx-open" data-i18n="nav.github">GitHub</a>
+      </nav>
+      <div class="language-switcher" aria-label="Language">
+        <button type="button" data-lang-option="en">EN</button>
+        <button type="button" data-lang-option="es">ES</button>
+        <button type="button" data-lang-option="zh">中文</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="content" class="page page-shell">
     <section class="hero">
-      <p class="eyebrow">CTX 1.0.19 / Live Demo Notes</p>
-      <h1>How the GitHub-native CTX demo is delivered.</h1>
-      <p class="lede">
+      <p class="eyebrow" data-i18n="notes.eyebrow">Live Demo Notes</p>
+      <h1 data-i18n="notes.title">How the GitHub-native CTX demo is delivered.</h1>
+      <p class="lede" data-i18n="notes.lede">
         CTX uses GitHub Codespaces for the runnable viewer and GitHub Pages for the
-        static landing. Pages explains the demo and the local MCP setup. Codespaces runs it.
+        static landing. Pages explains the demo. Codespaces runs it.
       </p>
       <div class="actions">
-        <a class="button primary" href="./index.html">Back To Landing</a>
-        <a class="button" href="https://codespaces.new/diegoxtr/ctx-open?quickstart=1">Open In Codespaces</a>
+        <a class="button primary" href="./index.html" data-i18n="mcp.back">Back to docs</a>
+        <a class="button" href="https://github.com/diegoxtr/ctx-open?tab=codespaces" data-i18n="notes.codespaces">Open in Codespaces</a>
       </div>
     </section>
 
     <section class="grid">
       <article class="card">
-        <h2>Why the split exists</h2>
-        <p>
-          GitHub Pages is static hosting. It cannot run the CTX Viewer backend or inspect a
-          <code>.ctx</code> repository by itself. The runnable part therefore lives in a Codespace.
-        </p>
+        <h2 data-i18n="notes.split">Why the split exists</h2>
+        <p data-i18n="notes.splitText">GitHub Pages is static hosting. It cannot run the CTX Viewer backend or inspect a .ctx repository by itself. The runnable part therefore lives in a Codespace.</p>
       </article>
       <article class="card">
-        <h2>Canonical demo repository</h2>
-        <p>
-          The default demo dataset is <code>examples/ctx/agent-session-continuity</code>,
-          chosen because it shows continuity across sessions instead of a one-shot graph.
-        </p>
-        <p>
-          If a temporary public viewer session is available, publish that URL on the landing page.
-          Otherwise the canonical entrypoint stays the Codespaces quickstart.
-        </p>
+        <h2 data-i18n="notes.dataset">Canonical demo repository</h2>
+        <p data-i18n="notes.datasetText">The default demo dataset is examples/ctx/agent-session-continuity, chosen because it shows continuity across sessions instead of a one-shot graph.</p>
       </article>
       <article class="card">
-        <h2>Codespaces flow</h2>
+        <h2 data-i18n="notes.flow">Codespaces flow</h2>
         <ol>
-          <li><code>scripts/ensure-dotnet-sdk.sh</code> installs the SDK pinned in <code>global.json</code> when needed.</li>
           <li><code>dotnet restore Ctx.sln</code> runs on create.</li>
           <li><code>scripts/start-codespaces-demo.sh</code> starts the viewer on <code>0.0.0.0:5271</code>.</li>
           <li>The script sets <code>CTX_VIEWER_DEFAULT_REPOSITORY_PATH</code> to the tracked demo repo.</li>
@@ -54,50 +70,28 @@
 
     <section class="grid">
       <article class="card">
-        <h2>Demo Repositories</h2>
-        <ul>
-          <li><code>/workspaces/ctx-open/examples/ctx/agent-session-continuity</code></li>
-          <li><code>/workspaces/ctx-open/examples/ctx/catalog-cache-branch-merge</code></li>
-          <li><code>/workspaces/ctx-open/examples/ctx/critical-checkout-regression</code></li>
-        </ul>
-      </article>
-      <article class="card">
-        <h2>Manual relaunch</h2>
+        <h2 data-i18n="notes.manual">Manual relaunch</h2>
         <pre><code>bash scripts/start-codespaces-demo.sh</code></pre>
-        <p>Logs are written to <code>/tmp/ctx-viewer-codespaces.log</code>.</p>
+        <p data-i18n="notes.logs">Logs are written to /tmp/ctx-viewer-codespaces.log.</p>
       </article>
       <article class="card">
-        <h2>Delivery model</h2>
+        <h2 data-i18n="notes.delivery">Delivery model</h2>
         <ul>
           <li><code>GitHub Pages</code> = static landing</li>
           <li><code>GitHub Codespaces</code> = live viewer</li>
           <li><code>Local MCP</code> = your machine plus your MCP-capable agent</li>
-          <li><code>Local ACP</code> = read-only session adapter through <code>ctx-agent-acp</code></li>
           <li>tracked <code>.ctx</code> example = demo data</li>
         </ul>
       </article>
       <article class="card">
-        <h2>Local MCP setup</h2>
+        <h2 data-i18n="notes.localMcp">Local MCP setup</h2>
+        <p data-i18n="notes.localMcpText">The static page can prepare copy-ready configuration for each agent, but the MCP server itself still runs locally through ctx-mcp.</p>
         <p>
-          The static page can prepare copy-ready configuration for each agent, but the MCP
-          server itself still runs locally through <code>ctx-mcp</code>. The release smoke test
-          is <code>ctx_plan</code>.
-        </p>
-        <p>
-          <a class="button ghost" href="./mcp-local.html">Configure MCP locally</a>
-        </p>
-      </article>
-      <article class="card">
-        <h2>Local ACP adapter</h2>
-        <p>
-          CTX 1.0.19 also exposes <code>ctx-agent-acp</code> for local ACP-style clients.
-          It is read-only in this public release and is documented separately from MCP.
-        </p>
-        <p>
-          <a class="button ghost" href="https://github.com/diegoxtr/ctx-open/blob/main/docs/ACP_LOCAL_CONNECTION_GUIDE.md">Read ACP guide</a>
+          <a class="button ghost" href="./mcp-local.html" data-i18n="notes.configure">Configure MCP locally</a>
         </p>
       </article>
     </section>
   </main>
+  <script src="./site.js"></script>
 </body>
 </html>
