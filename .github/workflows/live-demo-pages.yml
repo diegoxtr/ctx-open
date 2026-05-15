@@ -31,6 +31,8 @@ jobs:
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Build static artifact
         shell: bash
@@ -39,11 +41,10 @@ jobs:
           rm -rf site
           mkdir -p site/assets
           cp docs/live-demo/index.html site/index.html
-          cp docs/live-demo/docs.html site/docs.html
           cp docs/live-demo/notes.html site/notes.html
           cp docs/live-demo/mcp-local.html site/mcp-local.html
-          cp docs/live-demo/talk-unju.html site/talk-unju.html
           cp docs/live-demo/styles.css site/styles.css
+          cp docs/live-demo/site.js site/site.js
           cp assets/screenshots/ctx-viewer-working-context.jpg site/assets/
           cp assets/screenshots/ctx-viewer-commit-thread.jpg site/assets/
 

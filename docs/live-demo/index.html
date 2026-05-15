@@ -3,152 +3,222 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CTX Live Demo</title>
+  <title>CTX Documentation</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <main class="page">
-    <section class="hero">
-      <p class="eyebrow">CTX 1.0.19</p>
-      <h1>Connect agents to durable CTX memory.</h1>
-      <p class="lede">
-        CTX 1.0.19 gives agents a local, versioned working memory, a copy-ready MCP server,
-        and a local ACP-style adapter.
-        Install CTX, point the server at a repository, and let Claude, Gemini, Codex,
-        VS Code, Devin, or another MCP-capable client recover goals, tasks, decisions, and runbooks.
-      </p>
-      <div class="actions">
-        <a class="button primary" href="https://codespaces.new/diegoxtr/ctx-open?quickstart=1">Open In Codespaces</a>
-        <a class="button" href="https://github.com/diegoxtr/ctx-open/releases/tag/v1.0.19">Download Release</a>
-        <a class="button" href="./mcp-local.html">Run MCP Locally</a>
-        <a class="button" href="./docs.html">Browse Documentation</a>
-        <a class="button" href="./talk-unju.html">View UNJu Talk Deck</a>
-        <a class="button ghost" href="./notes.html">Read Demo Notes</a>
+  <a class="skip-link" href="#content" data-i18n="skip.content">Skip to content</a>
+  <div class="announcement">
+    <span data-i18n="banner">CTX gives agents durable cognitive continuity across sessions, models, and tools.</span>
+  </div>
+
+  <header class="topbar">
+    <a class="brand" href="./index.html" aria-label="CTX documentation home" data-i18n-aria="brand.home">
+      <span class="brand-mark" aria-hidden="true">CTX</span>
+      <span class="brand-name">CTX</span>
+    </a>
+    <div class="top-actions">
+      <nav class="topnav" aria-label="Primary navigation">
+        <a href="#start" data-i18n="nav.start">Start</a>
+        <a href="#install" data-i18n="nav.install">Install</a>
+        <a href="#agent-loop" data-i18n="nav.agentLoop">Agent loop</a>
+        <a href="./mcp-local.html" data-i18n="nav.mcp">MCP</a>
+        <a href="#viewer" data-i18n="nav.viewer">Viewer</a>
+        <a href="https://github.com/diegoxtr/ctx-open" data-i18n="nav.github">GitHub</a>
+      </nav>
+      <div class="language-switcher" aria-label="Language">
+        <button type="button" data-lang-option="en">EN</button>
+        <button type="button" data-lang-option="es">ES</button>
+        <button type="button" data-lang-option="zh">中文</button>
       </div>
-      <div id="live-demo-card" class="live-demo-card" hidden>
-        <p class="live-demo-label">Live viewer</p>
-        <a id="live-demo-link" class="live-demo-link" href="#">Open the running CTX Viewer demo</a>
-      </div>
-      <p id="live-demo-placeholder" class="live-demo-placeholder">
-        When a temporary public viewer session is available, publish it here. Otherwise use the Codespaces quickstart to launch a fresh one.
-      </p>
-    </section>
+    </div>
+  </header>
 
-    <section class="grid">
-      <article class="card">
-        <h2>UNJu Talk Deck</h2>
-        <p>
-          A public slide deck for CTX 1.0.19 that explains why CTX became necessary,
-          what problem it solves, and how to use it from a clean VS Code setup with
-          an agent, Git, MCP, and the public landing page.
-        </p>
-        <p>
-          <a class="button ghost" href="./talk-unju.html">Open the presentation</a>
-        </p>
-      </article>
-      <article class="card">
-        <h2>Without CTX</h2>
-        <ul>
-          <li>Agents re-read files they already inspected.</li>
-          <li>They re-infer decisions from partial memory.</li>
-          <li>They spend steps reconstructing state before making progress.</li>
-        </ul>
-      </article>
-      <article class="card">
-        <h2>With CTX</h2>
-        <ul>
-          <li>Agents recover the active cognitive line first.</li>
-          <li>They see what was tried, found, and decided.</li>
-          <li>They continue work instead of restarting investigation.</li>
-        </ul>
-      </article>
-      <article class="card">
-        <h2>Local MCP</h2>
-        <p>
-          Connect Claude, Gemini CLI, VS Code, Codex, Devin, or another MCP-capable agent to a local CTX
-          repository with copy-ready configuration for Windows, Linux, and macOS.
-          Start in read-only mode, verify <code>ctx_plan</code>, then switch to write mode only when
-          the agent should create CTX artifacts.
-        </p>
-        <p>
-          <a class="button ghost" href="./mcp-local.html">Configure MCP locally</a>
-        </p>
-      </article>
-      <article class="card">
-        <h2>Commit Compare</h2>
-        <p>
-          Compare cognitive commits from History and inspect the result as a Git-style
-          Compare Graph with added, changed, removed, context, and conflict states.
-          Select diff nodes to see connected evidence, decisions, tasks, and conclusions.
-        </p>
-      </article>
-      <article class="card">
-        <h2>Live Working Signal</h2>
-        <p>
-          The Viewer now refreshes from an enriched working-context signal that tracks
-          goals, epics, tasks, hypotheses, decisions, evidence, conclusions, and repository state.
-        </p>
-      </article>
-      <article class="card">
-        <h2>Local ACP</h2>
-        <p>
-          CTX 1.0.19 also ships <code>ctx-agent-acp</code>, a read-only local adapter
-          for ACP-style session flows. MCP remains the main tool-rich agent path today;
-          ACP is available for clients that want <code>initialize</code>,
-          <code>session/new</code>, and <code>session/prompt</code>.
-        </p>
-        <p>
-          <a class="button ghost" href="https://github.com/diegoxtr/ctx-open/blob/main/docs/ACP_LOCAL_CONNECTION_GUIDE.md">Read ACP guide</a>
-        </p>
-      </article>
-      <article class="card">
-        <h2>Documentation</h2>
-        <p>
-          Browse the public Markdown documentation as a searchable HTML index,
-          including guides, release notes, localized references, examples, and prompts.
-        </p>
-        <p>
-          <a class="button ghost" href="./docs.html">Open documentation index</a>
-        </p>
-      </article>
-      <article class="card">
-        <h2>Demo Dataset</h2>
-        <p>
-          The default live demo repository is
-          <code>examples/ctx/agent-session-continuity</code>, chosen because it shows
-          multi-session continuity instead of a one-shot graph snapshot.
-        </p>
-      </article>
-    </section>
+  <div class="docs-shell">
+    <aside class="sidebar" aria-label="Documentation sections">
+      <p class="sidebar-title" data-i18n="side.docs">Documentation</p>
+      <a class="active" href="#start" data-i18n="side.intro">Introduction</a>
+      <a href="#install" data-i18n="side.install">Installation</a>
+      <a href="#agent-loop" data-i18n="side.agentLoop">Agent loop</a>
+      <a href="#mcp" data-i18n="side.mcp">MCP</a>
+      <a href="#viewer" data-i18n="side.viewer">Viewer</a>
+      <a href="#architecture" data-i18n="side.model">Cognitive model</a>
+      <a href="#next" data-i18n="side.next">Next steps</a>
+    </aside>
 
-    <section class="screens">
-      <figure class="shot">
-        <img src="./assets/ctx-viewer-working-context.jpg" alt="CTX Viewer working context">
-        <figcaption>
-          Working context focused on the active cognitive line.
-          Multi-repository tabs, the active graph, and the detail surfaces stay aligned in one viewer session.
-        </figcaption>
-      </figure>
-      <figure class="shot">
-        <img src="./assets/ctx-viewer-commit-thread.jpg" alt="CTX Viewer commit thread">
-        <figcaption>
-          Commit-focused graph trace with preserved evidence and decisions.
-          Durable reasoning remains inspectable as a structured thread instead of collapsing into a flat log.
-        </figcaption>
-      </figure>
-    </section>
-  </main>
-  <script>
-    const LIVE_DEMO_URL = "";
-    const liveDemoCard = document.getElementById("live-demo-card");
-    const liveDemoLink = document.getElementById("live-demo-link");
-    const liveDemoPlaceholder = document.getElementById("live-demo-placeholder");
+    <main id="content" class="content">
+      <nav class="breadcrumbs" aria-label="Breadcrumbs">
+        <span data-i18n="crumb.home">Home</span>
+        <span aria-hidden="true">/</span>
+        <span data-i18n="crumb.docs">Documentation</span>
+      </nav>
 
-    if (LIVE_DEMO_URL.trim()) {
-      liveDemoCard.hidden = false;
-      liveDemoLink.href = LIVE_DEMO_URL;
-      liveDemoPlaceholder.hidden = true;
+      <article class="doc">
+        <section id="start" class="section intro-section">
+          <p class="version-pill">Version 1.0.x</p>
+          <h1 data-i18n="home.title">CTX</h1>
+          <p class="subtitle" data-i18n="home.subtitle">Cognitive Version Control for AI agents.</p>
+          <p class="lede" data-i18n="home.lede">
+            CTX turns long-running agent work into durable cognitive state: goals, tasks,
+            hypotheses, evidence, decisions, conclusions, runbooks, and cognitive commits.
+            Agents stop reconstructing context from chat and start from the current work line.
+          </p>
+          <div class="action-row">
+            <a class="button primary" href="#install" data-i18n="home.installCta">Install CTX</a>
+            <a class="button" href="./mcp-local.html" data-i18n="home.mcpCta">Connect MCP</a>
+            <a class="button ghost" href="https://codespaces.new/diegoxtr/ctx-open?quickstart=1" data-i18n="home.demoCta">Open demo</a>
+            <a class="button ghost" href="https://github.com/diegoxtr/ctx-open" data-i18n="home.starCta">+1 Star on GitHub</a>
+          </div>
+        </section>
+
+        <section class="star-panel" aria-label="GitHub star">
+          <p data-i18n="home.starText">If CTX helps your agent workflow, star the repository so other builders can find it.</p>
+          <iframe
+            class="github-star-frame"
+            src="https://ghbtns.com/github-btn.html?user=diegoxtr&amp;repo=ctx-open&amp;type=star&amp;count=true&amp;size=large"
+            title="GitHub Star"
+            loading="lazy"></iframe>
+        </section>
+
+        <section class="command-panel" aria-label="Minimum CTX loop">
+          <div>
+            <p class="panel-label" data-i18n="home.loopLabel">Minimum operator loop</p>
+            <h2 data-i18n="home.loopTitle">Start from state, not from chat memory.</h2>
+            <p data-i18n="home.loopText">
+              Run the helper, ask CTX what matters next, then request a focused planning packet
+              before the agent touches code, docs, release flow, or recovery work.
+            </p>
+          </div>
+          <pre><code>ctx
+ctx next
+ctx plan --purpose "Plan the next work turn"</code></pre>
+        </section>
+
+        <section id="install" class="section">
+          <h2 data-i18n="home.installTitle">Install</h2>
+          <p data-i18n="home.installText">
+            The normal install path uses the published portable release. A local clone does not
+            imply source mode unless you request it explicitly.
+          </p>
+          <div class="code-grid">
+            <div>
+              <h3 data-i18n="home.windows">Windows</h3>
+              <pre><code>powershell -ExecutionPolicy Bypass -File .\install.ps1</code></pre>
+            </div>
+            <div>
+              <h3 data-i18n="home.unix">Linux / macOS</h3>
+              <pre><code>bash ./install.sh</code></pre>
+            </div>
+          </div>
+          <div class="callout info">
+            <strong data-i18n="home.toolsTitle">Installed tools</strong>
+            <p data-i18n="home.toolsText">CTX exposes ctx, ctx-mcp, ctx-agent-acp, and the local Viewer from the install root.</p>
+          </div>
+        </section>
+
+        <section id="agent-loop" class="section">
+          <h2 data-i18n="home.agentTitle">Agent loop</h2>
+          <p data-i18n="home.agentText">
+            CTX works best when agents treat it as the operating state for the task, not as an
+            after-the-fact log. The packet returned by <code>ctx plan</code> includes the next
+            work line, focused context, evidence, decisions, conclusions, and runbook suggestions.
+          </p>
+          <div class="flow">
+            <div><span>1</span><strong data-i18n="home.inspect">Inspect</strong><p data-i18n="home.inspectText">ctx status, ctx audit, ctx next</p></div>
+            <div><span>2</span><strong data-i18n="home.plan">Plan</strong><p data-i18n="home.planText">ctx plan returns focused context and playbooks.</p></div>
+            <div><span>3</span><strong data-i18n="home.work">Work</strong><p data-i18n="home.workText">Make the smallest useful change that produces evidence.</p></div>
+            <div><span>4</span><strong data-i18n="home.close">Close</strong><p data-i18n="home.closeText">Record evidence, decisions, conclusions, and a cognitive commit.</p></div>
+          </div>
+        </section>
+
+        <section id="mcp" class="section">
+          <h2 data-i18n="home.mcpTitle">MCP</h2>
+          <p data-i18n="home.mcpText">
+            The local MCP server lets Claude, Codex, VS Code, and other MCP-capable tools read
+            CTX state through a controlled stdio adapter. Start read-only, smoke test
+            <code>ctx_plan</code>, then enable write mode only when the agent should create artifacts.
+          </p>
+          <pre><code>{
+  "mcpServers": {
+    "ctx": {
+      "type": "stdio",
+      "command": "C:\\ctx\\bin\\ctx-mcp.cmd",
+      "args": ["--repo", "C:\\path\\to\\ctx-repo", "--mode", "read-only"],
+      "tools": ["*"]
     }
-  </script>
+  }
+}</code></pre>
+          <p><a class="text-link" href="./mcp-local.html" data-i18n="home.mcpLink">Build your local MCP configuration</a></p>
+        </section>
+
+        <section id="viewer" class="section">
+          <h2 data-i18n="home.viewerTitle">Viewer</h2>
+          <p data-i18n="home.viewerText">
+            CTX Viewer is the visual surface for cognitive history. It shows working context,
+            commit timelines, graph lineage, details, origins, playbooks, and hypotheses without
+            asking the agent to reload the whole repository into a prompt.
+          </p>
+          <div class="screens">
+            <figure class="shot">
+              <img src="./assets/ctx-viewer-working-context.jpg" alt="CTX Viewer showing working context">
+              <figcaption data-i18n="home.viewerCap1">Working context keeps the active cognitive line visible.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="./assets/ctx-viewer-commit-thread.jpg" alt="CTX Viewer showing a commit thread">
+              <figcaption data-i18n="home.viewerCap2">Commit threads preserve evidence, decisions, and conclusions.</figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <section id="architecture" class="section">
+          <h2 data-i18n="home.modelTitle">Cognitive model</h2>
+          <p data-i18n="home.modelText">
+            CTX records reasoning as first-class artifacts. This makes agent work inspectable,
+            auditable, resumable, and portable across sessions.
+          </p>
+          <div class="artifact-grid">
+            <span>Goals</span>
+            <span>Tasks</span>
+            <span>Hypotheses</span>
+            <span>Evidence</span>
+            <span>Decisions</span>
+            <span>Conclusions</span>
+            <span>Runbooks</span>
+            <span>Commits</span>
+          </div>
+        </section>
+
+        <section id="next" class="section">
+          <h2 data-i18n="home.nextTitle">Next steps</h2>
+          <div class="next-grid">
+            <a href="https://github.com/diegoxtr/ctx-open/blob/main/docs/INSTALLATION_AND_USAGE_GUIDE.md">
+              <strong data-i18n="home.installGuide">Installation guide</strong>
+              <span data-i18n="home.installGuideText">Install, update, repair, and verify CTX locally.</span>
+            </a>
+            <a href="https://github.com/diegoxtr/ctx-open/blob/main/docs/CLI_COMMANDS.md">
+              <strong data-i18n="home.cliGuide">CLI reference</strong>
+              <span data-i18n="home.cliGuideText">Use the state machine, commands, and cognitive closeout flow.</span>
+            </a>
+            <a href="https://github.com/diegoxtr/ctx-open/blob/main/docs/CTX_VIEWER_GUIDE.md">
+              <strong data-i18n="home.viewerGuide">Viewer guide</strong>
+              <span data-i18n="home.viewerGuideText">Read working context, history, graph lineage, and playbooks.</span>
+            </a>
+          </div>
+        </section>
+      </article>
+    </main>
+
+    <aside class="toc" aria-label="On this page">
+      <p class="toc-title" data-i18n="toc.title">On this page</p>
+      <a href="#start" data-i18n="side.intro">Introduction</a>
+      <a href="#install" data-i18n="nav.install">Install</a>
+      <a href="#agent-loop" data-i18n="side.agentLoop">Agent loop</a>
+      <a href="#mcp" data-i18n="side.mcp">MCP</a>
+      <a href="#viewer" data-i18n="side.viewer">Viewer</a>
+      <a href="#architecture" data-i18n="side.model">Cognitive model</a>
+      <a href="#next" data-i18n="side.next">Next steps</a>
+    </aside>
+  </div>
+  <script src="./site.js"></script>
 </body>
 </html>
