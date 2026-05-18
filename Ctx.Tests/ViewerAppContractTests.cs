@@ -32,6 +32,32 @@ public sealed class ViewerAppContractTests
     }
 
     [Fact]
+    public async Task CommitDetail_ExposesParentComparison()
+    {
+        var script = await ReadViewerAppScriptAsync();
+
+        Assert.Contains("renderCommitDetailDiffActions", script);
+        Assert.Contains("Compare with parent", script);
+        Assert.Contains("data-commit-detail-diff-action=\"parent\"", script);
+        Assert.Contains("handleCommitDetailDiffAction", script);
+        Assert.Contains("loadCommitComparison(parentId, detail.id", script);
+    }
+
+    [Fact]
+    public async Task CompareGraph_IncludesSnapshotContextOverlay()
+    {
+        var script = await ReadViewerAppScriptAsync();
+        var program = await ReadViewerProgramAsync();
+
+        Assert.Contains("BuildDiffSnapshotOverlay", program);
+        Assert.Contains("ContextDiffChange(\"Context\"", program);
+        Assert.Contains("overlay = BuildDiffSnapshotOverlay", program);
+        Assert.Contains("comparison?.overlay?.context", script);
+        Assert.Contains("[\"Snapshot Context\", \"Context\", overlayContext]", script);
+        Assert.Contains("changed and snapshot-context cognitive entities", script);
+    }
+
+    [Fact]
     public async Task WorkingContextSignal_FingerprintsFullCognitiveState()
     {
         var program = await ReadViewerProgramAsync();
@@ -173,6 +199,9 @@ public sealed class ViewerAppContractTests
     private static Task<string> ReadViewerAppScriptAsync()
         => File.ReadAllTextAsync(FindRepositoryFile("Ctx.Viewer", "wwwroot", "app.mjs"));
 
+    private static Task<string> ReadViewerProgramAsync()
+        => File.ReadAllTextAsync(FindRepositoryFile("Ctx.Viewer", "Program.cs"));
+
     private static Task<string> ReadViewerUtilityModuleAsync()
         => File.ReadAllTextAsync(FindRepositoryFile("Ctx.Viewer", "wwwroot", "js", "viewer-utils.mjs"));
 
@@ -190,9 +219,6 @@ public sealed class ViewerAppContractTests
 
     private static Task<string> ReadViewerIndexAsync()
         => File.ReadAllTextAsync(FindRepositoryFile("Ctx.Viewer", "wwwroot", "index.html"));
-
-    private static Task<string> ReadViewerProgramAsync()
-        => File.ReadAllTextAsync(FindRepositoryFile("Ctx.Viewer", "Program.cs"));
 
     private static Task<string> ReadViewerStylesAsync()
         => File.ReadAllTextAsync(FindRepositoryFile("Ctx.Viewer", "wwwroot", "styles.css"));

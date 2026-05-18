@@ -13,7 +13,7 @@ Operating Reminder:
   Use those files as the operating baseline for this project.
   Align existing Playbook/runbook guidance before drifting into ad-hoc operation.
   If CTX already knows what's next, continue from CTX instead of waiting for chat.
-  Respect the active repository boundary instead of assuming private and public repos are interchangeable.
+  Respect the active repository boundary instead of assuming different repos are interchangeable.
   Validate locally first; propagate public release artifacts only when the active CTX task explicitly calls for it.
   Treat `Working context` as cognition in motion and `ctx commit` as a durable cognitive snapshot, not as a log of every thought.
   If a cognitive delta exists, it must be visible either in `Working context` or in `Commit history`.

@@ -378,7 +378,7 @@ app.MapGet("/api/commit", async (string id, string? path, CancellationToken canc
     }
 });
 
-app.MapGet("/api/diff", async (string? from, string? to, string? path, CancellationToken cancellationToken) =>
+app.MapGet("/api/diff", async (HttpContext http, string? path, CancellationToken cancellationToken) =>
 {
     try
     {
@@ -388,25 +388,44 @@ app.MapGet("/api/diff", async (string? from, string? to, string? path, Cancellat
             return Results.NotFound(new { message = $"No .ctx repository found at '{repositoryPath}'." });
         }
 
-        var resolvedFromCommitId = await ResolveCommitReferenceAsync(repositoryPath, from, commitRepository, branchRepository, cancellationToken);
-        var resolvedToCommitId = await ResolveCommitReferenceAsync(repositoryPath, to, commitRepository, branchRepository, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(resolvedFromCommitId) && !string.IsNullOrWhiteSpace(resolvedToCommitId))
+        var from = http.Request.Query["from"].ToString();
+        var to = http.Request.Query["to"].ToString();
+        var resolvedFrom = await ResolveCommitReferenceAsync(repositoryPath, from, commitRepository, branchRepository, cancellationToken);
+        var resolvedTo = await ResolveCommitReferenceAsync(repositoryPath, to, commitRepository, branchRepository, cancellationToken);
+        if (!string.IsNullOrWhiteSpace(resolvedFrom) && !string.IsNullOrWhiteSpace(resolvedTo))
         {
-            var targetCommit = await commitRepository.LoadAsync(repositoryPath, new ContextCommitId(resolvedToCommitId), cancellationToken);
+            var targetCommit = await commitRepository.LoadAsync(repositoryPath, new ContextCommitId(resolvedTo), cancellationToken);
             if (targetCommit is not null
-                && targetCommit.ParentIds.Any(parent => parent.Value.Equals(resolvedFromCommitId, StringComparison.OrdinalIgnoreCase)))
+                && targetCommit.ParentIds.Any(parent => parent.Value.Equals(resolvedFrom, StringComparison.OrdinalIgnoreCase)))
             {
                 return Results.Json(new
                 {
                     summary = targetCommit.Diff.Summary,
-                    diff = targetCommit.Diff
+                    diff = targetCommit.Diff,
+                    overlay = BuildDiffSnapshotOverlay(targetCommit.Snapshot, targetCommit.Diff)
                 });
             }
         }
 
-        var result = await runtime.ApplicationService.DiffAsync(repositoryPath, resolvedFromCommitId, resolvedToCommitId, cancellationToken);
+        var result = await runtime.ApplicationService.DiffAsync(repositoryPath, resolvedFrom, resolvedTo, cancellationToken);
+        object? overlay = null;
+        object? diffPayload = result.Data?.GetType().GetProperty("diff")?.GetValue(result.Data);
+        if (!string.IsNullOrWhiteSpace(resolvedTo) && diffPayload is ContextDiff diff)
+        {
+            var targetCommit = await commitRepository.LoadAsync(repositoryPath, new ContextCommitId(resolvedTo), cancellationToken);
+            if (targetCommit is not null)
+            {
+                overlay = BuildDiffSnapshotOverlay(targetCommit.Snapshot, diff);
+            }
+        }
+
         return result.Success
-            ? Results.Json(result.Data)
+            ? Results.Json(overlay is null ? result.Data : new
+            {
+                summary = result.Message,
+                diff = diffPayload,
+                overlay
+            })
             : Results.BadRequest(new { message = result.Message });
     }
     catch (InvalidOperationException ex)
@@ -1451,6 +1470,70 @@ static string ComputeStableHash(string input)
 {
     var bytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(input));
     return Convert.ToHexString(bytes);
+}
+
+static object BuildDiffSnapshotOverlay(RepositorySnapshot snapshot, ContextDiff diff)
+{
+    var changedIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    AddChangedIds(changedIds, diff.Decisions);
+    AddChangedIds(changedIds, diff.Hypotheses);
+    AddChangedIds(changedIds, diff.Evidence);
+    AddChangedIds(changedIds, diff.Epics ?? Array.Empty<ContextDiffChange>());
+    AddChangedIds(changedIds, diff.Tasks);
+    AddChangedIds(changedIds, diff.Conclusions);
+    AddChangedIds(changedIds, diff.Runbooks);
+    AddChangedIds(changedIds, diff.Triggers);
+
+    var working = snapshot.WorkingContext;
+    var context = new List<ContextDiffChange>();
+    context.AddRange(BuildContextChanges(working.Goals, "Goal", item => item.Id.Value, item => $"{item.Title} [{item.State}]"));
+    context.AddRange(BuildContextChanges(working.Epics ?? Array.Empty<Epic>(), "Epic", item => item.Id.Value, item => $"{item.Title} [{item.State}]"));
+    context.AddRange(BuildContextChanges(working.Tasks, "Task", item => item.Id.Value, item => $"{item.Title} [{item.State}]"));
+    context.AddRange(BuildContextChanges(working.Hypotheses, "Hypothesis", item => item.Id.Value, item => $"{item.Statement} [{item.State}]"));
+    context.AddRange(BuildContextChanges(working.Evidence, "Evidence", item => item.Id.Value, item => $"{item.Title} [{item.Kind}]"));
+    context.AddRange(BuildContextChanges(working.Decisions, "Decision", item => item.Id.Value, item => $"{item.Title} [{item.State}]"));
+    context.AddRange(BuildContextChanges(working.Conclusions, "Conclusion", item => item.Id.Value, item => $"{item.Summary} [{item.State}]"));
+    context.AddRange(BuildContextChanges(snapshot.Runbooks, "Runbook", item => item.Id.Value, item => $"{item.Title} [{item.Kind}]"));
+    context.AddRange(BuildContextChanges(snapshot.Triggers, "Trigger", item => item.Id.Value, item => $"{item.Kind}:{item.Summary}"));
+
+    var filteredContext = context
+        .Where(item => !changedIds.Contains($"{item.EntityType}:{item.EntityId}"))
+        .ToArray();
+
+    return new
+    {
+        context = filteredContext,
+        contextCount = filteredContext.Length,
+        snapshotHash = ComputeStableHash(JsonSerializer.Serialize(snapshot))
+    };
+}
+
+static void AddChangedIds(HashSet<string> changedIds, IEnumerable<ContextDiffChange> changes)
+{
+    foreach (var change in changes)
+    {
+        changedIds.Add($"{NormalizeDiffOverlayEntityType(change.EntityType)}:{change.EntityId}");
+    }
+}
+
+static string NormalizeDiffOverlayEntityType(string entityType)
+    => entityType switch
+    {
+        nameof(OperationalRunbook) => "Runbook",
+        nameof(CognitiveTrigger) => "Trigger",
+        _ => entityType
+    };
+
+static IEnumerable<ContextDiffChange> BuildContextChanges<T>(
+    IEnumerable<T> items,
+    string entityType,
+    Func<T, string> idSelector,
+    Func<T, string> summarySelector)
+{
+    foreach (var item in items)
+    {
+        yield return new ContextDiffChange("Context", entityType, idSelector(item), summarySelector(item));
+    }
 }
 
 static async Task<ContextCommit?> FindEntityOriginCommitAsync(
