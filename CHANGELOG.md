@@ -4,6 +4,23 @@ All notable changes to CTX will be documented in this file.
 
 ## [Unreleased]
 
+## [1.0.20] - 2026-05-18
+
+### Added
+
+- Viewer commit details can now start `Compare with parent` directly.
+- Viewer `/api/diff` now returns snapshot-context overlay data for target commits.
+- Compare Graph now includes `Snapshot Context` nodes around changed entities.
+
+### Changed
+
+- Viewer mobile layouts now stack controls and panels cleanly on phone-width screens.
+- Mobile Viewer panel order is now Trace Graph, Details, then History.
+
+### Validation
+
+- Release branch validation must confirm `ctx version` reports `1.0.20`, Viewer contract coverage verifies parent comparison and snapshot context, tests pass, GitHub Pages assets resolve, and no local `.ctx` state or machine-specific paths are staged.
+
 ## [1.0.19] - 2026-05-13
 
 ### Fixed

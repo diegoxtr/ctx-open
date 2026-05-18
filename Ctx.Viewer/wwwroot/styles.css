@@ -3600,3 +3600,335 @@ body {
         padding-top: 0;
     }
 }
+
+@media (max-width: 900px) {
+    body {
+        height: auto;
+        overflow: auto;
+        overflow-x: hidden;
+        grid-template-rows: auto auto auto auto auto;
+    }
+
+    .topbar {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 0.85rem;
+        padding: 0.9rem;
+    }
+
+    .topbar-title {
+        align-items: flex-start;
+    }
+
+    .topbar-right {
+        align-items: stretch;
+        flex-direction: column;
+        justify-content: flex-start;
+    }
+
+    .mcp-control {
+        align-self: flex-start;
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    .repo-form {
+        width: 100%;
+    }
+
+    .repo-form label {
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+
+    .repo-form input,
+    .repo-form select,
+    .repo-form button {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .repository-browser {
+        position: fixed;
+        inset: auto 0.75rem 0.75rem;
+        left: 0.75rem;
+        width: auto;
+        max-height: min(70dvh, 520px);
+    }
+
+    .repository-browser-header,
+    .repository-browser-actions,
+    .repository-browser-roots {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .repository-browser-close {
+        align-self: flex-end;
+    }
+
+    .workspace-tab-strip,
+    .view-toolbar {
+        padding-inline: 0.75rem;
+        max-width: 100vw;
+        min-width: 0;
+    }
+
+    .workspace-tab-strip {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 0.55rem;
+    }
+
+    .workspace-tab {
+        min-width: min(240px, calc(100vw - 4.5rem));
+        max-width: min(300px, calc(100vw - 4.5rem));
+    }
+
+    .view-mode-group,
+    .sidebar-tab-bar,
+    .detail-tab-bar,
+    .graph-control-row,
+    .graph-filter-row,
+    .graph-state-group,
+    .graph-filter-toolbar {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        max-width: 100%;
+        overflow-x: auto;
+        padding-bottom: 0.2rem;
+        scrollbar-width: none;
+    }
+
+    .view-mode-group::-webkit-scrollbar,
+    .sidebar-tab-bar::-webkit-scrollbar,
+    .detail-tab-bar::-webkit-scrollbar,
+    .graph-control-row::-webkit-scrollbar,
+    .graph-filter-row::-webkit-scrollbar,
+    .graph-state-group::-webkit-scrollbar,
+    .graph-filter-toolbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .view-toolbar > *,
+    .panel-header > *,
+    .graph-toolbar-stack > * {
+        min-width: 0;
+    }
+
+    .view-mode-caption,
+    .viewer-hint {
+        max-width: 100%;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .view-mode-group > *,
+    .sidebar-tab-bar > *,
+    .detail-tab-bar > *,
+    .graph-control-row > *,
+    .graph-filter-row > *,
+    .graph-state-group > *,
+    .graph-filter-toolbar > * {
+        flex: 0 0 auto;
+    }
+
+    .layout {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        min-height: 0;
+        overflow: visible;
+        padding: 0.75rem;
+    }
+
+    .layout[data-view-mode="history"],
+    .layout[data-view-mode="split"],
+    .layout[data-view-mode="graph"] {
+        display: flex;
+    }
+
+    .panel {
+        border-radius: 12px;
+        max-width: 100%;
+        min-height: 0;
+        overflow: visible;
+        padding: 0.85rem;
+    }
+
+    .panel-left,
+    .panel-center,
+    .panel-right,
+    .sidebar-tab-panel,
+    .detail-tab-panel {
+        min-height: 0;
+        overflow: visible;
+    }
+
+    .panel-center {
+        order: 1;
+    }
+
+    .panel-right {
+        order: 2;
+    }
+
+    .panel-left {
+        order: 3;
+    }
+
+    .graph-toolbar-stack {
+        justify-items: stretch;
+        width: 100%;
+    }
+
+    .graph-title-block {
+        min-width: 0;
+    }
+
+    .graph-canvas {
+        flex: 0 0 auto;
+        height: min(62dvh, 520px);
+        min-height: 360px;
+        max-height: none;
+        padding: 0.75rem;
+        resize: none;
+        scrollbar-gutter: auto;
+    }
+
+    .graph-stage {
+        min-width: 720px;
+        min-height: 540px;
+    }
+
+    .graph-node {
+        max-width: min(240px, 72vw);
+    }
+
+    .epic-rail {
+        max-height: none;
+        overflow: visible;
+    }
+
+    .history-browser,
+    .detail-grid,
+    .diff-summary-states {
+        grid-template-columns: 1fr;
+    }
+
+    .history-rows {
+        overflow: visible;
+        padding: 0.55rem;
+    }
+
+    .history-row {
+        grid-template-columns: 88px minmax(0, 1fr);
+    }
+
+    .detail-box,
+    .detail-surface,
+    .origin-link,
+    .commit-body code {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+}
+
+@media (max-width: 520px) {
+    .topbar h1 {
+        font-size: 1.35rem;
+    }
+
+    .topbar p,
+    .topbar-byline,
+    .view-mode-caption {
+        font-size: 0.8rem;
+    }
+
+    .mcp-control {
+        width: 100%;
+        border-radius: 14px;
+    }
+
+    .topbar .mcp-control .mcp-action {
+        padding-inline: 0.58rem;
+    }
+
+    .workspace-tab-strip,
+    .view-toolbar,
+    .layout {
+        padding-inline: 0.55rem;
+    }
+
+    .view-mode-label {
+        flex-basis: 100%;
+    }
+
+    .view-mode-group {
+        flex-wrap: wrap;
+        overflow-x: visible;
+    }
+
+    .panel {
+        padding: 0.7rem;
+    }
+
+    .graph-canvas {
+        height: 58dvh;
+        min-height: 320px;
+    }
+
+    .graph-stage {
+        min-width: 640px;
+        min-height: 480px;
+    }
+
+    .history-row {
+        grid-template-columns: 1fr;
+    }
+
+    .history-change-cell,
+    .history-date-cell,
+    .history-author-cell,
+    .history-model-cell,
+    .history-id-cell {
+        grid-column: 1;
+    }
+
+    .history-cell {
+        padding: 0.5rem 0.6rem;
+    }
+
+    .history-cell + .history-cell {
+        padding-top: 0;
+    }
+
+    .detail-action-row,
+    .repository-browser-actions,
+    .repository-browser-roots {
+        gap: 0.4rem;
+    }
+}
+
+@media (max-width: 380px) {
+    .topbar,
+    .panel {
+        padding: 0.6rem;
+    }
+
+    .workspace-tab {
+        min-width: min(220px, calc(100vw - 4rem));
+        max-width: min(260px, calc(100vw - 4rem));
+    }
+
+    .view-mode-button,
+    .sidebar-tab-button,
+    .detail-tab-button {
+        padding-inline: 0.65rem;
+    }
+
+    .graph-canvas {
+        min-height: 300px;
+    }
+}

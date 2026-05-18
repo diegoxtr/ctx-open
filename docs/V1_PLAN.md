@@ -329,7 +329,7 @@ The pilot should answer:
 - whether operational cost is acceptable
 - whether the CLI is sufficient
 - whether artifact structure adds real value
-- whether to move to a restricted public V1 or a private beta
+- whether to move to a restricted public V1 or a closed beta
 
 ## 14. Primary risks
 

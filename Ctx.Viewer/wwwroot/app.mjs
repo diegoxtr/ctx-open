@@ -6120,6 +6120,7 @@ function renderCommitDetail(detail) {
                 <span class="detail-card-value">${escapeHtml(diff.summary ?? "No diff summary")}</span>
             </div>
         </div>
+        ${renderCommitDetailDiffActions(detail)}
         ${renderCognitivePathSection(pathMeta)}
         ${renderRelatedCommitSection(currentCommitFocus)}
         ${sections.map(([label, items]) => renderDiffSection(label, items)).join("")}
@@ -6164,6 +6165,59 @@ function renderCommitDetail(detail) {
         });
     }
 
+    for (const button of commitDetail.querySelectorAll("[data-commit-detail-diff-action]")) {
+        button.addEventListener("click", () => {
+            handleCommitDetailDiffAction(button.dataset.commitDetailDiffAction, detail);
+        });
+    }
+
+}
+
+function renderCommitDetailDiffActions(detail) {
+    const parentId = Array.isArray(detail.parentIds) && detail.parentIds.length > 0 ? detail.parentIds[0] : null;
+    const compareParentButton = parentId
+        ? `<button type="button" class="detail-pill" data-commit-detail-diff-action="parent">Compare with parent</button>`
+        : "";
+    const isBase = compareBaseCommit?.id === detail.id;
+    const baseButton = isBase
+        ? `<button type="button" class="detail-pill active" data-commit-detail-diff-action="clear-base">Base selected</button>`
+        : `<button type="button" class="detail-pill" data-commit-detail-diff-action="base">Use as base</button>`;
+    const compareSelectedBaseButton = compareBaseCommit?.id && compareBaseCommit.id !== detail.id
+        ? `<button type="button" class="detail-pill" data-commit-detail-diff-action="compare-base">Compare with selected base</button>`
+        : "";
+
+    return `
+        <div class="detail-action-row" aria-label="Commit comparison actions">
+            ${baseButton}
+            ${compareSelectedBaseButton}
+            ${compareParentButton}
+        </div>`;
+}
+
+function handleCommitDetailDiffAction(action, detail) {
+    if (action === "base") {
+        setCommitComparisonBase(detail);
+        renderCommitDetail(detail);
+        return;
+    }
+
+    if (action === "clear-base") {
+        clearCommitComparisonBase();
+        renderCommitDetail(detail);
+        return;
+    }
+
+    if (action === "compare-base" && compareBaseCommit?.id && compareBaseCommit.id !== detail.id) {
+        void loadCommitComparison(compareBaseCommit.id, detail.id, { targetCommit: detail });
+        return;
+    }
+
+    if (action === "parent") {
+        const parentId = Array.isArray(detail.parentIds) && detail.parentIds.length > 0 ? detail.parentIds[0] : null;
+        if (parentId) {
+            void loadCommitComparison(parentId, detail.id, { targetCommit: detail, fromMessage: "Parent commit" });
+        }
+    }
 }
 
 function setCommitComparisonBase(commit) {
@@ -6197,7 +6251,7 @@ async function loadCommitComparison(fromCommitId, toCommitId, options = {}) {
     currentCommitComparison = {
         fromCommitId,
         toCommitId,
-        fromMessage: compareBaseCommit?.id === fromCommitId ? compareBaseCommit.message : "",
+        fromMessage: options.fromMessage ?? (compareBaseCommit?.id === fromCommitId ? compareBaseCommit.message : ""),
         toMessage: options.targetCommit?.message ?? "",
         status: "loading",
         comparison: null,
@@ -6295,6 +6349,7 @@ function renderDiffDetail() {
 
 function renderCommitComparison(panel, comparison, fromCommitId, toCommitId, metadata = {}) {
     const diff = comparison?.diff ?? {};
+    const overlayContext = Array.isArray(comparison?.overlay?.context) ? comparison.overlay.context : [];
     const sections = [
         ["Decisions", diff.decisions],
         ["Hypotheses", diff.hypotheses],
@@ -6307,8 +6362,8 @@ function renderCommitComparison(panel, comparison, fromCommitId, toCommitId, met
         ["Conflicts", diff.conflicts]
     ];
     const totalChanges = sections.reduce((total, [, items]) => total + (Array.isArray(items) ? items.length : 0), 0);
-    const summaryMetrics = buildComparisonSummaryMetrics(sections);
-    const diffGraph = buildComparisonDiffGraph(diff);
+    const summaryMetrics = buildComparisonSummaryMetrics(sections, overlayContext);
+    const diffGraph = buildComparisonDiffGraph(diff, overlayContext);
 
     panel.innerHTML = `
         <div class="detail-compare-panel">
@@ -6366,7 +6421,7 @@ function renderCommitComparison(panel, comparison, fromCommitId, toCommitId, met
     }
 }
 
-function buildComparisonSummaryMetrics(sections) {
+function buildComparisonSummaryMetrics(sections, overlayContext = []) {
     const stateCounts = new Map([
         ["added", 0],
         ["changed", 0],
@@ -6392,6 +6447,12 @@ function buildComparisonSummaryMetrics(sections) {
                 : normalizeDiffChangeState(item?.changeType ?? item?.state);
             stateCounts.set(state, (stateCounts.get(state) ?? 0) + 1);
         }
+    }
+
+    const contextCount = Array.isArray(overlayContext) ? overlayContext.length : 0;
+    if (contextCount > 0) {
+        stateCounts.set("unchanged", (stateCounts.get("unchanged") ?? 0) + contextCount);
+        entityCounts.push(["Context", contextCount]);
     }
 
     return { total, stateCounts, entityCounts };
@@ -6424,7 +6485,7 @@ function renderComparisonSummaryStrip(metrics) {
         </div>`;
 }
 
-function buildComparisonDiffGraph(diff) {
+function buildComparisonDiffGraph(diff, overlayContext = []) {
     const groups = [
         ["Tasks", "Task", diff.tasks],
         ["Hypotheses", "Hypothesis", diff.hypotheses],
@@ -6434,7 +6495,8 @@ function buildComparisonDiffGraph(diff) {
         ["Epics", "Epic", diff.epics],
         ["Runbooks", "Runbook", diff.runbooks],
         ["Triggers", "Trigger", diff.triggers],
-        ["Conflicts", "Conflict", diff.conflicts]
+        ["Conflicts", "Conflict", diff.conflicts],
+        ["Snapshot Context", "Context", overlayContext]
     ];
     const nodes = [];
     const edges = [];
@@ -6544,7 +6606,7 @@ function renderComparisonDiffGraph(graph) {
         return `<p class="detail-empty">No graphable diff entities.</p>`;
     }
 
-    const typeOrder = ["Diff", "Group", "Task", "Hypothesis", "Evidence", "Decision", "Conclusion", "Epic", "Runbook", "Trigger", "Conflict"];
+    const typeOrder = ["Diff", "Group", "Task", "Hypothesis", "Evidence", "Decision", "Conclusion", "Epic", "Runbook", "Trigger", "Context", "Conflict"];
     const grouped = new Map(typeOrder.map(type => [type, []]));
     for (const node of graph.nodes) {
         if (!grouped.has(node.type)) {
@@ -6640,7 +6702,7 @@ function renderComparisonDiffGraphSummary(graph) {
     return `
         <div class="diff-graph-handoff">
             <strong>Graph rendered in Compare Graph</strong>
-            <span>${escapeHtml(String(totalItems))} changed cognitive entities are represented on the main graph canvas until Back to Trace Graph is selected.${hiddenItems > 0 ? ` ${escapeHtml(String(hiddenItems))} are collapsed into summary nodes.` : ""}</span>
+            <span>${escapeHtml(String(totalItems))} changed and snapshot-context cognitive entities are represented on the main graph canvas until Back to Trace Graph is selected.${hiddenItems > 0 ? ` ${escapeHtml(String(hiddenItems))} are collapsed into summary nodes.` : ""}</span>
         </div>
         <div class="diff-graph-legend">
             <span class="diff-legend-item diff-state-added">Added ${escapeHtml(String(counts.get("added") ?? 0))}</span>

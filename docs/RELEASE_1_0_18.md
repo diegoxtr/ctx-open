@@ -12,7 +12,7 @@ Version:
 
 CTX 1.0.18 improves Viewer live refresh detection by expanding the `/api/working-context/signal` fingerprint.
 
-The public Viewer already polled the working context signal, but the public fingerprint was narrower than the validated private implementation. This release aligns the public endpoint so Viewer refreshes can notice broader cognitive state changes, not just the active task slice.
+The Viewer already polled the working context signal, but the shipped fingerprint was narrower than the validated implementation. This release aligns the endpoint so Viewer refreshes can notice broader cognitive state changes, not just the active task slice.
 
 ## Changed
 
