@@ -613,6 +613,63 @@ public sealed class CtxApplicationService : ICtxApplicationService
         });
     }
 
+    public async System.Threading.Tasks.Task<CommandResult> UpdateOperationalRunbookAsync(string repositoryPath, UpdateOperationalRunbookRequest request, CancellationToken cancellationToken)
+    {
+        if (_operationalRunbookRepository is null)
+        {
+            throw new InvalidOperationException("Operational runbooks are not configured.");
+        }
+
+        return await ExecuteWriteLockedAsync(repositoryPath, cancellationToken, async () =>
+        {
+            var context = await _workingContextRepository.LoadAsync(repositoryPath, cancellationToken);
+            var runbook = await _operationalRunbookRepository.LoadAsync(repositoryPath, new OperationalRunbookId(request.RunbookId), cancellationToken)
+                ?? throw new InvalidOperationException($"OperationalRunbook '{request.RunbookId}' was not found.");
+
+            var kind = runbook.Kind;
+            if (!string.IsNullOrWhiteSpace(request.Kind)
+                && !Enum.TryParse<OperationalRunbookKind>(request.Kind, true, out kind))
+            {
+                throw new InvalidOperationException($"Runbook kind '{request.Kind}' is not supported.");
+            }
+
+            var state = runbook.State;
+            if (!string.IsNullOrWhiteSpace(request.State)
+                && !Enum.TryParse<LifecycleState>(request.State, true, out state))
+            {
+                throw new InvalidOperationException($"Runbook state '{request.State}' is not supported.");
+            }
+
+            var goalIds = request.GoalIds is null
+                ? null
+                : request.GoalIds.Select(id => ResolveGoal(context, id).Id).ToArray();
+            var taskIds = request.TaskIds is null
+                ? null
+                : request.TaskIds.Select(id => ResolveTask(context, id).Id).ToArray();
+
+            var updated = runbook with
+            {
+                Title = request.Title ?? runbook.Title,
+                Kind = kind,
+                Triggers = MergeTextList(runbook.Triggers, request.Triggers, request.AppendLists, distinct: true),
+                WhenToUse = request.WhenToUse ?? runbook.WhenToUse,
+                Do = MergeTextList(runbook.Do, request.Do, request.AppendLists),
+                Verify = MergeTextList(runbook.Verify, request.Verify, request.AppendLists),
+                References = MergeTextList(runbook.References, request.References, request.AppendLists),
+                Preconditions = MergeTextList(runbook.Preconditions, request.Preconditions, request.AppendLists),
+                FailureSignals = MergeTextList(runbook.FailureSignals, request.FailureSignals, request.AppendLists),
+                EscalationBoundary = MergeTextList(runbook.EscalationBoundary, request.EscalationBoundary, request.AppendLists),
+                GoalIds = MergeIdList(runbook.GoalIds, goalIds, request.AppendLists),
+                TaskIds = MergeIdList(runbook.TaskIds, taskIds, request.AppendLists),
+                State = state,
+                Trace = runbook.Trace with { UpdatedBy = request.UpdatedBy, UpdatedAtUtc = _clock.UtcNow }
+            };
+
+            await _operationalRunbookRepository.SaveAsync(repositoryPath, updated, cancellationToken);
+            return new CommandResult(true, $"OperationalRunbook updated: {updated.Title}", updated);
+        });
+    }
+
     public async System.Threading.Tasks.Task<CommandResult> DetachOperationalRunbookAsync(string repositoryPath, DetachOperationalRunbookRequest request, CancellationToken cancellationToken)
     {
         if (_operationalRunbookRepository is null)
@@ -3261,7 +3318,7 @@ public sealed class CtxApplicationService : ICtxApplicationService
                 break;
             case "public-release":
                 guidance.Add("Before sharing or closing the release, produce the bilingual announcement and flyer, or record an explicit omission decision with the reason.");
-                guidance.Add("Before tagging or publishing, verify the full public `docs/` tree is copied and every console-referenced installed path exists in the packaged layout, including `docs/TECHNICAL_INDEX.md`, `docs/CLI_COMMANDS.md`, `docs/CTX_VIEWER_GUIDE.md`, `docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md`, `prompts/CTX_HELPER_PROMPT.md`, and `prompts/CTX_AGENT_PROMPT.md`.");
+                guidance.Add("Before tagging or publishing, verify every console-referenced installed path exists in the packaged layout, including `docs/CLI_COMMANDS.md`, `docs/CTX_VIEWER_GUIDE.md`, `docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md`, `prompts/CTX_HELPER_PROMPT.md`, and `prompts/CTX_AGENT_PROMPT.md`.");
                 guidance.Add("If `ctx helper`, install docs, or release notes tell the operator to read a file from the installed CLI/package, stop publication unless that file is copied by the portable bundle and install scripts.");
                 guidance.Add("Run `ctx preflight --operation github-release` after publishing the GitHub Release so the post-release announcement/flyer runbook is surfaced deliberately.");
                 break;
@@ -5873,6 +5930,48 @@ public sealed class CtxApplicationService : ICtxApplicationService
 
     private static string NormalizeEnumToken(string value)
         => value.Replace("-", string.Empty, StringComparison.Ordinal).Replace("_", string.Empty, StringComparison.Ordinal);
+
+    private static IReadOnlyList<string> MergeTextList(
+        IReadOnlyList<string> existing,
+        IReadOnlyList<string>? requested,
+        bool append,
+        bool distinct = false)
+    {
+        if (requested is null)
+        {
+            return existing;
+        }
+
+        var normalized = requested
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Select(item => item.Trim());
+
+        if (append)
+        {
+            normalized = existing.Concat(normalized);
+        }
+
+        return (distinct
+                ? normalized.Distinct(StringComparer.OrdinalIgnoreCase)
+                : normalized)
+            .ToArray();
+    }
+
+    private static IReadOnlyList<T> MergeIdList<T>(
+        IReadOnlyList<T> existing,
+        IReadOnlyList<T>? requested,
+        bool append)
+        where T : notnull
+    {
+        if (requested is null)
+        {
+            return existing;
+        }
+
+        return append
+            ? existing.Concat(requested).Distinct().ToArray()
+            : requested.Distinct().ToArray();
+    }
 
     private async System.Threading.Tasks.Task<T> ExecuteWriteLockedAsync<T>(string repositoryPath, CancellationToken cancellationToken, Func<System.Threading.Tasks.Task<T>> action)
     {

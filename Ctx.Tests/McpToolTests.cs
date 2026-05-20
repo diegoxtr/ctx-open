@@ -78,6 +78,7 @@ public sealed class McpToolTests
             "ctx_conclusion_add",
             "ctx_conclusion_update",
             "ctx_runbook_add",
+            "ctx_runbook_update",
             "ctx_trigger_add",
             "ctx_bootstrap_apply",
             "ctx_commit"

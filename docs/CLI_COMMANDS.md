@@ -146,6 +146,7 @@ Rules:
 ### `ctx`
 
 Without arguments, shows helper-first operator guidance and points to the canonical command reference.
+The helper intentionally highlights the daily operating loop, CTX planning/runbook flow, and MCP parity notes; use this file for the complete command syntax.
 
 ```powershell
 dotnet run --project .\Ctx.Cli --
@@ -570,6 +571,33 @@ Design rules:
 
 ```powershell
 dotnet run --project .\Ctx.Cli -- runbook add --title "Local publish" --kind Procedure --trigger publish-local --when "Use when refreshing the installed local viewer" --precondition "No installed CTX binary is locked" --do "Run scripts/publish-local.ps1" --verify "Viewer responds locally" --signal "Failed to copy Ctx.Viewer.exe" --escalate "Stop retrying publish if binaries remain locked" --reference "scripts/publish-local.ps1"
+```
+
+### `ctx runbook update <runbookId>`
+
+Updates an existing `OperationalRunbook` without hand-editing `.ctx/runbooks/*.json`.
+
+Scalar options replace the current value when supplied:
+- `--title <text>`
+- `--kind Procedure|Troubleshooting|Policy|Guardrail`
+- `--when <text>`
+- `--state Active|Archived`
+
+List options replace the current list when supplied. Add `--append` to append instead, with duplicate triggers, goals, and tasks deduplicated.
+- `--trigger <text>` repeatable
+- `--precondition <text>` repeatable
+- `--do <text>` repeatable
+- `--verify <text>` repeatable
+- `--signal <text>` repeatable
+- `--escalate <text>` repeatable
+- `--reference <text>` repeatable
+- `--goal <goalId>` repeatable
+- `--task <taskId>` repeatable
+
+Repeated options and comma-separated values are both accepted.
+
+```powershell
+dotnet run --project .\Ctx.Cli -- runbook update <runbookId> --title "Local publish guard" --append --trigger viewer --verify "Topbar version matches" --reference "ctx preflight --operation publish-local"
 ```
 
 ### `ctx runbook attach <runbookId>`

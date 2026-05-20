@@ -126,14 +126,87 @@ public sealed class ViewerAppContractTests
     [Fact]
     public async Task GraphCanvas_OwnsScrollingAndIsResizable()
     {
+        var script = await ReadViewerAppScriptAsync();
         var styles = await ReadViewerStylesAsync();
         var graphCanvasStyles = ExtractCssRule(styles, ".graph-canvas");
         var diffCanvasStyles = ExtractCssRule(styles, ".graph-canvas-diff .diff-graph-canvas");
+        var graphFooterStyles = ExtractCssRule(styles, ".graph-footer");
+        var epicRailStyles = ExtractCssRule(styles, ".epic-rail");
 
         Assert.Contains("overflow: auto", graphCanvasStyles);
-        Assert.Contains("resize: vertical", graphCanvasStyles);
+        Assert.Contains("resize: both", graphCanvasStyles);
         Assert.Contains("scrollbar-gutter: stable both-edges", graphCanvasStyles);
+        Assert.Contains("--graph-window-width: 100%", styles);
+        Assert.Contains("width: var(--graph-window-width, 100%)", graphFooterStyles);
+        Assert.Contains("width: var(--graph-window-width, 100%)", epicRailStyles);
+        Assert.Contains("initializeGraphWindowSizing", script);
+        Assert.Contains("ResizeObserver", script);
+        Assert.Contains("overflow-y: auto", styles);
+        Assert.Contains("overscroll-behavior: contain", styles);
+        Assert.Contains("padding-bottom: calc(5.25rem + var(--viewer-footer-height))", styles);
         Assert.Contains("overflow: visible", diffCanvasStyles);
+        Assert.Contains("position: static", graphFooterStyles);
+        Assert.DoesNotContain("bottom:", graphFooterStyles);
+        Assert.DoesNotContain("updateGraphFooterAnchor", script);
+        Assert.DoesNotContain("--graph-footer-left", styles);
+    }
+
+    [Fact]
+    public async Task ViewerChromeAndPlanningLayer_AreUserAdjustable()
+    {
+        var index = await ReadViewerIndexAsync();
+        var script = await ReadViewerAppScriptAsync();
+        var styles = await ReadViewerStylesAsync();
+        var chrome = await ReadViewerChromeModuleAsync();
+
+        Assert.Contains("topbar-collapse-toggle", index);
+        Assert.Contains("topbar-inner", index);
+        Assert.Contains("workspace-tab-strip-inner", index);
+        Assert.Contains("view-toolbar-inner", index);
+        Assert.Contains("workspace-tabs-collapse-toggle", index);
+        Assert.DoesNotContain("workspace-tabs-density-toggle", index);
+        Assert.Contains("topbarCollapsedStorageKey", script);
+        Assert.DoesNotContain("workspaceTabsCompactStorageKey", script);
+        Assert.DoesNotContain("data.workspaceTabsCompact", script);
+        Assert.Contains("planningLayerCollapsedStorageKey", script);
+        Assert.Contains("compareGraphAutoFitStorageKey", script);
+        Assert.Contains("compareGraphExpandedStorageKey", script);
+        Assert.Contains("graphIntroCollapsedStorageKey", script);
+        Assert.Contains("graph-intro-toggle", index);
+        Assert.Contains("diff-graph-top", script);
+        Assert.Contains("data-compare-graph-action=\"auto-fit\"", script);
+        Assert.Contains("data-toggle-planning-layer", script);
+        Assert.Contains("resize: vertical", ExtractCssRule(styles, ".workspace-tab-strip"));
+        Assert.Contains("min-width: 170px", ExtractCssRule(styles, ".workspace-tab {"));
+        Assert.Contains("max-width: 230px", ExtractCssRule(styles, ".workspace-tab {"));
+        Assert.Contains("font-size: 0.78rem", ExtractCssRule(styles, ".workspace-tab-label {"));
+        Assert.Contains("font-size: 0.66rem", ExtractCssRule(styles, ".workspace-tab-path {"));
+        Assert.DoesNotContain("data-workspace-tabs-compact", styles);
+        Assert.Contains("body[data-topbar-collapsed=\"true\"] .topbar", styles);
+        Assert.Contains("body[data-graph-intro-collapsed=\"true\"] #graph-caption", styles);
+        Assert.Contains(".graph-canvas-diff.graph-canvas-expanded", styles);
+        Assert.Contains(".epic-rail.is-collapsed .epic-rail-list", styles);
+        Assert.Contains("overflow-x: auto", ExtractCssRule(styles, ".epic-rail-list"));
+        Assert.Contains("flex: 0 0 min(320px, 78vw)", ExtractCssRule(styles, ".epic-rail-card"));
+        Assert.Contains("--viewer-viewport-top", styles);
+        Assert.Contains("top: var(--viewer-viewport-top)", ExtractCssRule(styles, ".layout"));
+        Assert.Contains("position: fixed", ExtractCssRule(styles, ".topbar"));
+        Assert.Contains("position: fixed", ExtractCssRule(styles, ".workspace-tab-strip"));
+        Assert.Contains("padding: 0", ExtractCssRule(styles, ".topbar"));
+        Assert.Contains("padding: 0", ExtractCssRule(styles, ".workspace-tab-strip"));
+        Assert.Contains("padding: 0", ExtractCssRule(styles, ".view-toolbar"));
+        Assert.Contains("padding: 0.58rem var(--viewer-chrome-inline-pad)", ExtractCssRule(styles, ".topbar-inner"));
+        Assert.Contains("padding: 0.45rem var(--viewer-chrome-inline-pad) 0.35rem", ExtractCssRule(styles, ".workspace-tab-strip-inner"));
+        Assert.Contains("padding: 0.75rem var(--viewer-chrome-inline-pad) 0.65rem", ExtractCssRule(styles, ".view-toolbar-inner"));
+        Assert.Contains("overflow: hidden", ExtractCssRule(styles, ".workspace-tab-strip"));
+        Assert.Contains("overflow: auto", ExtractCssRule(styles, ".workspace-tab-strip-inner"));
+        Assert.Contains("overflow: visible", ExtractCssRule(styles, ".panel-divider {"));
+        Assert.Contains("z-index: 35", ExtractCssRule(styles, ".panel-divider {"));
+        Assert.Contains("z-index: 60", ExtractCssRule(styles, ".panel-collapse-toggle"));
+        Assert.Contains("updateViewerChromeLayout", script);
+        Assert.Contains("initializeViewerChromeLayout", script);
+        Assert.Contains("document.body?.style.setProperty(name, value)", chrome);
+        Assert.Contains("document.body?.style.removeProperty(name)", chrome);
     }
 
     [Fact]
@@ -216,6 +289,9 @@ public sealed class ViewerAppContractTests
 
     private static Task<string> ReadViewerHistoryModuleAsync()
         => File.ReadAllTextAsync(FindRepositoryFile("Ctx.Viewer", "wwwroot", "js", "viewer-history.mjs"));
+
+    private static Task<string> ReadViewerChromeModuleAsync()
+        => File.ReadAllTextAsync(FindRepositoryFile("Ctx.Viewer", "wwwroot", "js", "viewer-chrome.mjs"));
 
     private static Task<string> ReadViewerIndexAsync()
         => File.ReadAllTextAsync(FindRepositoryFile("Ctx.Viewer", "wwwroot", "index.html"));

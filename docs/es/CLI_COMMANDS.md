@@ -36,7 +36,8 @@ ctx <comando>
 
 ### `ctx`
 
-Sin argumentos, muestra ayuda basica.
+Sin argumentos, muestra la guia operativa principal y apunta a la referencia canonica de comandos.
+La ayuda destaca el loop diario, `ctx plan`, runbooks y notas de paridad MCP; este archivo conserva la sintaxis completa.
 
 ```powershell
 dotnet run --project .\Ctx.Cli --
@@ -363,7 +364,7 @@ Opciones:
 - `--goal <goalId>` repetible
 - `--task <taskId>` repetible
 
-Reglas de diseño:
+Reglas de diseÃ±o:
 - mantener el runbook compacto
 - resumir el camino operativo en vez de duplicar docs largas
 - preferir scripts, comandos y referencias canonicas
@@ -371,6 +372,33 @@ Reglas de diseño:
 
 ```powershell
 dotnet run --project .\Ctx.Cli -- runbook add --title "Local publish" --kind Procedure --trigger publish-local --when "Use when refreshing the installed local viewer" --precondition "No installed CTX binary is locked" --do "Run scripts/publish-local.ps1" --verify "Viewer responds locally" --signal "Failed to copy Ctx.Viewer.exe" --escalate "Stop retrying publish if binaries remain locked" --reference "scripts/publish-local.ps1"
+```
+
+### `ctx runbook update <runbookId>`
+
+Actualiza un `OperationalRunbook` existente sin editar `.ctx/runbooks/*.json` a mano.
+
+Las opciones escalares reemplazan el valor actual cuando se pasan:
+- `--title <text>`
+- `--kind Procedure|Troubleshooting|Policy|Guardrail`
+- `--when <text>`
+- `--state Active|Archived`
+
+Las opciones de lista reemplazan la lista actual cuando se pasan. Agrega `--append` para anexar valores sin pisar lo anterior.
+- `--trigger <text>` repetible
+- `--precondition <text>` repetible
+- `--do <text>` repetible
+- `--verify <text>` repetible
+- `--signal <text>` repetible
+- `--escalate <text>` repetible
+- `--reference <text>` repetible
+- `--goal <goalId>` repetible
+- `--task <taskId>` repetible
+
+Acepta opciones repetidas y valores separados por coma.
+
+```powershell
+dotnet run --project .\Ctx.Cli -- runbook update <runbookId> --append --trigger viewer --verify "Topbar version matches"
 ```
 
 ### `ctx runbook attach <runbookId>`

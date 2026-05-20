@@ -186,7 +186,7 @@ Recommended order:
   Public live demo surfaces, Codespaces expectations, static pages, local MCP setup, and validation paths.
 
 - [live-demo/index.html](live-demo/index.html)
-  Static public landing page for CTX 1.0.20.
+  Static public landing page for CTX 1.0.21.
 
 - [live-demo/docs.html](live-demo/docs.html)
   Searchable HTML index over the public Markdown documentation.
