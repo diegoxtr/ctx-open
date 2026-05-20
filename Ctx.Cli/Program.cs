@@ -135,6 +135,26 @@ static async Task<CommandResult> DispatchAsync(IReadOnlyList<string> args, ICtxA
                 GetMultiOption(args, "--signal", "--signals", "--failure-signal", "--failure-signals"),
                 GetMultiOption(args, "--escalate", "--escalation", "--escalation-boundary")),
             cancellationToken),
+        "runbook" when Match(args, "runbook", "update") => await service.UpdateOperationalRunbookAsync(
+            repositoryPath,
+            new UpdateOperationalRunbookRequest(
+                RequirePositional(args, 2, "runbook id"),
+                GetOption(args, "--title"),
+                GetOption(args, "--kind"),
+                HasOption(args, "--trigger", "--triggers") ? GetMultiOption(args, "--trigger", "--triggers") : null,
+                GetOption(args, "--when"),
+                HasOption(args, "--do") ? GetMultiOption(args, "--do") : null,
+                HasOption(args, "--verify") ? GetMultiOption(args, "--verify") : null,
+                HasOption(args, "--reference", "--references") ? GetMultiOption(args, "--reference", "--references") : null,
+                HasOption(args, "--goal", "--goals") ? GetMultiOption(args, "--goal", "--goals") : null,
+                HasOption(args, "--task", "--tasks") ? GetMultiOption(args, "--task", "--tasks") : null,
+                GetOption(args, "--state"),
+                Environment.UserName,
+                HasOption(args, "--precondition", "--preconditions") ? GetMultiOption(args, "--precondition", "--preconditions") : null,
+                HasOption(args, "--signal", "--signals", "--failure-signal", "--failure-signals") ? GetMultiOption(args, "--signal", "--signals", "--failure-signal", "--failure-signals") : null,
+                HasOption(args, "--escalate", "--escalation", "--escalation-boundary") ? GetMultiOption(args, "--escalate", "--escalation", "--escalation-boundary") : null,
+                HasOption(args, "--append")),
+            cancellationToken),
         "runbook" when Match(args, "runbook", "attach") => await service.AttachOperationalRunbookAsync(
             repositoryPath,
             new AttachOperationalRunbookRequest(
@@ -482,13 +502,23 @@ static string RequireOption(IReadOnlyList<string> args, params string[] names)
 
 static IReadOnlyList<string> GetMultiOption(IReadOnlyList<string> args, params string[] names)
 {
-    var value = GetOption(args, names);
-    if (string.IsNullOrWhiteSpace(value))
+    var values = new List<string>();
+    for (var i = 0; i < args.Count; i++)
     {
-        return Array.Empty<string>();
+        if (!names.Contains(args[i], StringComparer.OrdinalIgnoreCase))
+        {
+            continue;
+        }
+
+        if (i + 1 >= args.Count)
+        {
+            throw new InvalidOperationException($"Missing value for option '{args[i]}'.");
+        }
+
+        values.AddRange(args[i + 1].Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries));
     }
 
-    return value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+    return values;
 }
 
 static decimal? TryGetDecimalOption(IReadOnlyList<string> args, params string[] names)
@@ -679,7 +709,7 @@ static string BuildHelpText(string repositoryPath)
     var projectRoot = ResolveProjectRoot(repositoryPath, AppContext.BaseDirectory);
     var projectContext = BuildProjectContextText(projectRoot);
     var cliCommandsDoc = Path.Combine(projectRoot, "docs", "CLI_COMMANDS.md");
-    var technicalIndexDoc = Path.Combine(projectRoot, "docs", "TECHNICAL_INDEX.md");
+    var mcpParityDoc = Path.Combine(projectRoot, "docs", "CTX_MCP_TOOL_PARITY.md");
     var helpState = BuildHelpState(repositoryPath, projectRoot);
     var branchLine = !string.IsNullOrWhiteSpace(helpState.Branch) ? $"  Branch: {helpState.Branch}" : string.Empty;
     var dirtyLine = helpState.Dirty.HasValue ? $"  Dirty: {helpState.Dirty.Value}" : string.Empty;
@@ -752,13 +782,18 @@ MCP Agent Surface:
   ctx_gaps              MCP read-only planning gaps
   ctx_roadmap           MCP read-only future planning lanes
   ctx_preflight         MCP runbook-aware operation guidance
+  ctx_runbook_update    write-mode playbook/runbook maintenance
   ctx_epic_*            MCP epic list/show/add/update/promote parity
+
+MCP Parity Notes:
+  The MCP server exposes the main agent-facing CTX surface, not every CLI command.
+  CLI-only or deferred surfaces include ctx update, import/export, provider runs,
+  branch/checkout/merge, usage/metrics, packet diagnostics, runbook attach/detach,
+  and prompt list. Track changes here before release:
+  {{mcpParityDoc}}
 
 Full Command Reference:
   {{cliCommandsDoc}}
-
-Installed Documentation Index:
-  {{technicalIndexDoc}}
 
 Branch-like hypothesis reminder:
   Hypothesis branch semantics live inside hypothesis lineage first.

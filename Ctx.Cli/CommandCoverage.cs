@@ -28,6 +28,7 @@ public static class CommandCoverage
         "operational review",
         "line open",
         "runbook add",
+        "runbook update",
         "runbook attach",
         "runbook detach",
         "runbook list",

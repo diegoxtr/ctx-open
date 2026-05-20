@@ -22,6 +22,9 @@ import {
     normalizeOverviewHistoryState
 } from "./js/viewer-history.mjs";
 import {
+    createViewerChromeLayoutController
+} from "./js/viewer-chrome.mjs";
+import {
     cssEscape,
     escapeAttribute,
     escapeHtml,
@@ -38,6 +41,12 @@ const refreshButton = document.getElementById("refresh-button");
 const autoRefreshToggle = document.getElementById("auto-refresh-toggle");
 const workspaceTabsHost = document.getElementById("workspace-tabs");
 const workspaceTabAddButton = document.getElementById("workspace-tab-add");
+const topbar = document.querySelector(".topbar");
+const workspaceTabStrip = document.querySelector(".workspace-tab-strip");
+const viewToolbar = document.querySelector(".view-toolbar");
+const topbarCollapseToggle = document.getElementById("topbar-collapse-toggle");
+const topbarRestoreButton = document.getElementById("topbar-restore");
+const workspaceTabsCollapseToggle = document.getElementById("workspace-tabs-collapse-toggle");
 const topbarVersion = document.getElementById("topbar-version");
 const mcpStatus = document.getElementById("mcp-status");
 const mcpStartButton = document.getElementById("mcp-start-button");
@@ -64,6 +73,7 @@ const graphCanvas = document.getElementById("graph-canvas");
 const graphTitle = document.getElementById("graph-title");
 const graphCaption = document.getElementById("graph-caption");
 const graphFocusCaption = document.getElementById("graph-focus-caption");
+const graphIntroToggle = document.getElementById("graph-intro-toggle");
 const graphNodeActions = document.getElementById("graph-node-actions");
 const graphSurfaceBackButton = document.getElementById("graph-surface-back");
 const graphZoomOutButton = document.getElementById("graph-zoom-out");
@@ -75,6 +85,7 @@ const graphFooterSummary = document.getElementById("graph-footer-summary");
 const graphFooterEpics = document.getElementById("graph-footer-epics");
 const appFooterRepository = document.getElementById("app-footer-repository");
 const appFooterSummary = document.getElementById("app-footer-summary");
+const appFooter = document.querySelector(".app-footer");
 const primaryLineageToggle = document.getElementById("primary-lineage-toggle");
 const graphExpandActiveToggle = document.getElementById("graph-expand-active-toggle");
 const interpretationRelationsToggle = document.getElementById("interpretation-relations-toggle");
@@ -123,8 +134,12 @@ const branchStorageKey = "ctx-viewer-branch";
 const autoRefreshStorageKey = "ctx-viewer-auto-refresh";
 const workspaceTabsStorageKey = "ctx-viewer-workspace-tabs";
 const activeWorkspaceTabStorageKey = "ctx-viewer-active-workspace-tab";
+const topbarCollapsedStorageKey = "ctx-viewer-topbar-collapsed";
+const workspaceTabsCollapsedStorageKey = "ctx-viewer-workspace-tabs-collapsed";
+const planningLayerCollapsedStorageKey = "ctx-viewer-planning-layer-collapsed";
 const compareGraphAutoFitStorageKey = "ctx-viewer-compare-graph-auto-fit";
 const compareGraphExpandedStorageKey = "ctx-viewer-compare-graph-expanded";
+const graphIntroCollapsedStorageKey = "ctx-viewer-graph-intro-collapsed";
 const defaultBranchName = "main";
 const viewModeDescriptions = {
     history: "History mode keeps timeline and commit detail readable by collapsing the graph panel.",
@@ -197,8 +212,25 @@ let originRequestSequence = 0;
 let pendingStartupWorkingFocus = true;
 let workspaceTabs = [];
 let activeWorkspaceTabId = null;
+let topbarCollapsed = readStorageBoolean(topbarCollapsedStorageKey);
+let workspaceTabsCollapsed = readStorageBoolean(workspaceTabsCollapsedStorageKey);
+let planningLayerCollapsed = readStorageBoolean(planningLayerCollapsedStorageKey);
 let compareGraphAutoFit = readStorageBoolean(compareGraphAutoFitStorageKey, true);
 let compareGraphExpanded = readStorageBoolean(compareGraphExpandedStorageKey);
+let graphIntroCollapsed = readStorageBoolean(graphIntroCollapsedStorageKey);
+let graphWindowResizeObserver = null;
+const viewerChromeLayout = createViewerChromeLayoutController({
+    document,
+    window,
+    elements: {
+        topbar,
+        workspaceTabStrip,
+        viewToolbar,
+        appFooter
+    },
+    isTopbarCollapsed: () => topbarCollapsed,
+    onLayoutChange: () => {}
+});
 
 const graphPresets = {
     all: ["Draft", "Ready", "InProgress", "Blocked", "Done"],
@@ -236,6 +268,20 @@ for (const button of graphPresetButtons) {
         toggleGraphFocusMode(button.dataset.graphPreset);
     });
 }
+
+topbarCollapseToggle?.addEventListener("click", () => setTopbarCollapsed(true));
+topbarRestoreButton?.addEventListener("click", () => setTopbarCollapsed(false));
+workspaceTabsCollapseToggle?.addEventListener("click", () => {
+    workspaceTabsCollapsed = !workspaceTabsCollapsed;
+    writeStorageBoolean(workspaceTabsCollapsedStorageKey, workspaceTabsCollapsed);
+    applyViewerChromeState();
+});
+graphIntroToggle?.addEventListener("click", () => {
+    graphIntroCollapsed = !graphIntroCollapsed;
+    writeStorageBoolean(graphIntroCollapsedStorageKey, graphIntroCollapsed);
+    applyViewerChromeState();
+});
+applyViewerChromeState();
 
 graphZoomOutButton?.addEventListener("click", () => {
     setGraphZoom(currentGraphZoom - 0.1);
@@ -382,6 +428,7 @@ if (interpretationRelationsToggle) {
 }
 
 window.addEventListener("load", async () => {
+    initializeViewerChromeLayout();
     applyViewMode(currentViewMode);
     restoreGraphFocusSelection();
     setHistorySummaryCollapsed(loadHistorySummaryCollapsed(), { persist: false });
@@ -403,6 +450,8 @@ window.addEventListener("load", async () => {
     }
     attachPanelDividerHandlers();
     applyPanelLayout();
+    initializeGraphWindowSizing();
+    updateViewerChromeLayout();
 
     const params = new URLSearchParams(window.location.search);
     const path = params.get("path");
@@ -414,7 +463,9 @@ window.addEventListener("load", async () => {
 });
 
 window.addEventListener("resize", () => {
+    updateViewerChromeLayout();
     applyPanelLayout();
+    updateGraphWindowWidth();
 });
 
 graphCanvas?.addEventListener("click", (event) => {
@@ -1599,6 +1650,64 @@ async function switchWorkspaceTab(tabId, options = {}) {
 
 function loadStoredAutoRefreshPreference() {
     return readStorageBoolean(autoRefreshStorageKey, true);
+}
+
+function setTopbarCollapsed(collapsed) {
+    topbarCollapsed = collapsed;
+    writeStorageBoolean(topbarCollapsedStorageKey, topbarCollapsed);
+    applyViewerChromeState();
+}
+
+function applyViewerChromeState() {
+    document.body.dataset.topbarCollapsed = String(topbarCollapsed);
+    document.body.dataset.workspaceTabsCollapsed = String(workspaceTabsCollapsed);
+    document.body.dataset.graphIntroCollapsed = String(graphIntroCollapsed);
+    topbarRestoreButton.hidden = !topbarCollapsed;
+    if (topbarCollapseToggle) {
+        topbarCollapseToggle.textContent = topbarCollapsed ? "Show top" : "Hide top";
+        topbarCollapseToggle.setAttribute("aria-pressed", String(topbarCollapsed));
+    }
+    if (workspaceTabsCollapseToggle) {
+        workspaceTabsCollapseToggle.textContent = workspaceTabsCollapsed ? "Show tabs" : "Hide tabs";
+        workspaceTabsCollapseToggle.setAttribute("aria-pressed", String(workspaceTabsCollapsed));
+    }
+    if (graphIntroToggle) {
+        graphIntroToggle.textContent = graphIntroCollapsed ? "Show" : "Minimize";
+        graphIntroToggle.setAttribute("aria-pressed", String(graphIntroCollapsed));
+    }
+    window.requestAnimationFrame(updateViewerChromeLayout);
+}
+
+function updateViewerChromeLayout() {
+    viewerChromeLayout.update();
+}
+
+function initializeViewerChromeLayout() {
+    viewerChromeLayout.initialize();
+}
+
+function initializeGraphWindowSizing() {
+    updateGraphWindowWidth();
+    if (!graphCanvas || typeof ResizeObserver === "undefined" || graphWindowResizeObserver) {
+        return;
+    }
+
+    graphWindowResizeObserver = new ResizeObserver(() => updateGraphWindowWidth());
+    graphWindowResizeObserver.observe(graphCanvas);
+}
+
+function updateGraphWindowWidth() {
+    if (!graphCanvas?.parentElement) {
+        return;
+    }
+
+    const width = graphCanvas.getBoundingClientRect().width;
+    if (width <= 0) {
+        graphCanvas.parentElement.style.removeProperty("--graph-window-width");
+        return;
+    }
+
+    graphCanvas.parentElement.style.setProperty("--graph-window-width", `${Math.round(width)}px`);
 }
 
 function loadStoredCommitFocus() {
@@ -3222,6 +3331,7 @@ function renderEpicRail(graph) {
     }
 
     epicRail.hidden = false;
+    epicRail.classList.toggle("is-collapsed", planningLayerCollapsed);
     const cards = epics.map(epic => {
         const state = normalizeGraphNodeState(epic.state) || "Parked";
         const isActive = selectedNodeId === epic.id;
@@ -3241,10 +3351,19 @@ function renderEpicRail(graph) {
                 <span class="epic-rail-eyebrow">Planning layer</span>
                 <h3>Parked Epics</h3>
             </div>
-            <span class="epic-rail-count">${epics.length}</span>
+            <div class="epic-rail-header-actions">
+                <span class="epic-rail-count">${epics.length}</span>
+                <button type="button" class="epic-rail-toggle" data-toggle-planning-layer aria-pressed="${planningLayerCollapsed ? "true" : "false"}">${planningLayerCollapsed ? "Show" : "Minimize"}</button>
+            </div>
         </div>
         <div class="epic-rail-list">${cards}</div>
     `;
+
+    epicRail.querySelector("[data-toggle-planning-layer]")?.addEventListener("click", () => {
+        planningLayerCollapsed = !planningLayerCollapsed;
+        writeStorageBoolean(planningLayerCollapsedStorageKey, planningLayerCollapsed);
+        renderEpicRail(graph);
+    });
 
     epicRail.querySelectorAll("[data-epic-node-id]").forEach(button => {
         button.addEventListener("click", () => {

@@ -3072,6 +3072,97 @@ public sealed class ApplicationServiceTests
     }
 
     [Fact]
+    public async Task OperationalRunbook_Update_ReplacesAndAppendsFields()
+    {
+        var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(repositoryPath);
+
+        try
+        {
+            var service = CreateService(new DateTimeOffset(2026, 5, 13, 17, 20, 0, TimeSpan.Zero));
+            await service.InitAsync(repositoryPath, new Ctx.Application.InitRepositoryRequest("CTX", "Runbook update test", "main", "tester"), CancellationToken.None);
+            var goal = await service.AddGoalAsync(repositoryPath, new Ctx.Application.AddGoalRequest("Operate viewer", "Keep local viewer stable", 1, null, "tester"), CancellationToken.None);
+            var goalId = ((Ctx.Domain.Goal)goal.Data!).Id.Value;
+            var task = await service.AddTaskAsync(repositoryPath, new Ctx.Application.AddTaskRequest("Publish local viewer", "Refresh installed app", goalId, Array.Empty<string>(), "tester"), CancellationToken.None);
+            var taskId = ((Ctx.Domain.Task)task.Data!).Id.Value;
+            var added = await service.AddOperationalRunbookAsync(
+                repositoryPath,
+                new Ctx.Application.AddOperationalRunbookRequest(
+                    "Local publish",
+                    "Procedure",
+                    new[] { "publish-local" },
+                    "Use when refreshing the installed local viewer.",
+                    new[] { "Run scripts/publish-local.ps1" },
+                    new[] { "Viewer responds locally" },
+                    new[] { "scripts/publish-local.ps1" },
+                    Array.Empty<string>(),
+                    Array.Empty<string>(),
+                    "tester"),
+                CancellationToken.None);
+            var runbookId = ((Ctx.Domain.OperationalRunbook)added.Data!).Id.Value;
+
+            var replaced = await service.UpdateOperationalRunbookAsync(
+                repositoryPath,
+                new Ctx.Application.UpdateOperationalRunbookRequest(
+                    runbookId,
+                    "Local publish guard",
+                    "Guardrail",
+                    new[] { "publish-local", "viewer" },
+                    "Use before refreshing the installed local viewer.",
+                    new[] { "Close installed viewer", "Run scripts/publish-local.ps1" },
+                    new[] { "Viewer loads locally" },
+                    new[] { "docs/LOCAL_CTX_INSTALLATION.md" },
+                    new[] { goalId },
+                    new[] { taskId },
+                    "Active",
+                    "tester",
+                    new[] { "Install root is writable" },
+                    new[] { "Access denied" },
+                    new[] { "Stop before retrying blindly" }),
+                CancellationToken.None);
+            var appended = await service.UpdateOperationalRunbookAsync(
+                repositoryPath,
+                new Ctx.Application.UpdateOperationalRunbookRequest(
+                    runbookId,
+                    null,
+                    null,
+                    new[] { "viewer", "publish-local-after-fix" },
+                    null,
+                    new[] { "Reopen viewer" },
+                    new[] { "Topbar version matches" },
+                    new[] { "ctx preflight --operation publish-local" },
+                    null,
+                    null,
+                    null,
+                    "tester",
+                    AppendLists: true),
+                CancellationToken.None);
+
+            Assert.True(replaced.Success);
+            Assert.True(appended.Success);
+            var runbook = Assert.IsType<Ctx.Domain.OperationalRunbook>(appended.Data);
+            Assert.Equal(runbookId, runbook.Id.Value);
+            Assert.Equal("Local publish guard", runbook.Title);
+            Assert.Equal(Ctx.Domain.OperationalRunbookKind.Guardrail, runbook.Kind);
+            Assert.Equal(new[] { "publish-local", "viewer", "publish-local-after-fix" }, runbook.Triggers);
+            Assert.Contains("Reopen viewer", runbook.Do);
+            Assert.Contains("Topbar version matches", runbook.Verify);
+            Assert.Contains("ctx preflight --operation publish-local", runbook.References);
+            Assert.Contains(runbook.GoalIds, item => item.Value == goalId);
+            Assert.Contains(runbook.TaskIds, item => item.Value == taskId);
+            Assert.Equal("tester", runbook.Trace.UpdatedBy);
+            Assert.NotNull(runbook.Trace.UpdatedAtUtc);
+        }
+        finally
+        {
+            if (Directory.Exists(repositoryPath))
+            {
+                Directory.Delete(repositoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public async Task OperationalRunbook_AttachMakesRunbookSelectedForTask()
     {
         var repositoryPath = Path.Combine(Path.GetTempPath(), "ctx-tests", Guid.NewGuid().ToString("N"));
@@ -3684,9 +3775,9 @@ public sealed class ApplicationServiceTests
                 "Guardrail",
                 new[] { "docs-freeze" },
                 "Use before freezing documentation for a release.",
-                new[] { "Run documentation consistency pass", "Check release notes" },
+                new[] { "Run documentation consistency pass", "Check RELEASE_NEXT" },
                 new[] { "Release notes and docs agree" },
-                new[] { "CHANGELOG.md", "docs/RELEASE_1_0_13.md" },
+                new[] { "docs/RELEASE_NEXT.md" },
                 Array.Empty<string>(),
                 Array.Empty<string>(),
                 "tester",
@@ -3743,7 +3834,7 @@ public sealed class ApplicationServiceTests
                 "Use after release notes are consolidated and before sharing a release publicly or with stakeholders.",
                 new[] { "Write English release description", "Write Spanish version", "Create flyer-style block" },
                 new[] { "The flyer names the release version", "The final chat output is self-contained and shareable" },
-                new[] { "CHANGELOG.md", "docs/RELEASE_1_0_13.md", "docs/OPERATIONAL_RUNBOOKS.md" },
+                new[] { "docs/RELEASE_NEXT.md", "docs/OPERATIONAL_RUNBOOKS.md" },
                 Array.Empty<string>(),
                 Array.Empty<string>(),
                 "tester"), CancellationToken.None);

@@ -391,6 +391,49 @@ public static class CtxWriteTools
                 Normalize(escalationBoundary)),
             cancellationToken);
 
+    [McpServerTool(Name = "ctx_runbook_update", ReadOnly = false, Destructive = false), Description("Update a CTX operational runbook. Requires ctx-mcp --mode write.")]
+    public static Task<CommandResult> UpdateRunbookAsync(
+        ICtxApplicationService service,
+        RepositoryGuard guard,
+        CancellationToken cancellationToken,
+        string runbookId,
+        string? title = null,
+        string? kind = null,
+        string? whenToUse = null,
+        string[]? triggers = null,
+        string[]? steps = null,
+        string[]? verify = null,
+        string[]? references = null,
+        string[]? goalIds = null,
+        string[]? taskIds = null,
+        string? state = null,
+        string[]? preconditions = null,
+        string[]? failureSignals = null,
+        string[]? escalationBoundary = null,
+        bool appendLists = false,
+        string updatedBy = "mcp-agent",
+        string? repo = null)
+        => service.UpdateOperationalRunbookAsync(
+            guard.ResolveWritable(repo),
+            new UpdateOperationalRunbookRequest(
+                runbookId,
+                title,
+                kind,
+                triggers is null ? null : Normalize(triggers),
+                whenToUse,
+                steps is null ? null : Normalize(steps),
+                verify is null ? null : Normalize(verify),
+                references is null ? null : Normalize(references),
+                goalIds is null ? null : Normalize(goalIds),
+                taskIds is null ? null : Normalize(taskIds),
+                state,
+                updatedBy,
+                preconditions is null ? null : Normalize(preconditions),
+                failureSignals is null ? null : Normalize(failureSignals),
+                escalationBoundary is null ? null : Normalize(escalationBoundary),
+                appendLists),
+            cancellationToken);
+
     [McpServerTool(Name = "ctx_trigger_add", ReadOnly = false, Destructive = false), Description("Add a CTX cognitive trigger. Requires ctx-mcp --mode write.")]
     public static Task<CommandResult> AddTriggerAsync(
         ICtxApplicationService service,

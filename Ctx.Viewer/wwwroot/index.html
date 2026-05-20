@@ -8,59 +8,75 @@
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
+    <button id="topbar-restore" class="topbar-restore" type="button" title="Show topbar" aria-label="Show topbar" hidden>Top</button>
     <header class="topbar">
-        <div>
-            <div class="topbar-title">
-                <h1>CTX Viewer</h1>
-                <span class="topbar-byline">by Diego Mariano Verrastro</span>
-                <span id="topbar-version" class="topbar-version"></span>
-                <span class="mcp-control" aria-label="Local MCP server controls">
-                    <span id="mcp-status" class="mcp-status mcp-status-unknown" title="Checking local MCP server" aria-label="Local MCP server status">
-                        <span class="mcp-status-dot" aria-hidden="true"></span>
-                        <span class="mcp-status-label">MCP Server</span>
+        <div class="topbar-inner">
+            <div>
+                <div class="topbar-title">
+                    <h1>CTX Viewer</h1>
+                    <span class="topbar-byline">by Diego Mariano Verrastro</span>
+                    <span id="topbar-version" class="topbar-version"></span>
+                    <span class="mcp-control" aria-label="Local MCP server controls">
+                        <span id="mcp-status" class="mcp-status mcp-status-unknown" title="Checking local MCP server" aria-label="Local MCP server status">
+                            <span class="mcp-status-dot" aria-hidden="true"></span>
+                            <span class="mcp-status-label">MCP Server</span>
+                        </span>
+                        <button id="mcp-start-button" class="mcp-action mcp-start-action" type="button" title="Start local MCP server">
+                            <span class="mcp-action-icon mcp-action-icon-start" aria-hidden="true"></span>
+                            <span>Start</span>
+                        </button>
+                        <button id="mcp-stop-button" class="mcp-action mcp-stop-action" type="button" title="Stop local MCP server" hidden>
+                            <span class="mcp-action-icon mcp-action-icon-stop" aria-hidden="true"></span>
+                            <span>Stop</span>
+                        </button>
                     </span>
-                    <button id="mcp-start-button" class="mcp-action mcp-start-action" type="button" title="Start local MCP server">
-                        <span class="mcp-action-icon mcp-action-icon-start" aria-hidden="true"></span>
-                        <span>Start</span>
-                    </button>
-                    <button id="mcp-stop-button" class="mcp-action mcp-stop-action" type="button" title="Stop local MCP server" hidden>
-                        <span class="mcp-action-icon mcp-action-icon-stop" aria-hidden="true"></span>
-                        <span>Stop</span>
-                    </button>
-                </span>
+                </div>
+                <p>Timeline and cognitive graph explorer</p>
             </div>
-            <p>Timeline and cognitive graph explorer</p>
-        </div>
-        <div class="topbar-right">
-            <button id="release-bell" class="release-bell release-status-unknown" type="button" title="Checking CTX releases" aria-label="Checking CTX releases">
-                <span class="release-bell-icon" aria-hidden="true"></span>
-                <span id="release-bell-badge" class="release-bell-badge" aria-hidden="true"></span>
-            </button>
-            <form id="repo-form" class="repo-form">
-                <label for="repo-path">Repository</label>
-                <input id="repo-path" name="repoPath" type="text" placeholder="Leave empty to use configured default or project git root" />
-                <button id="browse-repo-button" type="button" class="secondary-button">Browse...</button>
-                <div id="repository-browser" class="repository-browser" hidden></div>
-                <label for="branch-select">Branch</label>
-                <select id="branch-select" name="branch"></select>
-                <button type="submit">Load</button>
-            </form>
+            <div class="topbar-right">
+                <div class="topbar-chrome-actions" aria-label="Topbar layout controls">
+                    <button id="topbar-collapse-toggle" class="chrome-toggle-button" type="button" title="Hide topbar">Hide top</button>
+                </div>
+                <button id="release-bell" class="release-bell release-status-unknown" type="button" title="Checking CTX releases" aria-label="Checking CTX releases">
+                    <span class="release-bell-icon" aria-hidden="true"></span>
+                    <span id="release-bell-badge" class="release-bell-badge" aria-hidden="true"></span>
+                </button>
+                <form id="repo-form" class="repo-form">
+                    <label for="repo-path">Repository</label>
+                    <input id="repo-path" name="repoPath" type="text" placeholder="Leave empty to use configured default or project git root" />
+                    <button id="browse-repo-button" type="button" class="secondary-button">Browse...</button>
+                    <div id="repository-browser" class="repository-browser" hidden></div>
+                    <label for="branch-select">Branch</label>
+                    <select id="branch-select" name="branch"></select>
+                    <button type="submit">Load</button>
+                </form>
+            </div>
         </div>
     </header>
 
     <section class="workspace-tab-strip" aria-label="Open repositories">
-        <div id="workspace-tabs" class="workspace-tabs" role="tablist" aria-label="Repository tabs"></div>
-        <button id="workspace-tab-add" type="button" class="workspace-tab-add" aria-label="Open another repository tab">+</button>
+        <div class="workspace-tab-strip-inner">
+            <div class="workspace-tab-control-row">
+                <div class="workspace-tab-control-label">Projects</div>
+                <div class="workspace-tab-actions" aria-label="Project tab layout controls">
+                    <button id="workspace-tabs-collapse-toggle" class="chrome-toggle-button" type="button">Hide tabs</button>
+                </div>
+            </div>
+            <div id="workspace-tabs" class="workspace-tabs" role="tablist" aria-label="Repository tabs"></div>
+            <button id="workspace-tab-add" type="button" class="workspace-tab-add" aria-label="Open another repository tab">+</button>
+        </div>
     </section>
 
     <section class="view-toolbar">
-        <div class="view-mode-group" role="group" aria-label="Viewer mode">
-            <span class="view-mode-label">View</span>
-            <button type="button" class="view-mode-button" data-view-mode="history">History</button>
-            <button type="button" class="view-mode-button active" data-view-mode="split">Split</button>
-            <button type="button" class="view-mode-button" data-view-mode="graph">Graph</button>
+        <div class="view-toolbar-inner">
+            <div class="view-mode-group" role="group" aria-label="Viewer mode">
+                <span class="view-mode-label">View</span>
+                <button type="button" class="view-mode-button" data-view-mode="history">History</button>
+                <button type="button" class="view-mode-button active" data-view-mode="split">Split</button>
+                <button type="button" class="view-mode-button" data-view-mode="graph">Graph</button>
+            </div>
+            <p id="view-mode-caption" class="view-mode-caption">Split mode uses a compact commit navigator so the graph and detail panels stay readable.</p>
         </div>
-        <p id="view-mode-caption" class="view-mode-caption">Split mode uses a compact commit navigator so the graph and detail panels stay readable.</p>
     </section>
 
     <main class="layout" data-view-mode="split">
@@ -134,6 +150,10 @@
         <section class="panel panel-center">
             <div class="panel-header graph-panel-header">
                 <div class="graph-title-block">
+                    <div class="graph-intro-top">
+                        <span class="graph-intro-eyebrow">Graph top</span>
+                        <button id="graph-intro-toggle" type="button" class="graph-intro-toggle" aria-pressed="false">Minimize</button>
+                    </div>
                     <div class="graph-title-row">
                         <h2 id="graph-title">Trace Graph</h2>
                         <button id="graph-surface-back" type="button" class="graph-surface-back" hidden>Back to Trace Graph</button>

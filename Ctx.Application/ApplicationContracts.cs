@@ -25,6 +25,23 @@ public record AddOperationalRunbookRequest(
     IReadOnlyList<string>? Preconditions = null,
     IReadOnlyList<string>? FailureSignals = null,
     IReadOnlyList<string>? EscalationBoundary = null);
+public record UpdateOperationalRunbookRequest(
+    string RunbookId,
+    string? Title,
+    string? Kind,
+    IReadOnlyList<string>? Triggers,
+    string? WhenToUse,
+    IReadOnlyList<string>? Do,
+    IReadOnlyList<string>? Verify,
+    IReadOnlyList<string>? References,
+    IReadOnlyList<string>? GoalIds,
+    IReadOnlyList<string>? TaskIds,
+    string? State,
+    string UpdatedBy,
+    IReadOnlyList<string>? Preconditions = null,
+    IReadOnlyList<string>? FailureSignals = null,
+    IReadOnlyList<string>? EscalationBoundary = null,
+    bool AppendLists = false);
 public record AttachOperationalRunbookRequest(
     string RunbookId,
     IReadOnlyList<string> GoalIds,

@@ -15,6 +15,7 @@ public interface ICtxApplicationService
     System.Threading.Tasks.Task<CommandResult> PromoteEpicAsync(string repositoryPath, PromoteEpicRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> OpenWorkLineAsync(string repositoryPath, OpenWorkLineRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddOperationalRunbookAsync(string repositoryPath, AddOperationalRunbookRequest request, CancellationToken cancellationToken);
+    System.Threading.Tasks.Task<CommandResult> UpdateOperationalRunbookAsync(string repositoryPath, UpdateOperationalRunbookRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AttachOperationalRunbookAsync(string repositoryPath, AttachOperationalRunbookRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> DetachOperationalRunbookAsync(string repositoryPath, DetachOperationalRunbookRequest request, CancellationToken cancellationToken);
     System.Threading.Tasks.Task<CommandResult> AddCognitiveTriggerAsync(string repositoryPath, AddCognitiveTriggerRequest request, CancellationToken cancellationToken);

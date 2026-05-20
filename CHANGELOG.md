@@ -4,6 +4,24 @@ All notable changes to CTX will be documented in this file.
 
 ## [Unreleased]
 
+## [1.0.21] - TBD
+
+### Added
+
+- `ctx runbook update <runbookId>` for maintaining operational runbooks without hand-editing `.ctx` files.
+- `ctx_runbook_update` MCP write tool for agent-facing runbook maintenance.
+- Viewer chrome controls for topbar collapse, project-tab collapse, graph intro minimization, Compare Graph auto-fit, and expanded canvas mode.
+
+### Changed
+
+- Viewer desktop layout now uses measured fixed chrome surfaces so the graph workspace, side rails, footer, parked epic rail, and summary strip remain reachable while resizing.
+- Viewer graph canvas can resize freely on desktop and keeps parked epic state aligned to the graph window.
+- MCP parity docs now classify `runbook add/update` as implemented and keep attach/detach plus prompt-list follow-ups explicit.
+
+### Validation
+
+- Release branch validation must confirm `ctx version` reports `1.0.21`, Viewer chrome/graph contract coverage passes, `ctx_runbook_update` appears in MCP tool coverage, public/private consistency guard passes, and no local `.ctx` state or machine-specific paths are staged.
+
 ## [1.0.20] - 2026-05-18
 
 ### Added

@@ -67,7 +67,7 @@ These require `ctx-mcp --mode write`.
 | `ctx evidence add/share` | `ctx_evidence_add`, `ctx_evidence_share` | implemented |
 | `ctx decision add/update` | `ctx_decision_add`, `ctx_decision_update` | implemented |
 | `ctx conclusion add/update` | `ctx_conclusion_add`, `ctx_conclusion_update` | implemented |
-| `ctx runbook add` | `ctx_runbook_add` | implemented |
+| `ctx runbook add/update` | `ctx_runbook_add`, `ctx_runbook_update` | implemented |
 | `ctx trigger add` | `ctx_trigger_add` | implemented |
 | `ctx commit` | `ctx_commit` | implemented |
 
@@ -89,6 +89,9 @@ These are useful, but not required for the current agent-facing MCP baseline:
 |---|---|
 | `ctx branch`, `ctx checkout`, `ctx merge` | repository-level state changes need stronger MCP guardrails |
 | `ctx import`, `ctx export` | portable snapshot mutation/egress should be designed explicitly |
+| `ctx update` | installed-binary self-update needs an explicit safe protocol before exposing through a running MCP server |
+| `ctx runbook attach`, `ctx runbook detach` | useful follow-up; lower risk than repository mutation, but not in the current MCP write surface yet |
+| `ctx prompt list` | useful read-only follow-up for trigger/prompt timeline inspection |
 | `ctx run`, `ctx run list/show` | provider execution has credential and cost implications |
 | `ctx provider list` | lower priority until provider execution is exposed |
 | `ctx packet list/show` | useful for diagnostics, but not required for daily cognitive operation |
