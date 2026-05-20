@@ -170,6 +170,20 @@ body {
     flex: 0 0 auto;
 }
 
+.chrome-toggle-button {
+    border: 1px solid #bfd2ef;
+    border-radius: 999px;
+    padding: 0.32rem 0.62rem;
+    background: #f6f9ff;
+    color: #214a88;
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
 .view-mode-group {
     display: inline-flex;
     align-items: center;
@@ -2979,6 +2993,39 @@ body {
     font-weight: 800;
 }
 
+.diff-graph-top {
+    position: sticky;
+    top: 0;
+    z-index: 7;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin: -0.15rem 0 0.65rem;
+    padding: 0.48rem 0.62rem;
+    border: 1px solid #c8daf2;
+    border-radius: 10px;
+    background: rgba(248, 251, 255, 0.96);
+    color: #1b3358;
+    box-shadow: 0 8px 18px rgba(33, 74, 136, 0.08);
+}
+
+.diff-graph-top-eyebrow {
+    display: block;
+    color: #647899;
+    font-size: 0.66rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.diff-graph-top-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
 .diff-graph-canvas {
     overflow: auto;
     min-height: 300px;
@@ -2997,6 +3044,12 @@ body {
     background: transparent;
     padding: 0;
     overflow: visible;
+}
+
+.graph-canvas-diff.graph-canvas-expanded {
+    flex-basis: auto;
+    height: 78dvh;
+    max-height: none;
 }
 
 .graph-canvas-diff .diff-graph-stage {
