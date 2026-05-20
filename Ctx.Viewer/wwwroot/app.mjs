@@ -123,6 +123,8 @@ const branchStorageKey = "ctx-viewer-branch";
 const autoRefreshStorageKey = "ctx-viewer-auto-refresh";
 const workspaceTabsStorageKey = "ctx-viewer-workspace-tabs";
 const activeWorkspaceTabStorageKey = "ctx-viewer-active-workspace-tab";
+const compareGraphAutoFitStorageKey = "ctx-viewer-compare-graph-auto-fit";
+const compareGraphExpandedStorageKey = "ctx-viewer-compare-graph-expanded";
 const defaultBranchName = "main";
 const viewModeDescriptions = {
     history: "History mode keeps timeline and commit detail readable by collapsing the graph panel.",
@@ -195,6 +197,8 @@ let originRequestSequence = 0;
 let pendingStartupWorkingFocus = true;
 let workspaceTabs = [];
 let activeWorkspaceTabId = null;
+let compareGraphAutoFit = readStorageBoolean(compareGraphAutoFitStorageKey, true);
+let compareGraphExpanded = readStorageBoolean(compareGraphExpandedStorageKey);
 
 const graphPresets = {
     all: ["Draft", "Ready", "InProgress", "Blocked", "Done"],
@@ -1641,7 +1645,10 @@ function setGraphZoom(value, options = {}) {
             currentComparisonDiffGraph.graph,
             currentComparisonDiffGraph.fromCommitId,
             currentComparisonDiffGraph.toCommitId,
-            { preserveViewport: options.preserveViewport ?? true });
+            {
+                preserveViewport: options.preserveViewport ?? true,
+                skipAutoFit: true
+            });
     } else if (currentGraph) {
         renderGraph(currentGraph, { preserveViewport: options.preserveViewport ?? true });
     }
@@ -6601,7 +6608,7 @@ function normalizeDiffChangeState(value) {
     return "changed";
 }
 
-function renderComparisonDiffGraph(graph) {
+function renderComparisonDiffGraph(graph, fromCommitId, toCommitId) {
     if (!graph.nodes.some(node => node.id !== "Diff:root")) {
         return `<p class="detail-empty">No graphable diff entities.</p>`;
     }
@@ -6667,6 +6674,16 @@ function renderComparisonDiffGraph(graph) {
     }).join("");
 
     return `
+        <div class="diff-graph-top">
+            <div>
+                <span class="diff-graph-top-eyebrow">Compare Graph</span>
+                <strong>${escapeHtml(fromCommitId?.slice?.(0, 8) ?? "base")} -> ${escapeHtml(toCommitId?.slice?.(0, 8) ?? "target")}</strong>
+            </div>
+            <div class="diff-graph-top-actions" aria-label="Compare Graph layout controls">
+                <button type="button" class="chrome-toggle-button" data-compare-graph-action="auto-fit" aria-pressed="${compareGraphAutoFit ? "true" : "false"}">${compareGraphAutoFit ? "Auto-fit on" : "Auto-fit off"}</button>
+                <button type="button" class="chrome-toggle-button" data-compare-graph-action="expanded" aria-pressed="${compareGraphExpanded ? "true" : "false"}">${compareGraphExpanded ? "Compact canvas" : "Expand canvas"}</button>
+            </div>
+        </div>
         <div class="diff-graph-legend">
             <span class="diff-legend-item diff-state-added">Added</span>
             <span class="diff-legend-item diff-state-changed">Changed</span>
@@ -6727,8 +6744,10 @@ function renderComparisonDiffGraphInTrace(graph, fromCommitId, toCommitId, optio
     currentRenderedGraph = null;
     selectedNodeId = null;
     updateGraphSurfaceChrome("diff");
-    graphCanvas.innerHTML = renderComparisonDiffGraph(graph);
+    graphCanvas.innerHTML = renderComparisonDiffGraph(graph, fromCommitId, toCommitId);
     graphCanvas.classList.add("graph-canvas-diff");
+    graphCanvas.classList.toggle("graph-canvas-expanded", compareGraphExpanded);
+    wireCompareGraphControls();
     if (graphCaption) {
         graphCaption.textContent = `Diff graph ${fromCommitId.slice(0, 8)} -> ${toCommitId.slice(0, 8)}`;
     }
@@ -6737,12 +6756,49 @@ function renderComparisonDiffGraphInTrace(graph, fromCommitId, toCommitId, optio
     }
     clearGraphNodeActions();
     renderGraphFooter(graph, graph, { visibleRelationCount: graph.edges.length });
-    if (viewportSnapshot) {
+    if (compareGraphAutoFit && !options.skipAutoFit) {
+        fitGraphZoomToCanvas();
+    } else if (viewportSnapshot) {
         restoreGraphViewport(viewportSnapshot);
     } else {
         resetGraphViewport();
     }
     syncActiveWorkspaceFromGlobals();
+}
+
+function wireCompareGraphControls() {
+    graphCanvas?.querySelectorAll("[data-compare-graph-action]").forEach(button => {
+        button.addEventListener("click", () => {
+            const action = button.getAttribute("data-compare-graph-action");
+            if (action === "auto-fit") {
+                compareGraphAutoFit = !compareGraphAutoFit;
+                writeStorageBoolean(compareGraphAutoFitStorageKey, compareGraphAutoFit);
+                if (compareGraphAutoFit) {
+                    fitGraphZoomToCanvas();
+                } else if (currentComparisonDiffGraph) {
+                    renderComparisonDiffGraphInTrace(
+                        currentComparisonDiffGraph.graph,
+                        currentComparisonDiffGraph.fromCommitId,
+                        currentComparisonDiffGraph.toCommitId,
+                        { preserveViewport: true, skipAutoFit: true });
+                }
+            }
+            if (action === "expanded") {
+                compareGraphExpanded = !compareGraphExpanded;
+                writeStorageBoolean(compareGraphExpandedStorageKey, compareGraphExpanded);
+                graphCanvas.classList.toggle("graph-canvas-expanded", compareGraphExpanded);
+                if (compareGraphAutoFit) {
+                    fitGraphZoomToCanvas();
+                } else if (currentComparisonDiffGraph) {
+                    renderComparisonDiffGraphInTrace(
+                        currentComparisonDiffGraph.graph,
+                        currentComparisonDiffGraph.fromCommitId,
+                        currentComparisonDiffGraph.toCommitId,
+                        { preserveViewport: true, skipAutoFit: true });
+                }
+            }
+        });
+    });
 }
 
 function restoreTraceGraphAfterDiff(options = {}) {
@@ -6752,7 +6808,7 @@ function restoreTraceGraphAfterDiff(options = {}) {
 
     traceGraphDiffActive = false;
     currentComparisonDiffGraph = null;
-    graphCanvas?.classList.remove("graph-canvas-diff");
+    graphCanvas?.classList.remove("graph-canvas-diff", "graph-canvas-expanded");
     updateGraphSurfaceChrome("trace");
     if (currentGraph) {
         void renderGraph(currentGraph, { forceRender: true });
