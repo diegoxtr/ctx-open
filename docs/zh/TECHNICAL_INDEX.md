@@ -36,7 +36,7 @@
 - [V1_FUNCTIONAL_SPEC.md](../V1_FUNCTIONAL_SPEC.md)
   定义模块、需求、验收标准与 V1 done 标准。
 
-- [RELEASE_1_0_12.md](RELEASE_1_0_12.md)
+- [RELEASE_1_0_21.md](../RELEASE_1_0_21.md)
   总结当前稳定 release baseline。
 
 ### 架构与设计

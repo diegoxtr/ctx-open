@@ -685,7 +685,7 @@ This is a planned direction, not a statement of current capability.
 - Formal V1 functional specification is documented in `docs/V1_FUNCTIONAL_SPEC.md`.
 - Pilot execution guidance is documented in `docs/PILOT_TESTING_GUIDE.md`.
 - Installation and first-use guidance are documented in `docs/INSTALLATION_AND_USAGE_GUIDE.md`.
-- Release baseline details are documented in `docs/RELEASE_1_0_12.md`.
+- Release baseline details are documented in `docs/RELEASE_1_0_21.md`.
 - A repeatable smoke test is available at `scripts/run-smoke-test.ps1`.
 - A repeatable branch/merge conflict demo is available at `scripts/run-merge-conflict-demo.ps1`.
 - A local publish script is available at `scripts/publish-local.ps1`.
@@ -782,6 +782,7 @@ Use this index as the navigable entrypoint into the public repository documentat
 |---|---|
 | [Release 1.0.21](docs/RELEASE_1_0_21.md) | Current release notes |
 | [Release 1.0.20](docs/RELEASE_1_0_20.md) | Previous release notes |
+| [Release 1.0.19](docs/RELEASE_1_0_19.md) | Previous release notes |
 | [Release 1.0.18](docs/RELEASE_1_0_18.md) | Previous release notes |
 | [Release 1.0.17](docs/RELEASE_1_0_17.md) | Previous release notes |
 | [Release 1.0.16](docs/RELEASE_1_0_16.md) | Viewer Compare endpoint hotfix notes |

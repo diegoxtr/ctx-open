@@ -4,7 +4,7 @@ All notable changes to CTX will be documented in this file.
 
 ## [Unreleased]
 
-## [1.0.21] - TBD
+## [1.0.21] - 2026-05-20
 
 ### Added
 

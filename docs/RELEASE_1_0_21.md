@@ -2,7 +2,7 @@
 
 Release date:
 
-- `TBD`
+- `2026-05-20`
 
 Version:
 

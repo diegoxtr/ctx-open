@@ -46,8 +46,11 @@ Recommended order:
 - [V1_FUNCTIONAL_SPEC.md](V1_FUNCTIONAL_SPEC.md)
   Defines modules, requirements, acceptance criteria, and V1 definition of done.
 
-- [RELEASE_1_0_20.md](RELEASE_1_0_20.md)
+- [RELEASE_1_0_21.md](RELEASE_1_0_21.md)
   Summarizes the current release baseline.
+
+- [RELEASE_1_0_20.md](RELEASE_1_0_20.md)
+  Previous stable release notes.
 
 - [RELEASE_1_0_19.md](RELEASE_1_0_19.md)
   Previous stable release notes.
