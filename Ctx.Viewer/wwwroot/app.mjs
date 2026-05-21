@@ -3236,6 +3236,14 @@ function resolveGraphEpics(graph) {
         });
 }
 
+function shouldShowPlanningLayerForCurrentFocus() {
+    if (selectedCommitId || currentCommitFocus) {
+        return true;
+    }
+
+    return currentGraphFocusModes.has("all") || currentGraphFocusModes.has("closed");
+}
+
 function renderGraphFooter(graph, filteredGraph = currentRenderedGraph, options = {}) {
     if (!graphFooterSummary || !graphFooterEpics) {
         return;
@@ -3254,8 +3262,12 @@ function renderGraphFooter(graph, filteredGraph = currentRenderedGraph, options 
     const zoomPercent = Math.round(currentGraphZoom * 100);
     graphFooterSummary.textContent = `Visible ${visibleNodes}/${totalNodes} nodes, ${visibleRelations}/${totalRelations} relations, zoom ${zoomPercent}%.`;
 
-    const epics = resolveGraphEpics(graph);
-    graphFooterEpics.textContent = epics.length === 0
+    const epics = shouldShowPlanningLayerForCurrentFocus()
+        ? resolveGraphEpics(filteredGraph ?? graph)
+        : [];
+    graphFooterEpics.textContent = !shouldShowPlanningLayerForCurrentFocus()
+        ? "Planning layer hidden for current focus."
+        : epics.length === 0
         ? "No parked epics."
         : `${epics.length} parked epic${epics.length === 1 ? "" : "s"} available.`;
 }
@@ -3319,6 +3331,12 @@ function buildGraphRenderKey(graph, filteredGraph) {
 
 function renderEpicRail(graph) {
     if (!epicRail) {
+        return;
+    }
+
+    if (!shouldShowPlanningLayerForCurrentFocus()) {
+        epicRail.hidden = true;
+        epicRail.innerHTML = "";
         return;
     }
 
@@ -3615,7 +3633,7 @@ async function renderGraph(graph, options = {}) {
     activeGraphRenderKey = renderKey;
     currentRenderedGraph = filteredGraph;
     graphCanvas.innerHTML = "";
-    renderEpicRail(graph);
+    renderEpicRail(filteredGraph);
     updateGraphZoomControls();
     renderGraphFocusCaption(filteredGraph);
     renderGraphNodeActions();
@@ -4473,7 +4491,7 @@ function filterGraphByTaskState(graph) {
         return { nodes: [], edges: [] };
     }
 
-    if (selectedTaskIds.size === taskNodes.length) {
+    if (selectedTaskIds.size === taskNodes.length && shouldShowPlanningLayerForCurrentFocus()) {
         return graph;
     }
 
@@ -4590,6 +4608,10 @@ function filterGraphByTaskState(graph) {
         }
 
         if (node.type === "Epic") {
+            if (!shouldShowPlanningLayerForCurrentFocus()) {
+                continue;
+            }
+
             if (hasSelectedAssociation) {
                 visibleIds.add(node.id);
             }

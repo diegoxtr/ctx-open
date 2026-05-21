@@ -536,31 +536,33 @@ The release is not ready if a console-facing command, helper, installer note, RE
 
 Required installed references:
 
-- `prompts/CTX_HELPER_PROMPT.md`
-- `prompts/CTX_AGENT_PROMPT.md`
-- `docs/CLI_COMMANDS.md`
-- `docs/CTX_VIEWER_GUIDE.md`
-- `docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md`
+- every prompt listed in `distribution/packaged-prompts.txt`
+- every document listed in `distribution/packaged-docs.txt`
 
 Do:
 
+- read `distribution/packaged-docs.txt` and `distribution/packaged-prompts.txt`
 - build the portable distribution from the release branch
 - inspect the bundle layout before publishing
 - install from the bundle into a disposable install root
 - run `ctx helper` from the installed launcher
 - verify every path printed by the helper exists under the install root
 - verify installer docs and release notes do not mention package-local files that are absent from the bundle
+- update the manifests in the same work block if a new console-facing doc or prompt is introduced
 
 Verify:
 
-- `docs/CLI_COMMANDS.md` exists in the portable bundle and installed root
+- `docs/TECHNICAL_INDEX.md`, `docs/INSTALLATION_AND_USAGE_GUIDE.md`, `docs/CLI_COMMANDS.md`, `docs/CTX_VIEWER_GUIDE.md`, `docs/CTX_MCP_AGENT_SETUP.md`, `docs/OPERATIONAL_RUNBOOKS.md`, and the current `docs/RELEASE_X_Y_Z.md` exist in the portable bundle and installed root
+- `prompts/CTX_HELPER_PROMPT.md`, `prompts/CTX_AGENT_PROMPT.md`, and `prompts/CTX_AUTONOMOUS_OPERATOR_PROMPT.md` exist in the portable bundle and installed root
 - `ctx helper` points to files that exist after install
 - Windows, Linux, and macOS install scripts copy the same console-referenced docs
+- `scripts/build-distribution.ps1`, `scripts/install-ctx.ps1`, and `scripts/install-ctx.sh` all consume the packaged asset manifests instead of maintaining divergent hard-coded doc lists
 
 Escalate:
 
 - stop release publication if a console-referenced file is missing from the bundle or installed root
 - either ship the file or remove the installed-path reference before tagging
+- stop publication if the portable bundle contains private-only docs such as `docs/private`
 
 The operator-facing output should be pasted directly in chat and be ready to share:
 
