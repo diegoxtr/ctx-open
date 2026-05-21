@@ -24,12 +24,43 @@ $viewerProject = Join-Path $repoRoot "Ctx.Viewer\Ctx.Viewer.csproj"
 $agentLinkPrompt = Join-Path $repoRoot "distribution\agent-link\CTX_AGENT_LINK_PROMPT.txt"
 $helperPrompt = Join-Path $repoRoot "prompts\CTX_HELPER_PROMPT.md"
 $installManifest = Join-Path $repoRoot "distribution\install-manifest.json"
+$packagedDocsManifest = Join-Path $repoRoot "distribution\packaged-docs.txt"
+$packagedPromptsManifest = Join-Path $repoRoot "distribution\packaged-prompts.txt"
 $docsSource = Join-Path $repoRoot "docs"
 $viewerGuide = Join-Path $repoRoot "docs\CTX_VIEWER_GUIDE.md"
 $cliCommands = Join-Path $repoRoot "docs\CLI_COMMANDS.md"
 $technicalIndex = Join-Path $repoRoot "docs\TECHNICAL_INDEX.md"
 $agentPrompt = Join-Path $repoRoot "prompts\CTX_AGENT_PROMPT.md"
 $autonomousProtocol = Join-Path $repoRoot "docs\CTX_AUTONOMOUS_OPERATION_PROTOCOL.md"
+
+function Read-PackagedAssetList {
+    param([string]$Path)
+
+    if (-not (Test-Path $Path)) {
+        throw "Packaged asset manifest not found: $Path"
+    }
+
+    return @(Get-Content $Path |
+        ForEach-Object { $_.Trim() } |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and -not $_.StartsWith("#") })
+}
+
+function Copy-PackagedPromptAssets {
+    param(
+        [string]$SourceRoot,
+        [string]$TargetRoot,
+        [string[]]$RelativePaths
+    )
+
+    foreach ($relativePath in $RelativePaths) {
+        $sourcePath = Join-Path $SourceRoot $relativePath
+        if (-not (Test-Path $sourcePath)) {
+            throw "Required packaged prompt not found: $sourcePath"
+        }
+
+        Copy-Item $sourcePath (Join-Path $TargetRoot (Split-Path -Leaf $relativePath)) -Force
+    }
+}
 
 if (-not (Test-Path $TargetManifest)) {
     throw "Target manifest not found: $TargetManifest"
@@ -47,6 +78,9 @@ if (-not (Test-Path $installManifest)) {
     throw "Install manifest not found: $installManifest"
 }
 
+$packagedDocs = Read-PackagedAssetList -Path $packagedDocsManifest
+$packagedPrompts = Read-PackagedAssetList -Path $packagedPromptsManifest
+
 foreach ($requiredDoc in @($viewerGuide, $cliCommands, $agentPrompt, $autonomousProtocol)) {
     if (-not (Test-Path $requiredDoc)) {
         throw "Required helper asset not found: $requiredDoc"
@@ -55,6 +89,13 @@ foreach ($requiredDoc in @($viewerGuide, $cliCommands, $agentPrompt, $autonomous
 
 if (-not (Test-Path $technicalIndex)) {
     throw "Documentation index not found: $technicalIndex"
+}
+
+foreach ($requiredPackagedDoc in $packagedDocs) {
+    $docPath = Join-Path $repoRoot $requiredPackagedDoc
+    if (-not (Test-Path $docPath)) {
+        throw "Required packaged documentation not found: $docPath"
+    }
 }
 
 if (-not (Test-Path $mcpProject)) {
@@ -157,10 +198,11 @@ foreach ($target in $targets) {
     }
 
     Copy-Item $agentLinkPrompt (Join-Path $metaOut "CTX_AGENT_LINK_PROMPT.txt")
-    Copy-Item $helperPrompt (Join-Path $promptOut "CTX_HELPER_PROMPT.md")
     Copy-Item $installManifest (Join-Path $metaOut "install-manifest.json")
+    Copy-Item $packagedDocsManifest (Join-Path $metaOut "packaged-docs.txt")
+    Copy-Item $packagedPromptsManifest (Join-Path $metaOut "packaged-prompts.txt")
     Copy-Item (Join-Path $docsSource "*") $docsOut -Recurse -Force
-    Copy-Item $agentPrompt (Join-Path $promptOut "CTX_AGENT_PROMPT.md")
+    Copy-PackagedPromptAssets -SourceRoot $repoRoot -TargetRoot $promptOut -RelativePaths $packagedPrompts
     $target | ConvertTo-Json -Depth 4 | Set-Content -Path (Join-Path $metaOut "target.json") -Encoding ASCII
 
     Write-PortableLaunchers `

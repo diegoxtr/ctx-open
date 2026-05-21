@@ -39,6 +39,63 @@ $viewerPath = Join-Path $InstallRoot $manifest.paths.viewer
 $promptsPath = Join-Path $InstallRoot $manifest.paths.prompts
 $docsPath = Join-Path $InstallRoot $manifest.paths.docs
 $metadataPath = Join-Path $InstallRoot $manifest.metadataFile
+$packagedDocsManifest = Join-Path $repoRoot "distribution\packaged-docs.txt"
+$packagedPromptsManifest = Join-Path $repoRoot "distribution\packaged-prompts.txt"
+
+function Read-PackagedAssetList {
+    param([string]$Path)
+
+    if (-not (Test-Path $Path)) {
+        throw "Packaged asset manifest not found: $Path"
+    }
+
+    return @(Get-Content $Path |
+        ForEach-Object { $_.Trim() } |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and -not $_.StartsWith("#") })
+}
+
+function Resolve-PackagedTargetPath {
+    param(
+        [string]$RelativePath,
+        [string]$TargetRoot,
+        [string]$StripPrefix
+    )
+
+    $normalized = $RelativePath.Replace("/", "\")
+    $prefix = $StripPrefix.TrimEnd("\") + "\"
+    $targetRelative = if ($normalized.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) {
+        $normalized.Substring($prefix.Length)
+    }
+    else {
+        Split-Path -Leaf $normalized
+    }
+
+    return Join-Path $TargetRoot $targetRelative
+}
+
+function Copy-PackagedAssets {
+    param(
+        [string]$SourceRoot,
+        [string]$TargetRoot,
+        [string[]]$RelativePaths,
+        [string]$StripPrefix
+    )
+
+    foreach ($relativePath in $RelativePaths) {
+        $sourcePath = Join-Path $SourceRoot $relativePath
+        if (-not (Test-Path $sourcePath)) {
+            throw "Required packaged asset not found: $sourcePath"
+        }
+
+        $targetPath = Resolve-PackagedTargetPath -RelativePath $relativePath -TargetRoot $TargetRoot -StripPrefix $StripPrefix
+        $targetDirectory = Split-Path -Parent $targetPath
+        New-Item -ItemType Directory -Path $targetDirectory -Force | Out-Null
+        Copy-Item $sourcePath $targetPath -Force
+    }
+}
+
+$packagedDocs = Read-PackagedAssetList -Path $packagedDocsManifest
+$packagedPrompts = Read-PackagedAssetList -Path $packagedPromptsManifest
 
 function Reset-InstallLayout {
     param(
@@ -106,19 +163,8 @@ function Copy-ContextDocs {
         [string]$PromptsTargetPath
     )
 
-    $docsSource = Join-Path $SourceRoot "docs"
-    if (-not (Test-Path $docsSource)) {
-        throw "Docs folder not found: $docsSource"
-    }
-
-    Copy-Item (Join-Path $docsSource "*") $DocsTargetPath -Recurse -Force
-
-    $agentPromptSource = Join-Path $SourceRoot "prompts\CTX_AGENT_PROMPT.md"
-    if (-not (Test-Path $agentPromptSource)) {
-        throw "Required context asset not found: $agentPromptSource"
-    }
-
-    Copy-Item $agentPromptSource (Join-Path $PromptsTargetPath "CTX_AGENT_PROMPT.md") -Force
+    Copy-PackagedAssets -SourceRoot $SourceRoot -TargetRoot $DocsTargetPath -RelativePaths $packagedDocs -StripPrefix "docs"
+    Copy-PackagedAssets -SourceRoot $SourceRoot -TargetRoot $PromptsTargetPath -RelativePaths $packagedPrompts -StripPrefix "prompts"
 }
 
 function Write-WindowsLaunchers {
@@ -343,12 +389,8 @@ function Install-FromPortable {
         Copy-Item (Join-Path $extractRoot "viewer\*") $Viewer -Recurse -Force
     }
 
-    if (Test-Path (Join-Path $extractRoot "prompts\CTX_HELPER_PROMPT.md")) {
-        Copy-Item (Join-Path $extractRoot "prompts\CTX_HELPER_PROMPT.md") (Join-Path $Prompts "CTX_HELPER_PROMPT.md") -Force
-    }
-
-    if (Test-Path (Join-Path $extractRoot "prompts\CTX_AGENT_PROMPT.md")) {
-        Copy-Item (Join-Path $extractRoot "prompts\CTX_AGENT_PROMPT.md") (Join-Path $Prompts "CTX_AGENT_PROMPT.md") -Force
+    if (Test-Path (Join-Path $extractRoot "prompts")) {
+        Copy-Item (Join-Path $extractRoot "prompts\*") $Prompts -Recurse -Force
     }
 
     if (Test-Path (Join-Path $extractRoot "docs")) {
@@ -388,10 +430,18 @@ function Test-InstallLayout {
         throw "Installed viewer executable not found: $viewerExe"
     }
 
-    foreach ($requiredDoc in @("CTX_VIEWER_GUIDE.md", "CLI_COMMANDS.md", "CTX_AUTONOMOUS_OPERATION_PROTOCOL.md", "TECHNICAL_INDEX.md")) {
-        $docPath = Join-Path (Split-Path -Parent $Bin) "docs\$requiredDoc"
+    $installRoot = Split-Path -Parent $Bin
+    foreach ($requiredDoc in $packagedDocs) {
+        $docPath = Resolve-PackagedTargetPath -RelativePath $requiredDoc -TargetRoot (Join-Path $installRoot "docs") -StripPrefix "docs"
         if (-not (Test-Path $docPath)) {
             throw "Installed console-referenced documentation not found: $docPath"
+        }
+    }
+
+    foreach ($requiredPrompt in $packagedPrompts) {
+        $promptPath = Resolve-PackagedTargetPath -RelativePath $requiredPrompt -TargetRoot (Join-Path $installRoot "prompts") -StripPrefix "prompts"
+        if (-not (Test-Path $promptPath)) {
+            throw "Installed context prompt not found: $promptPath"
         }
     }
 }

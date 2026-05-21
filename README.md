@@ -261,7 +261,7 @@ The strongest demos are not graph demos. They are continuity demos.
 - Tiene un valor inusualmente alto para generar inputs estructurados de entrenamiento porque el camino de razonamiento queda preservado en lugar de ser reconstruido a posteriori.
 - Esto no es solo otra herramienta de IA. Es parte de la capa de infraestructura que necesitara la proxima generacion de workflows con agentes.
 
-Current version: `1.0.21`
+Current version: `1.0.22`
 
 ## Install
 
@@ -780,7 +780,8 @@ Use this index as the navigable entrypoint into the public repository documentat
 
 | Document | Use it for |
 |---|---|
-| [Release 1.0.21](docs/RELEASE_1_0_21.md) | Current release notes |
+| [Release 1.0.22](docs/RELEASE_1_0_22.md) | Current release notes |
+| [Release 1.0.21](docs/RELEASE_1_0_21.md) | Previous release notes |
 | [Release 1.0.20](docs/RELEASE_1_0_20.md) | Previous release notes |
 | [Release 1.0.19](docs/RELEASE_1_0_19.md) | Previous release notes |
 | [Release 1.0.18](docs/RELEASE_1_0_18.md) | Previous release notes |

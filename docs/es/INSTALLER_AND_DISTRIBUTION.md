@@ -46,6 +46,9 @@ La raiz de packaging es:
 Los assets concretos viven en:
 
 - `distribution/targets.json`
+- `distribution/install-manifest.json`
+- `distribution/packaged-docs.txt`
+- `distribution/packaged-prompts.txt`
 - `distribution/agent-link/CTX_AGENT_LINK_PROMPT.txt`
 - `distribution/windows/ctx.iss`
 - `distribution/macos/package-macos.sh`
@@ -98,9 +101,9 @@ El flujo base de actualizacion deberia soportar:
 - Cada build ejecuta `ctx version` correctamente.
 - El binario arranca en cada OS/arch.
 - El fragmento de prompt se distribuye junto al binario.
-- El arbol publico completo de `docs/` se distribuye junto al binario, incluyendo `docs/TECHNICAL_INDEX.md`, `docs/CLI_COMMANDS.md`, `docs/CTX_VIEWER_GUIDE.md` y `docs/CTX_AUTONOMOUS_OPERATION_PROTOCOL.md`.
-- Los prompts referenciados desde consola se distribuyen junto al binario: `prompts/CTX_HELPER_PROMPT.md` y `prompts/CTX_AGENT_PROMPT.md`.
+- La documentacion y los prompts referenciados desde consola se distribuyen junto al binario segun `distribution/packaged-docs.txt` y `distribution/packaged-prompts.txt`.
 - Si `ctx helper`, la instalacion o las notas de release apuntan a un archivo instalado, el preflight de release debe fallar hasta que el bundle portable y los scripts de instalacion copien ese archivo.
+- La validacion de release revisa al menos un zip y un tar para confirmar que contienen `docs/TECHNICAL_INDEX.md`, `docs/INSTALLATION_AND_USAGE_GUIDE.md`, `docs/CTX_VIEWER_GUIDE.md`, `docs/CTX_MCP_AGENT_SETUP.md`, `docs/OPERATIONAL_RUNBOOKS.md`, `docs/RELEASE_1_0_22.md`, `prompts/CTX_HELPER_PROMPT.md` y `prompts/CTX_AGENT_PROMPT.md`.
 - Los archivos portables se emiten bajo `artifacts/distribution/`.
 
 ## Preguntas abiertas

@@ -220,6 +220,19 @@ public sealed class ViewerAppContractTests
     }
 
     [Fact]
+    public async Task WorkingContextFocus_HidesPlanningEpics()
+    {
+        var script = await ReadViewerAppScriptAsync();
+
+        Assert.Contains("function shouldShowPlanningLayerForCurrentFocus()", script);
+        Assert.Contains("currentGraphFocusModes.has(\"all\") || currentGraphFocusModes.has(\"closed\")", script);
+        Assert.Contains("Planning layer hidden for current focus.", script);
+        Assert.Contains("renderEpicRail(filteredGraph)", script);
+        Assert.Contains("if (!shouldShowPlanningLayerForCurrentFocus())", script);
+        Assert.Contains("selectedTaskIds.size === taskNodes.length && shouldShowPlanningLayerForCurrentFocus()", script);
+    }
+
+    [Fact]
     public async Task GraphZoom_DoesNotForceFullGraphRerender()
     {
         var script = await ReadViewerAppScriptAsync();

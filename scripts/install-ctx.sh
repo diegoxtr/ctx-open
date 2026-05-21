@@ -14,6 +14,8 @@ SKIP_VIEWER="${SKIP_VIEWER:-0}"
 SCRIPT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_ROOT/.." && pwd)"
 MANIFEST_PATH="$REPO_ROOT/distribution/install-manifest.json"
+PACKAGED_DOCS_MANIFEST="$REPO_ROOT/distribution/packaged-docs.txt"
+PACKAGED_PROMPTS_MANIFEST="$REPO_ROOT/distribution/packaged-prompts.txt"
 
 if [[ ! -f "$MANIFEST_PATH" ]]; then
   echo "Install manifest not found: $MANIFEST_PATH" >&2
@@ -27,6 +29,63 @@ VIEWER_PATH="$INSTALL_ROOT/viewer"
 PROMPTS_PATH="$INSTALL_ROOT/prompts"
 DOCS_PATH="$INSTALL_ROOT/docs"
 METADATA_PATH="$INSTALL_ROOT/ctx-install.json"
+
+copy_packaged_assets() {
+  local source_root="$1"
+  local target_root="$2"
+  local manifest_path="$3"
+  local strip_prefix="$4"
+
+  if [[ ! -f "$manifest_path" ]]; then
+    echo "Packaged asset manifest not found: $manifest_path" >&2
+    exit 1
+  fi
+
+  while IFS= read -r relative_path || [[ -n "$relative_path" ]]; do
+    relative_path="${relative_path//$'\r'/}"
+    [[ -z "$relative_path" || "$relative_path" == \#* ]] && continue
+
+    local source_path="$source_root/$relative_path"
+    if [[ ! -f "$source_path" ]]; then
+      echo "Required packaged asset not found: $source_path" >&2
+      exit 1
+    fi
+
+    local target_relative="$relative_path"
+    if [[ "$target_relative" == "$strip_prefix/"* ]]; then
+      target_relative="${target_relative#"$strip_prefix/"}"
+    else
+      target_relative="$(basename "$target_relative")"
+    fi
+
+    mkdir -p "$(dirname "$target_root/$target_relative")"
+    cp "$source_path" "$target_root/$target_relative"
+  done < "$manifest_path"
+}
+
+validate_packaged_assets() {
+  local target_root="$1"
+  local manifest_path="$2"
+  local strip_prefix="$3"
+  local label="$4"
+
+  while IFS= read -r relative_path || [[ -n "$relative_path" ]]; do
+    relative_path="${relative_path//$'\r'/}"
+    [[ -z "$relative_path" || "$relative_path" == \#* ]] && continue
+
+    local target_relative="$relative_path"
+    if [[ "$target_relative" == "$strip_prefix/"* ]]; then
+      target_relative="${target_relative#"$strip_prefix/"}"
+    else
+      target_relative="$(basename "$target_relative")"
+    fi
+
+    if [[ ! -f "$target_root/$target_relative" ]]; then
+      echo "Installed $label not found: $target_root/$target_relative" >&2
+      exit 1
+    fi
+  done < "$manifest_path"
+}
 
 reset_install_layout() {
   mkdir -p "$INSTALL_ROOT"
@@ -142,9 +201,8 @@ install_from_source() {
     dotnet publish "$effective_repo/Ctx.Viewer/Ctx.Viewer.csproj" -c Release -o "$VIEWER_PATH"
   fi
 
-  cp "$effective_repo/prompts/CTX_HELPER_PROMPT.md" "$PROMPTS_PATH/CTX_HELPER_PROMPT.md"
-  cp "$effective_repo/prompts/CTX_AGENT_PROMPT.md" "$PROMPTS_PATH/CTX_AGENT_PROMPT.md"
-  cp -R "$effective_repo/docs/." "$DOCS_PATH/"
+  copy_packaged_assets "$effective_repo" "$DOCS_PATH" "$PACKAGED_DOCS_MANIFEST" "docs"
+  copy_packaged_assets "$effective_repo" "$PROMPTS_PATH" "$PACKAGED_PROMPTS_MANIFEST" "prompts"
   printf '%s' "$effective_repo"
 }
 
@@ -181,22 +239,16 @@ install_from_portable() {
     cp -R "$extract_root/viewer/." "$VIEWER_PATH/"
   fi
 
-  if [[ -f "$extract_root/prompts/CTX_HELPER_PROMPT.md" ]]; then
-    cp "$extract_root/prompts/CTX_HELPER_PROMPT.md" "$PROMPTS_PATH/CTX_HELPER_PROMPT.md"
+  if [[ -d "$extract_root/prompts" ]]; then
+    cp -R "$extract_root/prompts/." "$PROMPTS_PATH/"
   else
-    cp "$REPO_ROOT/prompts/CTX_HELPER_PROMPT.md" "$PROMPTS_PATH/CTX_HELPER_PROMPT.md"
-  fi
-
-  if [[ -f "$extract_root/prompts/CTX_AGENT_PROMPT.md" ]]; then
-    cp "$extract_root/prompts/CTX_AGENT_PROMPT.md" "$PROMPTS_PATH/CTX_AGENT_PROMPT.md"
-  else
-    cp "$REPO_ROOT/prompts/CTX_AGENT_PROMPT.md" "$PROMPTS_PATH/CTX_AGENT_PROMPT.md"
+    copy_packaged_assets "$REPO_ROOT" "$PROMPTS_PATH" "$PACKAGED_PROMPTS_MANIFEST" "prompts"
   fi
 
   if [[ -d "$extract_root/docs" ]]; then
     cp -R "$extract_root/docs/." "$DOCS_PATH/"
   else
-    cp -R "$REPO_ROOT/docs/." "$DOCS_PATH/"
+    copy_packaged_assets "$REPO_ROOT" "$DOCS_PATH" "$PACKAGED_DOCS_MANIFEST" "docs"
   fi
 
   printf '%s' "$extract_root"
@@ -241,12 +293,8 @@ validate_install_layout() {
     exit 1
   fi
 
-  for required_doc in CTX_VIEWER_GUIDE.md CLI_COMMANDS.md CTX_AUTONOMOUS_OPERATION_PROTOCOL.md TECHNICAL_INDEX.md; do
-    if [[ ! -f "$DOCS_PATH/$required_doc" ]]; then
-      echo "Installed console-referenced documentation not found: $DOCS_PATH/$required_doc" >&2
-      exit 1
-    fi
-  done
+  validate_packaged_assets "$DOCS_PATH" "$PACKAGED_DOCS_MANIFEST" "docs" "packaged documentation"
+  validate_packaged_assets "$PROMPTS_PATH" "$PACKAGED_PROMPTS_MANIFEST" "prompts" "context prompt"
 }
 
 reset_install_layout

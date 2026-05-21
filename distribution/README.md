@@ -21,6 +21,12 @@ It contains:
 - `install-manifest.json`
   Shared install-root, layout, and helper-prompt metadata used by the source/portable bootstrap scripts.
 
+- `packaged-docs.txt`
+  Canonical list of documentation files that must ship in portable bundles and installed roots.
+
+- `packaged-prompts.txt`
+  Canonical list of prompt files that must ship in portable bundles and installed roots.
+
 - `agent-link/CTX_AGENT_LINK_PROMPT.txt`
   Prompt fragment that binds agents to CTX as the system of record.
 
@@ -41,20 +47,23 @@ Portable bundles are produced by:
 powershell -ExecutionPolicy Bypass -File .\scripts\build-distribution.ps1
 ```
 
-The script publishes CTX for each target in `targets.json`, copies the agent-link prompt into the bundle, and emits archives under `artifacts/distribution/`.
+The script publishes CTX for each target in `targets.json`, copies the agent-link prompt, packaged documentation, and packaged prompts into the bundle, and emits archives under `artifacts/distribution/`.
 
 Current portable bundle layout:
 
 ```text
 bin/
 mcp/
+acp/
 viewer/
 prompts/
 docs/
 distribution/
 ```
 
-The install scripts turn that bundle into an operational install root with `ctx`, `ctx-mcp`, and optional `ctx-viewer` launchers.
+The `docs/` and `prompts/` payloads are driven by `distribution/packaged-docs.txt` and `distribution/packaged-prompts.txt`. Release validation must fail if a console-referenced document or prompt is missing from those manifests, the portable bundle, or the installed root.
+
+The install scripts turn that bundle into an operational install root with `ctx`, `ctx-mcp`, `ctx-agent-acp`, and optional `ctx-viewer` launchers.
 
 Install bootstrap flows are provided by:
 

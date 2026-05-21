@@ -520,7 +520,7 @@ public static class DomainConstants
 {
     public const string RepositoryFolderName = ".ctx";
     public const string CurrentRepositoryVersion = "1.0";
-    public const string ProductVersion = "1.0.21"; // CTX_RELEASE_VERSION
+    public const string ProductVersion = "1.0.22"; // CTX_RELEASE_VERSION
 }
 
 public static class HypothesisScoring

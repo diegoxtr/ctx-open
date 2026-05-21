@@ -4,6 +4,22 @@ All notable changes to CTX will be documented in this file.
 
 ## [Unreleased]
 
+## [1.0.22] - 2026-05-21
+
+### Fixed
+
+- Viewer Working/Thinking focus now hides planning epics and archived promoted epics instead of letting them leak through the planning layer or the all-selected-tasks graph shortcut.
+
+### Changed
+
+- Distribution builds now ship a manifest-backed packaged documentation and prompt contract.
+- Source and portable install scripts validate the same packaged documentation and prompt contract used by the build.
+- Release documentation now requires package-local docs and prompts to be validated before tagging or publishing.
+
+### Validation
+
+- Release branch validation must confirm `ctx version` reports `1.0.22`, Viewer working-context epic contract coverage passes, distribution packaging contract coverage passes, and at least one portable zip and tar archive contain the manifest-listed docs and prompts.
+
 ## [1.0.21] - 2026-05-20
 
 ### Added
